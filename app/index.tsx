@@ -1,14 +1,14 @@
-import { StyleSheet, Text, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import { StyleSheet, Text, View } from 'react-native';
 
-export default function HomeScreen() {
-  return (
-    <View style={styles.container}>
-      <Text style={styles.title}>가치 GACHI</Text>
-      <StatusBar style="auto" />
-    </View>
-  );
-}
+const HomeScreen = () => (
+  <View style={styles.container}>
+    <Text style={styles.title}>가치 GACHI</Text>
+    <StatusBar style="auto" />
+  </View>
+);
+
+export default HomeScreen;
 
 const styles = StyleSheet.create({
   container: {

@@ -19,8 +19,13 @@ export const PrimaryButton = ({ label, onPress, disabled = false }: ButtonProps)
   </TouchableOpacity>
 );
 
-export const SecondaryButton = ({ label, onPress }: ButtonProps) => (
-  <TouchableOpacity style={styles.secondary} onPress={onPress} activeOpacity={0.7}>
+export const SecondaryButton = ({ label, onPress, disabled = false }: ButtonProps) => (
+  <TouchableOpacity
+    style={[styles.secondary, disabled && styles.secondaryDisabled]}
+    onPress={onPress}
+    disabled={disabled}
+    activeOpacity={0.7}
+  >
     <Text style={styles.secondaryLabel}>{label}</Text>
   </TouchableOpacity>
 );
@@ -49,6 +54,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors.text.white,
+  },
+  secondaryDisabled: {
+    borderColor: colors.gray[200],
   },
   secondaryLabel: {
     color: colors.gray[300],

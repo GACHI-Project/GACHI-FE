@@ -11,7 +11,7 @@ interface StepHeaderProps {
 }
 
 const StepHeader = ({ currentStep, totalStep }: StepHeaderProps) => {
-  const progress = (currentStep / totalStep) * 100;
+  const progress = totalStep > 0 ? Math.min((currentStep / totalStep) * 100, 100) : 0;
 
   return (
     <View style={styles.container}>

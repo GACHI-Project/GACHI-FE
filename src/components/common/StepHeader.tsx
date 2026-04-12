@@ -15,7 +15,13 @@ const StepHeader = ({ currentStep, totalStep }: StepHeaderProps) => {
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+      <TouchableOpacity
+        style={styles.backButton}
+        onPress={() => router.back()}
+        accessible
+        accessibilityRole="button"
+        accessibilityLabel="뒤로 가기"
+      >
         <Ionicons name="chevron-back" size={18} color={colors.gray[300]} />
       </TouchableOpacity>
 

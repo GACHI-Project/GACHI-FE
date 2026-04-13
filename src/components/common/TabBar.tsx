@@ -27,8 +27,7 @@ const TABS: TabItem[] = [
   { routeName: 'profile', label: '프로필', icon: 'person-outline', activeIcon: 'person' },
 ];
 
-const TabBar = ({ state, navigation, insets }: BottomTabBarProps) => {
-  return (
+const TabBar = ({ state, navigation, insets }: BottomTabBarProps) => (
     <View style={[styles.outer, { paddingBottom: insets.bottom }]}>
       <View style={styles.container}>
         {TABS.map((tab) => {
@@ -90,8 +89,7 @@ const TabBar = ({ state, navigation, insets }: BottomTabBarProps) => {
         })}
       </View>
     </View>
-  );
-};
+);
 
 export default TabBar;
 

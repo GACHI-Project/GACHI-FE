@@ -347,7 +347,7 @@ const RegisterChildScreen = () => {
       <View style={styles.footer}>
         <PrimaryButton
           label="다음으로 →"
-          onPress={() => router.push('/(auth)/register/language' as never)}
+          onPress={() => router.push('/(auth)/register/notification')}
         />
       </View>
     </View>

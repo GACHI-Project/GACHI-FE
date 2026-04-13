@@ -31,14 +31,15 @@ const TabBar = ({ state, navigation, insets }: BottomTabBarProps) => (
   <View style={[styles.outer, { paddingBottom: insets.bottom }]}>
     <View style={styles.container}>
       {TABS.map((tab) => {
-        const routeIndex = state.routes.findIndex((r) => r.name === tab.routeName);
-        const isActive = state.index === routeIndex;
+        const route = state.routes.find((r) => r.name === tab.routeName);
+        const isActive = !!route && state.index === state.routes.indexOf(route);
         const isScan = tab.routeName === 'scan';
 
         const onPress = () => {
+          if (!route) return;
           const event = navigation.emit({
             type: 'tabPress',
-            target: state.routes[routeIndex].key,
+            target: route.key,
             canPreventDefault: true,
           });
           if (!event.defaultPrevented) {

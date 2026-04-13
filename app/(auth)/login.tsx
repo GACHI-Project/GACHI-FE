@@ -75,6 +75,7 @@ export default LoginScreen;
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
+    backgroundColor: colors.primary[100],
   },
   gradient: {
     flex: 1,

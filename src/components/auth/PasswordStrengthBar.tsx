@@ -13,10 +13,11 @@ const SEGMENT_KEYS = ['s1', 's2', 's3', 's4'];
 
 export const getStrength = (password: string): number => {
   if (!password) return 0;
+  const hasAlphaNumeric = /[A-Za-z]/.test(password) && /[0-9]/.test(password);
   let score = 0;
   if (password.length >= 6) score += 1;
-  if (password.length >= 10) score += 1;
-  if (/[A-Za-z]/.test(password) && /[0-9]/.test(password)) score += 1;
+  if (hasAlphaNumeric) score += 1;
+  if (hasAlphaNumeric && password.length >= 10) score += 1;
   if (/[^A-Za-z0-9]/.test(password)) score += 1;
   return Math.min(Math.max(score, 1), SEGMENT_COUNT);
 };

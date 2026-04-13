@@ -38,6 +38,10 @@ module.exports = {
     'react-native/no-inline-styles': 'warn',
 
     'react/style-prop-object': 'off',
+
+    'no-void': 'off',
+    'global-require': 'off',
+    '@typescript-eslint/no-require-imports': 'off',
   },
   settings: {
     'import/resolver': {

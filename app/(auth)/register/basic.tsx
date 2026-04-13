@@ -25,6 +25,7 @@ const MESSAGES: Record<string, Record<string, string>> = {
   phone: { success: '사용 가능한 전화번호에요', error: '이미 등록된 전화번호입니다.' },
   email: { success: '사용 가능한 이메일이에요', error: '올바른 이메일 형식이 아니에요' },
   code: { error: '인증 코드는 6자리 숫자여야 해요' },
+  codeExpired: { error: '인증 시간이 만료됐어요. 재발송해주세요.' },
   passwordConfirmSuccess: { success: '비밀번호가 일치합니다.' },
   passwordConfirmError: { error: '비밀번호가 일치하지 않아요' },
 };
@@ -41,6 +42,7 @@ const RegisterBasicScreen = () => {
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [emailTimer, setEmailTimer] = useState<number | null>(null);
+  const [emailSent, setEmailSent] = useState(false);
   const [verificationCode, setVerificationCode] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -79,10 +81,11 @@ const RegisterBasicScreen = () => {
 
   const handleEmailChange = (v: string) => {
     setEmail(v);
-    if (emailTimer !== null) {
-      if (timerRef.current) clearInterval(timerRef.current);
-      setEmailTimer(null);
-    }
+    if (timerRef.current) clearInterval(timerRef.current);
+    setEmailTimer(null);
+    setEmailSent(false);
+    setVerificationCode('');
+    setCodeValidation(undefined);
     setEmailValidation(undefined);
   };
 
@@ -91,12 +94,17 @@ const RegisterBasicScreen = () => {
       setEmailValidation('error');
       return;
     }
+    if (timerRef.current) clearInterval(timerRef.current);
     setEmailValidation('success');
+    setEmailSent(true);
+    setVerificationCode('');
+    setCodeValidation(undefined);
     setEmailTimer(179);
     timerRef.current = setInterval(() => {
       setEmailTimer((prev) => {
-        if (prev === null || prev <= 0) {
-          if (timerRef.current) clearInterval(timerRef.current);
+        if (prev === null || prev <= 1) {
+          clearInterval(timerRef.current!);
+          timerRef.current = null;
           return null;
         }
         return prev - 1;
@@ -166,17 +174,25 @@ const RegisterBasicScreen = () => {
             validationMessage={getMessage('email', emailValidation)}
           />
 
-          {emailTimer !== null && (
-            <FormField
-              label="인증번호"
-              value={verificationCode}
-              onChangeText={setVerificationCode}
-              keyboardType="number-pad"
-              rightButton={{ label: '확인', onPress: handleCodeConfirm }}
-              validationState={codeValidation}
-              validationMessage={getMessage('code', codeValidation)}
-            />
-          )}
+          {emailSent &&
+            (() => {
+              const isExpired = emailTimer === null && codeValidation !== 'success';
+              const codeMsg = isExpired
+                ? getMessage('codeExpired', 'error')
+                : getMessage('code', codeValidation);
+              const codeState: ValidationState = isExpired ? 'error' : codeValidation;
+              return (
+                <FormField
+                  label="인증번호"
+                  value={verificationCode}
+                  onChangeText={setVerificationCode}
+                  keyboardType="number-pad"
+                  rightButton={{ label: '확인', onPress: handleCodeConfirm }}
+                  validationState={codeState}
+                  validationMessage={codeMsg}
+                />
+              );
+            })()}
 
           <FormField
             label="비밀번호"
@@ -215,7 +231,15 @@ const RegisterBasicScreen = () => {
         <PrimaryButton
           label="다음으로 →"
           onPress={() => router.push('/(auth)/register/child')}
-          disabled={getStrength(password) < 2}
+          disabled={
+            !name ||
+            idValidation !== 'success' ||
+            phoneValidation !== 'success' ||
+            codeValidation !== 'success' ||
+            getStrength(password) < 2 ||
+            passwordConfirmValidation !== 'success' ||
+            !agreed
+          }
         />
 
         <TouchableOpacity onPress={() => router.push('/(auth)/login')}>

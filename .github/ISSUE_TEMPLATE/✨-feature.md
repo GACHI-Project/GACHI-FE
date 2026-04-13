@@ -2,7 +2,7 @@
 name: '✨ Feature'
 about: '기능 추가 또는 개선 작업'
 title: '✨ [Feature] '
-labels: ✨ Feature
+labels: ['✨ Feature']
 ---
 
 ## 📌 이슈 내용

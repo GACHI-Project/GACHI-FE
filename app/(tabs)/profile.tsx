@@ -2,13 +2,13 @@ import { View, Text, StyleSheet } from 'react-native';
 import colors from '../../src/constants/colors';
 import fonts from '../../src/constants/fonts';
 
-const Screen = () => (
+const ProfileScreen = () => (
   <View style={styles.container}>
     <Text style={styles.text}>profile</Text>
   </View>
 );
 
-export default Screen;
+export default ProfileScreen;
 
 const styles = StyleSheet.create({
   container: {

@@ -2,13 +2,13 @@ import { View, Text, StyleSheet } from 'react-native';
 import colors from '../../src/constants/colors';
 import fonts from '../../src/constants/fonts';
 
-const Screen = () => (
+const DocumentScreen = () => (
   <View style={styles.container}>
     <Text style={styles.text}>document</Text>
   </View>
 );
 
-export default Screen;
+export default DocumentScreen;
 
 const styles = StyleSheet.create({
   container: {

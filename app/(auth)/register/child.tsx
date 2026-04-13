@@ -285,7 +285,7 @@ const RegisterChildScreen = () => {
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
+        showsVerticalScrollIndicator
         keyboardShouldPersistTaps="handled"
       >
         {/* 타이틀 */}

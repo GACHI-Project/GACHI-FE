@@ -28,67 +28,67 @@ const TABS: TabItem[] = [
 ];
 
 const TabBar = ({ state, navigation, insets }: BottomTabBarProps) => (
-    <View style={[styles.outer, { paddingBottom: insets.bottom }]}>
-      <View style={styles.container}>
-        {TABS.map((tab) => {
-          const routeIndex = state.routes.findIndex((r) => r.name === tab.routeName);
-          const isActive = state.index === routeIndex;
-          const isScan = tab.routeName === 'scan';
+  <View style={[styles.outer, { paddingBottom: insets.bottom }]}>
+    <View style={styles.container}>
+      {TABS.map((tab) => {
+        const routeIndex = state.routes.findIndex((r) => r.name === tab.routeName);
+        const isActive = state.index === routeIndex;
+        const isScan = tab.routeName === 'scan';
 
-          const onPress = () => {
-            const event = navigation.emit({
-              type: 'tabPress',
-              target: state.routes[routeIndex].key,
-              canPreventDefault: true,
-            });
-            if (!event.defaultPrevented) {
-              navigation.navigate(tab.routeName);
-            }
-          };
-
-          if (isScan) {
-            return (
-              <TouchableOpacity
-                key={tab.routeName}
-                style={styles.scanWrapper}
-                onPress={onPress}
-                activeOpacity={0.85}
-              >
-                <View style={styles.scanButton}>
-                  <Svg width={60} height={60} style={StyleSheet.absoluteFill}>
-                    <Defs>
-                      <RadialGradient id="rg" cx="50%" cy="50%" r="50%">
-                        <Stop offset="0.28" stopColor="#47A3FF" stopOpacity="1" />
-                        <Stop offset="1" stopColor="#C1ECFC" stopOpacity="1" />
-                      </RadialGradient>
-                    </Defs>
-                    <Circle cx={30} cy={30} r={30} fill="url(#rg)" />
-                  </Svg>
-                  <Ionicons name={tab.icon} size={26} color={colors.text.white} />
-                </View>
-                <Text style={[styles.label, isActive && styles.activeLabel]}>{tab.label}</Text>
-              </TouchableOpacity>
-            );
+        const onPress = () => {
+          const event = navigation.emit({
+            type: 'tabPress',
+            target: state.routes[routeIndex].key,
+            canPreventDefault: true,
+          });
+          if (!event.defaultPrevented) {
+            navigation.navigate(tab.routeName);
           }
+        };
 
+        if (isScan) {
           return (
             <TouchableOpacity
               key={tab.routeName}
-              style={styles.tab}
+              style={styles.scanWrapper}
               onPress={onPress}
-              activeOpacity={0.7}
+              activeOpacity={0.85}
             >
-              <Ionicons
-                name={isActive ? tab.activeIcon : tab.icon}
-                size={26}
-                color={isActive ? colors.primary[500] : colors.gray[300]}
-              />
+              <View style={styles.scanButton}>
+                <Svg width={60} height={60} style={StyleSheet.absoluteFill}>
+                  <Defs>
+                    <RadialGradient id="rg" cx="50%" cy="50%" r="50%">
+                      <Stop offset="0.28" stopColor="#47A3FF" stopOpacity="1" />
+                      <Stop offset="1" stopColor="#C1ECFC" stopOpacity="1" />
+                    </RadialGradient>
+                  </Defs>
+                  <Circle cx={30} cy={30} r={30} fill="url(#rg)" />
+                </Svg>
+                <Ionicons name={tab.icon} size={26} color={colors.text.white} />
+              </View>
               <Text style={[styles.label, isActive && styles.activeLabel]}>{tab.label}</Text>
             </TouchableOpacity>
           );
-        })}
-      </View>
+        }
+
+        return (
+          <TouchableOpacity
+            key={tab.routeName}
+            style={styles.tab}
+            onPress={onPress}
+            activeOpacity={0.7}
+          >
+            <Ionicons
+              name={isActive ? tab.activeIcon : tab.icon}
+              size={26}
+              color={isActive ? colors.primary[500] : colors.gray[300]}
+            />
+            <Text style={[styles.label, isActive && styles.activeLabel]}>{tab.label}</Text>
+          </TouchableOpacity>
+        );
+      })}
     </View>
+  </View>
 );
 
 export default TabBar;

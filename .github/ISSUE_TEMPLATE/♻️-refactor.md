@@ -1,19 +1,23 @@
 ---
-name: "♻️ Refactor"
-about: "코드 리팩토링"
-title: "♻️ [Refactor] "
-labels: ["♻️ Refactor"]
+name: '♻️ Refactor'
+about: '코드 리팩토링'
+title: '♻️ [Refactor] '
+labels: ['♻️ Refactor']
 ---
 
 ## 📌 이슈 내용
+
 - 리팩토링 목적과 개선 이유를 작성해주세요.
 
 ## ⏰ 기한 (선택)
-- 
+
+-
 
 ## 📋 작업 내용
-- [ ] 
-- [ ] 
+
+- [ ]
+- [ ]
 
 ## 📱 참고 자료 (선택)
+
 - 관련 코드, 참고 링크 등

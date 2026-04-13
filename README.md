@@ -14,34 +14,35 @@
 
 ## ✨ 핵심 기능
 
-| 기능 | 설명 |
-|------|------|
-| 📷 가정통신문 스캔 | OCR로 문서를 촬영하면 텍스트 자동 추출 |
-| 🤖 AI 분석 | 행동 항목 자동 추출 및 문화 맥락 해설 제공 |
-| ✅ 체크리스트 | "지금 해야 할 일"을 리스트로 정리 |
-| 📅 캘린더 연동 | 마감일 자동 추출 후 일정 등록 |
-| 💬 챗봇 (까치) | 문서 기반 질문 및 학교 문화 안내 |
-| 🌐 다국어 지원 | 한국어 · 영어 · 베트남어 · 중국어 |
+| 기능               | 설명                                       |
+| ------------------ | ------------------------------------------ |
+| 📷 가정통신문 스캔 | OCR로 문서를 촬영하면 텍스트 자동 추출     |
+| 🤖 AI 분석         | 행동 항목 자동 추출 및 문화 맥락 해설 제공 |
+| ✅ 체크리스트      | "지금 해야 할 일"을 리스트로 정리          |
+| 📅 캘린더 연동     | 마감일 자동 추출 후 일정 등록              |
+| 💬 챗봇 (까치)     | 문서 기반 질문 및 학교 문화 안내           |
+| 🌐 다국어 지원     | 한국어 · 영어 · 베트남어 · 중국어          |
 
 ---
 
 ## 🛠 기술 스택
 
-| 분류 | 기술 |
-|------|------|
-| Framework | React Native (Expo ~55) |
-| Language | TypeScript |
-| Navigation | Expo Router |
-| State | Zustand |
-| Form | React Hook Form + Zod |
-| HTTP | Axios |
-| i18n | i18next, react-i18next |
-| UI | React Native Reanimated, React Native SVG |
-| Lint/Format | ESLint (Airbnb), Prettier |
+| 분류        | 기술                                      |
+| ----------- | ----------------------------------------- |
+| Framework   | React Native (Expo ~55)                   |
+| Language    | TypeScript                                |
+| Navigation  | Expo Router                               |
+| State       | Zustand                                   |
+| Form        | React Hook Form + Zod                     |
+| HTTP        | Axios                                     |
+| i18n        | i18next, react-i18next                    |
+| UI          | React Native Reanimated, React Native SVG |
+| Lint/Format | ESLint (Airbnb), Prettier                 |
 
 ---
 
 ## 📁 프로젝트 구조
+
 ```
 gachi-app/
 ├── app/
@@ -125,17 +126,17 @@ npm run format
 
 ## 🌿 브랜치 전략
 
-| 브랜치 | 용도 |
-|--------|------|
-| `main` | 프로덕션 배포 |
-| `develop` | 개발 통합 |
-| `feat/[기능명]` | 새로운 기능 개발 |
-| `fix/[내용]` | 버그 수정 |
-| `chore/[내용]` | 패키지 추가 / 기타 작업 |
-| `refactor/[내용]` | 코드 리팩토링 |
-| `style/[내용]` | UI / 스타일 수정 |
-| `docs/[내용]` | 문서 수정 |
-| `hotfix/[내용]` | 긴급 버그 수정 |
+| 브랜치            | 용도                    |
+| ----------------- | ----------------------- |
+| `main`            | 프로덕션 배포           |
+| `develop`         | 개발 통합               |
+| `feat/[기능명]`   | 새로운 기능 개발        |
+| `fix/[내용]`      | 버그 수정               |
+| `chore/[내용]`    | 패키지 추가 / 기타 작업 |
+| `refactor/[내용]` | 코드 리팩토링           |
+| `style/[내용]`    | UI / 스타일 수정        |
+| `docs/[내용]`     | 문서 수정               |
+| `hotfix/[내용]`   | 긴급 버그 수정          |
 
 예시: `feat/login-ui`
 
@@ -145,19 +146,19 @@ npm run format
 
 형식: `깃모지 [타입]: [요약]`
 
-| 깃모지 | 타입 | 설명 |
-|--------|------|------|
-| ✨ | `feat` | 새로운 기능 추가 |
-| 🐛 | `fix` | 버그 수정 |
-| 📦 | `chore` | 패키지 추가 / 기타 작업 |
-| ♻️ | `refactor` | 코드 리팩토링 |
-| 🎨 | `style` | UI / 스타일 수정 |
-| 📝 | `docs` | 문서 수정 |
-| 🚑 | `hotfix` | 긴급 버그 수정 |
-| 💄 | `design` | 디자인 개선 |
-| 🔥 | `remove` | 코드 삭제 |
-| 🚧 | `wip` | 작업 진행 중 |
-| 🎉 | `init` | 프로젝트 초기화 |
+| 깃모지 | 타입       | 설명                    |
+| ------ | ---------- | ----------------------- |
+| ✨     | `feat`     | 새로운 기능 추가        |
+| 🐛     | `fix`      | 버그 수정               |
+| 📦     | `chore`    | 패키지 추가 / 기타 작업 |
+| ♻️     | `refactor` | 코드 리팩토링           |
+| 🎨     | `style`    | UI / 스타일 수정        |
+| 📝     | `docs`     | 문서 수정               |
+| 🚑     | `hotfix`   | 긴급 버그 수정          |
+| 💄     | `design`   | 디자인 개선             |
+| 🔥     | `remove`   | 코드 삭제               |
+| 🚧     | `wip`      | 작업 진행 중            |
+| 🎉     | `init`     | 프로젝트 초기화         |
 
 예시: `✨ feat: 로그인 화면 구현`
 
@@ -174,7 +175,7 @@ npm run format
 
 ## 👥 팀원
 
-| 이름 | 역할 | GitHub |
-|------|------|--------|
+| 이름   | 역할       | GitHub                           |
+| ------ | ---------- | -------------------------------- |
 | 이채영 | 프론트엔드 | [@](https://github.com/chae1125) |
-| hyeeon | 프론트엔드 | [@](https://github.com/hyeeon) |
+| hyeeon | 프론트엔드 | [@](https://github.com/hyeeon)   |

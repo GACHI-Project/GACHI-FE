@@ -134,7 +134,12 @@ const styles = StyleSheet.create({
     borderColor: colors.primary[400],
     borderWidth: 7,
   },
-  // 안내 배너
+  // 안내 배너 + 버튼
+  footer: {
+    marginTop: 16,
+    gap: 16,
+    paddingBottom: layout.screenPaddingBottom,
+  },
   banner: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -142,7 +147,6 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     paddingVertical: 20,
     paddingHorizontal: 16,
-    marginTop: 8,
     gap: 8,
   },
   bannerText: {
@@ -151,12 +155,6 @@ const styles = StyleSheet.create({
     fontFamily: fonts.medium,
     color: colors.text.primary,
     lineHeight: 20,
-  },
-  // 버튼 그룹
-  buttonGroup: {
-    marginTop: 16,
-    gap: 10,
-    paddingBottom: layout.screenPaddingBottom,
   },
 });
 

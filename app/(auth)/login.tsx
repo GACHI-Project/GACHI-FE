@@ -59,7 +59,7 @@ const LoginScreen = () => {
           </TouchableOpacity>
         </View>
 
-        <TouchableOpacity onPress={() => router.push('/(auth)/register/basic')}>
+        <TouchableOpacity onPress={() => router.push('/(auth)/register/language')}>
           <Text style={styles.signUpText}>
             계정이 없으신가요?{'  '}
             <Text style={styles.signUpLink}>회원가입</Text>

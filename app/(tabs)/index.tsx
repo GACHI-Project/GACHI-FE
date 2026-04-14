@@ -10,32 +10,28 @@ import { GREETINGS } from '../../src/constants/greetings';
 import colors from '../../src/constants/colors';
 import styles from '../../src/styles/home/homeScreen';
 
+const getGreetingByTime = (): string => {
+  const hour = new Date().getHours();
+
+  let currentGreetings: readonly string[];
+
+  if (hour >= 5 && hour < 11) {
+    currentGreetings = GREETINGS.morning;
+  } else if (hour >= 11 && hour < 14) {
+    currentGreetings = GREETINGS.lunch;
+  } else if (hour >= 14 && hour < 18) {
+    currentGreetings = GREETINGS.afternoon;
+  } else if (hour >= 18 && hour < 21) {
+    currentGreetings = GREETINGS.evening;
+  } else {
+    currentGreetings = GREETINGS.night;
+  }
+
+  return currentGreetings[Math.floor(Math.random() * currentGreetings.length)];
+};
+
 const HomeScreen = () => {
   const insets = useSafeAreaInsets();
-
-  const getGreetingByTime = () => {
-    const hour = new Date().getHours();
-
-    const greetings = GREETINGS;
-
-    let currentGreetings: readonly string[] = greetings.morning;
-
-    if (hour >= 5 && hour < 11) {
-      currentGreetings = greetings.morning;
-    } else if (hour >= 11 && hour < 14) {
-      currentGreetings = greetings.lunch;
-    } else if (hour >= 14 && hour < 18) {
-      currentGreetings = greetings.afternoon;
-    } else if (hour >= 18 && hour < 21) {
-      currentGreetings = greetings.evening;
-    } else {
-      currentGreetings = greetings.night;
-    }
-
-    const randomIndex = Math.floor(Math.random() * currentGreetings.length);
-    return currentGreetings[randomIndex];
-  };
-
   const greetingText = useMemo(() => getGreetingByTime(), []);
 
   return (

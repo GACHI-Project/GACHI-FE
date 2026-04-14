@@ -13,10 +13,8 @@ const ScanBanner = () => (
       <Text style={styles.title}>가정통신문 스캔하기</Text>
       <Text style={styles.desc}>찍기만 하면 번역 · 요약 · 체크리스트까지 한 번에</Text>
     </View>
-    <TouchableOpacity style={styles.button} activeOpacity={0.8}>
-      <Text style={styles.buttonText} onPress={() => router.push('/(tabs)/scan')}>
-        지금 스캔 →
-      </Text>
+    <TouchableOpacity style={styles.button} activeOpacity={0.8} onPress={() => router.push('/(tabs)/scan')}>
+      <Text style={styles.buttonText}>지금 스캔 →</Text>
     </TouchableOpacity>
   </View>
 );

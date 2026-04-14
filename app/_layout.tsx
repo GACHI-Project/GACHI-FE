@@ -1,28 +1,32 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { StyleSheet } from 'react-native';
 import { Stack } from 'expo-router';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as SplashScreen from 'expo-splash-screen';
-import { useFonts } from 'expo-font';
+import * as Font from 'expo-font';
 
-SplashScreen.preventAutoHideAsync();
+SplashScreen.preventAutoHideAsync().catch(() => {});
+
+// eslint-disable-next-line global-require, @typescript-eslint/no-require-imports
+const FONTS = {
+  'Pretendard-Regular': require('../assets/fonts/Pretendard-Regular.otf'),
+  'Pretendard-Medium': require('../assets/fonts/Pretendard-Medium.otf'),
+  'Pretendard-SemiBold': require('../assets/fonts/Pretendard-SemiBold.otf'),
+  'Pretendard-Bold': require('../assets/fonts/Pretendard-Bold.otf'),
+};
 
 const RootLayout = () => {
-  const [fontsLoaded, fontError] = useFonts({
-    'Pretendard-Regular': require('../assets/fonts/Pretendard-Regular.otf'),
-    'Pretendard-Medium': require('../assets/fonts/Pretendard-Medium.otf'),
-    'Pretendard-SemiBold': require('../assets/fonts/Pretendard-SemiBold.otf'),
-    'Pretendard-Bold': require('../assets/fonts/Pretendard-Bold.otf'),
-  });
+  const [fontsReady, setFontsReady] = useState(false);
 
   useEffect(() => {
-    if (fontsLoaded || fontError) {
-      void SplashScreen.hideAsync();
-    }
-  }, [fontsLoaded, fontError]);
+    Font.loadAsync(FONTS).finally(() => {
+      setFontsReady(true);
+      SplashScreen.hideAsync().catch(() => {});
+    });
+  }, []);
 
-  if (!fontsLoaded && !fontError) return null;
+  if (!fontsReady) return null;
 
   return (
     <GestureHandlerRootView style={styles.root}>

@@ -124,14 +124,12 @@ const RegisterNotificationScreen = () => {
           />
         ))}
 
-        {/* 안내 배너 */}
-        <View style={styles.banner}>
-          <Ionicons name="settings" size={18} color={colors.text.primary} />
-          <Text style={styles.bannerText}>알림 방식은 설정에서 언제든 변경할 수 있어요</Text>
-        </View>
-
-        {/* 버튼 */}
-        <View style={styles.buttonGroup}>
+        {/* 안내 배너 + 버튼 */}
+        <View style={styles.footer}>
+          <View style={styles.banner}>
+            <Ionicons name="settings" size={18} color={colors.text.primary} />
+            <Text style={styles.bannerText}>알림 방식은 설정에서 언제든 변경할 수 있어요</Text>
+          </View>
           <PrimaryButton
             label="다음으로 →"
             onPress={() => router.push('/(auth)/register/complete')}

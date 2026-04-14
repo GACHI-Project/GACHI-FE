@@ -24,7 +24,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 26,
-    fontFamily: fonts.semiBold,
+    fontFamily: fonts.bold,
     color: colors.text.primary,
     lineHeight: 36,
   },
@@ -34,13 +34,8 @@ const styles = StyleSheet.create({
     color: colors.text.secondary,
     lineHeight: 22,
   },
-  sectionLabel: {
-    fontSize: 12,
-    fontFamily: fonts.medium,
-    color: colors.text.primary,
-    marginBottom: 14,
-  },
-  // 알림 옵션 카드
+
+  // 언어 선택 카드
   card: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -49,10 +44,19 @@ const styles = StyleSheet.create({
     borderColor: colors.gray[200],
     borderRadius: 15,
     height: 90,
-    paddingHorizontal: 20,
+    paddingHorizontal: 22,
     gap: 14,
     marginBottom: 10,
     overflow: 'hidden',
+  },
+  cardSelected: {
+    backgroundColor: colors.primary[0],
+    borderColor: colors.primary[400],
+    shadowColor: '#1F2A37',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 3,
   },
   selectedBar: {
     position: 'absolute',
@@ -64,61 +68,31 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 15,
     borderBottomLeftRadius: 15,
   },
-  cardSelected: {
-    backgroundColor: colors.primary[0],
-    borderColor: colors.primary[400],
-    shadowColor: '#1F2A37',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
-    elevation: 3,
-  },
-  // 아이콘 박스
-  iconBox: {
+  // 국기 이미지
+  flagWrapper: {
     width: 50,
     height: 50,
-    borderRadius: 15,
-    alignItems: 'center',
-    justifyContent: 'center',
+    borderRadius: 25,
+    overflow: 'hidden',
   },
-  iconBoxBordered: {
-    borderWidth: 1,
-    borderColor: colors.gray[200],
+  flagImage: {
+    width: 50,
+    height: 50,
   },
-  // 카드 콘텐츠
+  // 카드 텍스트
   cardContent: {
     flex: 1,
-    gap: 4,
+    gap: 2,
   },
-  cardTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  cardTitle: {
-    fontSize: 16,
+  cardName: {
+    fontSize: 20,
     fontFamily: fonts.medium,
     color: colors.text.primary,
   },
-  badge: {
-    backgroundColor: colors.primary[100],
-    borderRadius: 6,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-  },
-  badgeText: {
-    fontSize: 12,
-    fontFamily: fonts.medium,
-    color: colors.primary[500],
-  },
-  cardDescription: {
-    fontSize: 14,
+  cardLabel: {
+    fontSize: 16,
     fontFamily: fonts.medium,
     color: colors.text.secondary,
-  },
-  // 아이콘 반전
-  iconFlipped: {
-    transform: [{ scaleX: -1 }],
   },
   // 라디오 버튼
   radio: {
@@ -134,7 +108,7 @@ const styles = StyleSheet.create({
     borderColor: colors.primary[400],
     borderWidth: 7,
   },
-  // 안내 배너 + 버튼
+
   footer: {
     marginTop: 16,
     gap: 16,
@@ -146,7 +120,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.secondary[500],
     borderRadius: 15,
     paddingVertical: 20,
-    paddingHorizontal: 16,
+    paddingHorizontal: 15,
     gap: 8,
   },
   bannerText: {

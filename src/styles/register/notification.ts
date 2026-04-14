@@ -58,8 +58,8 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 0,
     top: 0,
+    bottom: 0,
     width: 4,
-    height: 90,
     backgroundColor: colors.primary[400],
     borderTopLeftRadius: 15,
     borderBottomLeftRadius: 15,
@@ -103,7 +103,7 @@ const styles = StyleSheet.create({
   badge: {
     backgroundColor: colors.primary[100],
     borderRadius: 6,
-    paddingHorizontal: 6,
+    paddingHorizontal: 8,
     paddingVertical: 2,
   },
   badgeText: {

@@ -150,6 +150,13 @@ const styles = StyleSheet.create({
     fontFamily: fonts.semiBold,
     color: colors.text.white,
   },
+  emptyText: {
+    fontSize: 14,
+    fontFamily: fonts.medium,
+    color: colors.text.secondary,
+    textAlign: 'center',
+    paddingVertical: 12,
+  },
   moreButton: {
     alignItems: 'center',
   },

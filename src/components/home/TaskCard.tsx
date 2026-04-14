@@ -38,6 +38,24 @@ const TODO_ITEMS: TodoItem[] = [
   },
 ];
 
+const VISIBLE_COUNT = 2;
+const total = TODO_ITEMS.length;
+const visibleItems = TODO_ITEMS.slice(0, VISIBLE_COUNT);
+const hiddenCount = Math.max(total - VISIBLE_COUNT, 0);
+const summaryDesc = (() => {
+  if (total === 0) return '오늘 처리할 항목이 없어요';
+  const childCounts = CHILDREN.map((child) => ({
+    name: TODO_ITEMS.find((t) => t.childId === child.id)?.childName ?? '',
+    count: TODO_ITEMS.filter((t) => t.childId === child.id).length,
+  }));
+  return (
+    childCounts
+      .filter((c) => c.count > 0)
+      .map((c) => `${c.name} ${c.count}건`)
+      .join(' · ') + ' 남아 있어요'
+  );
+})();
+
 const TaskCard = () => {
   const [checked, setChecked] = useState<Record<string, boolean>>({});
 
@@ -60,8 +78,10 @@ const TaskCard = () => {
           <Text style={styles.dateDay}>{todayDay}</Text>
         </View>
         <View style={styles.summaryTexts}>
-          <Text style={styles.summaryTitle}>오늘 처리할 항목 3건</Text>
-          <Text style={styles.summaryDesc}>첫째 2건 · 둘째 1건 남아 있어요</Text>
+          <Text style={styles.summaryTitle}>
+            {total === 0 ? '오늘 할 일 없음' : `오늘 처리할 항목 ${total}건`}
+          </Text>
+          <Text style={styles.summaryDesc}>{summaryDesc}</Text>
         </View>
         <View style={styles.childCircles}>
           {CHILDREN.map((child, index) => (
@@ -80,44 +100,56 @@ const TaskCard = () => {
       <View style={styles.divider} />
 
       {/* Todo items */}
-      {TODO_ITEMS.map((item, index) => (
-        <View key={item.id}>
-          <View style={styles.todoRow}>
-            <TouchableOpacity
-              style={[styles.checkbox, checked[item.id] && styles.checkboxChecked]}
-              onPress={() => toggleCheck(item.id)}
-              activeOpacity={0.7}
-            >
-              {checked[item.id] && <Text style={styles.checkMark}>✓</Text>}
-            </TouchableOpacity>
-            <View style={styles.todoContent}>
-              <Text style={[styles.todoTitle, checked[item.id] && styles.todoTitleDone]}>
-                {item.title}
-              </Text>
-              <View style={styles.todoMeta}>
-                <View style={[styles.childTag, { backgroundColor: CHILDREN.find((c) => c.id === item.childId)?.color }]}>
-                  <Text style={styles.childTagText}>{item.childName}</Text>
+      {total === 0 ? (
+        <Text style={styles.emptyText}>오늘은 처리할 항목이 없어요 🎉</Text>
+      ) : (
+        visibleItems.map((item, index) => (
+          <View key={item.id}>
+            <View style={styles.todoRow}>
+              <TouchableOpacity
+                style={[styles.checkbox, checked[item.id] && styles.checkboxChecked]}
+                onPress={() => toggleCheck(item.id)}
+                activeOpacity={0.7}
+              >
+                {checked[item.id] && <Text style={styles.checkMark}>✓</Text>}
+              </TouchableOpacity>
+              <View style={styles.todoContent}>
+                <Text style={[styles.todoTitle, checked[item.id] && styles.todoTitleDone]}>
+                  {item.title}
+                </Text>
+                <View style={styles.todoMeta}>
+                  <View
+                    style={[
+                      styles.childTag,
+                      { backgroundColor: CHILDREN.find((c) => c.id === item.childId)?.color },
+                    ]}
+                  >
+                    <Text style={styles.childTagText}>{item.childName}</Text>
+                  </View>
+                  <Text style={styles.todoDesc}>{item.description}</Text>
                 </View>
-                <Text style={styles.todoDesc}>{item.description}</Text>
+              </View>
+              <View style={styles.todayBadge}>
+                <Text style={styles.todayText}>오늘</Text>
               </View>
             </View>
-            <View style={styles.todayBadge}>
-              <Text style={styles.todayText}>오늘</Text>
-            </View>
+            {index < visibleItems.length - 1 && <View style={styles.divider} />}
           </View>
-          {index < TODO_ITEMS.length - 1 && <View style={styles.divider} />}
-        </View>
-      ))}
+        ))
+      )}
 
-      <View style={styles.divider} />
-
-      <TouchableOpacity
-        style={styles.moreButton}
-        activeOpacity={0.7}
-        onPress={() => router.push('/(tabs)/calendar')}
-      >
-        <Text style={styles.moreText}>1개 더보기 →</Text>
-      </TouchableOpacity>
+      {hiddenCount > 0 && (
+        <>
+          <View style={styles.divider} />
+          <TouchableOpacity
+            style={styles.moreButton}
+            activeOpacity={0.7}
+            onPress={() => router.push('/(tabs)/calendar')}
+          >
+            <Text style={styles.moreText}>{hiddenCount}개 더보기 →</Text>
+          </TouchableOpacity>
+        </>
+      )}
     </View>
   );
 };

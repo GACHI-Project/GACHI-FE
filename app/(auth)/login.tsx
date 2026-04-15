@@ -47,7 +47,7 @@ const LoginScreen = () => {
           <Text style={styles.stayLoggedInText}>로그인 상태 유지</Text>
         </View>
 
-        <PrimaryButton label="로그인" onPress={() => {}} />
+        <PrimaryButton label="로그인" onPress={() => router.push('/(tabs)')} />
 
         <View style={styles.forgotRow}>
           <TouchableOpacity>

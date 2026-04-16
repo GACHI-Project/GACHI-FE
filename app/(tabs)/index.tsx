@@ -6,6 +6,8 @@ import { useMemo } from 'react';
 import TaskCard from '../../src/components/home/TaskCard';
 import ScanBanner from '../../src/components/home/ScanBanner';
 import FeatureSection from '../../src/components/home/FeatureSection';
+import GuideCards from '../../src/components/home/GuideCards';
+import RecentDocs from '../../src/components/home/RecentDocs';
 import { GREETINGS } from '../../src/constants/greetings';
 import colors from '../../src/constants/colors';
 import styles from '../../src/styles/home/homeScreen';
@@ -57,6 +59,8 @@ const HomeScreen = () => {
           <TaskCard />
           <ScanBanner />
           <FeatureSection />
+          <GuideCards />
+          <RecentDocs />
         </ScrollView>
       </View>
     </View>

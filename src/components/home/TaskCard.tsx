@@ -48,12 +48,10 @@ const summaryDesc = (() => {
     name: TODO_ITEMS.find((t) => t.childId === child.id)?.childName ?? '',
     count: TODO_ITEMS.filter((t) => t.childId === child.id).length,
   }));
-  return (
-    childCounts
-      .filter((c) => c.count > 0)
-      .map((c) => `${c.name} ${c.count}건`)
-      .join(' · ') + ' 남아 있어요'
-  );
+  return `${childCounts
+    .filter((c) => c.count > 0)
+    .map((c) => `${c.name} ${c.count}건`)
+    .join(' · ')} 남아 있어요`;
 })();
 
 const TaskCard = () => {

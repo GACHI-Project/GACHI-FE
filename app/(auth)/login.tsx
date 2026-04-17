@@ -2,8 +2,10 @@ import { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
+import * as SecureStore from 'expo-secure-store';
 import AuthInput from '../../src/components/auth/AuthInput';
 import { PrimaryButton } from '../../src/components/common/Button';
+import { login, AuthApiError } from '../../src/api/auth';
 import colors from '../../src/constants/colors';
 import fonts from '../../src/constants/fonts';
 import layout from '../../src/constants/layout';
@@ -13,6 +15,35 @@ const LoginScreen = () => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [stayLoggedIn, setStayLoggedIn] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | undefined>();
+
+  const handleLogin = async () => {
+    setLoading(true);
+    setErrorMessage(undefined);
+    try {
+      const result = await login(id, password, stayLoggedIn);
+      await SecureStore.setItemAsync('accessToken', result.accessToken);
+      await SecureStore.setItemAsync('refreshToken', result.refreshToken);
+      router.replace('/(tabs)');
+    } catch (error) {
+      if (error instanceof AuthApiError) {
+        if (error.code === 'AUTH4011') {
+          setErrorMessage('아이디 또는 비밀번호가 올바르지 않아요');
+        } else if (error.code === 'AUTH4031') {
+          setErrorMessage('탈퇴한 계정이에요');
+        } else if (error.code === 'AUTH4293') {
+          setErrorMessage('로그인 시도가 너무 많아요. 잠시 후 다시 시도해주세요');
+        } else {
+          setErrorMessage('로그인 중 오류가 발생했어요. 다시 시도해주세요.');
+        }
+      } else {
+        setErrorMessage('네트워크 오류가 발생했어요. 다시 시도해주세요.');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <View style={styles.screen}>
@@ -47,7 +78,13 @@ const LoginScreen = () => {
           <Text style={styles.stayLoggedInText}>로그인 상태 유지</Text>
         </View>
 
-        <PrimaryButton label="로그인" onPress={() => router.push('/(tabs)')} />
+        {errorMessage && <Text style={styles.errorText}>{errorMessage}</Text>}
+
+        <PrimaryButton
+          label={loading ? '로그인 중...' : '로그인'}
+          onPress={handleLogin}
+          disabled={!id || !password || loading}
+        />
 
         <View style={styles.forgotRow}>
           <TouchableOpacity>
@@ -148,5 +185,11 @@ const styles = StyleSheet.create({
   },
   signUpLink: {
     fontFamily: fonts.semiBold,
+  },
+  errorText: {
+    fontSize: 13,
+    fontFamily: fonts.medium,
+    color: colors.text.red,
+    textAlign: 'center',
   },
 });

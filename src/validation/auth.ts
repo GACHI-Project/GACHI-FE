@@ -10,14 +10,14 @@ const containsPersonalInfo = (password: string, info: string): boolean => {
   const p = password.toLowerCase();
   const v = info.toLowerCase().replace(/[-\s]/g, '');
   if (v.length < 4) return false;
-  for (let i = 0; i <= v.length - 4; i++) {
+  for (let i = 0; i <= v.length - 4; i += 1) {
     if (p.includes(v.slice(i, i + 4))) return true;
   }
   return false;
 };
 
 const hasSequential = (password: string): boolean => {
-  for (let i = 0; i <= password.length - 4; i++) {
+  for (let i = 0; i <= password.length - 4; i += 1) {
     const codes = [0, 1, 2, 3].map((j) => password.charCodeAt(i + j));
     const isInc = codes.every((c, j) => j === 0 || c === codes[j - 1] + 1);
     const isDec = codes.every((c, j) => j === 0 || c === codes[j - 1] - 1);
@@ -26,7 +26,10 @@ const hasSequential = (password: string): boolean => {
   return false;
 };
 
-export const validatePassword = (password: string, context: PasswordContext = {}): string | null => {
+export const validatePassword = (
+  password: string,
+  context: PasswordContext = {}
+): string | null => {
   if (password.length < 8 || password.length > 20) {
     return '비밀번호는 8자 이상 20자 이하여야 해요';
   }
@@ -76,6 +79,4 @@ export const phoneNumberSchema = z
   .string()
   .regex(/^01[0-9]{8,9}$/, '올바른 전화번호 형식이 아니에요');
 
-export const emailSchema = z
-  .string()
-  .email('올바른 이메일 형식이 아니에요');
+export const emailSchema = z.string().email('올바른 이메일 형식이 아니에요');

@@ -6,6 +6,7 @@ import fonts from '../../constants/fonts';
 interface RightButton {
   label: string;
   onPress: () => void;
+  disabled?: boolean;
 }
 
 interface FormFieldProps {
@@ -63,7 +64,11 @@ const FormField = ({
         )}
       </View>
       {rightButton && (
-        <TouchableOpacity style={styles.button} onPress={rightButton.onPress}>
+        <TouchableOpacity
+          style={[styles.button, rightButton.disabled && styles.buttonDisabled]}
+          onPress={rightButton.onPress}
+          disabled={rightButton.disabled}
+        >
           <Text style={styles.buttonText}>{rightButton.label}</Text>
         </TouchableOpacity>
       )}
@@ -133,6 +138,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary[400],
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  buttonDisabled: {
+    backgroundColor: colors.gray[200],
   },
   buttonText: {
     fontSize: 14,

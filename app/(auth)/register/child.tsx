@@ -50,7 +50,7 @@ const createChild = (id: string): ChildInfo => ({
   selectedSchool: null,
   schoolQuery: '',
   grade: null,
-  calendarColor: null,
+  calendarColor: CALENDAR_COLORS[0],
 });
 
 const shortenAddress = (address: string): string => {

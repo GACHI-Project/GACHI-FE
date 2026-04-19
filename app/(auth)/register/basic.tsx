@@ -21,6 +21,7 @@ import { loginIdSchema, emailSchema, validatePassword } from '../../../src/valid
 import colors from '../../../src/constants/colors';
 import fonts from '../../../src/constants/fonts';
 import layout from '../../../src/constants/layout';
+import { useRegisterStore } from '../../../src/store/registerStore';
 
 type ValidationState = 'success' | 'error' | undefined;
 
@@ -85,6 +86,7 @@ const formSchema = z
 type FormValues = z.infer<typeof formSchema>;
 
 const RegisterBasicScreen = () => {
+  const setBasicInfo = useRegisterStore((s) => s.setBasicInfo);
   const {
     control,
     getValues,
@@ -482,7 +484,17 @@ const RegisterBasicScreen = () => {
 
         <PrimaryButton
           label="다음으로 →"
-          onPress={() => router.push('/(auth)/register/child')}
+          onPress={() => {
+            const values = getValues();
+            setBasicInfo({
+              loginId: values.id,
+              password: values.password,
+              name: values.name,
+              email: values.email,
+              phoneNumber: values.phone.replace(/-/g, ''),
+            });
+            router.push('/(auth)/register/child');
+          }}
           disabled={
             !isValid ||
             idChecking ||

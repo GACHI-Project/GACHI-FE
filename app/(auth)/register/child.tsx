@@ -361,7 +361,7 @@ const RegisterChildScreen = () => {
             const payloads: ChildPayload[] = children.map((child) => ({
               name: child.name,
               schoolName: child.selectedSchool?.name ?? child.schoolQuery,
-              schoolCode: '',
+              schoolCode: child.selectedSchool?.schoolCode ?? '',
               grade: child.grade ?? 1,
               colorCode: child.calendarColor ?? '#2BAEE0',
             }));

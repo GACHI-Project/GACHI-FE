@@ -9,7 +9,7 @@ import colors from '../../../src/constants/colors';
 import fonts from '../../../src/constants/fonts';
 import layout from '../../../src/constants/layout';
 import { signup, login } from '../../../src/api/auth';
-import { registerChildren } from '../../../src/api/child';
+import { registerChild } from '../../../src/api/child';
 import { useRegisterStore } from '../../../src/store/registerStore';
 
 // ─── 메인 화면 ────────────────────────────────────────────────────────────────
@@ -31,8 +31,10 @@ const RegisterCompleteScreen = () => {
       children,
       signupDone,
       loginDone,
+      registeredChildrenCount,
       setSignupDone,
       setLoginDone,
+      incrementRegisteredChildrenCount,
       reset,
     } = useRegisterStore.getState();
 
@@ -68,12 +70,22 @@ const RegisterCompleteScreen = () => {
         setLoginDone(true);
         accessToken = result.accessToken;
       } else {
-        accessToken = (await SecureStore.getItemAsync('accessToken')) ?? '';
+        const stored = await SecureStore.getItemAsync('accessToken');
+        if (stored) {
+          accessToken = stored;
+        } else {
+          const result = await login(loginId, password, false);
+          await SecureStore.setItemAsync('accessToken', result.accessToken);
+          await SecureStore.setItemAsync('refreshToken', result.refreshToken);
+          accessToken = result.accessToken;
+        }
       }
 
-      if (children.length > 0) {
-        await registerChildren(children, accessToken);
-      }
+      await children.slice(registeredChildrenCount).reduce(async (prev, child) => {
+        await prev;
+        await registerChild(child, accessToken);
+        incrementRegisteredChildrenCount();
+      }, Promise.resolve());
 
       setStatus('done');
       reset();

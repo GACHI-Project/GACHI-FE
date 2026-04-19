@@ -44,6 +44,20 @@ export interface ChildResult {
   createdAt: string;
 }
 
+export const registerChild = async (
+  child: ChildPayload,
+  accessToken: string
+): Promise<ChildResult> => {
+  try {
+    const response = await childApiClient.post<{ result: ChildResult }>('/api/v1/children', child, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    return response.data.result;
+  } catch (error) {
+    throw wrapError(error);
+  }
+};
+
 export const registerChildren = async (
   children: ChildPayload[],
   accessToken: string

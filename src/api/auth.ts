@@ -105,3 +105,28 @@ export const verifyEmailCode = async (email: string, code: string): Promise<void
     throw wrapError(error);
   }
 };
+
+export interface SignupResult {
+  userId: number;
+  loginId: string;
+  email: string;
+  name: string;
+  phoneNumber: string;
+}
+
+export const signup = async (payload: {
+  name: string;
+  email: string;
+  loginId: string;
+  password: string;
+  passwordConfirm: string;
+  phoneNumber: string;
+  consentAgreed: boolean;
+}): Promise<SignupResult> => {
+  try {
+    const response = await apiClient.post('/api/v1/auth/signup', payload);
+    return response.data.result;
+  } catch (error) {
+    throw wrapError(error);
+  }
+};

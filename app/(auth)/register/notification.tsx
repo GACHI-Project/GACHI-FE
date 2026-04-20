@@ -10,15 +10,6 @@ import { NotificationType, NotificationOption } from '../../../src/types/notific
 
 const NOTIFICATION_OPTIONS: NotificationOption[] = [
   {
-    type: 'urgent',
-    title: '긴급 알림만',
-    description: '마감일 등 꼭 필요한 알림만 받아요',
-    iconName: 'alert-circle-outline',
-    iconColor: colors.text.red,
-    iconBg: colors.text.white,
-    iconBordered: true,
-  },
-  {
     type: 'important',
     title: '중요 알림',
     description: '마감일과 곧 확인이 필요한 내용을 받아요',
@@ -26,6 +17,15 @@ const NOTIFICATION_OPTIONS: NotificationOption[] = [
     iconColor: colors.secondary[600],
     iconBg: colors.secondary[100],
     badge: '추천',
+  },
+  {
+    type: 'urgent',
+    title: '긴급 알림만',
+    description: '마감일 등 꼭 필요한 알림만 받아요',
+    iconName: 'alert-circle-outline',
+    iconColor: colors.text.red,
+    iconBg: colors.text.white,
+    iconBordered: true,
   },
   {
     type: 'all',
@@ -95,7 +95,7 @@ const NotificationCard = ({ option, selected, onPress }: NotificationCardProps) 
 // ─── 메인 화면 ────────────────────────────────────────────────────────────────
 
 const RegisterNotificationScreen = () => {
-  const [selected, setSelected] = useState<NotificationType>('urgent');
+  const [selected, setSelected] = useState<NotificationType>('important');
 
   return (
     <View style={styles.container}>

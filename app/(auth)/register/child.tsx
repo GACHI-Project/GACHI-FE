@@ -9,6 +9,8 @@ import { SchoolResult } from '../../../src/types/school';
 import { ChildInfo } from '../../../src/types/child';
 import cardStyles from '../../../src/styles/register/childCard';
 import styles from '../../../src/styles/register/child';
+import { useRegisterStore } from '../../../src/store/registerStore';
+import { ChildPayload } from '../../../src/api/child';
 
 // ─── 상수 ────────────────────────────────────────────────────────────────────
 
@@ -36,13 +38,19 @@ const MOCK_SCHOOLS: SchoolResult[] = [
 
 // ─── 헬퍼 ────────────────────────────────────────────────────────────────────
 
+const isChildComplete = (child: ChildInfo): boolean =>
+  child.name.trim().length > 0 &&
+  (child.selectedSchool !== null || child.schoolQuery.trim().length > 0) &&
+  child.grade !== null &&
+  child.calendarColor !== null;
+
 const createChild = (id: string): ChildInfo => ({
   id,
   name: '',
   selectedSchool: null,
   schoolQuery: '',
   grade: null,
-  calendarColor: null,
+  calendarColor: CALENDAR_COLORS[0],
 });
 
 const shortenAddress = (address: string): string => {
@@ -273,6 +281,7 @@ const ChildCard = ({ child, order, isDeletable, onUpdate, onDelete }: ChildCardP
 
 const RegisterChildScreen = () => {
   const [children, setChildren] = useState<ChildInfo[]>([createChild('1')]);
+  const setStoreChildren = useRegisterStore((s) => s.setChildren);
 
   const updateChild = (id: string, updates: Partial<ChildInfo>) => {
     setChildren((prev) => prev.map((c) => (c.id === id ? { ...c, ...updates } : c)));
@@ -347,7 +356,18 @@ const RegisterChildScreen = () => {
       <View style={styles.footer}>
         <PrimaryButton
           label="다음으로 →"
-          onPress={() => router.push('/(auth)/register/notification')}
+          disabled={children.length === 0 || !children.every(isChildComplete)}
+          onPress={() => {
+            const payloads: ChildPayload[] = children.map((child) => ({
+              name: child.name,
+              schoolName: child.selectedSchool?.name ?? child.schoolQuery,
+              schoolCode: child.selectedSchool?.schoolCode ?? '',
+              grade: child.grade ?? 1,
+              colorCode: child.calendarColor ?? '#2BAEE0',
+            }));
+            setStoreChildren(payloads);
+            router.push('/(auth)/register/notification');
+          }}
         />
       </View>
     </View>

@@ -1,23 +1,130 @@
-import { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { router } from 'expo-router';
+import * as SecureStore from 'expo-secure-store';
 import Svg, { Circle, Defs, RadialGradient, Stop } from 'react-native-svg';
 import ConfettiCannon from 'react-native-confetti-cannon';
 import { PrimaryButton } from '../../../src/components/common/Button';
 import colors from '../../../src/constants/colors';
 import fonts from '../../../src/constants/fonts';
 import layout from '../../../src/constants/layout';
+import { signup, login } from '../../../src/api/auth';
+import { registerChild } from '../../../src/api/child';
+import { useRegisterStore } from '../../../src/store/registerStore';
 
 // ─── 메인 화면 ────────────────────────────────────────────────────────────────
 
+type Status = 'loading' | 'done' | 'error';
+
 const RegisterCompleteScreen = () => {
   const confettiRef = useRef<React.ComponentRef<typeof ConfettiCannon>>(null);
+  const [status, setStatus] = useState<Status>('loading');
+  const [errorMessage, setErrorMessage] = useState<string>('');
 
-  useEffect(() => {
-    if (confettiRef.current) {
-      confettiRef.current.start();
+  const run = useCallback(async () => {
+    const {
+      loginId,
+      password,
+      name,
+      email,
+      phoneNumber,
+      children,
+      signupDone,
+      loginDone,
+      registeredChildrenCount,
+      setSignupDone,
+      setLoginDone,
+      incrementRegisteredChildrenCount,
+      reset,
+    } = useRegisterStore.getState();
+
+    setStatus('loading');
+    setErrorMessage('');
+
+    if (!loginId) {
+      setStatus('error');
+      setErrorMessage('회원가입 정보가 없어요. 처음부터 다시 시도해주세요.');
+      return;
+    }
+
+    try {
+      if (!signupDone) {
+        await signup({
+          name,
+          email,
+          loginId,
+          password,
+          passwordConfirm: password,
+          phoneNumber,
+          consentAgreed: true,
+        });
+        setSignupDone(true);
+      }
+
+      let accessToken: string;
+
+      if (!loginDone) {
+        const result = await login(loginId, password, false);
+        await SecureStore.setItemAsync('accessToken', result.accessToken);
+        await SecureStore.setItemAsync('refreshToken', result.refreshToken);
+        setLoginDone(true);
+        accessToken = result.accessToken;
+      } else {
+        const stored = await SecureStore.getItemAsync('accessToken');
+        if (stored) {
+          accessToken = stored;
+        } else {
+          const result = await login(loginId, password, false);
+          await SecureStore.setItemAsync('accessToken', result.accessToken);
+          await SecureStore.setItemAsync('refreshToken', result.refreshToken);
+          accessToken = result.accessToken;
+        }
+      }
+
+      await children.slice(registeredChildrenCount).reduce(async (prev, child) => {
+        await prev;
+        await registerChild(child, accessToken);
+        incrementRegisteredChildrenCount();
+      }, Promise.resolve());
+
+      setStatus('done');
+      reset();
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error ? error.message : '오류가 발생했어요. 다시 시도해주세요.'
+      );
+      setStatus('error');
     }
   }, []);
+
+  useEffect(() => {
+    run();
+  }, [run]);
+
+  useEffect(() => {
+    if (status === 'done' && confettiRef.current) {
+      confettiRef.current.start();
+    }
+  }, [status]);
+
+  if (status === 'loading') {
+    return (
+      <View style={[styles.container, styles.centered]}>
+        <ActivityIndicator size="large" color={colors.primary[400]} />
+      </View>
+    );
+  }
+
+  if (status === 'error') {
+    return (
+      <View style={[styles.container, styles.centered]}>
+        <Text style={styles.errorText}>{errorMessage}</Text>
+        <TouchableOpacity style={styles.retryButton} onPress={run} activeOpacity={0.7}>
+          <Text style={styles.retryButtonText}>다시 시도</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -85,6 +192,11 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.text.white,
   },
+  centered: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 20,
+  },
   content: {
     flex: 1,
     justifyContent: 'center',
@@ -131,5 +243,23 @@ const styles = StyleSheet.create({
   buttonWrapper: {
     alignSelf: 'stretch',
     paddingHorizontal: layout.screenPaddingHorizontal,
+  },
+  errorText: {
+    fontSize: 14,
+    fontFamily: fonts.medium,
+    color: colors.text.red,
+    textAlign: 'center',
+    paddingHorizontal: layout.screenPaddingHorizontal,
+  },
+  retryButton: {
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+    backgroundColor: colors.primary[400],
+  },
+  retryButtonText: {
+    fontSize: 14,
+    fontFamily: fonts.semiBold,
+    color: colors.text.white,
   },
 });

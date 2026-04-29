@@ -16,7 +16,7 @@ const ScanBanner = () => (
     <TouchableOpacity
       style={styles.button}
       activeOpacity={0.8}
-      onPress={() => router.push('/(tabs)/scan')}
+      onPress={() => router.push('/scan')}
     >
       <Text style={styles.buttonText}>지금 스캔 →</Text>
     </TouchableOpacity>

@@ -1,6 +1,7 @@
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import Svg, { Defs, RadialGradient, Stop, Circle } from 'react-native-svg';
 import colors from '../../constants/colors';
 import fonts from '../../constants/fonts';
@@ -52,7 +53,7 @@ const TabBar = ({ state, navigation, insets }: BottomTabBarProps) => (
             <TouchableOpacity
               key={tab.routeName}
               style={styles.scanWrapper}
-              onPress={onPress}
+              onPress={() => router.push('/scan')}
               activeOpacity={0.85}
             >
               <View style={styles.scanButton}>

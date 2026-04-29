@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { View, Text, Image, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, Image, ScrollView } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import StepHeader from '../../../src/components/common/StepHeader';
 import { PrimaryButton, SecondaryButton } from '../../../src/components/common/Button';
+import SelectionCard from '../../../src/components/common/SelectionCard';
 import colors from '../../../src/constants/colors';
 import styles from '../../../src/styles/register/language';
 import { LanguageType, LanguageOption } from '../../../src/types/language';
@@ -19,36 +20,6 @@ const LANGUAGE_OPTIONS: LanguageOption[] = [
   { type: 'zh', name: '中文', label: '중국어', flag: CNFlag },
 ];
 
-// ─── LanguageCard ─────────────────────────────────────────────────────────────
-
-interface LanguageCardProps {
-  option: LanguageOption;
-  selected: boolean;
-  onPress: () => void;
-}
-
-const LanguageCard = ({ option, selected, onPress }: LanguageCardProps) => (
-  <TouchableOpacity
-    style={[styles.card, selected && styles.cardSelected]}
-    onPress={onPress}
-    activeOpacity={0.8}
-  >
-    {selected && <View style={styles.selectedBar} />}
-    <View style={styles.flagWrapper}>
-      <Image source={option.flag} style={styles.flagImage} />
-    </View>
-
-    <View style={styles.cardContent}>
-      <Text style={styles.cardName}>{option.name}</Text>
-      <Text style={styles.cardLabel}>{option.label}</Text>
-    </View>
-
-    <View style={[styles.radio, selected && styles.radioSelected]} />
-  </TouchableOpacity>
-);
-
-// ─── 메인 화면 ────────────────────────────────────────────────────────────────
-
 const RegisterLanguageScreen = () => {
   const [selected, setSelected] = useState<LanguageType>('ko');
 
@@ -62,23 +33,29 @@ const RegisterLanguageScreen = () => {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        {/* 타이틀 */}
         <View style={styles.titleSection}>
           <Text style={styles.title}>사용할 언어를 선택해 주세요</Text>
           <Text style={styles.subtitle}>선택한 언어로 가정통신문을 번역하고 쉽게 설명해드려요</Text>
         </View>
 
-        {/* 언어 선택 */}
-        {LANGUAGE_OPTIONS.map((option) => (
-          <LanguageCard
-            key={option.type}
-            option={option}
-            selected={selected === option.type}
-            onPress={() => setSelected(option.type)}
-          />
-        ))}
+        <View style={styles.cardList}>
+          {LANGUAGE_OPTIONS.map((option) => (
+            <SelectionCard
+              key={option.type}
+              name={option.name}
+              label={option.label}
+              leftElement={
+                <View style={styles.flagWrapper}>
+                  <Image source={option.flag} style={styles.flagImage} />
+                </View>
+              }
+              selected={selected === option.type}
+              onPress={() => setSelected(option.type)}
+              size="lg"
+            />
+          ))}
+        </View>
 
-        {/* 안내 배너 + 버튼 */}
         <View style={styles.footer}>
           <View style={styles.banner}>
             <Ionicons name="settings" size={18} color={colors.text.primary} />

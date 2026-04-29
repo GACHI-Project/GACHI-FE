@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, Alert, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
@@ -21,35 +21,35 @@ const ScanChildSelectScreen = () => {
   const [selectedId, setSelectedId] = useState<string | null>(CHILDREN[0].id);
   const [helpVisible, setHelpVisible] = useState(false);
 
-  const handleCamera = async () => {
-    try {
-      const { status } = await ImagePicker.requestCameraPermissionsAsync();
-      if (status !== 'granted') return;
-      const result = await ImagePicker.launchCameraAsync({
-        mediaTypes: ['images'],
-        quality: 1,
-      });
-      if (!result.canceled) {
-        router.push('/scan/loading');
-      }
-    } catch {
-      // 카메라 실행 실패 시 무시
-    }
+  const selected = CHILDREN.find((c) => c.id === selectedId);
+  const childParams = {
+    childName: selected?.name ?? '',
+    childColor: selected?.color ?? '',
+  };
+
+  const handleCamera = () => {
+    router.push({ pathname: '/scan/camera', params: childParams });
   };
 
   const handleGallery = async () => {
     try {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (status !== 'granted') return;
+      if (status !== 'granted') {
+        Alert.alert('권한 필요', '갤러리 접근 권한이 필요해요.');
+        return;
+      }
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ['images'],
         quality: 1,
       });
       if (!result.canceled) {
-        router.push('/scan/loading');
+        router.push({
+          pathname: '/scan/preview',
+          params: { photoUri: result.assets[0].uri, ...childParams, source: 'gallery' },
+        });
       }
     } catch {
-      // 갤러리 실행 실패 시 무시
+      Alert.alert('오류', '갤러리를 불러올 수 없어요.');
     }
   };
 
@@ -86,6 +86,8 @@ const ScanChildSelectScreen = () => {
             style={[styles.unknownCard, selectedId === null && styles.unknownCardSelected]}
             onPress={() => setSelectedId(null)}
             activeOpacity={0.8}
+            accessibilityLabel="어느 아이인지 모르겠어요"
+            accessibilityRole="button"
           >
             <View
               style={[

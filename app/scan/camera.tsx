@@ -32,6 +32,7 @@ export default function ScanCameraScreen() {
     try {
       const photo = await cameraRef.current.takePictureAsync({ quality: 1 });
       if (photo) {
+        setCapturing(false);
         router.push({
           pathname: '/scan/preview',
           params: {

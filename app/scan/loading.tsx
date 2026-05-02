@@ -219,6 +219,9 @@ export default function ScanLoadingScreen() {
             activeOpacity={0.8}
             accessibilityRole="button"
             accessibilityLabel="다음으로"
+            onPress={() => {
+              // TODO: API 연동 후 다음 화면으로 이동
+            }}
           >
             <Text style={styles.nextBtnText}>다음으로 →</Text>
           </TouchableOpacity>

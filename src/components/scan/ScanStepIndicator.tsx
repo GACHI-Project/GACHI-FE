@@ -17,7 +17,7 @@ const ScanStepIndicator = ({ currentStep, totalSteps = 4 }: ScanStepIndicatorPro
       const isActive = step === currentStep;
       return (
         <View key={step} style={styles.item}>
-          {i > 0 && <View style={[styles.line, isCompleted && styles.lineActive]} />}
+          {i > 0 && <View style={[styles.line, (isCompleted || isActive) && styles.lineActive]} />}
           <View style={isActive ? styles.activeRing : styles.ringPlaceholder}>
             <View
               style={[

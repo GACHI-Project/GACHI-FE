@@ -40,6 +40,8 @@ const SelectionCard = ({
       ]}
       onPress={onPress}
       activeOpacity={0.8}
+      accessibilityRole="button"
+      accessibilityLabel={name}
     >
       {selected && <View style={styles.selectedBar} />}
       {leftElement}

@@ -53,7 +53,12 @@ export default function ScanPreviewScreen() {
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.confirmBtn}
-          onPress={() => router.push('/scan/loading')}
+          onPress={() =>
+            router.push({
+              pathname: '/scan/loading',
+              params: { photoUri, childName, childColor },
+            })
+          }
           activeOpacity={0.8}
           accessibilityLabel="사용하기"
           accessibilityRole="button"

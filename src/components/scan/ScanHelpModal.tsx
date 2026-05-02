@@ -73,9 +73,11 @@ const ScanHelpModal = ({ visible, onClose }: ScanHelpModalProps) => {
           duration: 220,
           useNativeDriver: true,
         }),
-      ]).start(() => setShow(false));
+      ]).start(({ finished }) => {
+        if (finished) setShow(false);
+      });
     }
-  }, [visible, opacity, translateY]);
+  }, [visible, show, opacity, translateY]);
 
   return (
     <Modal visible={show} transparent animationType="none" onRequestClose={onClose}>

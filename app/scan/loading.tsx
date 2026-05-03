@@ -13,9 +13,10 @@ import styles from '../../src/styles/scan/loading';
 const SCAN_DURATION = 20000;
 
 export default function ScanLoadingScreen() {
-  const { photoUri, childName, childGrade } = useLocalSearchParams<{
+  const { photoUri, childName, childColor, childGrade } = useLocalSearchParams<{
     photoUri: string;
     childName: string;
+    childColor: string;
     childGrade: string;
   }>();
 
@@ -224,7 +225,7 @@ export default function ScanLoadingScreen() {
             onPress={() =>
               router.push({
                 pathname: '/scan/result',
-                params: { photoUri, childName, childGrade },
+                params: { photoUri, childName, childColor, childGrade },
               })
             }
           >

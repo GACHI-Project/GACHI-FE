@@ -38,7 +38,14 @@ interface DateInputFieldsProps {
   onDayChange: (v: string) => void;
 }
 
-function DateInputFields({ year, month, day, onYearChange, onMonthChange, onDayChange }: DateInputFieldsProps) {
+function DateInputFields({
+  year,
+  month,
+  day,
+  onYearChange,
+  onMonthChange,
+  onDayChange,
+}: DateInputFieldsProps) {
   return (
     <View style={styles.dateInputRow}>
       <View style={styles.dateInputWrap}>
@@ -114,6 +121,7 @@ export default function SaveBottomSheet({
 
   useEffect(() => {
     if (visible) {
+      if (show) return;
       opacity.setValue(0);
       translateY.setValue(SHEET_HEIGHT);
       keyboardOffset.setValue(0);
@@ -198,7 +206,9 @@ export default function SaveBottomSheet({
                   <View style={styles.eventHeader}>
                     <View style={styles.eventDot} />
                     <View style={styles.successEventInfo}>
-                      <Text style={styles.eventTitle}>{MOCK_EVENT.title} · {childName}</Text>
+                      <Text style={styles.eventTitle}>
+                        {MOCK_EVENT.title} · {childName}
+                      </Text>
                       <Text style={styles.eventDate}>{displayDate}</Text>
                     </View>
                   </View>
@@ -212,7 +222,11 @@ export default function SaveBottomSheet({
                     ))}
                   </View>
                 </View>
-                <PrimaryButton label="캘린더에서 보기" onPress={onConfirm} style={STYLE_FULL_WIDTH} />
+                <PrimaryButton
+                  label="캘린더에서 보기"
+                  onPress={onConfirm}
+                  style={STYLE_FULL_WIDTH}
+                />
                 <SecondaryButton label="닫기" onPress={onDismiss} style={STYLE_FULL_WIDTH} />
               </>
             ) : (
@@ -236,7 +250,9 @@ export default function SaveBottomSheet({
                 <View style={styles.eventCard}>
                   <View style={styles.eventHeader}>
                     <View style={styles.eventDot} />
-                    <Text style={styles.eventTitle}>{MOCK_EVENT.title} · {childName}</Text>
+                    <Text style={styles.eventTitle}>
+                      {MOCK_EVENT.title} · {childName}
+                    </Text>
                   </View>
                   {dateFound ? (
                     <>

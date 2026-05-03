@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Header from '../../src/components/common/Header';
@@ -8,6 +8,7 @@ import ScanHelpModal from '../../src/components/scan/ScanHelpModal';
 import FullDocTab from '../../src/components/scan/result/FullDocTab';
 import ChecklistTab from '../../src/components/scan/result/ChecklistTab';
 import AISummaryTab from '../../src/components/scan/result/AISummaryTab';
+import SaveBottomSheet from '../../src/components/scan/result/SaveBottomSheet';
 import colors from '../../src/constants/colors';
 import styles from '../../src/styles/scan/result';
 
@@ -27,9 +28,11 @@ export default function ScanResultScreen() {
     childGrade: string;
   }>();
 
+  const router = useRouter();
   const insets = useSafeAreaInsets();
   const [activeTab, setActiveTab] = useState<Tab>('전체 문서');
   const [helpVisible, setHelpVisible] = useState(false);
+  const [saveVisible, setSaveVisible] = useState(false);
 
   const { daysLeft } = MOCK_DOC;
 
@@ -97,6 +100,7 @@ export default function ScanResultScreen() {
           activeOpacity={0.8}
           accessibilityRole="button"
           accessibilityLabel="저장하기"
+          onPress={() => setSaveVisible(true)}
         >
           <Text>💾</Text>
           <Text style={styles.saveBtnText}>저장하기</Text>
@@ -104,6 +108,13 @@ export default function ScanResultScreen() {
       </View>
 
       <ScanHelpModal visible={helpVisible} onClose={() => setHelpVisible(false)} />
+      <SaveBottomSheet
+        visible={saveVisible}
+        onClose={() => setSaveVisible(false)}
+        onConfirm={() => router.replace('/(tabs)/calendar')}
+        onDismiss={() => router.replace('/(tabs)')}
+        childName={childName ?? ''}
+      />
     </View>
   );
 }

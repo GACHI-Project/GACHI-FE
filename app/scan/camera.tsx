@@ -15,9 +15,10 @@ import fonts from '../../src/constants/fonts';
 import { SCAN_FRAME_W, SCAN_FRAME_H, SCAN_DEFAULT_CHILD_COLOR } from '../../src/constants/scan';
 
 export default function ScanCameraScreen() {
-  const { childName, childColor } = useLocalSearchParams<{
+  const { childName, childColor, childGrade } = useLocalSearchParams<{
     childName: string;
     childColor: string;
+    childGrade: string;
   }>();
   const [facing, setFacing] = useState<'front' | 'back'>('back');
   const [helpVisible, setHelpVisible] = useState(false);
@@ -39,6 +40,7 @@ export default function ScanCameraScreen() {
             photoUri: photo.uri,
             childName: childName ?? '',
             childColor: childColor ?? '',
+            childGrade: childGrade ?? '',
             source: 'camera',
           },
         });
@@ -69,6 +71,7 @@ export default function ScanCameraScreen() {
             photoUri: result.assets[0].uri,
             childName: childName ?? '',
             childColor: childColor ?? '',
+            childGrade: childGrade ?? '',
             source: 'gallery',
           },
         });
@@ -222,6 +225,7 @@ const styles = StyleSheet.create({
   permissionText: {
     fontSize: 16,
     fontFamily: fonts.medium,
+    marginTop: 12,
     color: colors.text.primary,
   },
   permissionBtn: {
@@ -229,7 +233,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingHorizontal: 24,
     paddingVertical: 12,
-    marginTop: 8,
+    marginTop: 16,
   },
   permissionBtnText: {
     fontSize: 15,

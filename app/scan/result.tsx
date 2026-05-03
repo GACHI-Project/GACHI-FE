@@ -50,7 +50,7 @@ export default function ScanResultScreen() {
           <View style={styles.metaItem}>
             <Ionicons name="school" size={13} color={colors.text.secondary} />
             <Text style={styles.metaText}>
-              {childName} · {childGrade}
+              {childName ?? ''} · {childGrade ?? ''}
             </Text>
           </View>
           <View style={[styles.dBadge, daysLeft <= 3 && styles.dBadgeUrgent]}>

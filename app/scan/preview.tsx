@@ -11,10 +11,11 @@ import layout from '../../src/constants/layout';
 import { SCAN_FRAME_W, SCAN_FRAME_H, SCAN_DEFAULT_CHILD_COLOR } from '../../src/constants/scan';
 
 export default function ScanPreviewScreen() {
-  const { photoUri, childName, childColor, source } = useLocalSearchParams<{
+  const { photoUri, childName, childColor, childGrade, source } = useLocalSearchParams<{
     photoUri: string;
     childName: string;
     childColor: string;
+    childGrade: string;
     source: 'camera' | 'gallery';
   }>();
   const insets = useSafeAreaInsets();
@@ -56,7 +57,7 @@ export default function ScanPreviewScreen() {
           onPress={() =>
             router.push({
               pathname: '/scan/loading',
-              params: { photoUri, childName, childColor },
+              params: { photoUri, childName, childColor, childGrade },
             })
           }
           activeOpacity={0.8}

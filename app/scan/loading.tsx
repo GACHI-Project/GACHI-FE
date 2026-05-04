@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { View, Image, Text, Animated, ActivityIndicator, TouchableOpacity } from 'react-native';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Header from '../../src/components/common/Header';
@@ -13,8 +13,11 @@ import styles from '../../src/styles/scan/loading';
 const SCAN_DURATION = 20000;
 
 export default function ScanLoadingScreen() {
-  const { photoUri } = useLocalSearchParams<{
+  const { photoUri, childName, childColor, childGrade } = useLocalSearchParams<{
     photoUri: string;
+    childName: string;
+    childColor: string;
+    childGrade: string;
   }>();
 
   const insets = useSafeAreaInsets();
@@ -219,9 +222,12 @@ export default function ScanLoadingScreen() {
             activeOpacity={0.8}
             accessibilityRole="button"
             accessibilityLabel="다음으로"
-            onPress={() => {
-              // TODO: API 연동 후 다음 화면으로 이동
-            }}
+            onPress={() =>
+              router.push({
+                pathname: '/scan/result',
+                params: { photoUri, childName, childColor, childGrade },
+              })
+            }
           >
             <Text style={styles.nextBtnText}>다음으로 →</Text>
           </TouchableOpacity>

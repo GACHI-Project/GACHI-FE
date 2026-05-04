@@ -1,4 +1,4 @@
-import { TouchableOpacity, Text, StyleSheet } from 'react-native';
+import { TouchableOpacity, Text, StyleSheet, ViewStyle } from 'react-native';
 import colors from '../../constants/colors';
 import fonts from '../../constants/fonts';
 
@@ -6,11 +6,12 @@ interface ButtonProps {
   label: string;
   onPress: () => void;
   disabled?: boolean;
+  style?: ViewStyle;
 }
 
-export const PrimaryButton = ({ label, onPress, disabled = false }: ButtonProps) => (
+export const PrimaryButton = ({ label, onPress, disabled = false, style }: ButtonProps) => (
   <TouchableOpacity
-    style={[styles.primary, disabled && styles.primaryDisabled]}
+    style={[styles.primary, disabled && styles.primaryDisabled, style]}
     onPress={onPress}
     disabled={disabled}
     activeOpacity={0.8}
@@ -19,9 +20,9 @@ export const PrimaryButton = ({ label, onPress, disabled = false }: ButtonProps)
   </TouchableOpacity>
 );
 
-export const SecondaryButton = ({ label, onPress, disabled = false }: ButtonProps) => (
+export const SecondaryButton = ({ label, onPress, disabled = false, style }: ButtonProps) => (
   <TouchableOpacity
-    style={[styles.secondary, disabled && styles.secondaryDisabled]}
+    style={[styles.secondary, disabled && styles.secondaryDisabled, style]}
     onPress={onPress}
     disabled={disabled}
     activeOpacity={0.7}

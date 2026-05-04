@@ -25,6 +25,7 @@ const ScanChildSelectScreen = () => {
   const childParams = {
     childName: selected?.name ?? '',
     childColor: selected?.color ?? '',
+    childGrade: selected?.grade.split(' ').pop() ?? '',
   };
 
   const handleCamera = () => {

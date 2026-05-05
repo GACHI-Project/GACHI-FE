@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { Ionicons, FontAwesome5 } from '@expo/vector-icons';
 import { router } from 'expo-router';
@@ -48,8 +48,13 @@ const CalendarScreen = () => {
 
   const weekScrollRef = useRef<ScrollView>(null);
   const weekOffsetRef = useRef(weekOffset);
+  const shouldAutoScrollRef = useRef(weekOffset === 0);
   weekOffsetRef.current = weekOffset;
   const todayGroupY = useRef<number | undefined>(undefined);
+
+  useEffect(() => {
+    shouldAutoScrollRef.current = weekOffset === 0;
+  }, [weekOffset]);
 
   const filteredByChild = useMemo(
     () => events.filter((e) => selectedChildId === 'all' || e.childId === selectedChildId),
@@ -226,10 +231,11 @@ const CalendarScreen = () => {
             style={styles.list}
             showsVerticalScrollIndicator={false}
             onContentSizeChange={() => {
-              if (weekOffsetRef.current !== 0) return;
+              if (weekOffsetRef.current !== 0 || !shouldAutoScrollRef.current) return;
               requestAnimationFrame(() => {
                 if (weekOffsetRef.current !== 0 || todayGroupY.current === undefined) return;
                 weekScrollRef.current?.scrollTo({ y: todayGroupY.current, animated: false });
+                shouldAutoScrollRef.current = false;
               });
             }}
           >

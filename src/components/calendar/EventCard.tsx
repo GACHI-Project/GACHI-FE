@@ -50,6 +50,9 @@ const EventCard = ({ event, expanded, isPast, onToggleExpand, onToggleCheck }: E
           <TouchableOpacity
             onPress={onToggleExpand}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            accessibilityRole="button"
+            accessibilityLabel={expanded ? '체크리스트 접기' : '체크리스트 펼치기'}
+            accessibilityState={{ expanded }}
           >
             <Ionicons
               name={expanded ? 'chevron-up' : 'chevron-down'}
@@ -68,6 +71,9 @@ const EventCard = ({ event, expanded, isPast, onToggleExpand, onToggleCheck }: E
               style={calStyles.checkItem}
               onPress={() => onToggleCheck(item.id)}
               activeOpacity={0.7}
+              accessibilityRole="checkbox"
+              accessibilityLabel={item.label}
+              accessibilityState={{ checked: item.done }}
             >
               <View
                 style={[

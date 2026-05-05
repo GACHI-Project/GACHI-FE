@@ -22,13 +22,23 @@ const WeekCalendar = ({ weekDates, today, markedDates, onPrev, onNext }: WeekCal
   <View style={styles.container}>
     {/* 날짜 범위 헤더 */}
     <View style={styles.rangeHeader}>
-      <TouchableOpacity onPress={onPrev} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+      <TouchableOpacity
+        onPress={onPrev}
+        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        accessibilityRole="button"
+        accessibilityLabel="이전 주"
+      >
         <Ionicons name="chevron-back" size={16} color={colors.text.secondary} />
       </TouchableOpacity>
       <Text style={styles.rangeText}>
         {formatMonthDay(weekDates[0])} ~ {formatMonthDay(weekDates[6])}
       </Text>
-      <TouchableOpacity onPress={onNext} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+      <TouchableOpacity
+        onPress={onNext}
+        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        accessibilityRole="button"
+        accessibilityLabel="다음 주"
+      >
         <Ionicons name="chevron-forward" size={16} color={colors.text.secondary} />
       </TouchableOpacity>
     </View>

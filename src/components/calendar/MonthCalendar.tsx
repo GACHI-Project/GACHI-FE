@@ -64,13 +64,23 @@ const MonthCalendar = ({
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={onPrevMonth} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+        <TouchableOpacity
+          onPress={onPrevMonth}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          accessibilityRole="button"
+          accessibilityLabel="이전 달"
+        >
           <Ionicons name="chevron-back" size={16} color={colors.text.secondary} />
         </TouchableOpacity>
         <Text style={styles.headerText}>
           {year}년 {month + 1}월
         </Text>
-        <TouchableOpacity onPress={onNextMonth} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+        <TouchableOpacity
+          onPress={onNextMonth}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          accessibilityRole="button"
+          accessibilityLabel="다음 달"
+        >
           <Ionicons name="chevron-forward" size={16} color={colors.text.secondary} />
         </TouchableOpacity>
       </View>

@@ -159,6 +159,7 @@ const CalendarScreen = () => {
           style={styles.iconButton}
           onPress={() => router.back()}
           accessibilityRole="button"
+          accessibilityLabel="뒤로가기"
         >
           <Ionicons name="arrow-back" size={16} color={colors.gray[300]} />
         </TouchableOpacity>
@@ -167,6 +168,7 @@ const CalendarScreen = () => {
           style={[styles.iconButton, styles.calendarIconButton]}
           onPress={handleToggleMode}
           accessibilityRole="button"
+          accessibilityLabel={isWeekMode ? '월간 보기로 전환' : '주간 보기로 전환'}
         >
           <FontAwesome5
             name={isWeekMode ? 'calendar-alt' : 'calendar-week'}

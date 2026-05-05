@@ -137,17 +137,27 @@ const CalendarScreen = () => {
     setExpandedIds(new Set());
   };
 
+  const syncSelectedDateToMonth = (year: number, month: number) => {
+    setSelectedDate((prev) => {
+      const day = Number(prev.split('-')[2]);
+      const lastDay = new Date(year, month + 1, 0).getDate();
+      return `${year}-${String(month + 1).padStart(2, '0')}-${String(Math.min(day, lastDay)).padStart(2, '0')}`;
+    });
+  };
+
   const handlePrevMonth = () => {
     setCalendarMonth(({ year, month }) => {
-      if (month === 0) return { year: year - 1, month: 11 };
-      return { year, month: month - 1 };
+      const next = month === 0 ? { year: year - 1, month: 11 } : { year, month: month - 1 };
+      syncSelectedDateToMonth(next.year, next.month);
+      return next;
     });
   };
 
   const handleNextMonth = () => {
     setCalendarMonth(({ year, month }) => {
-      if (month === 11) return { year: year + 1, month: 0 };
-      return { year, month: month + 1 };
+      const next = month === 11 ? { year: year + 1, month: 0 } : { year, month: month + 1 };
+      syncSelectedDateToMonth(next.year, next.month);
+      return next;
     });
   };
 
@@ -292,7 +302,7 @@ const CalendarScreen = () => {
             <Text style={styles.dayLabel}>{formatDayLabel(selectedDate)}</Text>
             <View style={styles.listContent}>
               {dayEvents.length === 0 ? (
-                <Text style={styles.emptyText}>일정이 없어요</Text>
+                <Text style={styles.emptyText}>등록된 일정이 없어요</Text>
               ) : (
                 dayEvents.map((event) => (
                   <EventCard

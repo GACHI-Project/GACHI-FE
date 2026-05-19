@@ -57,6 +57,9 @@ const CalendarScreen = () => {
   const shouldAutoScrollRef = useRef(weekOffset === 0);
   weekOffsetRef.current = weekOffset;
   const todayGroupY = useRef<number | undefined>(undefined);
+  const weeklyReqIdRef = useRef(0);
+  const monthlyReqIdRef = useRef(0);
+  const dailyReqIdRef = useRef(0);
 
   useEffect(() => {
     shouldAutoScrollRef.current = weekOffset === 0;
@@ -86,30 +89,48 @@ const CalendarScreen = () => {
   useEffect(() => {
     if (!isWeekMode) return;
     setIsLoading(true);
+    weeklyReqIdRef.current += 1;
+    const reqId = weeklyReqIdRef.current;
     fetchWeeklyEvents(weekDates[0], selectedChildName)
-      .then(setWeeklyData)
+      .then((data) => {
+        if (reqId === weeklyReqIdRef.current) setWeeklyData(data);
+      })
       .catch(() => {})
-      .finally(() => setIsLoading(false));
+      .finally(() => {
+        if (reqId === weeklyReqIdRef.current) setIsLoading(false);
+      });
   }, [isWeekMode, weekDates, selectedChildName]);
 
   // 월간 마커
   useEffect(() => {
     if (isWeekMode) return;
     setIsLoading(true);
+    monthlyReqIdRef.current += 1;
+    const reqId = monthlyReqIdRef.current;
     fetchMonthlyMarkers(calendarMonth.year, calendarMonth.month + 1, selectedChildName)
-      .then(setMonthlyMarkers)
+      .then((data) => {
+        if (reqId === monthlyReqIdRef.current) setMonthlyMarkers(data);
+      })
       .catch(() => {})
-      .finally(() => setIsLoading(false));
+      .finally(() => {
+        if (reqId === monthlyReqIdRef.current) setIsLoading(false);
+      });
   }, [isWeekMode, calendarMonth.year, calendarMonth.month, selectedChildName]);
 
   // 일간 이벤트
   useEffect(() => {
     if (isWeekMode) return;
     setIsDailyLoading(true);
+    dailyReqIdRef.current += 1;
+    const reqId = dailyReqIdRef.current;
     fetchDailyEvents(selectedDate, selectedChildName)
-      .then((result) => setDayEvents(result.events))
+      .then((result) => {
+        if (reqId === dailyReqIdRef.current) setDayEvents(result.events);
+      })
       .catch(() => {})
-      .finally(() => setIsDailyLoading(false));
+      .finally(() => {
+        if (reqId === dailyReqIdRef.current) setIsDailyLoading(false);
+      });
   }, [isWeekMode, selectedDate, selectedChildName]);
 
   const markedDatesMap = useMemo(() => {

@@ -24,6 +24,9 @@ const wrapError = (error: unknown): Error => {
 
 const getAuthHeader = async () => {
   const token = await SecureStore.getItemAsync('accessToken');
+  if (!token) {
+    throw new CalendarApiError('UNAUTHORIZED', '로그인이 필요합니다.');
+  }
   return { Authorization: `Bearer ${token}` };
 };
 
@@ -93,7 +96,7 @@ export const fetchMonthlyMarkers = async (
       '/api/v1/calendars/monthly',
       { headers, params }
     );
-    return response.data.result.markedDates ?? [];
+    return response.data.result?.markedDates ?? [];
   } catch (error) {
     throw wrapError(error);
   }
@@ -108,7 +111,7 @@ export const fetchDailyEvents = async (date: string, childName?: string): Promis
       headers,
       params,
     });
-    return response.data.result;
+    return response.data.result ?? { date, events: [] };
   } catch (error) {
     throw wrapError(error);
   }
@@ -126,7 +129,14 @@ export const fetchWeeklyEvents = async (
       headers,
       params,
     });
-    return response.data.result;
+    return (
+      response.data.result ?? {
+        today: date,
+        weekStart: date,
+        weekEnd: date,
+        days: [],
+      }
+    );
   } catch (error) {
     throw wrapError(error);
   }

@@ -49,6 +49,13 @@ const AISummaryTab = ({ newsletterId }: Props) => {
   const [todoError, setTodoError] = useState<string | null>(null);
 
   useEffect(() => {
+    setSummary(null);
+    setSummaryLoading(true);
+    setSummaryError(null);
+    setTodos([]);
+    setTodoLoading(true);
+    setTodoError(null);
+
     if (!newsletterId) {
       setSummaryError('가정통신문 정보를 찾을 수 없어요.');
       setSummaryLoading(false);
@@ -61,7 +68,10 @@ const AISummaryTab = ({ newsletterId }: Props) => {
 
     getNewsletterSummary(newsletterId)
       .then((data) => {
-        if (!cancelled) setSummary(data);
+        if (!cancelled) {
+          setSummary(data);
+          setSummaryError(null);
+        }
       })
       .catch((e) => {
         if (!cancelled) setSummaryError(mapSummaryError(e));
@@ -72,7 +82,10 @@ const AISummaryTab = ({ newsletterId }: Props) => {
 
     getNewsletterChecklist(newsletterId, 'TODO')
       .then((data) => {
-        if (!cancelled) setTodos(data);
+        if (!cancelled) {
+          setTodos(data);
+          setTodoError(null);
+        }
       })
       .catch((e) => {
         if (cancelled) return;

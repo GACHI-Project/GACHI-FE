@@ -60,7 +60,12 @@ const ScanChildSelectScreen = () => {
       if (!result.canceled) {
         router.push({
           pathname: '/scan/preview',
-          params: { photoUri: result.assets[0].uri, ...childParams, source: 'gallery' },
+          params: {
+            photoUri: result.assets[0].uri,
+            ...childParams,
+            source: 'pdf',
+            fileType: result.assets[0].mimeType ?? 'application/pdf',
+          },
         });
       }
     } catch {

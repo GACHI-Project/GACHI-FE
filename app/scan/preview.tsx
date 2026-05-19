@@ -13,18 +13,21 @@ import layout from '../../src/constants/layout';
 import { SCAN_FRAME_W, SCAN_FRAME_H, SCAN_DEFAULT_CHILD_COLOR } from '../../src/constants/scan';
 
 const ScanPreviewScreen = () => {
-  const { photoUri, childId, childName, childColor, childGrade, source } = useLocalSearchParams<{
-    photoUri: string;
-    childId: string;
-    childName: string;
-    childColor: string;
-    childGrade: string;
-    source: 'camera' | 'gallery';
-  }>();
+  const { photoUri, childId, childName, childColor, childGrade, source, fileType } =
+    useLocalSearchParams<{
+      photoUri: string;
+      childId: string;
+      childName: string;
+      childColor: string;
+      childGrade: string;
+      source: 'camera' | 'gallery' | 'pdf';
+      fileType?: string;
+    }>();
   const insets = useSafeAreaInsets();
 
   const hasChild = !!childName;
-  const isPdf = photoUri?.toLowerCase().endsWith('.pdf');
+  const isPdf =
+    source === 'pdf' || fileType === 'application/pdf' || photoUri?.toLowerCase().endsWith('.pdf');
   const pdfFilename = photoUri?.split('/').pop() ?? 'document.pdf';
   const retakeLabel = source === 'gallery' || isPdf ? '다시 선택하기' : '다시 찍기';
 

@@ -149,9 +149,7 @@ export interface CalendarPreviewItem {
   isDateExtracted: boolean;
 }
 
-export const getCalendarPreview = async (
-  newsletterId: number
-): Promise<CalendarPreviewItem[]> => {
+export const getCalendarPreview = async (newsletterId: number): Promise<CalendarPreviewItem[]> => {
   try {
     const headers = await getAuthHeader();
     const response = await apiClient.get<{ result: { items: CalendarPreviewItem[] } }>(

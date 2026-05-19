@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { View, Text, Alert, TouchableOpacity, StyleSheet } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -14,9 +14,8 @@ import ScanCornerBrackets from '../../src/components/scan/ScanCornerBrackets';
 import colors from '../../src/constants/colors';
 import fonts from '../../src/constants/fonts';
 import { SCAN_FRAME_W, SCAN_FRAME_H, SCAN_DEFAULT_CHILD_COLOR } from '../../src/constants/scan';
-import React from 'react';
 
-export default function ScanCameraScreen() {
+const ScanCameraScreen = () => {
   const { childId, childName, childColor, childGrade } = useLocalSearchParams<{
     childId: string;
     childName: string;
@@ -31,11 +30,10 @@ export default function ScanCameraScreen() {
   const insets = useSafeAreaInsets();
 
   const compressImage = async (uri: string): Promise<string> => {
-    const result = await manipulateAsync(
-      uri,
-      [{ resize: { width: 2048 } }],
-      { compress: 0.85, format: SaveFormat.JPEG }
-    );
+    const result = await manipulateAsync(uri, [{ resize: { width: 2048 } }], {
+      compress: 0.85,
+      format: SaveFormat.JPEG,
+    });
     return result.uri;
   };
 
@@ -173,7 +171,9 @@ export default function ScanCameraScreen() {
       <ScanHelpModal visible={helpVisible} onClose={() => setHelpVisible(false)} />
     </View>
   );
-}
+};
+
+export default ScanCameraScreen;
 
 const styles = StyleSheet.create({
   screen: {

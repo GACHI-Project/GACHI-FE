@@ -18,18 +18,26 @@ const FullDocTab = ({ newsletterId }: Props) => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    setLoading(true);
+    setError(null);
+    setData(null);
+
     if (!newsletterId) {
       setError('가정통신문 정보를 찾을 수 없어요.');
       setLoading(false);
       return;
     }
 
+    let cancelled = false;
+
     getNewsletterTranslation(newsletterId)
       .then((result) => {
+        if (cancelled) return;
         setData(result);
         setLoading(false);
       })
       .catch((e) => {
+        if (cancelled) return;
         if (e instanceof NewsletterApiError && e.code === 'NL4004') {
           setError('아직 분석이 완료되지 않은 가정통신문이에요.');
         } else if (e instanceof NewsletterApiError && e.code === 'NL4041') {
@@ -39,6 +47,10 @@ const FullDocTab = ({ newsletterId }: Props) => {
         }
         setLoading(false);
       });
+
+    return () => {
+      cancelled = true;
+    };
   }, [newsletterId]);
 
   if (loading) {

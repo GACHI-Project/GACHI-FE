@@ -18,7 +18,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PrimaryButton, SecondaryButton } from '../../common/Button';
 import styles from '../../../styles/scan/saveBottomSheet';
 import colors from '../../../constants/colors';
-import { getCalendarPreview, patchCalendarPreviewDates, postCalendarEvents, CalendarApiError } from '../../../api/calendar';
+import {
+  getCalendarPreview,
+  patchCalendarPreviewDates,
+  postCalendarEvents,
+  CalendarApiError,
+} from '../../../api/calendar';
 import type { CalendarPreviewItem } from '../../../api/calendar';
 
 interface Props {
@@ -39,9 +44,9 @@ const formatCorrectedDate = (y: string, m: string, d: string): string | null => 
   const yn = Number(y);
   const mn = Number(m);
   const dn = Number(d);
-  if (!y || !m || !d || isNaN(yn) || isNaN(mn) || isNaN(dn)) return null;
+  if (!y || !m || !d || Number.isNaN(yn) || Number.isNaN(mn) || Number.isNaN(dn)) return null;
   const date = new Date(yn, mn - 1, dn);
-  if (isNaN(date.getTime()) || date.getMonth() !== mn - 1) return null;
+  if (Number.isNaN(date.getTime()) || date.getMonth() !== mn - 1) return null;
   return `${String(yn).padStart(4, '0')}-${String(mn).padStart(2, '0')}-${String(dn).padStart(2, '0')}`;
 };
 
@@ -64,7 +69,7 @@ const mapPatchError = (e: unknown): string => {
 
 const getDisplayDate = (y: string, m: string, d: string) => {
   const date = new Date(Number(y), Number(m) - 1, Number(d));
-  const weekday = isNaN(date.getTime()) ? '' : `${WEEKDAYS[date.getDay()]}요일 · `;
+  const weekday = Number.isNaN(date.getTime()) ? '' : `${WEEKDAYS[date.getDay()]}요일 · `;
   return `${y}년 ${m}월 ${d}일 ${weekday}종일`;
 };
 
@@ -77,65 +82,63 @@ interface DateInputFieldsProps {
   onDayChange: (v: string) => void;
 }
 
-function DateInputFields({
+const DateInputFields = ({
   year,
   month,
   day,
   onYearChange,
   onMonthChange,
   onDayChange,
-}: DateInputFieldsProps) {
-  return (
-    <View style={styles.dateInputRow}>
-      <View style={styles.dateInputWrap}>
-        <TextInput
-          style={styles.dateInput}
-          value={year}
-          onChangeText={onYearChange}
-          keyboardType="number-pad"
-          maxLength={4}
-          accessibilityLabel="년도"
-        />
-        <Text style={styles.dateUnit}>년</Text>
-      </View>
-      <View style={styles.dateInputWrap}>
-        <TextInput
-          style={styles.dateInput}
-          value={month}
-          onChangeText={onMonthChange}
-          keyboardType="number-pad"
-          maxLength={2}
-          accessibilityLabel="월"
-        />
-        <Text style={styles.dateUnit}>월</Text>
-      </View>
-      <View style={styles.dateInputWrap}>
-        <TextInput
-          style={styles.dateInput}
-          value={day}
-          onChangeText={onDayChange}
-          keyboardType="number-pad"
-          maxLength={2}
-          accessibilityLabel="일"
-        />
-        <Text style={styles.dateUnit}>일</Text>
-      </View>
+}: DateInputFieldsProps) => (
+  <View style={styles.dateInputRow}>
+    <View style={styles.dateInputWrap}>
+      <TextInput
+        style={styles.dateInput}
+        value={year}
+        onChangeText={onYearChange}
+        keyboardType="number-pad"
+        maxLength={4}
+        accessibilityLabel="년도"
+      />
+      <Text style={styles.dateUnit}>년</Text>
     </View>
-  );
-}
+    <View style={styles.dateInputWrap}>
+      <TextInput
+        style={styles.dateInput}
+        value={month}
+        onChangeText={onMonthChange}
+        keyboardType="number-pad"
+        maxLength={2}
+        accessibilityLabel="월"
+      />
+      <Text style={styles.dateUnit}>월</Text>
+    </View>
+    <View style={styles.dateInputWrap}>
+      <TextInput
+        style={styles.dateInput}
+        value={day}
+        onChangeText={onDayChange}
+        keyboardType="number-pad"
+        maxLength={2}
+        accessibilityLabel="일"
+      />
+      <Text style={styles.dateUnit}>일</Text>
+    </View>
+  </View>
+);
 
 const STYLE_FULL_WIDTH = { width: '100%' } as const;
 const STYLE_FLEX_1 = { flex: 1 } as const;
 const STYLE_FLEX_2 = { flex: 2 } as const;
 
-export default function SaveBottomSheet({
+const SaveBottomSheet = ({
   visible,
   onClose,
   onConfirm,
   onDismiss,
   childName,
   newsletterId,
-}: Props) {
+}: Props) => {
   const insets = useSafeAreaInsets();
   const [show, setShow] = useState(false);
   const [step, setStep] = useState<'confirm' | 'success'>('confirm');
@@ -160,7 +163,7 @@ export default function SaveBottomSheet({
 
   // 미리보기 데이터 fetch
   useEffect(() => {
-    if (!visible || !newsletterId) return;
+    if (!visible || !newsletterId) return () => {};
     let cancelled = false;
 
     setPreviewLoading(true);
@@ -217,7 +220,11 @@ export default function SaveBottomSheet({
       keyboardOffset.setValue(0);
       Animated.parallel([
         Animated.timing(opacity, { toValue: 0, duration: 200, useNativeDriver: true }),
-        Animated.timing(translateY, { toValue: SHEET_HEIGHT, duration: 220, useNativeDriver: true }),
+        Animated.timing(translateY, {
+          toValue: SHEET_HEIGHT,
+          duration: 220,
+          useNativeDriver: true,
+        }),
       ]).start(({ finished }) => {
         if (finished) setShow(false);
       });
@@ -252,6 +259,46 @@ export default function SaveBottomSheet({
   }, [keyboardOffset]);
 
   const eventTitle = preview?.title ?? '';
+
+  const renderEventCardContent = () => {
+    if (previewLoading) return <ActivityIndicator size="small" color={colors.primary[400]} />;
+    if (previewError) return <Text style={localStyles.errorText}>{previewError}</Text>;
+    return (
+      <>
+        <View style={styles.eventHeader}>
+          <View style={styles.eventDot} />
+          <Text style={styles.eventTitle}>
+            {eventTitle} · {childName}
+          </Text>
+        </View>
+        {dateFound ? (
+          <View style={styles.eventDateRow}>
+            <Text style={styles.eventDate}>{displayDate}</Text>
+            <TouchableOpacity
+              style={styles.editBadge}
+              onPress={() => setIsEditing((v) => !v)}
+              accessibilityRole="button"
+              accessibilityLabel="일정 수정"
+            >
+              <Text style={styles.editBadgeText}>{isEditing ? '✏️ 수정 중' : '✏️ 수정'}</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <>
+            <View style={styles.divider} />
+            <DateInputFields
+              year={year}
+              month={month}
+              day={day}
+              onYearChange={setYear}
+              onMonthChange={setMonth}
+              onDayChange={setDay}
+            />
+          </>
+        )}
+      </>
+    );
+  };
 
   const handleDateConfirm = async () => {
     const correctedDate = formatCorrectedDate(year, month, day);
@@ -380,47 +427,7 @@ export default function SaveBottomSheet({
                   </View>
                 )}
 
-                <View style={styles.eventCard}>
-                  {previewLoading ? (
-                    <ActivityIndicator size="small" color={colors.primary[400]} />
-                  ) : previewError ? (
-                    <Text style={localStyles.errorText}>{previewError}</Text>
-                  ) : (
-                    <>
-                      <View style={styles.eventHeader}>
-                        <View style={styles.eventDot} />
-                        <Text style={styles.eventTitle}>{eventTitle} · {childName}</Text>
-                      </View>
-                      {dateFound ? (
-                        <View style={styles.eventDateRow}>
-                          <Text style={styles.eventDate}>{displayDate}</Text>
-                          <TouchableOpacity
-                            style={styles.editBadge}
-                            onPress={() => setIsEditing((v) => !v)}
-                            accessibilityRole="button"
-                            accessibilityLabel="일정 수정"
-                          >
-                            <Text style={styles.editBadgeText}>
-                              {isEditing ? '✏️ 수정 중' : '✏️ 수정'}
-                            </Text>
-                          </TouchableOpacity>
-                        </View>
-                      ) : (
-                        <>
-                          <View style={styles.divider} />
-                          <DateInputFields
-                            year={year}
-                            month={month}
-                            day={day}
-                            onYearChange={setYear}
-                            onMonthChange={setMonth}
-                            onDayChange={setDay}
-                          />
-                        </>
-                      )}
-                    </>
-                  )}
-                </View>
+                <View style={styles.eventCard}>{renderEventCardContent()}</View>
 
                 {dateFound && isEditing && (
                   <View style={styles.dateEditorCard}>
@@ -453,7 +460,7 @@ export default function SaveBottomSheet({
                 <View style={styles.buttons}>
                   <SecondaryButton label="아니요" onPress={onClose} style={STYLE_FLEX_1} />
                   <PrimaryButton
-                    label={(datePatching || registering) ? '저장 중...' : '✓ 네, 등록할게요'}
+                    label={datePatching || registering ? '저장 중...' : '✓ 네, 등록할게요'}
                     onPress={handleRegisterConfirm}
                     disabled={datePatching || registering}
                     style={STYLE_FLEX_2}
@@ -466,7 +473,9 @@ export default function SaveBottomSheet({
       </View>
     </Modal>
   );
-}
+};
+
+export default SaveBottomSheet;
 
 const localStyles = StyleSheet.create({
   errorText: {

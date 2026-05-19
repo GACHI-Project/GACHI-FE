@@ -11,19 +11,19 @@ interface Props {
   children: ReactNode;
 }
 
-export default function SummaryCard({ icon, iconBg, title, children }: Props) {
-  return (
-    <View style={styles.card}>
-      <View style={styles.header}>
-        <View style={[styles.iconWrap, { backgroundColor: iconBg }]}>
-          <Ionicons name={icon} size={20} color={colors.text.white} />
-        </View>
-        <Text style={styles.title}>{title}</Text>
+const SummaryCard = ({ icon, iconBg, title, children }: Props) => (
+  <View style={styles.card}>
+    <View style={styles.header}>
+      <View style={[styles.iconWrap, { backgroundColor: iconBg }]}>
+        <Ionicons name={icon} size={20} color={colors.text.white} />
       </View>
-      {children}
+      <Text style={styles.title}>{title}</Text>
     </View>
-  );
-}
+    {children}
+  </View>
+);
+
+export default SummaryCard;
 
 const styles = StyleSheet.create({
   card: {

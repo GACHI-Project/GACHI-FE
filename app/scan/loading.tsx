@@ -1,20 +1,32 @@
-import { useEffect, useRef, useState } from 'react';
-import { View, Image, Text, Animated, ActivityIndicator, TouchableOpacity } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import {
+  View,
+  Image,
+  Text,
+  Animated,
+  ActivityIndicator,
+  TouchableOpacity,
+  Alert,
+} from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Header from '../../src/components/common/Header';
 import ScanHelpModal from '../../src/components/scan/ScanHelpModal';
 import ScanStepIndicator from '../../src/components/scan/ScanStepIndicator';
+import {
+  uploadNewsletter,
+  getNewsletterStatus,
+  NewsletterApiError,
+} from '../../src/api/newsletter';
 import { SCAN_FRAME_H } from '../../src/constants/scan';
 import colors from '../../src/constants/colors';
 import styles from '../../src/styles/scan/loading';
 
-const SCAN_DURATION = 20000;
-
 export default function ScanLoadingScreen() {
-  const { photoUri, childName, childColor, childGrade } = useLocalSearchParams<{
+  const { photoUri, childId, childName, childColor, childGrade } = useLocalSearchParams<{
     photoUri: string;
+    childId: string;
     childName: string;
     childColor: string;
     childGrade: string;
@@ -35,22 +47,13 @@ export default function ScanLoadingScreen() {
   const glowAnimation = useRef<Animated.CompositeAnimation | null>(null);
   const completionAnimation = useRef<Animated.CompositeAnimation | null>(null);
   const [displayPercent, setDisplayPercent] = useState(0);
+  const [progressMessage, setProgressMessage] = useState('문서를 준비하고 있어요');
   const [isComplete, setIsComplete] = useState(false);
   const [helpVisible, setHelpVisible] = useState(false);
+  const [newsletterId, setNewsletterId] = useState<number | null>(null);
+  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
-    const listenerId = progress.addListener(({ value }) => {
-      setDisplayPercent(Math.round(value * 100));
-    });
-
-    Animated.timing(progress, {
-      toValue: 1,
-      duration: SCAN_DURATION,
-      useNativeDriver: false,
-    }).start(({ finished }) => {
-      if (finished) setIsComplete(true);
-    });
-
     const loopScanLine = () => {
       scanLine.setValue(0);
       Animated.timing(scanLine, {
@@ -64,11 +67,66 @@ export default function ScanLoadingScreen() {
     loopScanLine();
 
     return () => {
-      progress.removeListener(listenerId);
-      progress.stopAnimation();
       scanLine.stopAnimation();
     };
-  }, [progress, scanLine]);
+  }, [scanLine]);
+
+  useEffect(() => {
+    if (!photoUri) return;
+    let cancelled = false;
+
+    const startPolling = (id: number) => {
+      pollingRef.current = setInterval(async () => {
+        try {
+          const result = await getNewsletterStatus(id);
+          if (cancelled) return;
+
+          setDisplayPercent(result.progressPercent);
+          setProgressMessage(result.progressMessage);
+          Animated.timing(progress, {
+            toValue: result.progressPercent / 100,
+            duration: 400,
+            useNativeDriver: false,
+          }).start();
+
+          if (result.status === 'COMPLETED') {
+            if (pollingRef.current) clearInterval(pollingRef.current);
+            setIsComplete(true);
+          } else if (result.status === 'FAILED') {
+            if (pollingRef.current) clearInterval(pollingRef.current);
+            Alert.alert('분석 실패', '문서 분석에 실패했어요. 다시 시도해주세요.', [
+              { text: '확인', onPress: () => router.back() },
+            ]);
+          }
+        } catch {
+          // 폴링 중 네트워크 오류는 무시하고 계속 시도
+        }
+      }, 2000);
+    };
+
+    const parsedChildId = childId ? Number(childId) : undefined;
+    uploadNewsletter(photoUri, parsedChildId)
+      .then((result) => {
+        if (cancelled) return;
+        setNewsletterId(result.newsletterId);
+        startPolling(result.newsletterId);
+      })
+      .catch((error: unknown) => {
+        if (cancelled) return;
+        let message = '업로드에 실패했어요. 다시 시도해주세요.';
+        if (error instanceof NewsletterApiError) {
+          if (error.code === 'NL4091') message = '이미 업로드된 가정통신문이에요.';
+          else if (error.code === 'NL4002') message = '지원하지 않는 파일 형식이에요.';
+          else if (error.code === 'NL4003') message = '파일 크기가 10MB를 초과해요.';
+        }
+        Alert.alert('업로드 실패', message, [{ text: '확인', onPress: () => router.back() }]);
+      });
+
+    return () => {
+      cancelled = true;
+      if (pollingRef.current) clearInterval(pollingRef.current);
+    };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!isComplete) return;
@@ -192,7 +250,7 @@ export default function ScanLoadingScreen() {
           )}
           <View style={styles.statusTexts}>
             <Text style={styles.statusTitle}>
-              {isComplete ? '번역 및 요약을 완료했어요!' : '문서를 스캔 중이에요 ...'}
+              {isComplete ? '번역 및 요약을 완료했어요!' : progressMessage}
             </Text>
             {!isComplete && (
               <Text style={styles.statusSubtitle}>텍스트와 레이아웃을 분석하고 있어요</Text>
@@ -225,7 +283,13 @@ export default function ScanLoadingScreen() {
             onPress={() =>
               router.push({
                 pathname: '/scan/result',
-                params: { photoUri, childName, childColor, childGrade },
+                params: {
+                  photoUri,
+                  childName,
+                  childColor,
+                  childGrade,
+                  newsletterId: String(newsletterId),
+                },
               })
             }
           >

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -22,7 +22,6 @@ import { getMyChildren, ChildResult } from '../../src/api/child';
 import colors from '../../src/constants/colors';
 import fonts from '../../src/constants/fonts';
 import layout from '../../src/constants/layout';
-import React from 'react';
 
 const ScanChildSelectScreen = () => {
   const [children, setChildren] = useState<ChildResult[]>([]);

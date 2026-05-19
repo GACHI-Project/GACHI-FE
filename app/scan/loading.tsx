@@ -51,7 +51,7 @@ const ScanLoadingScreen = () => {
   const [isComplete, setIsComplete] = useState(false);
   const [helpVisible, setHelpVisible] = useState(false);
   const [newsletterId, setNewsletterId] = useState<number | null>(null);
-  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const pollingRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const loopScanLine = () => {
@@ -76,7 +76,8 @@ const ScanLoadingScreen = () => {
     let cancelled = false;
 
     const startPolling = (id: number) => {
-      pollingRef.current = setInterval(async () => {
+      const poll = async () => {
+        if (cancelled) return;
         try {
           const result = await getNewsletterStatus(id);
           if (cancelled) return;
@@ -90,18 +91,21 @@ const ScanLoadingScreen = () => {
           }).start();
 
           if (result.status === 'COMPLETED') {
-            if (pollingRef.current) clearInterval(pollingRef.current);
             setIsComplete(true);
+            return;
           } else if (result.status === 'FAILED') {
-            if (pollingRef.current) clearInterval(pollingRef.current);
             Alert.alert('분석 실패', '문서 분석에 실패했어요. 다시 시도해주세요.', [
               { text: '확인', onPress: () => router.back() },
             ]);
+            return;
           }
         } catch {
           // 폴링 중 네트워크 오류는 무시하고 계속 시도
         }
-      }, 2000);
+        pollingRef.current = setTimeout(poll, 2000);
+      };
+
+      pollingRef.current = setTimeout(poll, 2000);
     };
 
     const parsedChildId = childId ? Number(childId) : undefined;
@@ -124,7 +128,7 @@ const ScanLoadingScreen = () => {
 
     return () => {
       cancelled = true;
-      if (pollingRef.current) clearInterval(pollingRef.current);
+      if (pollingRef.current) clearTimeout(pollingRef.current);
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 

@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
+import { useEffect, useState } from 'react';
+import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -9,24 +9,25 @@ import FullDocTab from '../../src/components/scan/result/FullDocTab';
 import ChecklistTab from '../../src/components/scan/result/ChecklistTab';
 import AISummaryTab from '../../src/components/scan/result/AISummaryTab';
 import SaveBottomSheet from '../../src/components/scan/result/SaveBottomSheet';
+import { getNewsletterDetail, type NewsletterDetail } from '../../src/api/newsletter';
 import colors from '../../src/constants/colors';
 import styles from '../../src/styles/scan/result';
 
 const TABS = ['전체 문서', '체크리스트', 'AI 요약'] as const;
 type Tab = (typeof TABS)[number];
 
-const MOCK_DOC = {
-  title: '봄 현장학습 안내 및 동의서 제출 요청',
-  date: '2026년 5월 22일',
-  daysLeft: 7,
+const formatDate = (iso: string) => {
+  const d = new Date(iso);
+  return `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일`;
 };
 
 export default function ScanResultScreen() {
-  const { photoUri, childName, childGrade } = useLocalSearchParams<{
-    photoUri: string;
+  const { childName: childNameParam, childGrade, newsletterId: newsletterIdParam } = useLocalSearchParams<{
     childName: string;
     childGrade: string;
+    newsletterId: string;
   }>();
+  const newsletterId = newsletterIdParam ? Number(newsletterIdParam) : undefined;
 
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -34,29 +35,56 @@ export default function ScanResultScreen() {
   const [helpVisible, setHelpVisible] = useState(false);
   const [saveVisible, setSaveVisible] = useState(false);
 
-  const { daysLeft } = MOCK_DOC;
+  const [detail, setDetail] = useState<NewsletterDetail | null>(null);
+  const [detailLoading, setDetailLoading] = useState(!!newsletterIdParam);
+
+  useEffect(() => {
+    if (!newsletterId) {
+      setDetailLoading(false);
+      return;
+    }
+    getNewsletterDetail(newsletterId)
+      .then(setDetail)
+      .catch(() => {
+        // 헤더 정보 로드 실패 시 route param fallback으로 표시
+      })
+      .finally(() => setDetailLoading(false));
+  }, [newsletterId]);
+
+  const displayTitle = detail?.title ?? '';
+  const displayChildName = detail?.childName ?? childNameParam ?? '';
+  const displayDate = detail ? formatDate(detail.createdAt) : '';
 
   return (
     <View style={styles.screen}>
       <Header title="스캔 결과" onHelp={() => setHelpVisible(true)} />
 
       <View style={styles.docInfo}>
-        <Text style={styles.docTitle}>{MOCK_DOC.title}</Text>
-        <View style={styles.metaRow}>
-          <View style={styles.metaItem}>
-            <Ionicons name="calendar" size={13} color={colors.text.secondary} />
-            <Text style={styles.metaText}>{MOCK_DOC.date}</Text>
-          </View>
-          <View style={styles.metaItem}>
-            <Ionicons name="school" size={13} color={colors.text.secondary} />
-            <Text style={styles.metaText}>
-              {childName ?? ''} · {childGrade ?? ''}
-            </Text>
-          </View>
-          <View style={[styles.dBadge, daysLeft <= 3 && styles.dBadgeUrgent]}>
-            <Text style={styles.dBadgeText}>D-{daysLeft}</Text>
-          </View>
-        </View>
+        {detailLoading ? (
+          <ActivityIndicator size="small" color={colors.primary[400]} />
+        ) : (
+          <>
+            <Text style={styles.docTitle}>{displayTitle}</Text>
+            <View style={styles.metaRow}>
+              {displayDate ? (
+                <View style={styles.metaItem}>
+                  <Ionicons name="calendar" size={13} color={colors.text.secondary} />
+                  <Text style={styles.metaText}>{displayDate}</Text>
+                </View>
+              ) : null}
+              {(displayChildName || childGrade) ? (
+                <View style={styles.metaItem}>
+                  <Ionicons name="school" size={13} color={colors.text.secondary} />
+                  <Text style={styles.metaText}>
+                    {displayChildName}
+                    {displayChildName && childGrade ? ' · ' : ''}
+                    {childGrade ?? ''}
+                  </Text>
+                </View>
+              ) : null}
+            </View>
+          </>
+        )}
       </View>
 
       <View style={styles.tabBar}>
@@ -80,9 +108,9 @@ export default function ScanResultScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator
       >
-        {activeTab === '전체 문서' && <FullDocTab photoUri={photoUri ?? ''} />}
-        {activeTab === '체크리스트' && <ChecklistTab />}
-        {activeTab === 'AI 요약' && <AISummaryTab />}
+        {activeTab === '전체 문서' && <FullDocTab newsletterId={newsletterId} />}
+        {activeTab === '체크리스트' && <ChecklistTab newsletterId={newsletterId} />}
+        {activeTab === 'AI 요약' && <AISummaryTab newsletterId={newsletterId} />}
       </ScrollView>
 
       <View style={[styles.bottomBar, { paddingBottom: insets.bottom + 12 }]}>
@@ -113,7 +141,7 @@ export default function ScanResultScreen() {
         onClose={() => setSaveVisible(false)}
         onConfirm={() => router.replace('/(tabs)/calendar')}
         onDismiss={() => router.replace('/(tabs)')}
-        childName={childName ?? ''}
+        childName={displayChildName}
       />
     </View>
   );

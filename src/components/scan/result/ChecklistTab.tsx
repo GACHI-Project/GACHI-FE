@@ -1,91 +1,117 @@
-import { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { useEffect, useState } from 'react';
+import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import {
+  getNewsletterChecklist,
+  NewsletterApiError,
+} from '../../../api/newsletter';
+import type { ChecklistItem } from '../../../api/newsletter';
 import colors from '../../../constants/colors';
 import fonts from '../../../constants/fonts';
 
-interface ChecklistItem {
-  id: string;
-  title: string;
-  subtitle: string;
-  deadline?: string;
-  checked: boolean;
+interface Props {
+  newsletterId?: number;
 }
 
-const MOCK_ITEMS: ChecklistItem[] = [
-  {
-    id: '1',
-    title: '현장학습 동의서 제출',
-    subtitle: '담임 선생님께 원본 직접 제출',
-    deadline: '내일 마감',
-    checked: false,
-  },
-  {
-    id: '2',
-    title: '알레르기 없는 도시락 준비',
-    subtitle: '해산물, 견과류 포함 금지',
-    deadline: '내일 마감',
-    checked: false,
-  },
-  {
-    id: '3',
-    title: '봄 현장학습 안내문 읽기',
-    subtitle: 'AI 번역 완료',
-    deadline: '오늘 마감',
-    checked: true,
-  },
-  {
-    id: '4',
-    title: '현장학습 동의서 제출',
-    subtitle: '담임 선생님께 원본 직접 제출',
-    deadline: '내일 마감',
-    checked: false,
-  },
-];
+export default function ChecklistTab({ newsletterId }: Props) {
+  const [items, setItems] = useState<ChecklistItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-export default function ChecklistTab() {
-  const [items, setItems] = useState<ChecklistItem[]>(MOCK_ITEMS);
+  useEffect(() => {
+    if (!newsletterId) {
+      setError('가정통신문 정보를 찾을 수 없어요.');
+      setLoading(false);
+      return;
+    }
 
-  const toggle = (id: string) => {
+    let cancelled = false;
+
+    getNewsletterChecklist(newsletterId, 'CHECKLIST')
+      .then((result) => {
+        if (!cancelled) setItems(result);
+      })
+      .catch((e) => {
+        if (cancelled) return;
+        if (e instanceof NewsletterApiError && e.code === 'NL4041') {
+          setError('가정통신문을 찾을 수 없어요.');
+        } else {
+          setError('체크리스트를 불러오는 데 실패했어요.');
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [newsletterId]);
+
+  const toggle = (id: number) => {
     setItems((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, checked: !item.checked } : item))
+      prev.map((item) =>
+        item.checklistId === id ? { ...item, isCompleted: !item.isCompleted } : item
+      )
     );
   };
 
-  const remove = (id: string) => {
-    setItems((prev) => prev.filter((item) => item.id !== id));
+  const remove = (id: number) => {
+    setItems((prev) => prev.filter((item) => item.checklistId !== id));
   };
+
+  if (loading) {
+    return (
+      <View style={styles.centered}>
+        <ActivityIndicator size="large" color={colors.primary[400]} />
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.centered}>
+        <Text style={styles.errorText}>{error}</Text>
+      </View>
+    );
+  }
+
+  if (items.length === 0) {
+    return (
+      <View style={styles.centered}>
+        <Text style={styles.errorText}>체크리스트 항목이 없어요.</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.list}>
       {items.map((item) => (
-        <View key={item.id} style={[styles.card, item.checked && styles.cardChecked]}>
+        <View key={item.checklistId} style={[styles.card, item.isCompleted && styles.cardChecked]}>
           <TouchableOpacity
-            style={[styles.checkbox, item.checked && styles.checkboxChecked]}
-            onPress={() => toggle(item.id)}
+            style={[styles.checkbox, item.isCompleted && styles.checkboxChecked]}
+            onPress={() => toggle(item.checklistId)}
             accessibilityRole="checkbox"
-            accessibilityState={{ checked: item.checked }}
+            accessibilityState={{ checked: item.isCompleted }}
           >
-            {item.checked && <Ionicons name="checkmark" size={14} color={colors.text.white} />}
+            {item.isCompleted && <Ionicons name="checkmark" size={14} color={colors.text.white} />}
           </TouchableOpacity>
 
           <View style={styles.textBlock}>
-            <Text style={[styles.title, item.checked && styles.titleChecked]}>{item.title}</Text>
-            <Text style={styles.subtitle}>{item.subtitle}</Text>
+            <Text style={[styles.title, item.isCompleted && styles.titleChecked]}>
+              {item.content}
+            </Text>
+            {item.detail && <Text style={styles.subtitle}>{item.detail}</Text>}
           </View>
 
-          {item.checked ? (
+          {item.isCompleted ? (
             <TouchableOpacity
-              onPress={() => remove(item.id)}
+              onPress={() => remove(item.checklistId)}
               accessibilityLabel="항목 삭제"
               accessibilityRole="button"
             >
               <Ionicons name="trash-outline" size={20} color={colors.primary[500]} />
             </TouchableOpacity>
-          ) : item.deadline ? (
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>{item.deadline}</Text>
-            </View>
           ) : null}
         </View>
       ))}
@@ -97,8 +123,14 @@ const styles = StyleSheet.create({
   list: {
     gap: 12,
   },
-  cardChecked: {
-    backgroundColor: colors.gray[100],
+  centered: {
+    paddingVertical: 60,
+    alignItems: 'center',
+  },
+  errorText: {
+    fontSize: 14,
+    fontFamily: fonts.medium,
+    color: colors.text.secondary,
   },
   card: {
     flexDirection: 'row',
@@ -112,6 +144,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.06,
     shadowRadius: 6,
     elevation: 3,
+  },
+  cardChecked: {
+    backgroundColor: colors.gray[100],
   },
   checkbox: {
     width: 20,
@@ -143,16 +178,5 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontFamily: fonts.regular,
     color: colors.text.secondary,
-  },
-  badge: {
-    backgroundColor: colors.secondary[600],
-    borderRadius: 20,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-  },
-  badgeText: {
-    fontSize: 12,
-    fontFamily: fonts.semiBold,
-    color: colors.text.white,
   },
 });

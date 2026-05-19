@@ -1,6 +1,10 @@
 import { useEffect, useState } from 'react';
 import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
-import { getNewsletterTranslation, NewsletterTranslationResult, NewsletterApiError } from '../../../api/newsletter';
+import {
+  getNewsletterTranslation,
+  NewsletterTranslationResult,
+  NewsletterApiError,
+} from '../../../api/newsletter';
 import colors from '../../../constants/colors';
 import fonts from '../../../constants/fonts';
 
@@ -8,7 +12,7 @@ interface Props {
   newsletterId?: number;
 }
 
-export default function FullDocTab({ newsletterId }: Props) {
+const FullDocTab = ({ newsletterId }: Props) => {
   const [data, setData] = useState<NewsletterTranslationResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -74,7 +78,9 @@ export default function FullDocTab({ newsletterId }: Props) {
       </View>
     </View>
   );
-}
+};
+
+export default FullDocTab;
 
 const styles = StyleSheet.create({
   container: {

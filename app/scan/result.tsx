@@ -21,8 +21,12 @@ const formatDate = (iso: string) => {
   return `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일`;
 };
 
-export default function ScanResultScreen() {
-  const { childName: childNameParam, childGrade, newsletterId: newsletterIdParam } = useLocalSearchParams<{
+const ScanResultScreen = () => {
+  const {
+    childName: childNameParam,
+    childGrade,
+    newsletterId: newsletterIdParam,
+  } = useLocalSearchParams<{
     childName: string;
     childGrade: string;
     newsletterId: string;
@@ -72,7 +76,7 @@ export default function ScanResultScreen() {
                   <Text style={styles.metaText}>{displayDate}</Text>
                 </View>
               ) : null}
-              {(displayChildName || childGrade) ? (
+              {displayChildName || childGrade ? (
                 <View style={styles.metaItem}>
                   <Ionicons name="school" size={13} color={colors.text.secondary} />
                   <Text style={styles.metaText}>
@@ -146,4 +150,6 @@ export default function ScanResultScreen() {
       />
     </View>
   );
-}
+};
+
+export default ScanResultScreen;

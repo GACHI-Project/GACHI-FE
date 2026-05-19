@@ -5,6 +5,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
+import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
 import Header from '../../src/components/common/Header';
 import ScanStepIndicator from '../../src/components/scan/ScanStepIndicator';
 import ScanHelpModal from '../../src/components/scan/ScanHelpModal';
@@ -13,9 +14,11 @@ import ScanCornerBrackets from '../../src/components/scan/ScanCornerBrackets';
 import colors from '../../src/constants/colors';
 import fonts from '../../src/constants/fonts';
 import { SCAN_FRAME_W, SCAN_FRAME_H, SCAN_DEFAULT_CHILD_COLOR } from '../../src/constants/scan';
+import React from 'react';
 
 export default function ScanCameraScreen() {
-  const { childName, childColor, childGrade } = useLocalSearchParams<{
+  const { childId, childName, childColor, childGrade } = useLocalSearchParams<{
+    childId: string;
     childName: string;
     childColor: string;
     childGrade: string;
@@ -27,17 +30,28 @@ export default function ScanCameraScreen() {
   const cameraRef = useRef<CameraView>(null);
   const insets = useSafeAreaInsets();
 
+  const compressImage = async (uri: string): Promise<string> => {
+    const result = await manipulateAsync(
+      uri,
+      [{ resize: { width: 2048 } }],
+      { compress: 0.85, format: SaveFormat.JPEG }
+    );
+    return result.uri;
+  };
+
   const handleCapture = async () => {
     if (!cameraRef.current || capturing) return;
     setCapturing(true);
     try {
       const photo = await cameraRef.current.takePictureAsync({ quality: 1 });
       if (photo) {
+        const compressedUri = await compressImage(photo.uri);
         setCapturing(false);
         router.push({
           pathname: '/scan/preview',
           params: {
-            photoUri: photo.uri,
+            photoUri: compressedUri,
+            childId: childId ?? '',
             childName: childName ?? '',
             childColor: childColor ?? '',
             childGrade: childGrade ?? '',
@@ -69,6 +83,7 @@ export default function ScanCameraScreen() {
           pathname: '/scan/preview',
           params: {
             photoUri: result.assets[0].uri,
+            childId: childId ?? '',
             childName: childName ?? '',
             childColor: childColor ?? '',
             childGrade: childGrade ?? '',

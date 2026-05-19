@@ -1,27 +1,28 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Ionicons, FontAwesome5 } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import colors from '../../src/constants/colors';
-import { MOCK_CAL_CHILDREN, MOCK_EVENTS } from '../../src/mock/calendar';
-import type { CalendarEvent } from '../../src/mock/calendar';
 import styles from '../../src/styles/calendar/calendar';
 import EventCard from '../../src/components/calendar/EventCard';
 import WeekCalendar from '../../src/components/calendar/WeekCalendar';
 import MonthCalendar from '../../src/components/calendar/MonthCalendar';
+import {
+  fetchMonthlyMarkers,
+  fetchDailyEvents,
+  fetchWeeklyEvents,
+  fetchChildren,
+  completeChecklist,
+  type CalendarEvent,
+  type WeeklyResult,
+  type ChildInfo,
+  type MonthlyMarker,
+} from '../../src/api/calendar';
 
 const todayDate = new Date();
 const today = `${todayDate.getFullYear()}-${String(todayDate.getMonth() + 1).padStart(2, '0')}-${String(todayDate.getDate()).padStart(2, '0')}`;
 
 const DAY_NAMES = ['일', '월', '화', '수', '목', '금', '토'];
-
-const calcDDay = (dateStr: string): number => {
-  const base = new Date();
-  base.setHours(0, 0, 0, 0);
-  const [year, month, day] = dateStr.split('-').map(Number);
-  const target = new Date(year, month - 1, day);
-  return Math.round((target.getTime() - base.getTime()) / (1000 * 60 * 60 * 24));
-};
 
 const formatDayLabel = (dateStr: string) => {
   const [, month, day] = dateStr.split('-');
@@ -35,10 +36,15 @@ const formatWeekDateHeader = (dateStr: string) => {
 };
 
 const CalendarScreen = () => {
-  const [selectedChildId, setSelectedChildId] = useState<string>('all');
+  const [children, setChildren] = useState<ChildInfo[]>([]);
+  const [selectedChildName, setSelectedChildName] = useState<string | undefined>(undefined);
   const [selectedDate, setSelectedDate] = useState<string>(today);
-  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
-  const [events, setEvents] = useState<CalendarEvent[]>(MOCK_EVENTS);
+  const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
+  const [monthlyMarkers, setMonthlyMarkers] = useState<MonthlyMarker[]>([]);
+  const [dayEvents, setDayEvents] = useState<CalendarEvent[]>([]);
+  const [weeklyData, setWeeklyData] = useState<WeeklyResult | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isDailyLoading, setIsDailyLoading] = useState(false);
   const [isWeekMode, setIsWeekMode] = useState<boolean>(true);
   const [weekOffset, setWeekOffset] = useState<number>(0);
   const [calendarMonth, setCalendarMonth] = useState({
@@ -56,27 +62,6 @@ const CalendarScreen = () => {
     shouldAutoScrollRef.current = weekOffset === 0;
   }, [weekOffset]);
 
-  const filteredByChild = useMemo(
-    () => events.filter((e) => selectedChildId === 'all' || e.childId === selectedChildId),
-    [events, selectedChildId]
-  );
-
-  const dayEvents = useMemo(
-    () => filteredByChild.filter((e) => e.date === selectedDate),
-    [filteredByChild, selectedDate]
-  );
-
-  const markedDates = useMemo(() => {
-    const marks: Record<string, { dots: { key: string; color: string }[] }> = {};
-    filteredByChild.forEach((event) => {
-      if (!marks[event.date]) marks[event.date] = { dots: [] };
-      if (!marks[event.date].dots.find((d) => d.key === event.childId)) {
-        marks[event.date].dots.push({ key: event.childId, color: event.calendarColor });
-      }
-    });
-    return marks;
-  }, [filteredByChild]);
-
   const weekDates = useMemo(() => {
     const d = new Date();
     const dayOfWeek = d.getDay();
@@ -90,27 +75,73 @@ const CalendarScreen = () => {
     });
   }, [weekOffset]);
 
-  const weekEventGroups = useMemo(() => {
-    const dateSet = new Set(weekDates);
-    const sorted = filteredByChild
-      .filter((e) => dateSet.has(e.date))
-      .sort((a, b) => {
-        if (a.date !== b.date) return a.date < b.date ? -1 : 1;
-        return calcDDay(a.date) - calcDDay(b.date);
-      });
-    const groups: { date: string; events: CalendarEvent[] }[] = [];
-    sorted.forEach((event) => {
-      const last = groups[groups.length - 1];
-      if (last && last.date === event.date) {
-        last.events.push(event);
-      } else {
-        groups.push({ date: event.date, events: [event] });
+  // 자녀 목록
+  useEffect(() => {
+    fetchChildren()
+      .then(setChildren)
+      .catch(() => {});
+  }, []);
+
+  // 주간 이벤트
+  useEffect(() => {
+    if (!isWeekMode) return;
+    setIsLoading(true);
+    fetchWeeklyEvents(weekDates[0], selectedChildName)
+      .then(setWeeklyData)
+      .catch(() => {})
+      .finally(() => setIsLoading(false));
+  }, [isWeekMode, weekDates, selectedChildName]);
+
+  // 월간 마커
+  useEffect(() => {
+    if (isWeekMode) return;
+    setIsLoading(true);
+    fetchMonthlyMarkers(calendarMonth.year, calendarMonth.month + 1, selectedChildName)
+      .then(setMonthlyMarkers)
+      .catch(() => {})
+      .finally(() => setIsLoading(false));
+  }, [isWeekMode, calendarMonth.year, calendarMonth.month, selectedChildName]);
+
+  // 일간 이벤트
+  useEffect(() => {
+    if (isWeekMode) return;
+    setIsDailyLoading(true);
+    fetchDailyEvents(selectedDate, selectedChildName)
+      .then((result) => setDayEvents(result.events))
+      .catch(() => {})
+      .finally(() => setIsDailyLoading(false));
+  }, [isWeekMode, selectedDate, selectedChildName]);
+
+  const markedDatesMap = useMemo(() => {
+    const map: Record<string, { dots: { key: string; color: string }[] }> = {};
+    monthlyMarkers.forEach(({ date, childName, childColor }) => {
+      if (!map[date]) map[date] = { dots: [] };
+      if (!map[date].dots.find((d) => d.key === childName)) {
+        map[date].dots.push({ key: childName, color: childColor });
       }
     });
-    return groups;
-  }, [filteredByChild, weekDates]);
+    return map;
+  }, [monthlyMarkers]);
 
-  const toggleExpand = (id: string) => {
+  const weekMarkedDates = useMemo(() => {
+    if (!weeklyData) return {};
+    const record: Record<string, { dots: { key: string; color: string }[] }> = {};
+    weeklyData.days.forEach((day) => {
+      if (day.events.length > 0) {
+        record[day.date] = {
+          dots: day.events.map((e) => ({ key: String(e.eventId), color: e.calendarColor })),
+        };
+      }
+    });
+    return record;
+  }, [weeklyData]);
+
+  const weekEventGroups = useMemo(() => {
+    if (!weeklyData) return [];
+    return weeklyData.days.filter((d) => d.events.length > 0);
+  }, [weeklyData]);
+
+  const toggleExpand = (id: number) => {
     setExpandedIds((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
@@ -119,17 +150,50 @@ const CalendarScreen = () => {
     });
   };
 
-  const toggleCheck = (eventId: string, checkId: string) => {
-    setEvents((prev) =>
-      prev.map((e) =>
-        e.id !== eventId
+  const toggleCheck = async (eventId: number, checklistId: number) => {
+    // 현재 isCompleted 상태 파악
+    let currentIsCompleted: boolean | undefined;
+    const inDay = dayEvents.find((e) => e.eventId === eventId);
+    if (inDay) {
+      currentIsCompleted = inDay.checklists.find((c) => c.checklistId === checklistId)?.isCompleted;
+    }
+    if (currentIsCompleted === undefined && weeklyData) {
+      const inWeek = weeklyData.days
+        .flatMap((day) => day.events)
+        .find((e) => e.eventId === eventId);
+      currentIsCompleted = inWeek?.checklists.find(
+        (c) => c.checklistId === checklistId
+      )?.isCompleted;
+    }
+    if (currentIsCompleted === undefined) return;
+
+    const applyToggle = (events: CalendarEvent[]) =>
+      events.map((e) =>
+        e.eventId !== eventId
           ? e
           : {
               ...e,
-              checkList: e.checkList.map((c) => (c.id === checkId ? { ...c, done: !c.done } : c)),
+              checklists: e.checklists.map((c) =>
+                c.checklistId === checklistId ? { ...c, isCompleted: !c.isCompleted } : c
+              ),
             }
-      )
-    );
+      );
+    const applyToWeekly = (prev: typeof weeklyData) =>
+      prev
+        ? { ...prev, days: prev.days.map((day) => ({ ...day, events: applyToggle(day.events) })) }
+        : prev;
+
+    // 낙관적 업데이트
+    setDayEvents(applyToggle);
+    setWeeklyData(applyToWeekly);
+
+    try {
+      await completeChecklist(checklistId, !currentIsCompleted);
+    } catch {
+      // 실패 시 롤백 (다시 토글하면 원래 값으로 복구)
+      setDayEvents(applyToggle);
+      setWeeklyData(applyToWeekly);
+    }
   };
 
   const handleToggleMode = () => {
@@ -197,26 +261,29 @@ const CalendarScreen = () => {
           contentContainerStyle={styles.filterContent}
         >
           <TouchableOpacity
-            style={[styles.filterBtn, selectedChildId === 'all' && styles.filterBtnSelected]}
-            onPress={() => setSelectedChildId('all')}
+            style={[styles.filterBtn, selectedChildName === undefined && styles.filterBtnSelected]}
+            onPress={() => setSelectedChildName(undefined)}
             activeOpacity={0.7}
           >
             <Text
-              style={[styles.filterText, selectedChildId === 'all' && styles.filterTextSelected]}
+              style={[
+                styles.filterText,
+                selectedChildName === undefined && styles.filterTextSelected,
+              ]}
             >
               전체
             </Text>
           </TouchableOpacity>
-          {MOCK_CAL_CHILDREN.map((child) => {
-            const selected = selectedChildId === child.id;
+          {children.map((child) => {
+            const selected = selectedChildName === child.name;
             return (
               <TouchableOpacity
                 key={child.id}
                 style={[styles.filterBtn, selected && styles.filterBtnSelected]}
-                onPress={() => setSelectedChildId(child.id)}
+                onPress={() => setSelectedChildName(child.name)}
                 activeOpacity={0.7}
               >
-                <View style={[styles.filterDot, { backgroundColor: child.calendarColor }]} />
+                <View style={[styles.filterDot, { backgroundColor: child.colorCode }]} />
                 <Text style={[styles.filterText, selected && styles.filterTextSelected]}>
                   {child.name}
                 </Text>
@@ -232,56 +299,62 @@ const CalendarScreen = () => {
           <WeekCalendar
             weekDates={weekDates}
             today={today}
-            markedDates={markedDates}
+            markedDates={weekMarkedDates}
             onPrev={() => setWeekOffset((o) => o - 1)}
             onNext={() => setWeekOffset((o) => o + 1)}
           />
 
           {/* 주간 일정 목록 */}
-          <ScrollView
-            ref={weekScrollRef}
-            style={styles.list}
-            showsVerticalScrollIndicator={false}
-            onContentSizeChange={() => {
-              if (weekOffsetRef.current !== 0 || !shouldAutoScrollRef.current) return;
-              requestAnimationFrame(() => {
-                if (weekOffsetRef.current !== 0 || todayGroupY.current === undefined) return;
-                weekScrollRef.current?.scrollTo({ y: todayGroupY.current, animated: false });
-                shouldAutoScrollRef.current = false;
-              });
-            }}
-          >
-            <View style={styles.weekListContent}>
-              {weekEventGroups.length === 0 ? (
-                <Text style={styles.emptyText}>이번 주 일정이 없어요</Text>
-              ) : (
-                weekEventGroups.map((group) => (
-                  <View
-                    key={group.date}
-                    onLayout={(e) => {
-                      if (group.date === today) {
-                        todayGroupY.current = e.nativeEvent.layout.y;
-                      }
-                    }}
-                  >
-                    <Text style={styles.weekDateHeader}>{formatWeekDateHeader(group.date)}</Text>
-                    <View style={styles.cardGroup}>
-                      {group.events.map((event) => (
-                        <EventCard
-                          key={event.id}
-                          event={event}
-                          expanded={expandedIds.has(event.id)}
-                          isPast={event.date < today}
-                          onToggleExpand={() => toggleExpand(event.id)}
-                          onToggleCheck={(checkId) => toggleCheck(event.id, checkId)}
-                        />
-                      ))}
-                    </View>
-                  </View>
-                ))
-              )}
+          {isLoading ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color={colors.primary[400]} />
             </View>
-          </ScrollView>
+          ) : (
+            <ScrollView
+              ref={weekScrollRef}
+              style={styles.list}
+              showsVerticalScrollIndicator={false}
+              onContentSizeChange={() => {
+                if (weekOffsetRef.current !== 0 || !shouldAutoScrollRef.current) return;
+                requestAnimationFrame(() => {
+                  if (weekOffsetRef.current !== 0 || todayGroupY.current === undefined) return;
+                  weekScrollRef.current?.scrollTo({ y: todayGroupY.current, animated: false });
+                  shouldAutoScrollRef.current = false;
+                });
+              }}
+            >
+              <View style={styles.weekListContent}>
+                {weekEventGroups.length === 0 ? (
+                  <Text style={styles.emptyText}>이번 주 일정이 없어요</Text>
+                ) : (
+                  weekEventGroups.map((group) => (
+                    <View
+                      key={group.date}
+                      onLayout={(e) => {
+                        if (group.date === today) {
+                          todayGroupY.current = e.nativeEvent.layout.y;
+                        }
+                      }}
+                    >
+                      <Text style={styles.weekDateHeader}>{formatWeekDateHeader(group.date)}</Text>
+                      <View style={styles.cardGroup}>
+                        {group.events.map((event) => (
+                          <EventCard
+                            key={event.eventId}
+                            event={event}
+                            expanded={expandedIds.has(event.eventId)}
+                            isPast={group.date < today}
+                            onToggleExpand={() => toggleExpand(event.eventId)}
+                            onToggleCheck={(checklistId) => toggleCheck(event.eventId, checklistId)}
+                          />
+                        ))}
+                      </View>
+                    </View>
+                  ))
+                )}
+              </View>
+            </ScrollView>
+          )}
         </>
       ) : (
         <>
@@ -291,32 +364,39 @@ const CalendarScreen = () => {
             month={calendarMonth.month}
             today={today}
             selectedDate={selectedDate}
-            markedDates={markedDates}
+            markedDates={markedDatesMap}
             onDayPress={setSelectedDate}
             onPrevMonth={handlePrevMonth}
             onNextMonth={handleNextMonth}
           />
 
           {/* 선택 날짜 + 일정 목록 */}
-          <ScrollView style={styles.list} showsVerticalScrollIndicator={false}>
-            <Text style={styles.dayLabel}>{formatDayLabel(selectedDate)}</Text>
-            <View style={styles.listContent}>
-              {dayEvents.length === 0 ? (
-                <Text style={styles.emptyText}>등록된 일정이 없어요</Text>
-              ) : (
-                dayEvents.map((event) => (
-                  <EventCard
-                    key={event.id}
-                    event={event}
-                    expanded={expandedIds.has(event.id)}
-                    isPast={event.date < today}
-                    onToggleExpand={() => toggleExpand(event.id)}
-                    onToggleCheck={(checkId) => toggleCheck(event.id, checkId)}
-                  />
-                ))
-              )}
+          {isLoading ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color={colors.primary[400]} />
             </View>
-          </ScrollView>
+          ) : (
+            <ScrollView style={styles.list} showsVerticalScrollIndicator={false}>
+              <Text style={styles.dayLabel}>{formatDayLabel(selectedDate)}</Text>
+              <View style={styles.listContent}>
+                {isDailyLoading && <ActivityIndicator size="small" color={colors.primary[400]} />}
+                {!isDailyLoading && dayEvents.length === 0 && (
+                  <Text style={styles.emptyText}>등록된 일정이 없어요</Text>
+                )}
+                {!isDailyLoading &&
+                  dayEvents.map((event) => (
+                    <EventCard
+                      key={event.eventId}
+                      event={event}
+                      expanded={expandedIds.has(event.eventId)}
+                      isPast={selectedDate < today}
+                      onToggleExpand={() => toggleExpand(event.eventId)}
+                      onToggleCheck={(checklistId) => toggleCheck(event.eventId, checklistId)}
+                    />
+                  ))}
+              </View>
+            </ScrollView>
+          )}
         </>
       )}
     </View>

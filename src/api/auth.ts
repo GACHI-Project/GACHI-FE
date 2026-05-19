@@ -20,7 +20,7 @@ const wrapError = (error: unknown): Error => {
   return error instanceof Error ? error : new Error(String(error));
 };
 
-const apiClient = axios.create({
+export const apiClient = axios.create({
   baseURL: 'https://43.202.191.103',
   headers: { 'Content-Type': 'application/json' },
   timeout: 10000,

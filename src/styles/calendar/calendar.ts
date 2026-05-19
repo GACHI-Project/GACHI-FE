@@ -77,6 +77,13 @@ export default StyleSheet.create({
     borderRadius: 99,
   },
 
+  // 로딩
+  loadingContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
   // 일정 목록
   list: {
     flex: 1,
@@ -155,6 +162,7 @@ export default StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: 8,
     paddingVertical: 3,
+    maxWidth: 220,
   },
   tagText: {
     fontSize: 12,

@@ -57,7 +57,7 @@ const WeekCalendar = ({ weekDates, today, markedDates, onPrev, onNext }: WeekCal
               <Text style={[styles.dateText, isToday && styles.todayText]}>{day}</Text>
             </View>
             <View style={styles.dotsRow}>
-              {dots.slice(0, 3).map((dot) => (
+              {dots.slice(0, 4).map((dot) => (
                 <View key={dot.key} style={[styles.dot, { backgroundColor: dot.color }]} />
               ))}
             </View>
@@ -122,7 +122,8 @@ const styles = StyleSheet.create({
   },
   dotsRow: {
     flexDirection: 'row',
-    gap: 2,
+    justifyContent: 'center',
+    gap: 3,
     height: 4,
   },
   dot: {

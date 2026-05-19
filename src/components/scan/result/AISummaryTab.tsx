@@ -39,7 +39,7 @@ const mapSummaryError = (e: unknown): string => {
   return '요약을 불러오는 데 실패했어요.';
 };
 
-export default function AISummaryTab({ newsletterId }: Props) {
+const AISummaryTab = ({ newsletterId }: Props) => {
   const [summary, setSummary] = useState<NewsletterSummaryResult | null>(null);
   const [summaryLoading, setSummaryLoading] = useState(true);
   const [summaryError, setSummaryError] = useState<string | null>(null);
@@ -54,18 +54,26 @@ export default function AISummaryTab({ newsletterId }: Props) {
       setSummaryLoading(false);
       setTodoError('가정통신문 정보를 찾을 수 없어요.');
       setTodoLoading(false);
-      return;
+      return () => {};
     }
 
     let cancelled = false;
 
     getNewsletterSummary(newsletterId)
-      .then((data) => { if (!cancelled) setSummary(data); })
-      .catch((e) => { if (!cancelled) setSummaryError(mapSummaryError(e)); })
-      .finally(() => { if (!cancelled) setSummaryLoading(false); });
+      .then((data) => {
+        if (!cancelled) setSummary(data);
+      })
+      .catch((e) => {
+        if (!cancelled) setSummaryError(mapSummaryError(e));
+      })
+      .finally(() => {
+        if (!cancelled) setSummaryLoading(false);
+      });
 
     getNewsletterChecklist(newsletterId, 'TODO')
-      .then((data) => { if (!cancelled) setTodos(data); })
+      .then((data) => {
+        if (!cancelled) setTodos(data);
+      })
       .catch((e) => {
         if (cancelled) return;
         if (e instanceof NewsletterApiError && e.code === 'NL4041') {
@@ -74,51 +82,56 @@ export default function AISummaryTab({ newsletterId }: Props) {
           setTodoError('할 일 목록을 불러오는 데 실패했어요.');
         }
       })
-      .finally(() => { if (!cancelled) setTodoLoading(false); });
+      .finally(() => {
+        if (!cancelled) setTodoLoading(false);
+      });
 
     return () => {
       cancelled = true;
     };
   }, [newsletterId]);
 
+  const renderSummary = () => {
+    if (summaryLoading) return <ActivityIndicator size="small" color={colors.primary[400]} />;
+    if (summaryError) return <Text style={styles.errorText}>{summaryError}</Text>;
+    if (summary)
+      return (
+        <>
+          <Text style={styles.summaryTitle}>{summary.title}</Text>
+          <Text style={styles.body}>{summary.summary}</Text>
+        </>
+      );
+    return null;
+  };
+
+  const renderTodos = () => {
+    if (todoLoading) return <ActivityIndicator size="small" color={colors.primary[400]} />;
+    if (todoError) return <Text style={styles.errorText}>{todoError}</Text>;
+    if (todos.length === 0) return <Text style={styles.errorText}>등록된 할 일이 없어요.</Text>;
+    return (
+      <View style={styles.todoList}>
+        {todos.map((item) => (
+          <View key={item.checklistId} style={styles.todoItem}>
+            <View style={styles.bullet} />
+            <Text style={styles.todoText}>
+              {item.targetDateLabel && <Text style={styles.todoWhen}>{item.targetDateLabel}</Text>}
+              {item.targetDateLabel ? ' — ' : ''}
+              {item.content}
+            </Text>
+          </View>
+        ))}
+      </View>
+    );
+  };
+
   return (
     <View style={styles.list}>
       <SummaryCard icon="bulb-outline" iconBg={colors.primary[400]} title="AI 요약">
-        {summaryLoading ? (
-          <ActivityIndicator size="small" color={colors.primary[400]} />
-        ) : summaryError ? (
-          <Text style={styles.errorText}>{summaryError}</Text>
-        ) : summary ? (
-          <>
-            <Text style={styles.summaryTitle}>{summary.title}</Text>
-            <Text style={styles.body}>{summary.summary}</Text>
-          </>
-        ) : null}
+        {renderSummary()}
       </SummaryCard>
 
       <SummaryCard icon="alarm-outline" iconBg={colors.secondary[600]} title="오늘 할 일">
-        {todoLoading ? (
-          <ActivityIndicator size="small" color={colors.primary[400]} />
-        ) : todoError ? (
-          <Text style={styles.errorText}>{todoError}</Text>
-        ) : todos.length === 0 ? (
-          <Text style={styles.errorText}>등록된 할 일이 없어요.</Text>
-        ) : (
-          <View style={styles.todoList}>
-            {todos.map((item) => (
-              <View key={item.checklistId} style={styles.todoItem}>
-                <View style={styles.bullet} />
-                <Text style={styles.todoText}>
-                  {item.targetDateLabel && (
-                    <Text style={styles.todoWhen}>{item.targetDateLabel}</Text>
-                  )}
-                  {item.targetDateLabel ? ' — ' : ''}
-                  {item.content}
-                </Text>
-              </View>
-            ))}
-          </View>
-        )}
+        {renderTodos()}
       </SummaryCard>
 
       <SummaryCard icon="earth-outline" iconBg={colors.primary[400]} title="문화 맥락 안내">
@@ -143,7 +156,9 @@ export default function AISummaryTab({ newsletterId }: Props) {
       </SummaryCard>
     </View>
   );
-}
+};
+
+export default AISummaryTab;
 
 const styles = StyleSheet.create({
   list: {

@@ -2,6 +2,7 @@ import { View, Image, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import React from 'react';
 import Header from '../../src/components/common/Header';
 import ScanStepIndicator from '../../src/components/scan/ScanStepIndicator';
 import ScanChildPill from '../../src/components/scan/ScanChildPill';
@@ -10,9 +11,8 @@ import colors from '../../src/constants/colors';
 import fonts from '../../src/constants/fonts';
 import layout from '../../src/constants/layout';
 import { SCAN_FRAME_W, SCAN_FRAME_H, SCAN_DEFAULT_CHILD_COLOR } from '../../src/constants/scan';
-import React from 'react';
 
-export default function ScanPreviewScreen() {
+const ScanPreviewScreen = () => {
   const { photoUri, childId, childName, childColor, childGrade, source } = useLocalSearchParams<{
     photoUri: string;
     childId: string;
@@ -84,7 +84,9 @@ export default function ScanPreviewScreen() {
       </View>
     </View>
   );
-}
+};
+
+export default ScanPreviewScreen;
 
 const styles = StyleSheet.create({
   screen: {

@@ -23,7 +23,7 @@ import { SCAN_FRAME_H } from '../../src/constants/scan';
 import colors from '../../src/constants/colors';
 import styles from '../../src/styles/scan/loading';
 
-export default function ScanLoadingScreen() {
+const ScanLoadingScreen = () => {
   const { photoUri, childId, childName, childColor, childGrade } = useLocalSearchParams<{
     photoUri: string;
     childId: string;
@@ -72,7 +72,7 @@ export default function ScanLoadingScreen() {
   }, [scanLine]);
 
   useEffect(() => {
-    if (!photoUri) return;
+    if (!photoUri) return () => {};
     let cancelled = false;
 
     const startPolling = (id: number) => {
@@ -129,7 +129,7 @@ export default function ScanLoadingScreen() {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    if (!isComplete) return;
+    if (!isComplete) return () => {};
 
     completionAnimation.current = Animated.parallel([
       Animated.timing(frameOpacity, {
@@ -300,4 +300,6 @@ export default function ScanLoadingScreen() {
       <ScanHelpModal visible={helpVisible} onClose={() => setHelpVisible(false)} />
     </View>
   );
-}
+};
+
+export default ScanLoadingScreen;

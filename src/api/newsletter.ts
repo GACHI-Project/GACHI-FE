@@ -157,9 +157,7 @@ export interface NewsletterDetail {
   createdAt: string;
 }
 
-export const getNewsletterDetail = async (
-  newsletterId: number
-): Promise<NewsletterDetail> => {
+export const getNewsletterDetail = async (newsletterId: number): Promise<NewsletterDetail> => {
   try {
     const headers = await getAuthHeader();
     const response = await apiClient.get<{ result: NewsletterDetail }>(

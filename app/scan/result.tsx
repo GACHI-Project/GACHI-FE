@@ -142,6 +142,7 @@ export default function ScanResultScreen() {
         onConfirm={() => router.replace('/(tabs)/calendar')}
         onDismiss={() => router.replace('/(tabs)')}
         childName={displayChildName}
+        newsletterId={newsletterId}
       />
     </View>
   );

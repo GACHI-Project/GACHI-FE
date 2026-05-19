@@ -25,7 +25,7 @@ const FullDocTab = ({ newsletterId }: Props) => {
     if (!newsletterId) {
       setError('가정통신문 정보를 찾을 수 없어요.');
       setLoading(false);
-      return;
+      return () => {};
     }
 
     let cancelled = false;

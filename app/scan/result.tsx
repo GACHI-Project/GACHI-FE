@@ -46,7 +46,7 @@ const ScanResultScreen = () => {
     if (!newsletterId) {
       setDetail(null);
       setDetailLoading(false);
-      return;
+      return () => {};
     }
     let cancelled = false;
     setDetail(null);

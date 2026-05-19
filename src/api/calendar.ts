@@ -142,6 +142,73 @@ export const fetchWeeklyEvents = async (
   }
 };
 
+export interface CalendarPreviewItem {
+  tempEventId: number;
+  title: string;
+  extractedDate: string | null;
+  isDateExtracted: boolean;
+}
+
+export const getCalendarPreview = async (
+  newsletterId: number
+): Promise<CalendarPreviewItem[]> => {
+  try {
+    const headers = await getAuthHeader();
+    const response = await apiClient.get<{ result: { items: CalendarPreviewItem[] } }>(
+      `/api/v1/newsletters/${newsletterId}/calendar/preview`,
+      { headers }
+    );
+    return response.data.result.items;
+  } catch (error) {
+    throw wrapError(error);
+  }
+};
+
+export interface CalendarDatePatchEvent {
+  tempEventId: number;
+  correctedDate: string;
+}
+
+export const patchCalendarPreviewDates = async (
+  newsletterId: number,
+  events: CalendarDatePatchEvent[]
+): Promise<void> => {
+  try {
+    const headers = await getAuthHeader();
+    await apiClient.patch(
+      `/api/v1/newsletters/${newsletterId}/calendar/preview/dates`,
+      { events },
+      { headers }
+    );
+  } catch (error) {
+    throw wrapError(error);
+  }
+};
+
+export interface CalendarPostEvent {
+  tempEventId: number;
+  title: string;
+  startAt: string;
+  endAt: string | null;
+}
+
+export const postCalendarEvents = async (
+  newsletterId: number,
+  events: CalendarPostEvent[]
+): Promise<{ registeredCount: number }> => {
+  try {
+    const headers = await getAuthHeader();
+    const response = await apiClient.post<{ result: { registeredCount: number } }>(
+      `/api/v1/newsletters/${newsletterId}/calendar`,
+      { events },
+      { headers }
+    );
+    return response.data.result;
+  } catch (error) {
+    throw wrapError(error);
+  }
+};
+
 export const completeChecklist = async (
   checklistId: number,
   isCompleted: boolean

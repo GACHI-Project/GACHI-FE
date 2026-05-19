@@ -44,15 +44,28 @@ const ScanResultScreen = () => {
 
   useEffect(() => {
     if (!newsletterId) {
+      setDetail(null);
       setDetailLoading(false);
       return;
     }
+    let cancelled = false;
+    setDetail(null);
+    setDetailLoading(true);
+
     getNewsletterDetail(newsletterId)
-      .then(setDetail)
-      .catch(() => {
-        // 헤더 정보 로드 실패 시 route param fallback으로 표시
+      .then((data) => {
+        if (!cancelled) setDetail(data);
       })
-      .finally(() => setDetailLoading(false));
+      .catch(() => {
+        if (!cancelled) setDetail(null);
+      })
+      .finally(() => {
+        if (!cancelled) setDetailLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [newsletterId]);
 
   const displayTitle = detail?.title ?? '';

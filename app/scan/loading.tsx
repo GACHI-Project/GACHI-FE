@@ -93,7 +93,8 @@ const ScanLoadingScreen = () => {
           if (result.status === 'COMPLETED') {
             setIsComplete(true);
             return;
-          } else if (result.status === 'FAILED') {
+          }
+          if (result.status === 'FAILED') {
             Alert.alert('분석 실패', '문서 분석에 실패했어요. 다시 시도해주세요.', [
               { text: '확인', onPress: () => router.back() },
             ]);

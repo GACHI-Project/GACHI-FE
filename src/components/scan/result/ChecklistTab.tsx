@@ -1,10 +1,7 @@
 import { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import {
-  getNewsletterChecklist,
-  NewsletterApiError,
-} from '../../../api/newsletter';
+import { getNewsletterChecklist, NewsletterApiError } from '../../../api/newsletter';
 import type { ChecklistItem } from '../../../api/newsletter';
 import colors from '../../../constants/colors';
 import fonts from '../../../constants/fonts';
@@ -13,7 +10,7 @@ interface Props {
   newsletterId?: number;
 }
 
-export default function ChecklistTab({ newsletterId }: Props) {
+const ChecklistTab = ({ newsletterId }: Props) => {
   const [items, setItems] = useState<ChecklistItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -22,7 +19,7 @@ export default function ChecklistTab({ newsletterId }: Props) {
     if (!newsletterId) {
       setError('가정통신문 정보를 찾을 수 없어요.');
       setLoading(false);
-      return;
+      return () => {};
     }
 
     let cancelled = false;
@@ -117,7 +114,9 @@ export default function ChecklistTab({ newsletterId }: Props) {
       ))}
     </View>
   );
-}
+};
+
+export default ChecklistTab;
 
 const styles = StyleSheet.create({
   list: {

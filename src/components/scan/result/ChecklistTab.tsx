@@ -16,6 +16,10 @@ const ChecklistTab = ({ newsletterId }: Props) => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    setLoading(true);
+    setError(null);
+    setItems([]);
+
     if (!newsletterId) {
       setError('가정통신문 정보를 찾을 수 없어요.');
       setLoading(false);

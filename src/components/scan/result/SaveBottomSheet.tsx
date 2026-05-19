@@ -322,14 +322,21 @@ const SaveBottomSheet = ({
     setIsEditing(false);
   };
 
+  const canRegister = !!newsletterId && !!preview && !previewLoading && !previewError;
+
   const handleRegisterConfirm = async () => {
+    if (!canRegister) {
+      Alert.alert('등록 실패', '일정 미리보기 정보를 먼저 불러와주세요.');
+      return;
+    }
+
     const startAt = formatCorrectedDate(year, month, day);
     if (!startAt) {
       Alert.alert('오류', '올바른 날짜를 입력해주세요.');
       return;
     }
 
-    if (!dateFound && newsletterId && preview?.tempEventId) {
+    if (!dateFound && preview.tempEventId) {
       setDatePatching(true);
       try {
         await patchCalendarPreviewDates(newsletterId, [
@@ -343,21 +350,16 @@ const SaveBottomSheet = ({
       setDatePatching(false);
     }
 
-    if (newsletterId && preview) {
-      setRegistering(true);
-      try {
-        await postCalendarEvents(newsletterId, [
-          { tempEventId: preview.tempEventId, title: preview.title, startAt, endAt: null },
-        ]);
-      } catch (e) {
-        Alert.alert('등록 실패', mapRegisterError(e));
-        setRegistering(false);
-        return;
-      }
-      setRegistering(false);
+    setRegistering(true);
+    try {
+      await postCalendarEvents(newsletterId, [
+        { tempEventId: preview.tempEventId, title: preview.title, startAt, endAt: null },
+      ]);
+      setStep('success');
+    } catch (e) {
+      Alert.alert('등록 실패', mapRegisterError(e));
     }
-
-    setStep('success');
+    setRegistering(false);
   };
 
   return (
@@ -462,7 +464,7 @@ const SaveBottomSheet = ({
                   <PrimaryButton
                     label={datePatching || registering ? '저장 중...' : '✓ 네, 등록할게요'}
                     onPress={handleRegisterConfirm}
-                    disabled={datePatching || registering}
+                    disabled={datePatching || registering || !canRegister}
                     style={STYLE_FLEX_2}
                   />
                 </View>

@@ -1,4 +1,6 @@
 import axios from 'axios';
+import * as SecureStore from 'expo-secure-store';
+import { apiClient } from './auth';
 
 export class ChildApiError extends Error {
   constructor(
@@ -25,6 +27,12 @@ const childApiClient = axios.create({
   headers: { 'Content-Type': 'application/json' },
   timeout: 10000,
 });
+
+const getAuthHeader = async () => {
+  const token = await SecureStore.getItemAsync('accessToken');
+  if (!token) throw new ChildApiError('UNAUTHORIZED', '로그인이 필요합니다.');
+  return { Authorization: `Bearer ${token}` };
+};
 
 export interface ChildPayload {
   name: string;
@@ -71,6 +79,18 @@ export const registerChildren = async (
       )
     );
     return results.map((res) => res.data.result);
+  } catch (error) {
+    throw wrapError(error);
+  }
+};
+
+export const getMyChildren = async (): Promise<ChildResult[]> => {
+  try {
+    const headers = await getAuthHeader();
+    const response = await apiClient.get<{ result: ChildResult[] }>('/api/v1/children', {
+      headers,
+    });
+    return response.data.result ?? [];
   } catch (error) {
     throw wrapError(error);
   }

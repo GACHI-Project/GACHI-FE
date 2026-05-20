@@ -1,6 +1,8 @@
 import { View, Image, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
+import React from 'react';
 import Header from '../../src/components/common/Header';
 import ScanStepIndicator from '../../src/components/scan/ScanStepIndicator';
 import ScanChildPill from '../../src/components/scan/ScanChildPill';
@@ -10,18 +12,24 @@ import fonts from '../../src/constants/fonts';
 import layout from '../../src/constants/layout';
 import { SCAN_FRAME_W, SCAN_FRAME_H, SCAN_DEFAULT_CHILD_COLOR } from '../../src/constants/scan';
 
-export default function ScanPreviewScreen() {
-  const { photoUri, childName, childColor, childGrade, source } = useLocalSearchParams<{
-    photoUri: string;
-    childName: string;
-    childColor: string;
-    childGrade: string;
-    source: 'camera' | 'gallery';
-  }>();
+const ScanPreviewScreen = () => {
+  const { photoUri, childId, childName, childColor, childGrade, source, fileType } =
+    useLocalSearchParams<{
+      photoUri: string;
+      childId: string;
+      childName: string;
+      childColor: string;
+      childGrade: string;
+      source: 'camera' | 'gallery' | 'pdf';
+      fileType?: string;
+    }>();
   const insets = useSafeAreaInsets();
 
   const hasChild = !!childName;
-  const retakeLabel = source === 'gallery' ? '다시 선택하기' : '다시 찍기';
+  const isPdf =
+    source === 'pdf' || fileType === 'application/pdf' || photoUri?.toLowerCase().endsWith('.pdf');
+  const pdfFilename = photoUri?.split('/').pop() ?? 'document.pdf';
+  const retakeLabel = source === 'gallery' || isPdf ? '다시 선택하기' : '다시 찍기';
 
   return (
     <View style={styles.screen}>
@@ -33,12 +41,22 @@ export default function ScanPreviewScreen() {
       )}
 
       <View style={styles.frameWrapper}>
-        <Image
-          source={{ uri: photoUri }}
-          style={styles.image}
-          resizeMode="cover"
-          accessibilityLabel="스캔할 문서 미리보기"
-        />
+        {isPdf ? (
+          <View style={styles.pdfPlaceholder}>
+            <Ionicons name="document-text-outline" size={48} color={colors.primary[400]} />
+            <Text style={styles.pdfFilename} numberOfLines={2}>
+              {pdfFilename}
+            </Text>
+            <Text style={styles.pdfLabel}>PDF 파일</Text>
+          </View>
+        ) : (
+          <Image
+            source={{ uri: photoUri }}
+            style={styles.image}
+            resizeMode="cover"
+            accessibilityLabel="스캔할 문서 미리보기"
+          />
+        )}
         <ScanCornerBrackets />
       </View>
 
@@ -57,7 +75,7 @@ export default function ScanPreviewScreen() {
           onPress={() =>
             router.push({
               pathname: '/scan/loading',
-              params: { photoUri, childName, childColor, childGrade },
+              params: { photoUri, childId, childName, childColor, childGrade },
             })
           }
           activeOpacity={0.8}
@@ -69,7 +87,9 @@ export default function ScanPreviewScreen() {
       </View>
     </View>
   );
-}
+};
+
+export default ScanPreviewScreen;
 
 const styles = StyleSheet.create({
   screen: {
@@ -87,6 +107,26 @@ const styles = StyleSheet.create({
   image: {
     width: SCAN_FRAME_W,
     height: SCAN_FRAME_H,
+  },
+  pdfPlaceholder: {
+    width: SCAN_FRAME_W,
+    height: SCAN_FRAME_H,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+    backgroundColor: colors.primary[0],
+  },
+  pdfFilename: {
+    fontSize: 14,
+    fontFamily: fonts.semiBold,
+    color: colors.text.primary,
+    textAlign: 'center',
+    paddingHorizontal: 16,
+  },
+  pdfLabel: {
+    fontSize: 12,
+    fontFamily: fonts.medium,
+    color: colors.text.secondary,
   },
   buttons: {
     flex: 1,

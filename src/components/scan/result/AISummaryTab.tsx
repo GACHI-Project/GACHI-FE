@@ -1,13 +1,18 @@
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
 import SummaryCard from './SummaryCard';
+import {
+  getNewsletterSummary,
+  getNewsletterChecklist,
+  NewsletterApiError,
+} from '../../../api/newsletter';
+import type { NewsletterSummaryResult, ChecklistItem } from '../../../api/newsletter';
 import colors from '../../../constants/colors';
 import fonts from '../../../constants/fonts';
 
-const TODO_ITEMS = [
-  { when: '지금 바로', desc: '동의서에 서명 후 내일 가방에 넣어두기' },
-  { when: '내일', desc: '담임 선생님께 동의서 직접 제출' },
-  { when: '5월 21일', desc: '도시락, 체육복, 물병 준비' },
-];
+interface Props {
+  newsletterId?: number;
+}
 
 const QNA_ITEMS = [
   {
@@ -24,45 +29,128 @@ const QNA_ITEMS = [
   },
 ];
 
-export default function AISummaryTab() {
+const mapSummaryError = (e: unknown): string => {
+  if (e instanceof NewsletterApiError) {
+    if (e.code === 'NL4092') return '아직 분석 중인 가정통신문이에요.';
+    if (e.code === 'NL4221') return '분석에 실패한 가정통신문이에요.';
+    if (e.code === 'NL4041') return '가정통신문을 찾을 수 없어요.';
+    if (e.code === 'NL4031') return '접근 권한이 없어요.';
+  }
+  return '요약을 불러오는 데 실패했어요.';
+};
+
+const AISummaryTab = ({ newsletterId }: Props) => {
+  const [summary, setSummary] = useState<NewsletterSummaryResult | null>(null);
+  const [summaryLoading, setSummaryLoading] = useState(true);
+  const [summaryError, setSummaryError] = useState<string | null>(null);
+
+  const [todos, setTodos] = useState<ChecklistItem[]>([]);
+  const [todoLoading, setTodoLoading] = useState(true);
+  const [todoError, setTodoError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setSummary(null);
+    setSummaryLoading(true);
+    setSummaryError(null);
+    setTodos([]);
+    setTodoLoading(true);
+    setTodoError(null);
+
+    if (!newsletterId) {
+      setSummaryError('가정통신문 정보를 찾을 수 없어요.');
+      setSummaryLoading(false);
+      setTodoError('가정통신문 정보를 찾을 수 없어요.');
+      setTodoLoading(false);
+      return () => {};
+    }
+
+    let cancelled = false;
+
+    getNewsletterSummary(newsletterId)
+      .then((data) => {
+        if (!cancelled) {
+          setSummary(data);
+          setSummaryError(null);
+        }
+      })
+      .catch((e) => {
+        if (!cancelled) setSummaryError(mapSummaryError(e));
+      })
+      .finally(() => {
+        if (!cancelled) setSummaryLoading(false);
+      });
+
+    getNewsletterChecklist(newsletterId, 'TODO')
+      .then((data) => {
+        if (!cancelled) {
+          setTodos(data);
+          setTodoError(null);
+        }
+      })
+      .catch((e) => {
+        if (cancelled) return;
+        if (e instanceof NewsletterApiError && e.code === 'NL4041') {
+          setTodoError('가정통신문을 찾을 수 없어요.');
+        } else {
+          setTodoError('할 일 목록을 불러오는 데 실패했어요.');
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setTodoLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [newsletterId]);
+
+  const renderSummary = () => {
+    if (summaryLoading) return <ActivityIndicator size="small" color={colors.primary[400]} />;
+    if (summaryError) return <Text style={styles.errorText}>{summaryError}</Text>;
+    if (summary)
+      return (
+        <>
+          <Text style={styles.summaryTitle}>{summary.title}</Text>
+          <Text style={styles.body}>{summary.summary}</Text>
+        </>
+      );
+    return null;
+  };
+
+  const renderTodos = () => {
+    if (todoLoading) return <ActivityIndicator size="small" color={colors.primary[400]} />;
+    if (todoError) return <Text style={styles.errorText}>{todoError}</Text>;
+    if (todos.length === 0) return <Text style={styles.errorText}>등록된 할 일이 없어요.</Text>;
+    return (
+      <View style={styles.todoList}>
+        {todos.map((item) => (
+          <View key={item.checklistId} style={styles.todoItem}>
+            <View style={styles.bullet} />
+            <Text style={styles.todoText}>
+              {item.targetDateLabel && <Text style={styles.todoWhen}>{item.targetDateLabel}</Text>}
+              {item.targetDateLabel ? ' — ' : ''}
+              {item.content}
+            </Text>
+          </View>
+        ))}
+      </View>
+    );
+  };
+
   return (
     <View style={styles.list}>
       <SummaryCard icon="bulb-outline" iconBg={colors.primary[400]} title="AI 요약">
-        <Text style={styles.body}>
-          {'첫째 반이 '}
-          <Text style={styles.highlight}>5월 22일 목요일</Text>
-          {'에 '}
-          <Text style={styles.highlight}>국립민속박물관과 경복궁</Text>
-          {
-            '으로 봄 현장학습을 가요. 전일 체험학습이라 학교 점심 급식이 없으니 도시락을 꼭 챙겨야 해요.'
-          }
-        </Text>
-        <Text style={styles.body}>
-          {'가장 중요한 건 '}
-          <Text style={styles.highlight}>동의서를 오늘(5월 15일)까지</Text>
-          {' 담임 선생님께 직접 제출하는 것이에요.'}
-        </Text>
+        {renderSummary()}
       </SummaryCard>
 
       <SummaryCard icon="alarm-outline" iconBg={colors.secondary[600]} title="오늘 할 일">
-        <View style={styles.todoList}>
-          {TODO_ITEMS.map((item, i) => (
-            <View key={String(i)} style={styles.todoItem}>
-              <View style={styles.bullet} />
-              <Text style={styles.todoText}>
-                <Text style={styles.todoWhen}>{item.when}</Text>
-                {' — '}
-                {item.desc}
-              </Text>
-            </View>
-          ))}
-        </View>
+        {renderTodos()}
       </SummaryCard>
 
       <SummaryCard icon="earth-outline" iconBg={colors.primary[400]} title="문화 맥락 안내">
         <View style={styles.qnaList}>
-          {QNA_ITEMS.map((item, i) => (
-            <View key={String(i)} style={styles.qnaItem}>
+          {QNA_ITEMS.map((item) => (
+            <View key={item.q} style={styles.qnaItem}>
               <View style={styles.qnaRow}>
                 <Text style={styles.qLabel}>Q.</Text>
                 <Text style={styles.qText}>{item.q}</Text>
@@ -81,11 +169,18 @@ export default function AISummaryTab() {
       </SummaryCard>
     </View>
   );
-}
+};
+
+export default AISummaryTab;
 
 const styles = StyleSheet.create({
   list: {
     gap: 16,
+  },
+  summaryTitle: {
+    fontSize: 15,
+    fontFamily: fonts.semiBold,
+    color: colors.text.primary,
   },
   body: {
     fontSize: 14,
@@ -93,9 +188,10 @@ const styles = StyleSheet.create({
     color: colors.text.primary,
     lineHeight: 22,
   },
-  highlight: {
-    fontFamily: fonts.semiBold,
-    color: colors.primary[500],
+  errorText: {
+    fontSize: 14,
+    fontFamily: fonts.medium,
+    color: colors.text.secondary,
   },
   todoList: {
     gap: 10,

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -10,12 +10,21 @@ import {
   StyleSheet,
   Keyboard,
   Platform,
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PrimaryButton, SecondaryButton } from '../../common/Button';
 import styles from '../../../styles/scan/saveBottomSheet';
 import colors from '../../../constants/colors';
+import {
+  getCalendarPreview,
+  patchCalendarPreviewDates,
+  postCalendarEvents,
+  CalendarApiError,
+} from '../../../api/calendar';
+import type { CalendarPreviewItem } from '../../../api/calendar';
 
 interface Props {
   visible: boolean;
@@ -23,11 +32,46 @@ interface Props {
   onConfirm: () => void;
   onDismiss: () => void;
   childName: string;
-  dateFound?: boolean;
+  newsletterId?: number;
 }
 
 const SHEET_HEIGHT = 560;
 const returnTrue = () => true;
+
+const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'] as const;
+
+const formatCorrectedDate = (y: string, m: string, d: string): string | null => {
+  const yn = Number(y);
+  const mn = Number(m);
+  const dn = Number(d);
+  if (!y || !m || !d || Number.isNaN(yn) || Number.isNaN(mn) || Number.isNaN(dn)) return null;
+  const date = new Date(yn, mn - 1, dn);
+  if (Number.isNaN(date.getTime()) || date.getMonth() !== mn - 1) return null;
+  return `${String(yn).padStart(4, '0')}-${String(mn).padStart(2, '0')}-${String(dn).padStart(2, '0')}`;
+};
+
+const mapRegisterError = (e: unknown): string => {
+  if (e instanceof CalendarApiError) {
+    if (e.code === 'COMMON4001') return '입력값이 올바르지 않아요.';
+    if (e.code === 'NL4041') return '가정통신문을 찾을 수 없어요.';
+  }
+  return '일정 등록에 실패했어요.';
+};
+
+const mapPatchError = (e: unknown): string => {
+  if (e instanceof CalendarApiError) {
+    if (e.code === 'COMMON4001') return '날짜 형식이 올바르지 않아요.';
+    if (e.code === 'NL4041') return '가정통신문을 찾을 수 없어요.';
+    if (e.code === 'CAL4042') return '미리보기 데이터가 만료됐어요. 다시 시도해주세요.';
+  }
+  return '날짜 저장에 실패했어요.';
+};
+
+const getDisplayDate = (y: string, m: string, d: string) => {
+  const date = new Date(Number(y), Number(m) - 1, Number(d));
+  const weekday = Number.isNaN(date.getTime()) ? '' : `${WEEKDAYS[date.getDay()]}요일 · `;
+  return `${y}년 ${m}월 ${d}일 ${weekday}종일`;
+};
 
 interface DateInputFieldsProps {
   year: string;
@@ -38,87 +82,127 @@ interface DateInputFieldsProps {
   onDayChange: (v: string) => void;
 }
 
-function DateInputFields({
+const DateInputFields = ({
   year,
   month,
   day,
   onYearChange,
   onMonthChange,
   onDayChange,
-}: DateInputFieldsProps) {
-  return (
-    <View style={styles.dateInputRow}>
-      <View style={styles.dateInputWrap}>
-        <TextInput
-          style={styles.dateInput}
-          value={year}
-          onChangeText={onYearChange}
-          keyboardType="number-pad"
-          maxLength={4}
-          accessibilityLabel="년도"
-        />
-        <Text style={styles.dateUnit}>년</Text>
-      </View>
-      <View style={styles.dateInputWrap}>
-        <TextInput
-          style={styles.dateInput}
-          value={month}
-          onChangeText={onMonthChange}
-          keyboardType="number-pad"
-          maxLength={2}
-          accessibilityLabel="월"
-        />
-        <Text style={styles.dateUnit}>월</Text>
-      </View>
-      <View style={styles.dateInputWrap}>
-        <TextInput
-          style={styles.dateInput}
-          value={day}
-          onChangeText={onDayChange}
-          keyboardType="number-pad"
-          maxLength={2}
-          accessibilityLabel="일"
-        />
-        <Text style={styles.dateUnit}>일</Text>
-      </View>
+}: DateInputFieldsProps) => (
+  <View style={styles.dateInputRow}>
+    <View style={styles.dateInputWrap}>
+      <TextInput
+        style={styles.dateInput}
+        value={year}
+        onChangeText={onYearChange}
+        keyboardType="number-pad"
+        maxLength={4}
+        accessibilityLabel="년도"
+      />
+      <Text style={styles.dateUnit}>년</Text>
     </View>
-  );
-}
-
-// TODO: 실제 문서에서 추출한 일정 데이터로 교체
-const MOCK_EVENT = {
-  title: '봄 현장학습',
-  reminders: ['동의서 마감 알림 - 3월 22일', '당일 준비 알림 - 3월 26일'],
-};
+    <View style={styles.dateInputWrap}>
+      <TextInput
+        style={styles.dateInput}
+        value={month}
+        onChangeText={onMonthChange}
+        keyboardType="number-pad"
+        maxLength={2}
+        accessibilityLabel="월"
+      />
+      <Text style={styles.dateUnit}>월</Text>
+    </View>
+    <View style={styles.dateInputWrap}>
+      <TextInput
+        style={styles.dateInput}
+        value={day}
+        onChangeText={onDayChange}
+        keyboardType="number-pad"
+        maxLength={2}
+        accessibilityLabel="일"
+      />
+      <Text style={styles.dateUnit}>일</Text>
+    </View>
+  </View>
+);
 
 const STYLE_FULL_WIDTH = { width: '100%' } as const;
 const STYLE_FLEX_1 = { flex: 1 } as const;
 const STYLE_FLEX_2 = { flex: 2 } as const;
 
-export default function SaveBottomSheet({
+const SaveBottomSheet = ({
   visible,
   onClose,
   onConfirm,
   onDismiss,
   childName,
-  dateFound = true,
-}: Props) {
+  newsletterId,
+}: Props) => {
   const insets = useSafeAreaInsets();
   const [show, setShow] = useState(false);
   const [step, setStep] = useState<'confirm' | 'success'>('confirm');
   const [isEditing, setIsEditing] = useState(false);
-  // TODO: 추출된 날짜로 초기값 설정
-  const [year, setYear] = useState('2026');
-  const [month, setMonth] = useState('3');
-  const [day, setDay] = useState('26');
+  const [year, setYear] = useState('');
+  const [month, setMonth] = useState('');
+  const [day, setDay] = useState('');
+
+  const [preview, setPreview] = useState<CalendarPreviewItem | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewError, setPreviewError] = useState<string | null>(null);
+  const [datePatching, setDatePatching] = useState(false);
+  const [registering, setRegistering] = useState(false);
 
   const opacity = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(SHEET_HEIGHT)).current;
   const keyboardOffset = useRef(new Animated.Value(0)).current;
   const combinedY = useRef(Animated.add(translateY, keyboardOffset)).current;
 
-  const displayDate = `${year}년 ${month}월 ${day}일 목요일 · 종일`; // TODO: 추출된 날짜 및 실제 요일 계산으로 교체
+  const dateFound = preview?.isDateExtracted ?? true;
+  const displayDate = getDisplayDate(year, month, day);
 
+  // 미리보기 데이터 fetch
+  useEffect(() => {
+    if (!visible || !newsletterId) return () => {};
+    let cancelled = false;
+
+    setPreviewLoading(true);
+    setPreviewError(null);
+
+    getCalendarPreview(newsletterId)
+      .then((items) => {
+        if (cancelled) return;
+        const first = items[0] ?? null;
+        setPreview(first);
+        if (first?.extractedDate) {
+          const [y, m, d] = first.extractedDate.split('-');
+          setYear(y);
+          setMonth(String(Number(m)));
+          setDay(String(Number(d)));
+        } else {
+          setYear('');
+          setMonth('');
+          setDay('');
+        }
+      })
+      .catch((e) => {
+        if (cancelled) return;
+        if (e instanceof CalendarApiError && e.code === 'CAL4042') {
+          setPreviewError('AI 분석 중이거나 미리보기 데이터가 만료됐어요.');
+        } else {
+          setPreviewError('일정 정보를 불러오는 데 실패했어요.');
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setPreviewLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [visible, newsletterId]);
+
+  // 시트 애니메이션
   useEffect(() => {
     if (visible) {
       if (show) return;
@@ -147,6 +231,7 @@ export default function SaveBottomSheet({
     }
   }, [visible, show, opacity, translateY, keyboardOffset]);
 
+  // 키보드 오프셋
   useEffect(() => {
     const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
     const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
@@ -172,6 +257,110 @@ export default function SaveBottomSheet({
       onHide.remove();
     };
   }, [keyboardOffset]);
+
+  const eventTitle = preview?.title ?? '';
+
+  const renderEventCardContent = () => {
+    if (previewLoading) return <ActivityIndicator size="small" color={colors.primary[400]} />;
+    if (previewError) return <Text style={localStyles.errorText}>{previewError}</Text>;
+    return (
+      <>
+        <View style={styles.eventHeader}>
+          <View style={styles.eventDot} />
+          <Text style={styles.eventTitle}>
+            {eventTitle} · {childName}
+          </Text>
+        </View>
+        {dateFound ? (
+          <View style={styles.eventDateRow}>
+            <Text style={styles.eventDate}>{displayDate}</Text>
+            <TouchableOpacity
+              style={styles.editBadge}
+              onPress={() => setIsEditing((v) => !v)}
+              accessibilityRole="button"
+              accessibilityLabel="일정 수정"
+            >
+              <Text style={styles.editBadgeText}>{isEditing ? '✏️ 수정 중' : '✏️ 수정'}</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <>
+            <View style={styles.divider} />
+            <DateInputFields
+              year={year}
+              month={month}
+              day={day}
+              onYearChange={setYear}
+              onMonthChange={setMonth}
+              onDayChange={setDay}
+            />
+          </>
+        )}
+      </>
+    );
+  };
+
+  const handleDateConfirm = async () => {
+    const correctedDate = formatCorrectedDate(year, month, day);
+    if (!correctedDate) {
+      Alert.alert('오류', '올바른 날짜를 입력해주세요.');
+      return;
+    }
+    if (newsletterId && preview?.tempEventId) {
+      setDatePatching(true);
+      try {
+        await patchCalendarPreviewDates(newsletterId, [
+          { tempEventId: preview.tempEventId, correctedDate },
+        ]);
+      } catch (e) {
+        Alert.alert('날짜 저장 실패', mapPatchError(e));
+        setDatePatching(false);
+        return;
+      }
+      setDatePatching(false);
+    }
+    setIsEditing(false);
+  };
+
+  const canRegister = !!newsletterId && !!preview && !previewLoading && !previewError;
+
+  const handleRegisterConfirm = async () => {
+    if (!canRegister) {
+      Alert.alert('등록 실패', '일정 미리보기 정보를 먼저 불러와주세요.');
+      return;
+    }
+
+    const startAt = formatCorrectedDate(year, month, day);
+    if (!startAt) {
+      Alert.alert('오류', '올바른 날짜를 입력해주세요.');
+      return;
+    }
+
+    if (!dateFound && preview.tempEventId) {
+      setDatePatching(true);
+      try {
+        await patchCalendarPreviewDates(newsletterId, [
+          { tempEventId: preview.tempEventId, correctedDate: startAt },
+        ]);
+      } catch (e) {
+        Alert.alert('날짜 저장 실패', mapPatchError(e));
+        setDatePatching(false);
+        return;
+      }
+      setDatePatching(false);
+    }
+
+    setRegistering(true);
+    try {
+      await postCalendarEvents(newsletterId, [
+        { tempEventId: preview.tempEventId, title: preview.title, startAt, endAt: null },
+      ]);
+      setStep('success');
+    } catch (e) {
+      Alert.alert('등록 실패', mapRegisterError(e));
+    }
+    setRegistering(false);
+  };
 
   return (
     <Modal visible={show} transparent animationType="none" onRequestClose={onClose}>
@@ -207,19 +396,10 @@ export default function SaveBottomSheet({
                     <View style={styles.eventDot} />
                     <View style={styles.successEventInfo}>
                       <Text style={styles.eventTitle}>
-                        {MOCK_EVENT.title} · {childName}
+                        {eventTitle} · {childName}
                       </Text>
                       <Text style={styles.eventDate}>{displayDate}</Text>
                     </View>
-                  </View>
-                  <View style={styles.divider} />
-                  <View style={styles.reminderList}>
-                    {MOCK_EVENT.reminders.map((r) => (
-                      <View key={r} style={styles.reminderRow}>
-                        <Text style={styles.reminderBullet}>•</Text>
-                        <Text style={styles.reminderText}>{r}</Text>
-                      </View>
-                    ))}
                   </View>
                 </View>
                 <PrimaryButton
@@ -239,6 +419,7 @@ export default function SaveBottomSheet({
                       : '날짜를 직접 입력해주세요.'}
                   </Text>
                 </View>
+
                 {!dateFound && (
                   <View style={styles.warningCard}>
                     <Ionicons name="warning" size={16} color={colors.text.primary} />
@@ -247,52 +428,9 @@ export default function SaveBottomSheet({
                     </Text>
                   </View>
                 )}
-                <View style={styles.eventCard}>
-                  <View style={styles.eventHeader}>
-                    <View style={styles.eventDot} />
-                    <Text style={styles.eventTitle}>
-                      {MOCK_EVENT.title} · {childName}
-                    </Text>
-                  </View>
-                  {dateFound ? (
-                    <>
-                      <View style={styles.eventDateRow}>
-                        <Text style={styles.eventDate}>{displayDate}</Text>
-                        <TouchableOpacity
-                          style={styles.editBadge}
-                          onPress={() => setIsEditing((v) => !v)}
-                          accessibilityRole="button"
-                          accessibilityLabel="일정 수정"
-                        >
-                          <Text style={styles.editBadgeText}>
-                            {isEditing ? '✏️ 수정 중' : '✏️ 수정'}
-                          </Text>
-                        </TouchableOpacity>
-                      </View>
-                      <View style={styles.divider} />
-                      <View style={styles.reminderList}>
-                        {MOCK_EVENT.reminders.map((r) => (
-                          <View key={r} style={styles.reminderRow}>
-                            <Text style={styles.reminderBullet}>•</Text>
-                            <Text style={styles.reminderText}>{r}</Text>
-                          </View>
-                        ))}
-                      </View>
-                    </>
-                  ) : (
-                    <>
-                      <View style={styles.divider} />
-                      <DateInputFields
-                        year={year}
-                        month={month}
-                        day={day}
-                        onYearChange={setYear}
-                        onMonthChange={setMonth}
-                        onDayChange={setDay}
-                      />
-                    </>
-                  )}
-                </View>
+
+                <View style={styles.eventCard}>{renderEventCardContent()}</View>
+
                 {dateFound && isEditing && (
                   <View style={styles.dateEditorCard}>
                     <Text style={styles.dateEditorLabel}>날짜 변경</Text>
@@ -306,20 +444,27 @@ export default function SaveBottomSheet({
                     />
                     <TouchableOpacity
                       style={styles.dateConfirmBtn}
-                      onPress={() => setIsEditing(false)}
+                      onPress={handleDateConfirm}
+                      disabled={datePatching}
                       activeOpacity={0.8}
                       accessibilityRole="button"
                       accessibilityLabel="날짜 확인"
                     >
-                      <Text style={styles.dateConfirmBtnText}>확인</Text>
+                      {datePatching ? (
+                        <ActivityIndicator size="small" color={colors.text.white} />
+                      ) : (
+                        <Text style={styles.dateConfirmBtnText}>확인</Text>
+                      )}
                     </TouchableOpacity>
                   </View>
                 )}
+
                 <View style={styles.buttons}>
                   <SecondaryButton label="아니요" onPress={onClose} style={STYLE_FLEX_1} />
                   <PrimaryButton
-                    label="✓ 네, 등록할게요"
-                    onPress={() => setStep('success')}
+                    label={datePatching || registering ? '저장 중...' : '✓ 네, 등록할게요'}
+                    onPress={handleRegisterConfirm}
+                    disabled={datePatching || registering || !canRegister}
                     style={STYLE_FLEX_2}
                   />
                 </View>
@@ -330,4 +475,15 @@ export default function SaveBottomSheet({
       </View>
     </Modal>
   );
-}
+};
+
+export default SaveBottomSheet;
+
+const localStyles = StyleSheet.create({
+  errorText: {
+    fontSize: 13,
+    color: colors.text.secondary,
+    textAlign: 'center',
+    paddingVertical: 8,
+  },
+});

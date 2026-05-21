@@ -34,9 +34,9 @@ const getGreetingByTime = (): string => {
 };
 
 const HomeScreen = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const insets = useSafeAreaInsets();
-  const greetingText = useMemo(() => getGreetingByTime(), []);
+  const greetingText = useMemo(() => getGreetingByTime(), [i18n.language]);
 
   return (
     <View style={styles.screen}>

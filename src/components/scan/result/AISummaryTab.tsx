@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import i18n from '../../../i18n';
 import SummaryCard from './SummaryCard';
 import {
   getNewsletterSummary,
@@ -16,14 +15,14 @@ interface Props {
   newsletterId?: number;
 }
 
-const mapSummaryError = (e: unknown): string => {
+const mapSummaryErrorKey = (e: unknown): string => {
   if (e instanceof NewsletterApiError) {
-    if (e.code === 'NL4092') return i18n.t('scan.result.aiSummary.error.analyzing');
-    if (e.code === 'NL4221') return i18n.t('scan.result.aiSummary.error.analysisFailed');
-    if (e.code === 'NL4041') return i18n.t('scan.result.aiSummary.error.newsletterNotFound');
-    if (e.code === 'NL4031') return i18n.t('scan.result.aiSummary.error.noAccess');
+    if (e.code === 'NL4092') return 'scan.result.aiSummary.error.analyzing';
+    if (e.code === 'NL4221') return 'scan.result.aiSummary.error.analysisFailed';
+    if (e.code === 'NL4041') return 'scan.result.aiSummary.error.newsletterNotFound';
+    if (e.code === 'NL4031') return 'scan.result.aiSummary.error.noAccess';
   }
-  return i18n.t('scan.result.aiSummary.error.summaryFailed');
+  return 'scan.result.aiSummary.error.summaryFailed';
 };
 
 const AISummaryTab = ({ newsletterId }: Props) => {
@@ -45,9 +44,9 @@ const AISummaryTab = ({ newsletterId }: Props) => {
     setTodoError(null);
 
     if (!newsletterId) {
-      setSummaryError(i18n.t('scan.result.aiSummary.error.notFound'));
+      setSummaryError('scan.result.aiSummary.error.notFound');
       setSummaryLoading(false);
-      setTodoError(i18n.t('scan.result.aiSummary.error.notFound'));
+      setTodoError('scan.result.aiSummary.error.notFound');
       setTodoLoading(false);
       return () => {};
     }
@@ -62,7 +61,7 @@ const AISummaryTab = ({ newsletterId }: Props) => {
         }
       })
       .catch((e) => {
-        if (!cancelled) setSummaryError(mapSummaryError(e));
+        if (!cancelled) setSummaryError(mapSummaryErrorKey(e));
       })
       .finally(() => {
         if (!cancelled) setSummaryLoading(false);
@@ -78,9 +77,9 @@ const AISummaryTab = ({ newsletterId }: Props) => {
       .catch((e) => {
         if (cancelled) return;
         if (e instanceof NewsletterApiError && e.code === 'NL4041') {
-          setTodoError(i18n.t('scan.result.aiSummary.error.newsletterNotFound'));
+          setTodoError('scan.result.aiSummary.error.newsletterNotFound');
         } else {
-          setTodoError(i18n.t('scan.result.aiSummary.error.todoFailed'));
+          setTodoError('scan.result.aiSummary.error.todoFailed');
         }
       })
       .finally(() => {
@@ -101,7 +100,7 @@ const AISummaryTab = ({ newsletterId }: Props) => {
 
   const renderSummary = () => {
     if (summaryLoading) return <ActivityIndicator size="small" color={colors.primary[400]} />;
-    if (summaryError) return <Text style={styles.errorText}>{summaryError}</Text>;
+    if (summaryError) return <Text style={styles.errorText}>{t(summaryError)}</Text>;
     if (summary)
       return (
         <>
@@ -114,7 +113,7 @@ const AISummaryTab = ({ newsletterId }: Props) => {
 
   const renderTodos = () => {
     if (todoLoading) return <ActivityIndicator size="small" color={colors.primary[400]} />;
-    if (todoError) return <Text style={styles.errorText}>{todoError}</Text>;
+    if (todoError) return <Text style={styles.errorText}>{t(todoError)}</Text>;
     if (todos.length === 0) return <Text style={styles.errorText}>{t('scan.result.aiSummary.emptyTodo')}</Text>;
     return (
       <View style={styles.todoList}>

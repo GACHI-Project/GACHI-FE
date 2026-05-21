@@ -3,6 +3,7 @@ import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import Svg, { Defs, RadialGradient, Stop, Circle } from 'react-native-svg';
+import { useTranslation } from 'react-i18next';
 import colors from '../../constants/colors';
 import fonts from '../../constants/fonts';
 
@@ -10,88 +11,97 @@ type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
 
 interface TabItem {
   routeName: string;
-  label: string;
+  labelKey: string;
   icon: IoniconName;
   activeIcon: IoniconName;
 }
 
 const TABS: TabItem[] = [
-  { routeName: 'index', label: '홈', icon: 'home-outline', activeIcon: 'home' },
+  { routeName: 'index', labelKey: 'tabs.home', icon: 'home-outline', activeIcon: 'home' },
   {
     routeName: 'document',
-    label: '문서',
+    labelKey: 'tabs.document',
     icon: 'document-text-outline',
     activeIcon: 'document-text',
   },
-  { routeName: 'scan', label: '스캔', icon: 'scan-outline', activeIcon: 'scan-outline' },
-  { routeName: 'calendar', label: '캘린더', icon: 'calendar-outline', activeIcon: 'calendar' },
-  { routeName: 'profile', label: '프로필', icon: 'person-outline', activeIcon: 'person' },
+  { routeName: 'scan', labelKey: 'tabs.scan', icon: 'scan-outline', activeIcon: 'scan-outline' },
+  {
+    routeName: 'calendar',
+    labelKey: 'tabs.calendar',
+    icon: 'calendar-outline',
+    activeIcon: 'calendar',
+  },
+  { routeName: 'profile', labelKey: 'tabs.profile', icon: 'person-outline', activeIcon: 'person' },
 ];
 
-const TabBar = ({ state, navigation, insets }: BottomTabBarProps) => (
-  <View style={[styles.outer, { paddingBottom: insets.bottom }]}>
-    <View style={styles.container}>
-      {TABS.map((tab) => {
-        const route = state.routes.find((r) => r.name === tab.routeName);
-        const isActive = !!route && state.index === state.routes.indexOf(route);
-        const isScan = tab.routeName === 'scan';
+const TabBar = ({ state, navigation, insets }: BottomTabBarProps) => {
+  const { t } = useTranslation();
 
-        const onPress = () => {
-          if (!route) return;
-          const event = navigation.emit({
-            type: 'tabPress',
-            target: route.key,
-            canPreventDefault: true,
-          });
-          if (!event.defaultPrevented) {
-            navigation.navigate(tab.routeName);
+  return (
+    <View style={[styles.outer, { paddingBottom: insets.bottom }]}>
+      <View style={styles.container}>
+        {TABS.map((tab) => {
+          const route = state.routes.find((r) => r.name === tab.routeName);
+          const isActive = !!route && state.index === state.routes.indexOf(route);
+          const isScan = tab.routeName === 'scan';
+
+          const onPress = () => {
+            if (!route) return;
+            const event = navigation.emit({
+              type: 'tabPress',
+              target: route.key,
+              canPreventDefault: true,
+            });
+            if (!event.defaultPrevented) {
+              navigation.navigate(tab.routeName);
+            }
+          };
+
+          if (isScan) {
+            return (
+              <TouchableOpacity
+                key={tab.routeName}
+                style={styles.scanWrapper}
+                onPress={() => router.push('/scan')}
+                activeOpacity={0.85}
+              >
+                <View style={styles.scanButton}>
+                  <Svg width={60} height={60} style={StyleSheet.absoluteFill}>
+                    <Defs>
+                      <RadialGradient id="rg" cx="50%" cy="50%" r="50%">
+                        <Stop offset="0.28" stopColor="#47A3FF" stopOpacity="1" />
+                        <Stop offset="1" stopColor="#C1ECFC" stopOpacity="1" />
+                      </RadialGradient>
+                    </Defs>
+                    <Circle cx={30} cy={30} r={30} fill="url(#rg)" />
+                  </Svg>
+                  <Ionicons name={tab.icon} size={26} color={colors.text.white} />
+                </View>
+                <Text style={[styles.label, isActive && styles.activeLabel]}>{t(tab.labelKey)}</Text>
+              </TouchableOpacity>
+            );
           }
-        };
 
-        if (isScan) {
           return (
             <TouchableOpacity
               key={tab.routeName}
-              style={styles.scanWrapper}
-              onPress={() => router.push('/scan')}
-              activeOpacity={0.85}
+              style={styles.tab}
+              onPress={onPress}
+              activeOpacity={0.7}
             >
-              <View style={styles.scanButton}>
-                <Svg width={60} height={60} style={StyleSheet.absoluteFill}>
-                  <Defs>
-                    <RadialGradient id="rg" cx="50%" cy="50%" r="50%">
-                      <Stop offset="0.28" stopColor="#47A3FF" stopOpacity="1" />
-                      <Stop offset="1" stopColor="#C1ECFC" stopOpacity="1" />
-                    </RadialGradient>
-                  </Defs>
-                  <Circle cx={30} cy={30} r={30} fill="url(#rg)" />
-                </Svg>
-                <Ionicons name={tab.icon} size={26} color={colors.text.white} />
-              </View>
-              <Text style={[styles.label, isActive && styles.activeLabel]}>{tab.label}</Text>
+              <Ionicons
+                name={isActive ? tab.activeIcon : tab.icon}
+                size={26}
+                color={isActive ? colors.primary[500] : colors.gray[300]}
+              />
+              <Text style={[styles.label, isActive && styles.activeLabel]}>{t(tab.labelKey)}</Text>
             </TouchableOpacity>
           );
-        }
-
-        return (
-          <TouchableOpacity
-            key={tab.routeName}
-            style={styles.tab}
-            onPress={onPress}
-            activeOpacity={0.7}
-          >
-            <Ionicons
-              name={isActive ? tab.activeIcon : tab.icon}
-              size={26}
-              color={isActive ? colors.primary[500] : colors.gray[300]}
-            />
-            <Text style={[styles.label, isActive && styles.activeLabel]}>{tab.label}</Text>
-          </TouchableOpacity>
-        );
-      })}
+        })}
+      </View>
     </View>
-  </View>
-);
+  );
+};
 
 export default TabBar;
 

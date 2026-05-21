@@ -1,6 +1,7 @@
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import colors from '../../constants/colors';
 import layout from '../../constants/layout';
 import fonts from '../../constants/fonts';
@@ -11,6 +12,7 @@ interface StepHeaderProps {
 }
 
 const StepHeader = ({ currentStep, totalStep }: StepHeaderProps) => {
+  const { t } = useTranslation();
   const progress = totalStep > 0 ? Math.min((currentStep / totalStep) * 100, 100) : 0;
 
   return (
@@ -20,7 +22,7 @@ const StepHeader = ({ currentStep, totalStep }: StepHeaderProps) => {
         onPress={() => router.back()}
         accessible
         accessibilityRole="button"
-        accessibilityLabel="뒤로 가기"
+        accessibilityLabel={t('common.back')}
       >
         <Ionicons name="chevron-back" size={18} color={colors.gray[300]} />
       </TouchableOpacity>
@@ -30,7 +32,7 @@ const StepHeader = ({ currentStep, totalStep }: StepHeaderProps) => {
           <View style={[styles.progressFill, { width: `${progress}%` }]} />
         </View>
         <Text style={styles.stepText}>
-          {currentStep}단계 / {totalStep}단계
+          {t('stepHeader.step', { current: currentStep, total: totalStep })}
         </Text>
       </View>
     </View>

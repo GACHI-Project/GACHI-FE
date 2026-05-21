@@ -9,6 +9,7 @@ import SelectionCard from '../../../src/components/common/SelectionCard';
 import colors from '../../../src/constants/colors';
 import styles from '../../../src/styles/register/language';
 import { LanguageType, LanguageOption } from '../../../src/types/language';
+import { saveLanguage } from '../../../src/i18n';
 import KRFlag from '../../../assets/flags/KR.png';
 import USFlag from '../../../assets/flags/US.png';
 import VNFlag from '../../../assets/flags/VN.png';
@@ -22,7 +23,7 @@ const LANGUAGE_OPTIONS: LanguageOption[] = [
 ];
 
 const RegisterLanguageScreen = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [selected, setSelected] = useState<LanguageType>('ko');
 
   return (
@@ -63,7 +64,16 @@ const RegisterLanguageScreen = () => {
             <Ionicons name="settings" size={18} color={colors.text.primary} />
             <Text style={styles.bannerText}>{t('auth.register.language.settingsTip')}</Text>
           </View>
-          <PrimaryButton label={t('common.next')} onPress={() => router.push('/(auth)/register/basic')} />
+          <PrimaryButton
+            label={t('common.next')}
+            onPress={async () => {
+              await i18n.changeLanguage(selected);
+              if (selected === 'ko' || selected === 'en') {
+                await saveLanguage(selected);
+              }
+              router.push('/(auth)/register/basic');
+            }}
+          />
           <SecondaryButton
             label={t('common.later')}
             onPress={() => router.push('/(auth)/register/basic')}

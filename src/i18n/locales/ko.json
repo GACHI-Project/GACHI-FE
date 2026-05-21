@@ -414,6 +414,7 @@
         "viewCalendar": "캘린더에서 보기",
         "close": "닫기",
         "accessibilityEdit": "일정 수정",
+        "dateConfirm": "확인",
         "accessibilityDateConfirm": "날짜 확인",
         "accessibilityClose": "모달 닫기",
         "yearLabel": "년도",

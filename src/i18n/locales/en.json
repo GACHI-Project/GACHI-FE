@@ -414,6 +414,7 @@
         "viewCalendar": "View in Calendar",
         "close": "Close",
         "accessibilityEdit": "Edit schedule",
+        "dateConfirm": "Confirm",
         "accessibilityDateConfirm": "Confirm date",
         "accessibilityClose": "Close modal",
         "yearLabel": "Year",

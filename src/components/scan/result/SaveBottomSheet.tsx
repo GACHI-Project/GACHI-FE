@@ -455,7 +455,7 @@ const SaveBottomSheet = ({
                       {datePatching ? (
                         <ActivityIndicator size="small" color={colors.text.white} />
                       ) : (
-                        <Text style={styles.dateConfirmBtnText}>{t('scan.result.saveBottomSheet.accessibilityDateConfirm')}</Text>
+                        <Text style={styles.dateConfirmBtnText}>{t('scan.result.saveBottomSheet.dateConfirm')}</Text>
                       )}
                     </TouchableOpacity>
                   </View>

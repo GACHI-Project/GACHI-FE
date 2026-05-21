@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { View, Text, Image, ScrollView } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import StepHeader from '../../../src/components/common/StepHeader';
 import { PrimaryButton, SecondaryButton } from '../../../src/components/common/Button';
 import SelectionCard from '../../../src/components/common/SelectionCard';
@@ -21,6 +22,7 @@ const LANGUAGE_OPTIONS: LanguageOption[] = [
 ];
 
 const RegisterLanguageScreen = () => {
+  const { t } = useTranslation();
   const [selected, setSelected] = useState<LanguageType>('ko');
 
   return (
@@ -34,8 +36,8 @@ const RegisterLanguageScreen = () => {
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.titleSection}>
-          <Text style={styles.title}>사용할 언어를 선택해 주세요</Text>
-          <Text style={styles.subtitle}>선택한 언어로 가정통신문을 번역하고 쉽게 설명해드려요</Text>
+          <Text style={styles.title}>{t('auth.register.language.title')}</Text>
+          <Text style={styles.subtitle}>{t('auth.register.language.subtitle')}</Text>
         </View>
 
         <View style={styles.cardList}>
@@ -59,11 +61,11 @@ const RegisterLanguageScreen = () => {
         <View style={styles.footer}>
           <View style={styles.banner}>
             <Ionicons name="settings" size={18} color={colors.text.primary} />
-            <Text style={styles.bannerText}>언어는 설정에서 언제든 변경할 수 있어요</Text>
+            <Text style={styles.bannerText}>{t('auth.register.language.settingsTip')}</Text>
           </View>
-          <PrimaryButton label="다음으로 →" onPress={() => router.push('/(auth)/register/basic')} />
+          <PrimaryButton label={t('common.next')} onPress={() => router.push('/(auth)/register/basic')} />
           <SecondaryButton
-            label="나중에 설정할게요"
+            label={t('common.later')}
             onPress={() => router.push('/(auth)/register/basic')}
           />
         </View>

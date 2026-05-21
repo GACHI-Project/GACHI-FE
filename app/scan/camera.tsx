@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
+import { useTranslation } from 'react-i18next';
 import Header from '../../src/components/common/Header';
 import ScanStepIndicator from '../../src/components/scan/ScanStepIndicator';
 import ScanHelpModal from '../../src/components/scan/ScanHelpModal';
@@ -16,6 +17,7 @@ import fonts from '../../src/constants/fonts';
 import { SCAN_FRAME_W, SCAN_FRAME_H, SCAN_DEFAULT_CHILD_COLOR } from '../../src/constants/scan';
 
 const ScanCameraScreen = () => {
+  const { t } = useTranslation();
   const { childId, childName, childColor, childGrade } = useLocalSearchParams<{
     childId: string;
     childName: string;
@@ -60,7 +62,7 @@ const ScanCameraScreen = () => {
       }
       setCapturing(false);
     } catch {
-      Alert.alert('촬영 실패', '다시 시도해주세요.');
+      Alert.alert(t('scan.camera.captureError'), t('scan.camera.captureErrorMsg'));
       setCapturing(false);
     }
   };
@@ -69,7 +71,7 @@ const ScanCameraScreen = () => {
     try {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('권한 필요', '갤러리 접근 권한이 필요해요.');
+        Alert.alert(t('scan.camera.permissionTitle'), t('scan.camera.galleryPermission'));
         return;
       }
       const result = await ImagePicker.launchImageLibraryAsync({
@@ -90,7 +92,7 @@ const ScanCameraScreen = () => {
         });
       }
     } catch {
-      Alert.alert('오류', '갤러리를 불러올 수 없어요.');
+      Alert.alert(t('scan.camera.errorTitle'), t('scan.camera.galleryError'));
     }
   };
 
@@ -100,14 +102,13 @@ const ScanCameraScreen = () => {
     return (
       <View style={styles.permissionScreen}>
         <Ionicons name="camera-outline" size={40} color={colors.primary[400]} />
-        <Text style={styles.permissionText}>카메라 접근 권한이 필요해요</Text>
+        <Text style={styles.permissionText}>{t('scan.camera.permissionText')}</Text>
         <TouchableOpacity
           style={styles.permissionBtn}
           onPress={requestPermission}
-          accessibilityLabel="카메라 권한 허용"
           accessibilityRole="button"
         >
-          <Text style={styles.permissionBtnText}>권한 허용하기</Text>
+          <Text style={styles.permissionBtnText}>{t('scan.camera.allowPermission')}</Text>
         </TouchableOpacity>
       </View>
     );
@@ -117,7 +118,7 @@ const ScanCameraScreen = () => {
 
   return (
     <View style={styles.screen}>
-      <Header title="문서 스캔" onHelp={() => setHelpVisible(true)} />
+      <Header title={t('scan.title')} onHelp={() => setHelpVisible(true)} />
       <ScanStepIndicator currentStep={2} />
 
       {hasChild && (
@@ -138,7 +139,7 @@ const ScanCameraScreen = () => {
           style={styles.sideButton}
           onPress={handleGallery}
           activeOpacity={0.8}
-          accessibilityLabel="갤러리에서 선택"
+          accessibilityLabel={t('scan.camera.accessibilityGallery')}
           accessibilityRole="button"
         >
           <Ionicons name="image-outline" size={24} color={colors.text.white} />
@@ -150,7 +151,7 @@ const ScanCameraScreen = () => {
             onPress={handleCapture}
             disabled={capturing}
             activeOpacity={0.85}
-            accessibilityLabel="사진 촬영"
+            accessibilityLabel={t('scan.camera.accessibilityCapture')}
             accessibilityRole="button"
           >
             <View style={styles.captureButton} />
@@ -161,7 +162,7 @@ const ScanCameraScreen = () => {
           style={styles.sideButton}
           onPress={() => setFacing((f) => (f === 'back' ? 'front' : 'back'))}
           activeOpacity={0.8}
-          accessibilityLabel="카메라 전환"
+          accessibilityLabel={t('scan.camera.accessibilityFlip')}
           accessibilityRole="button"
         >
           <Ionicons name="camera-reverse-outline" size={24} color={colors.text.white} />

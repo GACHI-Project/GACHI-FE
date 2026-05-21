@@ -11,6 +11,7 @@ import {
 import { useLocalSearchParams, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import Header from '../../src/components/common/Header';
 import ScanHelpModal from '../../src/components/scan/ScanHelpModal';
 import ScanStepIndicator from '../../src/components/scan/ScanStepIndicator';
@@ -46,8 +47,9 @@ const ScanLoadingScreen = () => {
 
   const glowAnimation = useRef<Animated.CompositeAnimation | null>(null);
   const completionAnimation = useRef<Animated.CompositeAnimation | null>(null);
+  const { t } = useTranslation();
   const [displayPercent, setDisplayPercent] = useState(0);
-  const [progressMessage, setProgressMessage] = useState('문서를 준비하고 있어요');
+  const [progressMessage, setProgressMessage] = useState('');
   const [isComplete, setIsComplete] = useState(false);
   const [helpVisible, setHelpVisible] = useState(false);
   const [newsletterId, setNewsletterId] = useState<number | null>(null);
@@ -95,8 +97,8 @@ const ScanLoadingScreen = () => {
             return;
           }
           if (result.status === 'FAILED') {
-            Alert.alert('분석 실패', '문서 분석에 실패했어요. 다시 시도해주세요.', [
-              { text: '확인', onPress: () => router.back() },
+            Alert.alert(t('scan.loading.error.analysisFailed'), t('scan.loading.error.analysisFailedMsg'), [
+              { text: t('common.confirm'), onPress: () => router.back() },
             ]);
             return;
           }
@@ -118,13 +120,13 @@ const ScanLoadingScreen = () => {
       })
       .catch((error: unknown) => {
         if (cancelled) return;
-        let message = '업로드에 실패했어요. 다시 시도해주세요.';
+        let message = t('scan.loading.error.uploadDefault');
         if (error instanceof NewsletterApiError) {
-          if (error.code === 'NL4091') message = '이미 업로드된 가정통신문이에요.';
-          else if (error.code === 'NL4002') message = '지원하지 않는 파일 형식이에요.';
-          else if (error.code === 'NL4003') message = '파일 크기가 10MB를 초과해요.';
+          if (error.code === 'NL4091') message = t('scan.loading.error.duplicate');
+          else if (error.code === 'NL4002') message = t('scan.loading.error.unsupportedFormat');
+          else if (error.code === 'NL4003') message = t('scan.loading.error.fileTooLarge');
         }
-        Alert.alert('업로드 실패', message, [{ text: '확인', onPress: () => router.back() }]);
+        Alert.alert(t('scan.loading.error.uploadFailed'), message, [{ text: t('common.confirm'), onPress: () => router.back() }]);
       });
 
     return () => {
@@ -214,7 +216,7 @@ const ScanLoadingScreen = () => {
 
   return (
     <View style={styles.screen}>
-      <Header title="문서 스캔" onHelp={() => setHelpVisible(true)} />
+      <Header title={t('scan.title')} onHelp={() => setHelpVisible(true)} />
       <ScanStepIndicator currentStep={isComplete ? 4 : 3} />
 
       {isComplete ? (
@@ -230,7 +232,7 @@ const ScanLoadingScreen = () => {
               { opacity: textOpacity, transform: [{ translateY: textSlide }] },
             ]}
           >
-            스캔 완료!
+            {t('scan.loading.scanComplete')}
           </Animated.Text>
         </Animated.View>
       ) : (
@@ -255,10 +257,10 @@ const ScanLoadingScreen = () => {
           )}
           <View style={styles.statusTexts}>
             <Text style={styles.statusTitle}>
-              {isComplete ? '번역 및 요약을 완료했어요!' : progressMessage}
+              {isComplete ? t('scan.loading.complete') : (progressMessage || t('scan.loading.preparing'))}
             </Text>
             {!isComplete && (
-              <Text style={styles.statusSubtitle}>텍스트와 레이아웃을 분석하고 있어요</Text>
+              <Text style={styles.statusSubtitle}>{t('scan.loading.analyzing')}</Text>
             )}
           </View>
           <Text style={styles.percentText}>{displayPercent}%</Text>
@@ -284,7 +286,7 @@ const ScanLoadingScreen = () => {
             style={styles.nextBtn}
             activeOpacity={0.8}
             accessibilityRole="button"
-            accessibilityLabel="다음으로"
+            accessibilityLabel={t('scan.loading.accessibilityNext')}
             onPress={() =>
               router.push({
                 pathname: '/scan/result',
@@ -298,7 +300,7 @@ const ScanLoadingScreen = () => {
               })
             }
           >
-            <Text style={styles.nextBtnText}>다음으로 →</Text>
+            <Text style={styles.nextBtnText}>{t('scan.loading.next')}</Text>
           </TouchableOpacity>
         </Animated.View>
       )}

@@ -15,6 +15,8 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
+import i18n from '../../../i18n';
 import { PrimaryButton, SecondaryButton } from '../../common/Button';
 import styles from '../../../styles/scan/saveBottomSheet';
 import colors from '../../../constants/colors';
@@ -38,8 +40,6 @@ interface Props {
 const SHEET_HEIGHT = 560;
 const returnTrue = () => true;
 
-const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'] as const;
-
 const formatCorrectedDate = (y: string, m: string, d: string): string | null => {
   const yn = Number(y);
   const mn = Number(m);
@@ -52,25 +52,19 @@ const formatCorrectedDate = (y: string, m: string, d: string): string | null => 
 
 const mapRegisterError = (e: unknown): string => {
   if (e instanceof CalendarApiError) {
-    if (e.code === 'COMMON4001') return '입력값이 올바르지 않아요.';
-    if (e.code === 'NL4041') return '가정통신문을 찾을 수 없어요.';
+    if (e.code === 'COMMON4001') return i18n.t('scan.result.saveBottomSheet.error.invalidInput');
+    if (e.code === 'NL4041') return i18n.t('scan.result.saveBottomSheet.error.newsletterNotFound');
   }
-  return '일정 등록에 실패했어요.';
+  return i18n.t('scan.result.saveBottomSheet.error.registerDefault');
 };
 
 const mapPatchError = (e: unknown): string => {
   if (e instanceof CalendarApiError) {
-    if (e.code === 'COMMON4001') return '날짜 형식이 올바르지 않아요.';
-    if (e.code === 'NL4041') return '가정통신문을 찾을 수 없어요.';
-    if (e.code === 'CAL4042') return '미리보기 데이터가 만료됐어요. 다시 시도해주세요.';
+    if (e.code === 'COMMON4001') return i18n.t('scan.result.saveBottomSheet.error.dateFormat');
+    if (e.code === 'NL4041') return i18n.t('scan.result.saveBottomSheet.error.newsletterNotFound');
+    if (e.code === 'CAL4042') return i18n.t('scan.result.saveBottomSheet.error.previewExpired');
   }
-  return '날짜 저장에 실패했어요.';
-};
-
-const getDisplayDate = (y: string, m: string, d: string) => {
-  const date = new Date(Number(y), Number(m) - 1, Number(d));
-  const weekday = Number.isNaN(date.getTime()) ? '' : `${WEEKDAYS[date.getDay()]}요일 · `;
-  return `${y}년 ${m}월 ${d}일 ${weekday}종일`;
+  return i18n.t('scan.result.saveBottomSheet.error.dateSaveDefault');
 };
 
 interface DateInputFieldsProps {
@@ -89,43 +83,46 @@ const DateInputFields = ({
   onYearChange,
   onMonthChange,
   onDayChange,
-}: DateInputFieldsProps) => (
-  <View style={styles.dateInputRow}>
-    <View style={styles.dateInputWrap}>
-      <TextInput
-        style={styles.dateInput}
-        value={year}
-        onChangeText={onYearChange}
-        keyboardType="number-pad"
-        maxLength={4}
-        accessibilityLabel="년도"
-      />
-      <Text style={styles.dateUnit}>년</Text>
+}: DateInputFieldsProps) => {
+  const { t } = useTranslation();
+  return (
+    <View style={styles.dateInputRow}>
+      <View style={styles.dateInputWrap}>
+        <TextInput
+          style={styles.dateInput}
+          value={year}
+          onChangeText={onYearChange}
+          keyboardType="number-pad"
+          maxLength={4}
+          accessibilityLabel={t('scan.result.saveBottomSheet.yearLabel')}
+        />
+        <Text style={styles.dateUnit}>{t('scan.result.saveBottomSheet.year')}</Text>
+      </View>
+      <View style={styles.dateInputWrap}>
+        <TextInput
+          style={styles.dateInput}
+          value={month}
+          onChangeText={onMonthChange}
+          keyboardType="number-pad"
+          maxLength={2}
+          accessibilityLabel={t('scan.result.saveBottomSheet.monthLabel')}
+        />
+        <Text style={styles.dateUnit}>{t('scan.result.saveBottomSheet.month')}</Text>
+      </View>
+      <View style={styles.dateInputWrap}>
+        <TextInput
+          style={styles.dateInput}
+          value={day}
+          onChangeText={onDayChange}
+          keyboardType="number-pad"
+          maxLength={2}
+          accessibilityLabel={t('scan.result.saveBottomSheet.dayLabel')}
+        />
+        <Text style={styles.dateUnit}>{t('scan.result.saveBottomSheet.day')}</Text>
+      </View>
     </View>
-    <View style={styles.dateInputWrap}>
-      <TextInput
-        style={styles.dateInput}
-        value={month}
-        onChangeText={onMonthChange}
-        keyboardType="number-pad"
-        maxLength={2}
-        accessibilityLabel="월"
-      />
-      <Text style={styles.dateUnit}>월</Text>
-    </View>
-    <View style={styles.dateInputWrap}>
-      <TextInput
-        style={styles.dateInput}
-        value={day}
-        onChangeText={onDayChange}
-        keyboardType="number-pad"
-        maxLength={2}
-        accessibilityLabel="일"
-      />
-      <Text style={styles.dateUnit}>일</Text>
-    </View>
-  </View>
-);
+  );
+};
 
 const STYLE_FULL_WIDTH = { width: '100%' } as const;
 const STYLE_FLEX_1 = { flex: 1 } as const;
@@ -139,6 +136,7 @@ const SaveBottomSheet = ({
   childName,
   newsletterId,
 }: Props) => {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const [show, setShow] = useState(false);
   const [step, setStep] = useState<'confirm' | 'success'>('confirm');
@@ -159,6 +157,12 @@ const SaveBottomSheet = ({
   const combinedY = useRef(Animated.add(translateY, keyboardOffset)).current;
 
   const dateFound = preview?.isDateExtracted ?? true;
+  const weekdays = t('scan.result.saveBottomSheet.weekdays', { returnObjects: true }) as string[];
+  const getDisplayDate = (y: string, m: string, d: string) => {
+    const date = new Date(Number(y), Number(m) - 1, Number(d));
+    const weekday = Number.isNaN(date.getTime()) ? '' : `${weekdays[date.getDay()]} · `;
+    return `${y}${t('scan.result.saveBottomSheet.year')} ${m}${t('scan.result.saveBottomSheet.month')} ${d}${t('scan.result.saveBottomSheet.day')} ${weekday}${t('scan.result.saveBottomSheet.fullDay')}`;
+  };
   const displayDate = getDisplayDate(year, month, day);
 
   // 미리보기 데이터 fetch
@@ -188,9 +192,9 @@ const SaveBottomSheet = ({
       .catch((e) => {
         if (cancelled) return;
         if (e instanceof CalendarApiError && e.code === 'CAL4042') {
-          setPreviewError('AI 분석 중이거나 미리보기 데이터가 만료됐어요.');
+          setPreviewError(i18n.t('scan.result.saveBottomSheet.error.expired'));
         } else {
-          setPreviewError('일정 정보를 불러오는 데 실패했어요.');
+          setPreviewError(i18n.t('scan.result.saveBottomSheet.error.loadFailed'));
         }
       })
       .finally(() => {
@@ -278,9 +282,9 @@ const SaveBottomSheet = ({
               style={styles.editBadge}
               onPress={() => setIsEditing((v) => !v)}
               accessibilityRole="button"
-              accessibilityLabel="일정 수정"
+              accessibilityLabel={t('scan.result.saveBottomSheet.accessibilityEdit')}
             >
-              <Text style={styles.editBadgeText}>{isEditing ? '✏️ 수정 중' : '✏️ 수정'}</Text>
+              <Text style={styles.editBadgeText}>{isEditing ? t('scan.result.saveBottomSheet.isEditing') : t('scan.result.saveBottomSheet.edit')}</Text>
             </TouchableOpacity>
           </View>
         ) : (
@@ -303,7 +307,7 @@ const SaveBottomSheet = ({
   const handleDateConfirm = async () => {
     const correctedDate = formatCorrectedDate(year, month, day);
     if (!correctedDate) {
-      Alert.alert('오류', '올바른 날짜를 입력해주세요.');
+      Alert.alert(t('scan.result.saveBottomSheet.error.errorTitle'), t('scan.result.saveBottomSheet.error.invalidDate'));
       return;
     }
     if (newsletterId && preview?.tempEventId) {
@@ -313,7 +317,7 @@ const SaveBottomSheet = ({
           { tempEventId: preview.tempEventId, correctedDate },
         ]);
       } catch (e) {
-        Alert.alert('날짜 저장 실패', mapPatchError(e));
+        Alert.alert(t('scan.result.saveBottomSheet.error.dateSaveFailed'), mapPatchError(e));
         setDatePatching(false);
         return;
       }
@@ -326,13 +330,13 @@ const SaveBottomSheet = ({
 
   const handleRegisterConfirm = async () => {
     if (!canRegister) {
-      Alert.alert('등록 실패', '일정 미리보기 정보를 먼저 불러와주세요.');
+      Alert.alert(t('scan.result.saveBottomSheet.error.registerFailed'), t('scan.result.saveBottomSheet.error.noPreviewMsg'));
       return;
     }
 
     const startAt = formatCorrectedDate(year, month, day);
     if (!startAt) {
-      Alert.alert('오류', '올바른 날짜를 입력해주세요.');
+      Alert.alert(t('scan.result.saveBottomSheet.error.errorTitle'), t('scan.result.saveBottomSheet.error.invalidDate'));
       return;
     }
 
@@ -343,7 +347,7 @@ const SaveBottomSheet = ({
           { tempEventId: preview.tempEventId, correctedDate: startAt },
         ]);
       } catch (e) {
-        Alert.alert('날짜 저장 실패', mapPatchError(e));
+        Alert.alert(t('scan.result.saveBottomSheet.error.dateSaveFailed'), mapPatchError(e));
         setDatePatching(false);
         return;
       }
@@ -357,7 +361,7 @@ const SaveBottomSheet = ({
       ]);
       setStep('success');
     } catch (e) {
-      Alert.alert('등록 실패', mapRegisterError(e));
+      Alert.alert(t('scan.result.saveBottomSheet.error.registerFailed'), mapRegisterError(e));
     }
     setRegistering(false);
   };
@@ -369,7 +373,7 @@ const SaveBottomSheet = ({
           style={StyleSheet.absoluteFill}
           onPress={onClose}
           accessibilityRole="button"
-          accessibilityLabel="모달 닫기"
+          accessibilityLabel={t('scan.result.saveBottomSheet.accessibilityClose')}
         />
       </Animated.View>
 
@@ -388,8 +392,8 @@ const SaveBottomSheet = ({
             {step === 'success' ? (
               <>
                 <View style={styles.textBlock}>
-                  <Text style={styles.title}>캘린더에 등록됐어요!</Text>
-                  <Text style={styles.subtitle}>마감일이 다가오면 알려드릴게요.</Text>
+                  <Text style={styles.title}>{t('scan.result.saveBottomSheet.successTitle')}</Text>
+                  <Text style={styles.subtitle}>{t('scan.result.saveBottomSheet.successSubtitle')}</Text>
                 </View>
                 <View style={styles.eventCard}>
                   <View style={styles.eventHeader}>
@@ -403,29 +407,27 @@ const SaveBottomSheet = ({
                   </View>
                 </View>
                 <PrimaryButton
-                  label="캘린더에서 보기"
+                  label={t('scan.result.saveBottomSheet.viewCalendar')}
                   onPress={onConfirm}
                   style={STYLE_FULL_WIDTH}
                 />
-                <SecondaryButton label="닫기" onPress={onDismiss} style={STYLE_FULL_WIDTH} />
+                <SecondaryButton label={t('scan.result.saveBottomSheet.close')} onPress={onDismiss} style={STYLE_FULL_WIDTH} />
               </>
             ) : (
               <>
                 <View style={styles.textBlock}>
-                  <Text style={styles.title}>캘린더에 일정을 등록하시겠습니까?</Text>
+                  <Text style={styles.title}>{t('scan.result.saveBottomSheet.title')}</Text>
                   <Text style={styles.subtitle}>
                     {dateFound
-                      ? '추출된 날짜 정보를 바탕으로\n자동으로 일정이 생성돼요.'
-                      : '날짜를 직접 입력해주세요.'}
+                      ? t('scan.result.saveBottomSheet.subtitleAutoDate')
+                      : t('scan.result.saveBottomSheet.subtitleManualDate')}
                   </Text>
                 </View>
 
                 {!dateFound && (
                   <View style={styles.warningCard}>
                     <Ionicons name="warning" size={16} color={colors.text.primary} />
-                    <Text style={styles.warningText}>
-                      {'문서에서 날짜를 찾지 못했어요.\n날짜를 직접 입력하면 등록할 수 있어요.'}
-                    </Text>
+                    <Text style={styles.warningText}>{t('scan.result.saveBottomSheet.dateNotFound')}</Text>
                   </View>
                 )}
 
@@ -433,7 +435,7 @@ const SaveBottomSheet = ({
 
                 {dateFound && isEditing && (
                   <View style={styles.dateEditorCard}>
-                    <Text style={styles.dateEditorLabel}>날짜 변경</Text>
+                    <Text style={styles.dateEditorLabel}>{t('scan.result.saveBottomSheet.dateEditor')}</Text>
                     <DateInputFields
                       year={year}
                       month={month}
@@ -448,21 +450,21 @@ const SaveBottomSheet = ({
                       disabled={datePatching}
                       activeOpacity={0.8}
                       accessibilityRole="button"
-                      accessibilityLabel="날짜 확인"
+                      accessibilityLabel={t('scan.result.saveBottomSheet.accessibilityDateConfirm')}
                     >
                       {datePatching ? (
                         <ActivityIndicator size="small" color={colors.text.white} />
                       ) : (
-                        <Text style={styles.dateConfirmBtnText}>확인</Text>
+                        <Text style={styles.dateConfirmBtnText}>{t('scan.result.saveBottomSheet.accessibilityDateConfirm')}</Text>
                       )}
                     </TouchableOpacity>
                   </View>
                 )}
 
                 <View style={styles.buttons}>
-                  <SecondaryButton label="아니요" onPress={onClose} style={STYLE_FLEX_1} />
+                  <SecondaryButton label={t('scan.result.saveBottomSheet.no')} onPress={onClose} style={STYLE_FLEX_1} />
                   <PrimaryButton
-                    label={datePatching || registering ? '저장 중...' : '✓ 네, 등록할게요'}
+                    label={datePatching || registering ? '...' : t('scan.result.saveBottomSheet.register')}
                     onPress={handleRegisterConfirm}
                     disabled={datePatching || registering || !canRegister}
                     style={STYLE_FLEX_2}

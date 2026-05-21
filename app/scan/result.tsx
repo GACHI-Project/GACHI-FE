@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator } from 'rea
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import Header from '../../src/components/common/Header';
 import ScanHelpModal from '../../src/components/scan/ScanHelpModal';
 import FullDocTab from '../../src/components/scan/result/FullDocTab';
@@ -13,13 +14,13 @@ import { getNewsletterDetail, type NewsletterDetail } from '../../src/api/newsle
 import colors from '../../src/constants/colors';
 import styles from '../../src/styles/scan/result';
 
-const TABS = ['전체 문서', '체크리스트', 'AI 요약'] as const;
+const TABS = ['full', 'checklist', 'aiSummary'] as const;
 type Tab = (typeof TABS)[number];
 
-const formatDate = (iso: string) => {
-  const d = new Date(iso);
-  return `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일`;
-};
+const formatDate = (iso: string, locale: string) =>
+  new Intl.DateTimeFormat(locale, { year: 'numeric', month: 'long', day: 'numeric' }).format(
+    new Date(iso)
+  );
 
 const ScanResultScreen = () => {
   const {
@@ -35,7 +36,8 @@ const ScanResultScreen = () => {
 
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const [activeTab, setActiveTab] = useState<Tab>('전체 문서');
+  const { t, i18n } = useTranslation();
+  const [activeTab, setActiveTab] = useState<Tab>('full');
   const [helpVisible, setHelpVisible] = useState(false);
   const [saveVisible, setSaveVisible] = useState(false);
 
@@ -70,11 +72,11 @@ const ScanResultScreen = () => {
 
   const displayTitle = detail?.title ?? '';
   const displayChildName = detail?.childName ?? childNameParam ?? '';
-  const displayDate = detail ? formatDate(detail.createdAt) : '';
+  const displayDate = detail ? formatDate(detail.createdAt, i18n.language) : '';
 
   return (
     <View style={styles.screen}>
-      <Header title="스캔 결과" onHelp={() => setHelpVisible(true)} />
+      <Header title={t('scan.result.title')} onHelp={() => setHelpVisible(true)} />
 
       <View style={styles.docInfo}>
         {detailLoading ? (
@@ -113,7 +115,7 @@ const ScanResultScreen = () => {
             accessibilityRole="tab"
             accessibilityState={{ selected: activeTab === tab }}
           >
-            <Text style={[styles.tabLabel, activeTab === tab && styles.tabLabelActive]}>{tab}</Text>
+            <Text style={[styles.tabLabel, activeTab === tab && styles.tabLabelActive]}>{t(`scan.result.tabs.${tab}`)}</Text>
             {activeTab === tab && <View style={styles.tabUnderline} />}
           </TouchableOpacity>
         ))}
@@ -125,9 +127,9 @@ const ScanResultScreen = () => {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator
       >
-        {activeTab === '전체 문서' && <FullDocTab newsletterId={newsletterId} />}
-        {activeTab === '체크리스트' && <ChecklistTab newsletterId={newsletterId} />}
-        {activeTab === 'AI 요약' && <AISummaryTab newsletterId={newsletterId} />}
+        {activeTab === 'full' && <FullDocTab newsletterId={newsletterId} />}
+        {activeTab === 'checklist' && <ChecklistTab newsletterId={newsletterId} />}
+        {activeTab === 'aiSummary' && <AISummaryTab newsletterId={newsletterId} />}
       </ScrollView>
 
       <View style={[styles.bottomBar, { paddingBottom: insets.bottom + 12 }]}>
@@ -135,20 +137,20 @@ const ScanResultScreen = () => {
           style={styles.chatBtn}
           activeOpacity={0.8}
           accessibilityRole="button"
-          accessibilityLabel="AI와 대화하기"
+          accessibilityLabel={t('scan.result.chat')}
         >
           <Text>💬</Text>
-          <Text style={styles.chatBtnText}>AI와 대화하기</Text>
+          <Text style={styles.chatBtnText}>{t('scan.result.chat')}</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.saveBtn}
           activeOpacity={0.8}
           accessibilityRole="button"
-          accessibilityLabel="저장하기"
+          accessibilityLabel={t('scan.result.save')}
           onPress={() => setSaveVisible(true)}
         >
           <Text>💾</Text>
-          <Text style={styles.saveBtnText}>저장하기</Text>
+          <Text style={styles.saveBtnText}>{t('scan.result.save')}</Text>
         </TouchableOpacity>
       </View>
 

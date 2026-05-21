@@ -15,15 +15,15 @@ const ChecklistTab = ({ newsletterId }: Props) => {
   const { t } = useTranslation();
   const [items, setItems] = useState<ChecklistItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [errorKey, setErrorKey] = useState<string | null>(null);
 
   useEffect(() => {
     setLoading(true);
-    setError(null);
+    setErrorKey(null);
     setItems([]);
 
     if (!newsletterId) {
-      setError(t('scan.result.checklist.error.notFound'));
+      setErrorKey('scan.result.checklist.error.notFound');
       setLoading(false);
       return () => {};
     }
@@ -37,9 +37,9 @@ const ChecklistTab = ({ newsletterId }: Props) => {
       .catch((e) => {
         if (cancelled) return;
         if (e instanceof NewsletterApiError && e.code === 'NL4041') {
-          setError(t('scan.result.checklist.error.newsletterNotFound'));
+          setErrorKey('scan.result.checklist.error.newsletterNotFound');
         } else {
-          setError(t('scan.result.checklist.error.loadFailed'));
+          setErrorKey('scan.result.checklist.error.loadFailed');
         }
       })
       .finally(() => {
@@ -49,7 +49,7 @@ const ChecklistTab = ({ newsletterId }: Props) => {
     return () => {
       cancelled = true;
     };
-  }, [newsletterId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [newsletterId]);
 
   const toggle = (id: number) => {
     setItems((prev) =>
@@ -71,10 +71,10 @@ const ChecklistTab = ({ newsletterId }: Props) => {
     );
   }
 
-  if (error) {
+  if (errorKey) {
     return (
       <View style={styles.centered}>
-        <Text style={styles.errorText}>{error}</Text>
+        <Text style={styles.errorText}>{t(errorKey)}</Text>
       </View>
     );
   }

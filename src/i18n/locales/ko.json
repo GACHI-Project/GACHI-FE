@@ -177,12 +177,15 @@
     "taskCard": {
       "noTodo": "오늘 할 일 없음",
       "todayCount": "오늘 처리할 항목 {{count}}건",
+      "todayCount_other": "오늘 처리할 항목 {{count}}건",
       "todayEmpty": "오늘 처리할 항목이 없어요",
       "childCount": "{{name}} {{count}}건",
+      "childCount_other": "{{name}} {{count}}건",
       "remaining": "남아 있어요",
       "empty": "오늘은 처리할 항목이 없어요 🎉",
       "today": "오늘",
-      "moreItems": "{{count}}개 더보기 →"
+      "moreItems": "{{count}}개 더보기 →",
+      "moreItems_other": "{{count}}개 더보기 →"
     },
     "scanBanner": {
       "title": "가정통신문 스캔하기",

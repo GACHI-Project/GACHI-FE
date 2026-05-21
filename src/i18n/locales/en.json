@@ -177,12 +177,18 @@
     "taskCard": {
       "noTodo": "Nothing to do today",
       "todayCount": "{{count}} items to handle today",
+      "todayCount_one": "1 item to handle today",
+      "todayCount_other": "{{count}} items to handle today",
       "todayEmpty": "No items to handle today",
       "childCount": "{{name}} {{count}}",
+      "childCount_one": "{{name}} 1 item",
+      "childCount_other": "{{name}} {{count}} items",
       "remaining": "remaining",
       "empty": "Nothing to do today 🎉",
       "today": "Today",
-      "moreItems": "{{count}} more →"
+      "moreItems": "{{count}} more →",
+      "moreItems_one": "1 more →",
+      "moreItems_other": "{{count}} more →"
     },
     "scanBanner": {
       "title": "Scan School Notice",

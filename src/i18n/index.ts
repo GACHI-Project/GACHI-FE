@@ -10,6 +10,8 @@ const LANGUAGE_KEY = 'app_language';
 
 const getInitialLanguage = async (): Promise<SupportedLanguage> => {
   // TODO: API 연동 후 로그인 시 서버에서 받은 언어로 교체
+  const saved = await AsyncStorage.getItem(LANGUAGE_KEY);
+  if (saved === 'ko' || saved === 'en') return saved;
   return 'en';
 };
 

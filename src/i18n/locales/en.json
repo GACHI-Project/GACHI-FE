@@ -1,0 +1,461 @@
+{
+  "common": {
+    "back": "Go Back",
+    "help": "Help",
+    "close": "Close",
+    "confirm": "Confirm",
+    "next": "Next →",
+    "later": "Set up later",
+    "retry": "Try Again",
+    "all": "All",
+    "today": "Today",
+    "error": "Error",
+    "networkError": "A network error occurred. Please try again.",
+    "modalClose": "Close modal",
+    "saving": "Saving...",
+    "change": "Change",
+    "elementaryGrade": "Grade {{grade}}",
+    "grade": "Grade {{grade}}"
+  },
+  "tabs": {
+    "home": "Home",
+    "document": "Docs",
+    "scan": "Scan",
+    "calendar": "Calendar",
+    "profile": "Profile"
+  },
+  "stepHeader": {
+    "step": "Step {{current}} / {{total}}"
+  },
+  "auth": {
+    "login": {
+      "title": "Log In",
+      "stayLoggedIn": "Stay logged in",
+      "button": "Log In",
+      "loading": "Logging in...",
+      "forgotId": "Find ID",
+      "forgotPassword": "Find Password",
+      "noAccount": "Don't have an account?",
+      "signUp": "Sign Up",
+      "error": {
+        "invalidCredentials": "Incorrect ID or password",
+        "withdrawnAccount": "This account has been deactivated",
+        "tooManyAttempts": "Too many login attempts. Please try again later",
+        "generic": "An error occurred during login. Please try again."
+      }
+    },
+    "register": {
+      "language": {
+        "title": "Select your language",
+        "subtitle": "We'll translate school notices and explain them in your selected language",
+        "settingsTip": "You can change the language at any time in Settings"
+      },
+      "basic": {
+        "title": "Create New Account",
+        "subtitle": "Set up a quick profile and get started right away.",
+        "name": "Name",
+        "id": "ID",
+        "phone": "Phone Number",
+        "email": "Email",
+        "verificationCode": "Verification Code",
+        "password": "Password",
+        "passwordConfirm": "Confirm Password",
+        "verify": "Verify",
+        "verifying": "Checking...",
+        "hasAccount": "Already have an account?",
+        "loginLink": "Log In",
+        "passwordMatch": "Passwords match.",
+        "error": {
+          "nameRequired": "Please enter your name",
+          "phoneFormat": "Invalid phone number format",
+          "passwordWeak": "Password security level is too low",
+          "passwordMismatch": "Passwords do not match",
+          "termsRequired": "Please agree to the terms",
+          "idAvailable": "This ID is available",
+          "idTaken": "This ID is already in use",
+          "phoneAvailable": "This phone number is available",
+          "phoneTaken": "This phone number is already in use",
+          "emailTaken": "This email is already in use",
+          "codeSent": "Verification code has been sent",
+          "codeExpiredDisplay": "Verification time expired. Please resend.",
+          "emailVerified": "Email verification complete",
+          "codeFormat": "Verification code must be 6 digits",
+          "checkError": "An error occurred. Please try again.",
+          "sendError": "Failed to send verification code. Please try again.",
+          "codeInvalid": "Invalid input",
+          "codeWrong": "Verification code does not match",
+          "codeExpired": "Verification code expired. Please resend.",
+          "codeExceeded": "Exceeded maximum verification attempts.",
+          "verifyError": "Verification failed. Please try again."
+        }
+      },
+      "child": {
+        "title": "Tell us about your child",
+        "subtitle": "We'll explain school notices according to your child's grade level",
+        "school": "School",
+        "schoolPlaceholder": "Search for a school",
+        "grade": "Elementary School Grade",
+        "calendarColor": "Calendar Color",
+        "childName": "Child's Name",
+        "childNamePlaceholder": "Enter name",
+        "colorHint": "Each child's color is used to quickly identify whose schedule it is on the calendar.",
+        "addChild": "Add Child",
+        "order": ["1st", "2nd", "3rd", "4th", "5th", "6th", "7th"]
+      },
+      "notification": {
+        "title": "Set your notification preferences",
+        "subtitle": "Choose how you'd like to receive notifications",
+        "sectionLabel": "Notification Level",
+        "settingsTip": "You can change notification settings at any time in Settings",
+        "options": {
+          "important": {
+            "title": "Important Alerts",
+            "desc": "Receive alerts for deadlines and items requiring attention",
+            "badge": "Recommended"
+          },
+          "urgent": {
+            "title": "Urgent Only",
+            "desc": "Receive only essential alerts like deadlines"
+          },
+          "all": {
+            "title": "All Notifications",
+            "desc": "Receive all school notices, updates, and alerts"
+          },
+          "none": {
+            "title": "No Notifications",
+            "desc": "Check the app yourself when needed"
+          }
+        }
+      },
+      "complete": {
+        "title": "Registration Complete!",
+        "subtitle": "Now explore your child's school life more easily with GACHI",
+        "button": "Go to Login →",
+        "noInfo": "No registration info found. Please start over.",
+        "error": "An error occurred. Please try again."
+      }
+    },
+    "terms": {
+      "title": "Terms of Service",
+      "confirm": "Confirm"
+    },
+    "privacy": {
+      "title": "Privacy Policy",
+      "confirm": "Agree and Continue"
+    },
+    "termsCheckbox": {
+      "main": "I agree to the Terms of Service and Privacy Policy.",
+      "sub": "Please read the required terms before checking.",
+      "viewTerms": "View Terms",
+      "viewPrivacy": "View Privacy Policy"
+    }
+  },
+  "passwordStrength": {
+    "label": "Strength:",
+    "danger": "Weak",
+    "normal": "Fair",
+    "safe": "Good",
+    "verySafe": "Strong"
+  },
+  "validation": {
+    "passwordLength": "Password must be 8–20 characters",
+    "passwordTypes": "Must include at least 2 of: letters, numbers, special characters",
+    "passwordSpace": "Password cannot contain spaces",
+    "passwordRepeat": "Cannot use the same character 3 or more times in a row",
+    "passwordSequential": "Cannot use 4 or more sequential characters or numbers",
+    "passwordContainsId": "Password cannot contain your ID",
+    "passwordContainsEmail": "Password cannot contain your email",
+    "passwordContainsPhone": "Password cannot contain your phone number",
+    "idMin": "ID must be at least 4 characters",
+    "idMax": "ID must be 50 characters or less",
+    "idFormat": "Only letters, numbers, ., _, - are allowed",
+    "phoneFormat": "Invalid phone number format",
+    "emailFormat": "Invalid email format"
+  },
+  "home": {
+    "usernameFormat": "{{name}}",
+    "taskCard": {
+      "noTodo": "Nothing to do today",
+      "todayCount": "{{count}} items to handle today",
+      "todayEmpty": "No items to handle today",
+      "childCount": "{{name}} {{count}}",
+      "remaining": "remaining",
+      "empty": "Nothing to do today 🎉",
+      "today": "Today",
+      "moreItems": "{{count}} more →"
+    },
+    "scanBanner": {
+      "title": "Scan School Notice",
+      "desc": "Just take a photo — get translation, summary & checklist at once",
+      "button": "Scan Now →"
+    },
+    "features": {
+      "sectionTitle": "Key Features",
+      "ai": {
+        "title": ["Ask", "AI"],
+        "desc": "Ask questions about anything unclear. AI explains with full context.",
+        "button": "Start Chat"
+      },
+      "guide": {
+        "title": ["School Culture", "Guide"],
+        "desc": "Understand Korean school culture easily. Get guidance on what to do.",
+        "button": "Start Guide"
+      }
+    },
+    "guideCards": {
+      "sectionTitle": "Common Questions",
+      "more": "More",
+      "badge": "✓ Guide",
+      "questions": [
+        "Do I really need to submit the consent form in person?",
+        "Should I contact the homeroom teacher?",
+        "What supplies do I need to prepare?",
+        "Do I need to buy a PE uniform separately?"
+      ]
+    },
+    "recentDocs": {
+      "sectionTitle": "Recent School Notices",
+      "more": "View All"
+    }
+  },
+  "greetings": {
+    "morning": [
+      "Good morning! ☀️",
+      "Another day with GACHI 🌼",
+      "Check school news easily 📄",
+      "A new day, new updates await 🌤",
+      "Check your child's schedule ahead 🎒",
+      "Start the day strong 💪"
+    ],
+    "lunch": [
+      "Take a quick look during lunch 🍽",
+      "Don't miss important school news 🌿",
+      "GACHI is here to help today ✨",
+      "Check today's alerts while you rest ☕",
+      "There might be supplies to prepare today 📋",
+      "Catch up on news between bites 🌞"
+    ],
+    "afternoon": [
+      "Get the info you need this afternoon ☁️",
+      "Check today's school updates 🍀",
+      "Review supplies and schedules together 📚",
+      "Prepare for tomorrow's school now 📅",
+      "Check alerts before your child comes home 🏫",
+      "See if you've missed anything 🔔"
+    ],
+    "evening": [
+      "Great work today 🌇",
+      "Shall we check remaining school schedules? 💛",
+      "Wrap up the day with GACHI ✨",
+      "Prepare ahead for tomorrow 🌆",
+      "Check important alerts one more time tonight 📬",
+      "Review today's school notices? 📝"
+    ],
+    "night": [
+      "Check comfortably even at this late hour 🌙",
+      "Review what to prepare for tomorrow ⭐",
+      "We'll show only the important news 🌌",
+      "Check today's last alert 🌛",
+      "GACHI will be with you tomorrow too 💤",
+      "Just check tomorrow's schedule before resting 🌠"
+    ]
+  },
+  "scan": {
+    "title": "Scan Document",
+    "helpModal": {
+      "title": "How to Scan",
+      "confirm": "Got it",
+      "step1": {
+        "title": "Select your child first",
+        "desc": "We'll interpret the document more accurately based on their grade"
+      },
+      "step2": {
+        "title": "Take a photo or select the school notice",
+        "desc": "Lay it flat so the text is clearly visible"
+      },
+      "step3": {
+        "title": "AI analyzes automatically",
+        "desc": "Get translation, summary & checklist all at once"
+      }
+    },
+    "childPill": {
+      "suffix": "'s school notice",
+      "change": "Change",
+      "changeAccessibility": "Change child"
+    },
+    "select": {
+      "title": "Whose school notice is this?",
+      "subtitle": "Select a child and we'll interpret the document for their grade",
+      "unknown": "I'm not sure which child",
+      "camera": "Take a Photo",
+      "gallery": "Choose from Gallery",
+      "pdf": "Upload PDF",
+      "error": {
+        "loadChildren": "Unable to load child info.",
+        "pdf": "Unable to load PDF.",
+        "gallery": "Unable to load gallery.",
+        "galleryPermission": "Gallery access permission is required.",
+        "permissionTitle": "Permission Required",
+        "errorTitle": "Error"
+      }
+    },
+    "camera": {
+      "permissionText": "Camera access permission is required",
+      "allowPermission": "Allow Permission",
+      "captureError": "Capture Failed",
+      "captureErrorMsg": "Please try again.",
+      "galleryPermission": "Gallery access permission is required.",
+      "galleryError": "Unable to load gallery.",
+      "accessibilityGallery": "Choose from gallery",
+      "accessibilityCapture": "Take photo",
+      "accessibilityFlip": "Flip camera",
+      "permissionTitle": "Permission Required",
+      "errorTitle": "Error"
+    },
+    "preview": {
+      "pdfLabel": "PDF File",
+      "accessibilityPreview": "Preview of document to scan",
+      "retake": "Retake",
+      "reselect": "Reselect",
+      "use": "Use This"
+    },
+    "loading": {
+      "preparing": "Preparing document",
+      "analyzing": "Analyzing text and layout",
+      "complete": "Translation & summary complete!",
+      "scanComplete": "Scan Complete!",
+      "next": "Next →",
+      "accessibilityNext": "Next",
+      "error": {
+        "analysisFailed": "Analysis Failed",
+        "analysisFailedMsg": "Document analysis failed. Please try again.",
+        "uploadFailed": "Upload Failed",
+        "uploadDefault": "Upload failed. Please try again.",
+        "duplicate": "This school notice has already been uploaded.",
+        "unsupportedFormat": "Unsupported file format.",
+        "fileTooLarge": "File size exceeds 10MB."
+      }
+    },
+    "result": {
+      "title": "Scan Result",
+      "tabs": {
+        "full": "Full Document",
+        "checklist": "Checklist",
+        "aiSummary": "AI Summary"
+      },
+      "chat": "Chat with AI",
+      "save": "Save",
+      "fullDoc": {
+        "translated": "Translated Document",
+        "original": "Original",
+        "ocrOriginal": "OCR Original",
+        "error": {
+          "notFound": "School notice info not found.",
+          "notAnalyzed": "This document hasn't been fully analyzed yet.",
+          "newsletterNotFound": "School notice not found.",
+          "loadFailed": "Failed to load document."
+        }
+      },
+      "checklist": {
+        "empty": "No checklist items.",
+        "deleteItem": "Delete item",
+        "error": {
+          "notFound": "School notice info not found.",
+          "newsletterNotFound": "School notice not found.",
+          "loadFailed": "Failed to load checklist."
+        }
+      },
+      "aiSummary": {
+        "summarySection": "AI Summary",
+        "todayTodo": "Today's Tasks",
+        "culturalContext": "Cultural Context",
+        "emptyTodo": "No tasks registered.",
+        "error": {
+          "notFound": "School notice info not found.",
+          "analyzing": "This school notice is still being analyzed.",
+          "analysisFailed": "Analysis failed for this school notice.",
+          "newsletterNotFound": "School notice not found.",
+          "noAccess": "No access permission.",
+          "summaryFailed": "Failed to load summary.",
+          "todoFailed": "Failed to load task list."
+        },
+        "qna": [
+          {
+            "q": "Why do I need to submit the consent form in person?",
+            "a": "Korean elementary schools require ",
+            "aHighlight": "an original guardian signature",
+            "aTail": " for off-campus activities by law. KakaoTalk or app messages are not accepted."
+          },
+          {
+            "q": "What happens if I submit it late?",
+            "a": "After the deadline, ",
+            "aHighlight": "participation in the field trip may not be possible",
+            "aTail": ". If late, contact the homeroom teacher directly right away."
+          }
+        ]
+      },
+      "saveBottomSheet": {
+        "title": "Add to Calendar?",
+        "subtitleAutoDate": "A schedule will be automatically created\nbased on the extracted date.",
+        "subtitleManualDate": "Please enter the date manually.",
+        "dateNotFound": "No date found in document.\nYou can register by entering a date manually.",
+        "dateEditor": "Change Date",
+        "year": "Y",
+        "month": "M",
+        "day": "D",
+        "fullDay": "All Day",
+        "weekdays": ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+        "isEditing": "✏️ Editing",
+        "edit": "✏️ Edit",
+        "no": "No",
+        "register": "✓ Yes, Add It",
+        "successTitle": "Added to Calendar!",
+        "successSubtitle": "We'll notify you as the deadline approaches.",
+        "viewCalendar": "View in Calendar",
+        "close": "Close",
+        "accessibilityEdit": "Edit schedule",
+        "accessibilityDateConfirm": "Confirm date",
+        "accessibilityClose": "Close modal",
+        "yearLabel": "Year",
+        "monthLabel": "Month",
+        "dayLabel": "Day",
+        "error": {
+          "invalidDate": "Please enter a valid date.",
+          "loadFailed": "Failed to load schedule info.",
+          "expired": "AI is still analyzing or preview data has expired.",
+          "registerFailed": "Registration Failed",
+          "registerDefault": "Failed to register schedule.",
+          "invalidInput": "Invalid input.",
+          "newsletterNotFound": "School notice not found.",
+          "dateFormat": "Invalid date format.",
+          "previewExpired": "Preview data has expired. Please try again.",
+          "dateSaveFailed": "Date Save Failed",
+          "dateSaveDefault": "Failed to save date.",
+          "noPreviewMsg": "Please load the schedule preview first.",
+          "errorTitle": "Error"
+        }
+      }
+    }
+  },
+  "calendar": {
+    "title": "Calendar",
+    "emptyWeek": "No events this week",
+    "emptyDay": "No events registered",
+    "weekViewAccessibility": "Switch to monthly view",
+    "monthViewAccessibility": "Switch to weekly view",
+    "backAccessibility": "Go back",
+    "prevWeek": "Previous week",
+    "nextWeek": "Next week",
+    "prevMonth": "Previous month",
+    "nextMonth": "Next month",
+    "checklist": {
+      "collapse": "Collapse checklist",
+      "expand": "Expand checklist"
+    }
+  },
+  "document": {
+    "title": "Documents",
+    "searchPlaceholder": "Search document title",
+    "empty": "No matching documents"
+  }
+}

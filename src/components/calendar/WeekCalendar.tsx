@@ -1,5 +1,6 @@
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import colors from '../../constants/colors';
 import fonts from '../../constants/fonts';
 
@@ -11,22 +12,32 @@ interface WeekCalendarProps {
   onNext: () => void;
 }
 
-const DAY_NAMES = ['일', '월', '화', '수', '목', '금', '토'];
+const REF_SUNDAY = new Date(2024, 0, 7);
 
-const formatMonthDay = (dateStr: string) => {
-  const [, month, day] = dateStr.split('-').map(Number);
-  return `${month}월 ${day}일`;
-};
+const WeekCalendar = ({ weekDates, today, markedDates, onPrev, onNext }: WeekCalendarProps) => {
+  const { t, i18n } = useTranslation();
 
-const WeekCalendar = ({ weekDates, today, markedDates, onPrev, onNext }: WeekCalendarProps) => (
+  const dayNames = Array.from({ length: 7 }, (_, i) =>
+    new Intl.DateTimeFormat(i18n.language, { weekday: 'short' }).format(
+      new Date(REF_SUNDAY.getFullYear(), REF_SUNDAY.getMonth(), REF_SUNDAY.getDate() + i)
+    )
+  );
+
+  const formatMonthDay = (dateStr: string) => {
+    const [year, month, day] = dateStr.split('-').map(Number);
+    return new Intl.DateTimeFormat(i18n.language, { month: 'long', day: 'numeric' }).format(
+      new Date(year, month - 1, day)
+    );
+  };
+
+  return (
   <View style={styles.container}>
-    {/* 날짜 범위 헤더 */}
     <View style={styles.rangeHeader}>
       <TouchableOpacity
         onPress={onPrev}
         hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         accessibilityRole="button"
-        accessibilityLabel="이전 주"
+        accessibilityLabel={t('calendar.prevWeek')}
       >
         <Ionicons name="chevron-back" size={16} color={colors.text.secondary} />
       </TouchableOpacity>
@@ -37,13 +48,12 @@ const WeekCalendar = ({ weekDates, today, markedDates, onPrev, onNext }: WeekCal
         onPress={onNext}
         hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         accessibilityRole="button"
-        accessibilityLabel="다음 주"
+        accessibilityLabel={t('calendar.nextWeek')}
       >
         <Ionicons name="chevron-forward" size={16} color={colors.text.secondary} />
       </TouchableOpacity>
     </View>
 
-    {/* 요일 + 날짜 + dot */}
     <View style={styles.datesRow}>
       {weekDates.map((dateStr, index) => {
         const day = parseInt(dateStr.split('-')[2], 10);
@@ -52,7 +62,7 @@ const WeekCalendar = ({ weekDates, today, markedDates, onPrev, onNext }: WeekCal
 
         return (
           <View key={dateStr} style={styles.dayCell}>
-            <Text style={styles.dayName}>{DAY_NAMES[index]}</Text>
+            <Text style={styles.dayName}>{dayNames[index]}</Text>
             <View style={[styles.dateCircle, isToday && styles.todayCircle]}>
               <Text style={[styles.dateText, isToday && styles.todayText]}>{day}</Text>
             </View>
@@ -66,7 +76,8 @@ const WeekCalendar = ({ weekDates, today, markedDates, onPrev, onNext }: WeekCal
       })}
     </View>
   </View>
-);
+  );
+};
 
 export default WeekCalendar;
 

@@ -1,5 +1,6 @@
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { AntDesign, Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import colors from '../../constants/colors';
 import fonts from '../../constants/fonts';
 import { DocumentItem } from '../../mock/documents';
@@ -16,7 +17,9 @@ const hexToRgba = (hex: string, alpha: number): string => {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 };
 
-const DocumentCard = ({ item, onPress }: DocumentCardProps) => (
+const DocumentCard = ({ item, onPress }: DocumentCardProps) => {
+  const { t } = useTranslation();
+  return (
   <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.75}>
     <View style={[styles.colorBar, { backgroundColor: item.calendarColor }]} />
 
@@ -27,7 +30,7 @@ const DocumentCard = ({ item, onPress }: DocumentCardProps) => (
     <View style={styles.info}>
       <View style={styles.topRow}>
         <Text style={styles.childInfo} numberOfLines={1}>
-          {item.childName} · 초등학교 {item.grade}학년
+          {item.childName} · {t('common.elementaryGrade', { grade: item.grade })}
         </Text>
         {item.dDay !== null && (
           <View style={styles.dDayBadge}>
@@ -46,7 +49,8 @@ const DocumentCard = ({ item, onPress }: DocumentCardProps) => (
       </View>
     </View>
   </TouchableOpacity>
-);
+  );
+};
 
 export default DocumentCard;
 

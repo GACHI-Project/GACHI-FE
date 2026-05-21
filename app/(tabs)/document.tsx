@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { View, Text, TextInput, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import colors from '../../src/constants/colors';
 import fonts from '../../src/constants/fonts';
 import layout from '../../src/constants/layout';
@@ -9,6 +10,7 @@ import DocumentCard from '../../src/components/document/DocumentCard';
 import Header from '../../src/components/common/Header';
 
 const DocumentScreen = () => {
+  const { t } = useTranslation();
   const [selectedChildId, setSelectedChildId] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -20,12 +22,12 @@ const DocumentScreen = () => {
 
   return (
     <View style={styles.container}>
-      <Header title="문서" />
+      <Header title={t('document.title')} />
       <View style={styles.searchWrap}>
         <Ionicons name="search" size={25} color={colors.gray[200]} style={styles.searchIcon} />
         <TextInput
           style={styles.searchInput}
-          placeholder="문서 제목 검색"
+          placeholder={t('document.searchPlaceholder')}
           placeholderTextColor={colors.gray[200]}
           value={searchQuery}
           onChangeText={setSearchQuery}
@@ -45,7 +47,7 @@ const DocumentScreen = () => {
           activeOpacity={0.7}
         >
           <Text style={[styles.filterText, selectedChildId === 'all' && styles.filterTextSelected]}>
-            전체
+            {t('common.all')}
           </Text>
         </TouchableOpacity>
 
@@ -74,7 +76,7 @@ const DocumentScreen = () => {
         keyboardShouldPersistTaps="handled"
       >
         {filtered.length === 0 ? (
-          <Text style={styles.emptyText}>해당하는 문서가 없어요</Text>
+          <Text style={styles.emptyText}>{t('document.empty')}</Text>
         ) : (
           filtered.map((doc) => <DocumentCard key={doc.id} item={doc} onPress={() => {}} />)
         )}

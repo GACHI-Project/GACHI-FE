@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { router } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import styles from '../../styles/home/taskCard';
 
 interface Child {
@@ -39,23 +40,25 @@ const TODO_ITEMS: TodoItem[] = [
 ];
 
 const VISIBLE_COUNT = 2;
-const total = TODO_ITEMS.length;
-const visibleItems = TODO_ITEMS.slice(0, VISIBLE_COUNT);
-const hiddenCount = Math.max(total - VISIBLE_COUNT, 0);
-const summaryDesc = (() => {
-  if (total === 0) return '오늘 처리할 항목이 없어요';
-  const childCounts = CHILDREN.map((child) => ({
-    name: TODO_ITEMS.find((t) => t.childId === child.id)?.childName ?? '',
-    count: TODO_ITEMS.filter((t) => t.childId === child.id).length,
-  }));
-  return `${childCounts
-    .filter((c) => c.count > 0)
-    .map((c) => `${c.name} ${c.count}건`)
-    .join(' · ')} 남아 있어요`;
-})();
 
 const TaskCard = () => {
+  const { t } = useTranslation();
   const [checked, setChecked] = useState<Record<string, boolean>>({});
+
+  const total = TODO_ITEMS.length;
+  const visibleItems = TODO_ITEMS.slice(0, VISIBLE_COUNT);
+  const hiddenCount = Math.max(total - VISIBLE_COUNT, 0);
+  const summaryDesc = useMemo(() => {
+    if (total === 0) return t('home.taskCard.todayEmpty');
+    const childCounts = CHILDREN.map((child) => ({
+      name: TODO_ITEMS.find((item) => item.childId === child.id)?.childName ?? '',
+      count: TODO_ITEMS.filter((item) => item.childId === child.id).length,
+    }));
+    return `${childCounts
+      .filter((c) => c.count > 0)
+      .map((c) => t('home.taskCard.childCount', { name: c.name, count: c.count }))
+      .join(' · ')} ${t('home.taskCard.remaining')}`;
+  }, [t]);
 
   const { todayMonth, todayDay } = useMemo(() => {
     const now = new Date();
@@ -77,7 +80,7 @@ const TaskCard = () => {
         </View>
         <View style={styles.summaryTexts}>
           <Text style={styles.summaryTitle}>
-            {total === 0 ? '오늘 할 일 없음' : `오늘 처리할 항목 ${total}건`}
+            {total === 0 ? t('home.taskCard.noTodo') : t('home.taskCard.todayCount', { count: total })}
           </Text>
           <Text style={styles.summaryDesc}>{summaryDesc}</Text>
         </View>
@@ -99,7 +102,7 @@ const TaskCard = () => {
 
       {/* Todo items */}
       {total === 0 ? (
-        <Text style={styles.emptyText}>오늘은 처리할 항목이 없어요 🎉</Text>
+        <Text style={styles.emptyText}>{t('home.taskCard.empty')}</Text>
       ) : (
         visibleItems.map((item, index) => (
           <View key={item.id}>
@@ -128,7 +131,7 @@ const TaskCard = () => {
                 </View>
               </View>
               <View style={styles.todayBadge}>
-                <Text style={styles.todayText}>오늘</Text>
+                <Text style={styles.todayText}>{t('home.taskCard.today')}</Text>
               </View>
             </View>
             {index < visibleItems.length - 1 && <View style={styles.divider} />}
@@ -144,7 +147,7 @@ const TaskCard = () => {
             activeOpacity={0.7}
             onPress={() => router.push('/(tabs)/calendar')}
           >
-            <Text style={styles.moreText}>{hiddenCount}개 더보기 →</Text>
+            <Text style={styles.moreText}>{t('home.taskCard.moreItems', { count: hiddenCount })}</Text>
           </TouchableOpacity>
         </>
       )}

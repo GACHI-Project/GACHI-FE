@@ -6,7 +6,8 @@ const GUIDE_EMOJIS = ['📋', '👩‍🏫', '🎒', '👕'];
 
 const GuideCards = () => {
   const { t } = useTranslation();
-  const questions = t('home.guideCards.questions', { returnObjects: true }) as string[];
+  const raw = t('home.guideCards.questions', { returnObjects: true });
+  const questions: string[] = Array.isArray(raw) ? (raw as string[]) : [];
 
   return (
     <View style={styles.section}>
@@ -30,7 +31,7 @@ const GuideCards = () => {
             activeOpacity={0.8}
             onPress={() => {}}
           >
-            <Text style={styles.cardEmoji}>{GUIDE_EMOJIS[index]}</Text>
+            <Text style={styles.cardEmoji}>{GUIDE_EMOJIS[index] ?? '📌'}</Text>
             <Text style={styles.cardQuestion}>{question}</Text>
             <View style={styles.guideBadge}>
               <Text style={styles.guideBadgeText}>{t('home.guideCards.badge')}</Text>

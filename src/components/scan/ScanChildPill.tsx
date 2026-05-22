@@ -1,4 +1,5 @@
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import colors from '../../constants/colors';
 import fonts from '../../constants/fonts';
 
@@ -8,25 +9,28 @@ interface ScanChildPillProps {
   onChangePress?: () => void;
 }
 
-const ScanChildPill = ({ name, color, onChangePress }: ScanChildPillProps) => (
-  <View style={styles.pill}>
-    <View style={[styles.dot, { backgroundColor: color }]} />
-    <Text style={styles.text}>
-      <Text style={styles.name}>{name}</Text>
-      {' 의 가정통신문'}
-    </Text>
-    {onChangePress && (
-      <TouchableOpacity
-        onPress={onChangePress}
-        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        accessibilityLabel="아이 변경"
-        accessibilityRole="button"
-      >
-        <Text style={styles.change}>변경</Text>
-      </TouchableOpacity>
-    )}
-  </View>
-);
+const ScanChildPill = ({ name, color, onChangePress }: ScanChildPillProps) => {
+  const { t } = useTranslation();
+  return (
+    <View style={styles.pill}>
+      <View style={[styles.dot, { backgroundColor: color }]} />
+      <Text style={styles.text}>
+        <Text style={styles.name}>{name}</Text>
+        {t('scan.childPill.suffix')}
+      </Text>
+      {onChangePress && (
+        <TouchableOpacity
+          onPress={onChangePress}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          accessibilityLabel={t('scan.childPill.changeAccessibility')}
+          accessibilityRole="button"
+        >
+          <Text style={styles.change}>{t('scan.childPill.change')}</Text>
+        </TouchableOpacity>
+      )}
+    </View>
+  );
+};
 
 export default ScanChildPill;
 

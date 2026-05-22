@@ -1,0 +1,465 @@
+{
+  "common": {
+    "back": "뒤로 가기",
+    "help": "도움말",
+    "close": "닫기",
+    "confirm": "확인",
+    "next": "다음으로 →",
+    "later": "나중에 설정할게요",
+    "retry": "다시 시도",
+    "all": "전체",
+    "today": "오늘",
+    "error": "오류",
+    "networkError": "네트워크 오류가 발생했어요. 다시 시도해주세요.",
+    "modalClose": "모달 닫기",
+    "saving": "저장 중...",
+    "change": "변경",
+    "elementaryGrade": "초등학교 {{grade}}학년",
+    "grade": "{{grade}}학년"
+  },
+  "tabs": {
+    "home": "홈",
+    "document": "문서",
+    "scan": "스캔",
+    "calendar": "캘린더",
+    "profile": "프로필"
+  },
+  "stepHeader": {
+    "step": "{{current}}단계 / {{total}}단계"
+  },
+  "auth": {
+    "login": {
+      "title": "로그인하기",
+      "stayLoggedIn": "로그인 상태 유지",
+      "button": "로그인",
+      "loading": "로그인 중...",
+      "forgotId": "아이디 찾기",
+      "forgotPassword": "비밀번호 찾기",
+      "noAccount": "계정이 없으신가요?",
+      "signUp": "회원가입",
+      "error": {
+        "invalidCredentials": "아이디 또는 비밀번호가 올바르지 않아요",
+        "withdrawnAccount": "탈퇴한 계정이에요",
+        "tooManyAttempts": "로그인 시도가 너무 많아요. 잠시 후 다시 시도해주세요",
+        "generic": "로그인 중 오류가 발생했어요. 다시 시도해주세요."
+      }
+    },
+    "register": {
+      "language": {
+        "title": "사용할 언어를 선택해 주세요",
+        "subtitle": "선택한 언어로 가정통신문을 번역하고 쉽게 설명해드려요",
+        "settingsTip": "언어는 설정에서 언제든 변경할 수 있어요"
+      },
+      "basic": {
+        "title": "새로운 계정 만들기",
+        "subtitle": "간단한 프로필 설정 후 바로 시작할 수 있어요.",
+        "name": "이름",
+        "id": "아이디",
+        "phone": "전화번호",
+        "email": "이메일",
+        "verificationCode": "인증번호",
+        "password": "비밀번호",
+        "passwordConfirm": "비밀번호 확인",
+        "verify": "인증하기",
+        "verifying": "확인 중...",
+        "hasAccount": "이미 계정이 있으신가요?",
+        "loginLink": "로그인",
+        "passwordMatch": "비밀번호가 일치합니다.",
+        "error": {
+          "nameRequired": "이름을 입력해주세요",
+          "phoneFormat": "올바른 전화번호 형식이 아니에요",
+          "passwordWeak": "비밀번호 보안 강도가 위험 등급이에요",
+          "passwordMismatch": "비밀번호가 일치하지 않아요",
+          "termsRequired": "약관에 동의해주세요",
+          "idAvailable": "사용 가능한 아이디에요",
+          "idTaken": "이미 사용 중인 아이디에요",
+          "phoneAvailable": "사용 가능한 전화번호에요",
+          "phoneTaken": "이미 사용 중인 전화번호에요",
+          "emailTaken": "이미 사용 중인 이메일이에요",
+          "codeSent": "인증 코드가 발송됐어요",
+          "codeExpiredDisplay": "인증 시간이 만료됐어요. 재발송해주세요.",
+          "emailVerified": "이메일 인증이 완료되었어요",
+          "codeFormat": "인증 코드는 6자리 숫자여야 해요",
+          "checkError": "확인 중 오류가 발생했어요. 다시 시도해주세요.",
+          "sendError": "인증 코드 발송에 실패했어요. 다시 시도해주세요.",
+          "codeInvalid": "입력값이 올바르지 않아요",
+          "codeWrong": "인증 코드가 일치하지 않아요",
+          "codeExpired": "인증 코드가 만료되었어요. 다시 발송해주세요.",
+          "codeExceeded": "인증 코드 입력 시도 횟수를 초과했어요.",
+          "verifyError": "인증 확인에 실패했어요. 다시 시도해주세요."
+        }
+      },
+      "child": {
+        "title": "우리 아이 정보를 알려주세요",
+        "subtitle": "아이의 학년에 맞춰 가정통신문을 이해하기 쉽게 설명해드려요",
+        "school": "학교",
+        "schoolPlaceholder": "학교명을 검색해 주세요",
+        "grade": "초등학교 학년",
+        "calendarColor": "캘린더 색상",
+        "childName": "아이 이름",
+        "childNamePlaceholder": "이름을 입력해 주세요",
+        "colorHint": "각 자녀의 색상은 캘린더에서 누구의 일정인지 바로 구분하는 데 사용돼요.",
+        "addChild": "자녀 추가하기",
+        "order": ["첫째", "둘째", "셋째", "넷째", "다섯째", "여섯째", "일곱째"]
+      },
+      "notification": {
+        "title": "원하는 알림 방식을 설정해주세요",
+        "subtitle": "알림을 원하는 방식으로 설정해보세요",
+        "sectionLabel": "알림 단계",
+        "settingsTip": "알림 방식은 설정에서 언제든 변경할 수 있어요",
+        "options": {
+          "important": {
+            "title": "중요 알림",
+            "desc": "마감일과 곧 확인이 필요한 내용을 받아요",
+            "badge": "추천"
+          },
+          "urgent": {
+            "title": "긴급 알림만",
+            "desc": "마감일 등 꼭 필요한 알림만 받아요"
+          },
+          "all": {
+            "title": "모든 알림",
+            "desc": "모든 가정통신문과 업데이트, 알림을 받아요"
+          },
+          "none": {
+            "title": "알림 안 받기",
+            "desc": "알림 없이 필요할 때 앱에서 확인해요"
+          }
+        }
+      },
+      "complete": {
+        "title": "가입이 완료됐어요!",
+        "subtitle": "이제 가치와 함께 우리 아이의 학교 생활을 더 쉽게 알아가요",
+        "button": "로그인하러 가기 →",
+        "noInfo": "회원가입 정보가 없어요. 처음부터 다시 시도해주세요.",
+        "error": "오류가 발생했어요. 다시 시도해주세요."
+      }
+    },
+    "terms": {
+      "title": "이용약관",
+      "confirm": "확인"
+    },
+    "privacy": {
+      "title": "개인정보 처리방침",
+      "confirm": "동의하고 계속하기"
+    },
+    "termsCheckbox": {
+      "main": "이용약관 및 개인정보 처리방침에 동의합니다.",
+      "sub": "필수 약관을 확인한 뒤 체크해주세요.",
+      "viewTerms": "이용약관 보기",
+      "viewPrivacy": "개인정보 처리방침 보기"
+    }
+  },
+  "passwordStrength": {
+    "label": "보안 강도 :",
+    "danger": "위험",
+    "normal": "보통",
+    "safe": "안전",
+    "verySafe": "매우 안전"
+  },
+  "validation": {
+    "passwordLength": "비밀번호는 8자 이상 20자 이하여야 해요",
+    "passwordTypes": "영문, 숫자, 특수문자 중 2종 이상을 포함해야 해요",
+    "passwordSpace": "비밀번호에 공백을 포함할 수 없어요",
+    "passwordRepeat": "같은 문자를 3번 이상 연속 사용할 수 없어요",
+    "passwordSequential": "연속된 문자나 숫자를 4자 이상 사용할 수 없어요",
+    "passwordContainsId": "아이디를 비밀번호에 포함할 수 없어요",
+    "passwordContainsEmail": "이메일을 비밀번호에 포함할 수 없어요",
+    "passwordContainsPhone": "전화번호를 비밀번호에 포함할 수 없어요",
+    "idMin": "아이디는 4자 이상이어야 해요",
+    "idMax": "아이디는 50자 이하여야 해요",
+    "idFormat": "영문, 숫자, ., _, -만 사용할 수 있어요",
+    "phoneFormat": "올바른 전화번호 형식이 아니에요",
+    "emailFormat": "올바른 이메일 형식이 아니에요"
+  },
+  "home": {
+    "usernameFormat": "{{name}} 님",
+    "taskCard": {
+      "noTodo": "오늘 할 일 없음",
+      "todayCount": "오늘 처리할 항목 {{count}}건",
+      "todayCount_other": "오늘 처리할 항목 {{count}}건",
+      "todayEmpty": "오늘 처리할 항목이 없어요",
+      "childCount": "{{name}} {{count}}건",
+      "childCount_other": "{{name}} {{count}}건",
+      "remaining": "남아 있어요",
+      "empty": "오늘은 처리할 항목이 없어요 🎉",
+      "today": "오늘",
+      "moreItems": "{{count}}개 더보기 →",
+      "moreItems_other": "{{count}}개 더보기 →"
+    },
+    "scanBanner": {
+      "title": "가정통신문 스캔하기",
+      "desc": "찍기만 하면 번역 · 요약 · 체크리스트까지 한 번에",
+      "button": "지금 스캔 →"
+    },
+    "features": {
+      "sectionTitle": "주요 기능",
+      "ai": {
+        "title": ["AI에게", "물어보기"],
+        "desc": "이해 안 되는 내용을 바로 질문하세요. AI가 맥락까지 설명해드려요.",
+        "button": "대화 시작"
+      },
+      "guide": {
+        "title": ["학교 문화", "해설 가이드"],
+        "desc": "한국 학교 문화를 쉽게 이해하세요. 필요한 행동까지 안내해드려요.",
+        "button": "가이드 시작"
+      }
+    },
+    "guideCards": {
+      "sectionTitle": "이런 내용, 궁금하셨나요?",
+      "more": "더보기",
+      "badge": "✓ 가이드",
+      "questions": [
+        "동의서를 꼭 직접 내야 하나요?",
+        "담임 선생님께 연락 드려야 할까요?",
+        "준비물은 어떤 걸 챙겨야 하나요?",
+        "체육복은 따로 구매해야 하나요?"
+      ]
+    },
+    "recentDocs": {
+      "sectionTitle": "최근 가정통신문",
+      "more": "전체보기"
+    }
+  },
+  "greetings": {
+    "morning": [
+      "좋은 아침이에요 ☀️",
+      "오늘도 가치와 함께해요 🌼",
+      "학교 소식을 쉽게 확인해보세요 📄",
+      "새로운 하루, 새로운 소식이 기다려요 🌤",
+      "아이의 학교 일정을 미리 확인해봐요 🎒",
+      "오늘 하루도 든든하게 시작해봐요 💪"
+    ],
+    "lunch": [
+      "점심 시간에 잠깐 확인해보세요 🍽",
+      "중요한 학교 소식을 놓치지 마세요 🌿",
+      "가치가 오늘도 도와드릴게요 ✨",
+      "잠깐 쉬면서 오늘의 알림 확인해봐요 ☕",
+      "오늘 챙겨야 할 준비물이 있을지도요 📋",
+      "점심 사이, 소식 하나 확인하고 가요 🌞"
+    ],
+    "afternoon": [
+      "오후에도 필요한 정보를 쉽게 ☁️",
+      "오늘의 학교 소식을 확인해보세요 🍀",
+      "준비물과 일정을 함께 살펴봐요 📚",
+      "내일 학교 준비, 지금 미리 확인해요 📅",
+      "아이 하교 전, 알림 한 번 더 살펴봐요 🏫",
+      "놓친 소식이 있는지 확인해봐요 🔔"
+    ],
+    "evening": [
+      "오늘도 수고 많으셨어요 🌇",
+      "남은 학교 일정도 챙겨볼까요? 💛",
+      "가치와 함께 하루를 정리해봐요 ✨",
+      "내일을 위해 미리 준비해봐요 🌆",
+      "중요한 알림, 저녁에 한 번 더 확인해요 📬",
+      "오늘 받은 가정통신문 다시 살펴볼까요? 📝"
+    ],
+    "night": [
+      "늦은 시간에도 편하게 확인해보세요 🌙",
+      "내일 준비할 내용을 살펴봐요 ⭐",
+      "중요한 소식만 쉽게 보여드릴게요 🌌",
+      "오늘의 마지막 알림을 확인해봐요 🌛",
+      "내일도 가치가 함께할게요 💤",
+      "푹 쉬기 전, 내일 일정만 확인해봐요 🌠"
+    ]
+  },
+  "scan": {
+    "title": "문서 스캔",
+    "helpModal": {
+      "title": "스캔 이용 방법",
+      "confirm": "확인했어요",
+      "step1": {
+        "title": "아이를 먼저 선택해 주세요",
+        "desc": "학년에 맞게 문서를 더 정확하게 해석해 드려요"
+      },
+      "step2": {
+        "title": "가정통신문을 촬영하거나 선택해 주세요",
+        "desc": "글자가 잘 보이도록 평평하게 펴서 찍어주세요"
+      },
+      "step3": {
+        "title": "AI가 자동으로 분석해요",
+        "desc": "번역 · 요약 · 체크리스트까지 한 번에 만들어드려요"
+      }
+    },
+    "childPill": {
+      "suffix": "의 가정통신문",
+      "change": "변경",
+      "changeAccessibility": "아이 변경"
+    },
+    "select": {
+      "title": "누구의 가정통신문인가요?",
+      "subtitle": "아이를 선택하면 학년에 맞게 문서를 해석해드려요",
+      "unknown": "어느 아이인지 모르겠어요",
+      "camera": "카메라로 촬영하기",
+      "gallery": "갤러리에서 선택하기",
+      "pdf": "PDF 문서로 업로드하기",
+      "error": {
+        "loadChildren": "자녀 정보를 불러올 수 없어요.",
+        "pdf": "PDF를 불러올 수 없어요.",
+        "gallery": "갤러리를 불러올 수 없어요.",
+        "galleryPermission": "갤러리 접근 권한이 필요해요.",
+        "permissionTitle": "권한 필요",
+        "errorTitle": "오류"
+      }
+    },
+    "camera": {
+      "permissionText": "카메라 접근 권한이 필요해요",
+      "allowPermission": "권한 허용하기",
+      "captureError": "촬영 실패",
+      "captureErrorMsg": "다시 시도해주세요.",
+      "galleryPermission": "갤러리 접근 권한이 필요해요.",
+      "galleryError": "갤러리를 불러올 수 없어요.",
+      "accessibilityGallery": "갤러리에서 선택",
+      "accessibilityCapture": "사진 촬영",
+      "accessibilityFlip": "카메라 전환",
+      "permissionTitle": "권한 필요",
+      "errorTitle": "오류"
+    },
+    "preview": {
+      "pdfLabel": "PDF 파일",
+      "accessibilityPreview": "스캔할 문서 미리보기",
+      "retake": "다시 찍기",
+      "reselect": "다시 선택하기",
+      "use": "사용하기"
+    },
+    "loading": {
+      "preparing": "문서를 준비하고 있어요",
+      "analyzing": "텍스트와 레이아웃을 분석하고 있어요",
+      "complete": "번역 및 요약을 완료했어요!",
+      "scanComplete": "스캔 완료!",
+      "next": "다음으로 →",
+      "accessibilityNext": "다음으로",
+      "error": {
+        "analysisFailed": "분석 실패",
+        "analysisFailedMsg": "문서 분석에 실패했어요. 다시 시도해주세요.",
+        "uploadFailed": "업로드 실패",
+        "uploadDefault": "업로드에 실패했어요. 다시 시도해주세요.",
+        "duplicate": "이미 업로드된 가정통신문이에요.",
+        "unsupportedFormat": "지원하지 않는 파일 형식이에요.",
+        "fileTooLarge": "파일 크기가 10MB를 초과해요."
+      }
+    },
+    "result": {
+      "title": "스캔 결과",
+      "tabs": {
+        "full": "전체 문서",
+        "checklist": "체크리스트",
+        "aiSummary": "AI 요약"
+      },
+      "chat": "AI와 대화하기",
+      "save": "저장하기",
+      "fullDoc": {
+        "translated": "번역된 문서",
+        "original": "원문",
+        "ocrOriginal": "OCR 원문",
+        "error": {
+          "notFound": "가정통신문 정보를 찾을 수 없어요.",
+          "notAnalyzed": "아직 분석이 완료되지 않은 가정통신문이에요.",
+          "newsletterNotFound": "가정통신문을 찾을 수 없어요.",
+          "loadFailed": "문서를 불러오는 데 실패했어요."
+        }
+      },
+      "checklist": {
+        "empty": "체크리스트 항목이 없어요.",
+        "deleteItem": "항목 삭제",
+        "error": {
+          "notFound": "가정통신문 정보를 찾을 수 없어요.",
+          "newsletterNotFound": "가정통신문을 찾을 수 없어요.",
+          "loadFailed": "체크리스트를 불러오는 데 실패했어요."
+        }
+      },
+      "aiSummary": {
+        "summarySection": "AI 요약",
+        "todayTodo": "오늘 할 일",
+        "culturalContext": "문화 맥락 안내",
+        "emptyTodo": "등록된 할 일이 없어요.",
+        "error": {
+          "notFound": "가정통신문 정보를 찾을 수 없어요.",
+          "analyzing": "아직 분석 중인 가정통신문이에요.",
+          "analysisFailed": "분석에 실패한 가정통신문이에요.",
+          "newsletterNotFound": "가정통신문을 찾을 수 없어요.",
+          "noAccess": "접근 권한이 없어요.",
+          "summaryFailed": "요약을 불러오는 데 실패했어요.",
+          "todoFailed": "할 일 목록을 불러오는 데 실패했어요."
+        },
+        "qna": [
+          {
+            "q": "동의서를 왜 직접 제출해야 하나요?",
+            "a": "한국 초등학교는 교외 활동 시 ",
+            "aHighlight": "보호자 서명 원본",
+            "aTail": "이 법적으로 필요해요. 카카오톡이나 앱 메시지로 대체가 안 돼요."
+          },
+          {
+            "q": "늦게 내면 어떻게 되나요?",
+            "a": "마감일이 지나면 ",
+            "aHighlight": "현장학습 참가가 불가",
+            "aTail": "할 수 있어요. 늦으면 바로 담임 선생님께 직접 연락하세요."
+          }
+        ]
+      },
+      "saveBottomSheet": {
+        "title": "캘린더에 일정을 등록하시겠습니까?",
+        "subtitleAutoDate": "추출된 날짜 정보를 바탕으로\n자동으로 일정이 생성돼요.",
+        "subtitleManualDate": "날짜를 직접 입력해주세요.",
+        "dateNotFound": "문서에서 날짜를 찾지 못했어요.\n날짜를 직접 입력하면 등록할 수 있어요.",
+        "dateEditor": "날짜 변경",
+        "year": "년",
+        "month": "월",
+        "day": "일",
+        "fullDay": "종일",
+        "weekdays": ["일요일", "월요일", "화요일", "수요일", "목요일", "금요일", "토요일"],
+        "isEditing": "✏️ 수정 중",
+        "edit": "✏️ 수정",
+        "no": "아니요",
+        "register": "✓ 네, 등록할게요",
+        "successTitle": "캘린더에 등록됐어요!",
+        "successSubtitle": "마감일이 다가오면 알려드릴게요.",
+        "viewCalendar": "캘린더에서 보기",
+        "close": "닫기",
+        "accessibilityEdit": "일정 수정",
+        "dateConfirm": "확인",
+        "accessibilityDateConfirm": "날짜 확인",
+        "accessibilityClose": "모달 닫기",
+        "yearLabel": "년도",
+        "monthLabel": "월",
+        "dayLabel": "일",
+        "error": {
+          "invalidDate": "올바른 날짜를 입력해주세요.",
+          "loadFailed": "일정 정보를 불러오는 데 실패했어요.",
+          "expired": "AI 분석 중이거나 미리보기 데이터가 만료됐어요.",
+          "registerFailed": "등록 실패",
+          "registerDefault": "일정 등록에 실패했어요.",
+          "invalidInput": "입력값이 올바르지 않아요.",
+          "newsletterNotFound": "가정통신문을 찾을 수 없어요.",
+          "dateFormat": "날짜 형식이 올바르지 않아요.",
+          "previewExpired": "미리보기 데이터가 만료됐어요. 다시 시도해주세요.",
+          "dateSaveFailed": "날짜 저장 실패",
+          "dateSaveDefault": "날짜 저장에 실패했어요.",
+          "noPreviewMsg": "일정 미리보기 정보를 먼저 불러와주세요.",
+          "errorTitle": "오류"
+        }
+      }
+    }
+  },
+  "calendar": {
+    "title": "캘린더",
+    "emptyWeek": "이번 주 일정이 없어요",
+    "emptyDay": "등록된 일정이 없어요",
+    "weekViewAccessibility": "월간 보기로 전환",
+    "monthViewAccessibility": "주간 보기로 전환",
+    "backAccessibility": "뒤로가기",
+    "prevWeek": "이전 주",
+    "nextWeek": "다음 주",
+    "prevMonth": "이전 달",
+    "nextMonth": "다음 달",
+    "checklist": {
+      "collapse": "체크리스트 접기",
+      "expand": "체크리스트 펼치기"
+    }
+  },
+  "document": {
+    "title": "문서",
+    "searchPlaceholder": "문서 제목 검색",
+    "empty": "해당하는 문서가 없어요"
+  }
+}

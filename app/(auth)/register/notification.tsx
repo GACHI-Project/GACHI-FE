@@ -2,49 +2,12 @@ import { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import StepHeader from '../../../src/components/common/StepHeader';
 import { PrimaryButton, SecondaryButton } from '../../../src/components/common/Button';
 import colors from '../../../src/constants/colors';
 import styles from '../../../src/styles/register/notification';
 import { NotificationType, NotificationOption } from '../../../src/types/notification';
-
-const NOTIFICATION_OPTIONS: NotificationOption[] = [
-  {
-    type: 'important',
-    title: '중요 알림',
-    description: '마감일과 곧 확인이 필요한 내용을 받아요',
-    iconName: 'notifications-outline',
-    iconColor: colors.secondary[600],
-    iconBg: colors.secondary[100],
-    badge: '추천',
-  },
-  {
-    type: 'urgent',
-    title: '긴급 알림만',
-    description: '마감일 등 꼭 필요한 알림만 받아요',
-    iconName: 'alert-circle-outline',
-    iconColor: colors.text.red,
-    iconBg: colors.text.white,
-    iconBordered: true,
-  },
-  {
-    type: 'all',
-    title: '모든 알림',
-    description: '모든 가정통신문과 업데이트, 알림을 받아요',
-    iconName: 'mail-outline',
-    iconColor: colors.primary[500],
-    iconBg: colors.primary[100],
-  },
-  {
-    type: 'none',
-    title: '알림 안 받기',
-    description: '알림 없이 필요할 때 앱에서 확인해요',
-    iconName: 'notifications-off-outline',
-    iconColor: colors.gray[300],
-    iconBg: colors.gray[100],
-    iconFlipped: true,
-  },
-];
 
 // ─── NotificationCard ─────────────────────────────────────────────────────────
 
@@ -95,7 +58,46 @@ const NotificationCard = ({ option, selected, onPress }: NotificationCardProps) 
 // ─── 메인 화면 ────────────────────────────────────────────────────────────────
 
 const RegisterNotificationScreen = () => {
+  const { t } = useTranslation();
   const [selected, setSelected] = useState<NotificationType>('important');
+
+  const NOTIFICATION_OPTIONS: NotificationOption[] = [
+    {
+      type: 'important',
+      title: t('auth.register.notification.options.important.title'),
+      description: t('auth.register.notification.options.important.desc'),
+      iconName: 'notifications-outline',
+      iconColor: colors.secondary[600],
+      iconBg: colors.secondary[100],
+      badge: t('auth.register.notification.options.important.badge'),
+    },
+    {
+      type: 'urgent',
+      title: t('auth.register.notification.options.urgent.title'),
+      description: t('auth.register.notification.options.urgent.desc'),
+      iconName: 'alert-circle-outline',
+      iconColor: colors.text.red,
+      iconBg: colors.text.white,
+      iconBordered: true,
+    },
+    {
+      type: 'all',
+      title: t('auth.register.notification.options.all.title'),
+      description: t('auth.register.notification.options.all.desc'),
+      iconName: 'mail-outline',
+      iconColor: colors.primary[500],
+      iconBg: colors.primary[100],
+    },
+    {
+      type: 'none',
+      title: t('auth.register.notification.options.none.title'),
+      description: t('auth.register.notification.options.none.desc'),
+      iconName: 'notifications-off-outline',
+      iconColor: colors.gray[300],
+      iconBg: colors.gray[100],
+      iconFlipped: true,
+    },
+  ];
 
   return (
     <View style={styles.container}>
@@ -107,14 +109,12 @@ const RegisterNotificationScreen = () => {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        {/* 타이틀 */}
         <View style={styles.titleSection}>
-          <Text style={styles.title}>원하는 알림 방식을 설정해주세요</Text>
-          <Text style={styles.subtitle}>알림을 원하는 방식으로 설정해보세요</Text>
+          <Text style={styles.title}>{t('auth.register.notification.title')}</Text>
+          <Text style={styles.subtitle}>{t('auth.register.notification.subtitle')}</Text>
         </View>
 
-        {/* 알림 옵션 */}
-        <Text style={styles.sectionLabel}>알림 단계</Text>
+        <Text style={styles.sectionLabel}>{t('auth.register.notification.sectionLabel')}</Text>
         {NOTIFICATION_OPTIONS.map((option) => (
           <NotificationCard
             key={option.type}
@@ -124,18 +124,17 @@ const RegisterNotificationScreen = () => {
           />
         ))}
 
-        {/* 안내 배너 + 버튼 */}
         <View style={styles.footer}>
           <View style={styles.banner}>
             <Ionicons name="settings" size={18} color={colors.text.primary} />
-            <Text style={styles.bannerText}>알림 방식은 설정에서 언제든 변경할 수 있어요</Text>
+            <Text style={styles.bannerText}>{t('auth.register.notification.settingsTip')}</Text>
           </View>
           <PrimaryButton
-            label="다음으로 →"
+            label={t('common.next')}
             onPress={() => router.push('/(auth)/register/complete')}
           />
           <SecondaryButton
-            label="나중에 설정할게요"
+            label={t('common.later')}
             onPress={() => router.push('/(auth)/register/complete')}
           />
         </View>

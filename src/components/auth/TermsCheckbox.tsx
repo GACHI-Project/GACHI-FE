@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import colors from '../../constants/colors';
 import fonts from '../../constants/fonts';
 
@@ -10,38 +11,41 @@ interface TermsCheckboxProps {
   onPrivacyPress: () => void;
 }
 
-const TermsCheckbox = ({ checked, onChange, onTermsPress, onPrivacyPress }: TermsCheckboxProps) => (
-  <View style={styles.wrapper}>
-    <Pressable
-      onPress={() => onChange(!checked)}
-      // 💡 This is the main box container mimicking other inputs
-      style={({ pressed }) => [styles.containerBox, pressed && { opacity: 0.7 }]}
-    >
-      <View style={styles.innerLayout}>
-        <View style={[styles.checkbox, checked && styles.checkboxChecked]}>
-          {checked && <Text style={styles.checkmark}>✓</Text>}
-        </View>
+const TermsCheckbox = ({ checked, onChange, onTermsPress, onPrivacyPress }: TermsCheckboxProps) => {
+  const { t } = useTranslation();
 
-        <View style={styles.textSection}>
-          <Text style={styles.mainText}>이용약관 및 개인정보 처리방침에 동의합니다.</Text>
-          <Text style={styles.subText}>필수 약관을 확인한 뒤 체크해주세요.</Text>
+  return (
+    <View style={styles.wrapper}>
+      <Pressable
+        onPress={() => onChange(!checked)}
+        style={({ pressed }) => [styles.containerBox, pressed && { opacity: 0.7 }]}
+      >
+        <View style={styles.innerLayout}>
+          <View style={[styles.checkbox, checked && styles.checkboxChecked]}>
+            {checked && <Text style={styles.checkmark}>✓</Text>}
+          </View>
+
+          <View style={styles.textSection}>
+            <Text style={styles.mainText}>{t('auth.termsCheckbox.main')}</Text>
+            <Text style={styles.subText}>{t('auth.termsCheckbox.sub')}</Text>
+          </View>
         </View>
+      </Pressable>
+
+      <View style={styles.linkRow}>
+        <Pressable onPress={onTermsPress} hitSlop={{ top: 10, bottom: 10, left: 10, right: 4 }}>
+          <Text style={styles.linkText}>{t('auth.termsCheckbox.viewTerms')}</Text>
+        </Pressable>
+
+        <Text style={styles.dot}>|</Text>
+
+        <Pressable onPress={onPrivacyPress} hitSlop={{ top: 10, bottom: 10, left: 4, right: 10 }}>
+          <Text style={styles.linkText}>{t('auth.termsCheckbox.viewPrivacy')}</Text>
+        </Pressable>
       </View>
-    </Pressable>
-
-    <View style={styles.linkRow}>
-      <Pressable onPress={onTermsPress} hitSlop={{ top: 10, bottom: 10, left: 10, right: 4 }}>
-        <Text style={styles.linkText}>이용약관 보기</Text>
-      </Pressable>
-
-      <Text style={styles.dot}>|</Text>
-
-      <Pressable onPress={onPrivacyPress} hitSlop={{ top: 10, bottom: 10, left: 4, right: 10 }}>
-        <Text style={styles.linkText}>개인정보 처리방침 보기</Text>
-      </Pressable>
     </View>
-  </View>
-);
+  );
+};
 
 export default TermsCheckbox;
 

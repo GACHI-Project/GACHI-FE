@@ -1,4 +1,5 @@
 import { View, Text, StyleSheet } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import fonts from '../../constants/fonts';
 import colors from '../../constants/colors';
 
@@ -7,7 +8,6 @@ interface PasswordStrengthBarProps {
 }
 
 const STRENGTH_COLORS = ['#E53935', '#FFA726', '#66BB6A', '#2E7D32'];
-const STRENGTH_LABELS = ['위험', '보통', '안전', '매우 안전'];
 const SEGMENT_KEYS = ['s1', 's2', 's3', 's4'];
 
 export const getStrength = (password: string): number => {
@@ -33,7 +33,15 @@ export const getStrength = (password: string): number => {
   return 4;
 };
 
+const STRENGTH_LABEL_KEYS = [
+  'passwordStrength.danger',
+  'passwordStrength.normal',
+  'passwordStrength.safe',
+  'passwordStrength.verySafe',
+];
+
 const PasswordStrengthBar = ({ password }: PasswordStrengthBarProps) => {
+  const { t } = useTranslation();
   const strength = getStrength(password);
   const show = password.length > 0;
 
@@ -55,7 +63,7 @@ const PasswordStrengthBar = ({ password }: PasswordStrengthBarProps) => {
       </View>
       {show && (
         <Text style={[styles.label, { color: STRENGTH_COLORS[strength - 1] }]}>
-          보안 강도 : {STRENGTH_LABELS[strength - 1]}
+          {t('passwordStrength.label')} {t(STRENGTH_LABEL_KEYS[strength - 1])}
         </Text>
       )}
     </View>

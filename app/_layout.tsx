@@ -5,6 +5,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as SplashScreen from 'expo-splash-screen';
 import * as Font from 'expo-font';
+import { initI18n } from '../src/i18n';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
@@ -17,16 +18,16 @@ const FONTS = {
 };
 
 const RootLayout = () => {
-  const [fontsReady, setFontsReady] = useState(false);
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    Font.loadAsync(FONTS).finally(() => {
-      setFontsReady(true);
+    Promise.all([Font.loadAsync(FONTS), initI18n()]).finally(() => {
+      setReady(true);
       SplashScreen.hideAsync().catch(() => {});
     });
   }, []);
 
-  if (!fontsReady) return null;
+  if (!ready) return null;
 
   return (
     <GestureHandlerRootView style={styles.root}>

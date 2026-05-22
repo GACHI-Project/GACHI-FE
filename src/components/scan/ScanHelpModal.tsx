@@ -1,33 +1,16 @@
 import { useEffect, useRef, useState } from 'react';
 import { View, Text, TouchableOpacity, Modal, Pressable, Animated, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { PrimaryButton } from '../common/Button';
 import colors from '../../constants/colors';
 import fonts from '../../constants/fonts';
 import layout from '../../constants/layout';
 
-const HELP_ITEMS = [
-  {
-    icon: 'person' as const,
-    bg: colors.primary[100],
-    iconColor: colors.primary[500],
-    title: '아이를 먼저 선택해 주세요',
-    desc: '학년에 맞게 문서를 더 정확하게 해석해 드려요',
-  },
-  {
-    icon: 'camera' as const,
-    bg: colors.gray[100],
-    iconColor: colors.gray[300],
-    title: '가정통신문을 촬영하거나 선택해 주세요',
-    desc: '글자가 잘 보이도록 평평하게 펴서 찍어주세요',
-  },
-  {
-    icon: 'sparkles' as const,
-    bg: colors.secondary[200],
-    iconColor: colors.secondary[600],
-    title: 'AI가 자동으로 분석해요',
-    desc: '번역 · 요약 · 체크리스트까지 한 번에 만들어드려요',
-  },
+const HELP_ITEM_ICONS = [
+  { icon: 'person' as const, bg: colors.primary[100], iconColor: colors.primary[500] },
+  { icon: 'camera' as const, bg: colors.gray[100], iconColor: colors.gray[300] },
+  { icon: 'sparkles' as const, bg: colors.secondary[200], iconColor: colors.secondary[600] },
 ];
 
 interface ScanHelpModalProps {
@@ -39,7 +22,13 @@ const SHEET_HEIGHT = 420;
 const returnTrue = () => true;
 
 const ScanHelpModal = ({ visible, onClose }: ScanHelpModalProps) => {
+  const { t } = useTranslation();
   const [show, setShow] = useState(false);
+  const helpItems = HELP_ITEM_ICONS.map((base, i) => ({
+    ...base,
+    title: t(`scan.helpModal.step${i + 1}.title`),
+    desc: t(`scan.helpModal.step${i + 1}.desc`),
+  }));
   const opacity = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(SHEET_HEIGHT)).current;
 
@@ -85,18 +74,18 @@ const ScanHelpModal = ({ visible, onClose }: ScanHelpModalProps) => {
         <Pressable
           style={StyleSheet.absoluteFill}
           onPress={onClose}
-          accessibilityLabel="모달 닫기"
+          accessibilityLabel={t('common.modalClose')}
         />
       </Animated.View>
 
       <Animated.View style={[styles.sheetWrap, { transform: [{ translateY }] }]}>
         <View style={styles.sheet} onStartShouldSetResponder={returnTrue}>
           <View style={styles.header}>
-            <Text style={styles.title}>스캔 이용 방법</Text>
+            <Text style={styles.title}>{t('scan.helpModal.title')}</Text>
             <TouchableOpacity
               onPress={onClose}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              accessibilityLabel="닫기"
+              accessibilityLabel={t('common.close')}
               accessibilityRole="button"
             >
               <Ionicons name="close" size={20} color={colors.gray[300]} />
@@ -104,7 +93,7 @@ const ScanHelpModal = ({ visible, onClose }: ScanHelpModalProps) => {
           </View>
 
           <View style={styles.list}>
-            {HELP_ITEMS.map((item) => (
+            {helpItems.map((item) => (
               <View key={item.title} style={styles.item}>
                 <View style={[styles.iconWrap, { backgroundColor: item.bg }]}>
                   <Ionicons name={item.icon} size={18} color={item.iconColor} />
@@ -117,7 +106,7 @@ const ScanHelpModal = ({ visible, onClose }: ScanHelpModalProps) => {
             ))}
           </View>
 
-          <PrimaryButton label="확인했어요" onPress={onClose} />
+          <PrimaryButton label={t('scan.helpModal.confirm')} onPress={onClose} />
         </View>
       </Animated.View>
     </Modal>

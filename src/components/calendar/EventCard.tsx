@@ -1,5 +1,6 @@
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons, FontAwesome } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import colors from '../../constants/colors';
 import type { CalendarEvent } from '../../api/calendar';
 import calStyles from '../../styles/calendar/calendar';
@@ -13,6 +14,7 @@ interface EventCardProps {
 }
 
 const EventCard = ({ event, expanded, isPast, onToggleExpand, onToggleCheck }: EventCardProps) => {
+  const { t } = useTranslation();
   const checklistItems = event.checklists;
 
   return (
@@ -46,7 +48,7 @@ const EventCard = ({ event, expanded, isPast, onToggleExpand, onToggleCheck }: E
               onPress={onToggleExpand}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               accessibilityRole="button"
-              accessibilityLabel={expanded ? '체크리스트 접기' : '체크리스트 펼치기'}
+              accessibilityLabel={expanded ? t('calendar.checklist.collapse') : t('calendar.checklist.expand')}
               accessibilityState={{ expanded }}
             >
               <Ionicons

@@ -4,6 +4,7 @@ import { router } from 'expo-router';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { useTranslation } from 'react-i18next';
 import StepHeader from '../../../src/components/common/StepHeader';
 import { PrimaryButton } from '../../../src/components/common/Button';
 import FormField from '../../../src/components/auth/FormField';
@@ -40,53 +41,66 @@ const formatPhoneNumber = (digits: string): string => {
   return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7, 11)}`;
 };
 
-const formSchema = z
-  .object({
-    name: z.string().trim().min(1, '이름을 입력해주세요'),
-    id: loginIdSchema,
-    phone: z
-      .string()
-      .refine((v) => /^01[0-9]{8,9}$/.test(v.replace(/-/g, '')), '올바른 전화번호 형식이 아니에요'),
-    email: emailSchema,
-    password: z.string().min(1),
-    passwordConfirm: z.string().min(1),
-    agreed: z.boolean(),
-  })
-  .superRefine((data, ctx) => {
-    const pwError = validatePassword(data.password, {
-      loginId: data.id,
-      email: data.email,
-      phoneNumber: data.phone.replace(/-/g, ''),
-    });
-    if (pwError) {
-      ctx.addIssue({ code: 'custom', message: pwError, path: ['password'] });
-    } else if (getStrength(data.password) < 2) {
-      ctx.addIssue({
-        code: 'custom',
-        message: '비밀번호 보안 강도가 위험 등급이에요',
-        path: ['password'],
-      });
-    }
-    if (data.passwordConfirm && data.password !== data.passwordConfirm) {
-      ctx.addIssue({
-        code: 'custom',
-        message: '비밀번호가 일치하지 않아요',
-        path: ['passwordConfirm'],
-      });
-    }
-    if (!data.agreed) {
-      ctx.addIssue({
-        code: 'custom',
-        message: '약관에 동의해주세요',
-        path: ['agreed'],
-      });
-    }
-  });
-
-type FormValues = z.infer<typeof formSchema>;
+type FormValues = {
+  name: string;
+  id: string;
+  phone: string;
+  email: string;
+  password: string;
+  passwordConfirm: string;
+  agreed: boolean;
+};
 
 const RegisterBasicScreen = () => {
+  const { t } = useTranslation();
   const setBasicInfo = useRegisterStore((s) => s.setBasicInfo);
+
+  const formSchema = z
+    .object({
+      name: z.string().trim().min(1, t('auth.register.basic.error.nameRequired')),
+      id: loginIdSchema,
+      phone: z
+        .string()
+        .refine(
+          (v) => /^01[0-9]{8,9}$/.test(v.replace(/-/g, '')),
+          t('auth.register.basic.error.phoneFormat')
+        ),
+      email: emailSchema,
+      password: z.string().min(1),
+      passwordConfirm: z.string().min(1),
+      agreed: z.boolean(),
+    })
+    .superRefine((data, ctx) => {
+      const pwError = validatePassword(data.password, {
+        loginId: data.id,
+        email: data.email,
+        phoneNumber: data.phone.replace(/-/g, ''),
+      });
+      if (pwError) {
+        ctx.addIssue({ code: 'custom', message: pwError, path: ['password'] });
+      } else if (getStrength(data.password) < 2) {
+        ctx.addIssue({
+          code: 'custom',
+          message: t('auth.register.basic.error.passwordWeak'),
+          path: ['password'],
+        });
+      }
+      if (data.passwordConfirm && data.password !== data.passwordConfirm) {
+        ctx.addIssue({
+          code: 'custom',
+          message: t('auth.register.basic.error.passwordMismatch'),
+          path: ['passwordConfirm'],
+        });
+      }
+      if (!data.agreed) {
+        ctx.addIssue({
+          code: 'custom',
+          message: t('auth.register.basic.error.termsRequired'),
+          path: ['agreed'],
+        });
+      }
+    });
+
   const {
     control,
     getValues,
@@ -151,10 +165,14 @@ const RegisterBasicScreen = () => {
       try {
         const { available } = await checkLoginId(v);
         setIdValidation(available ? 'success' : 'error');
-        setIdMessage(available ? '사용 가능한 아이디에요' : '이미 사용 중인 아이디에요');
+        setIdMessage(
+          available
+            ? t('auth.register.basic.error.idAvailable')
+            : t('auth.register.basic.error.idTaken')
+        );
       } catch {
         setIdValidation('error');
-        setIdMessage('확인 중 오류가 발생했어요. 다시 시도해주세요.');
+        setIdMessage(t('auth.register.basic.error.checkError'));
       } finally {
         setIdChecking(false);
       }
@@ -174,10 +192,14 @@ const RegisterBasicScreen = () => {
       try {
         const { available } = await checkPhoneNumber(digits);
         setPhoneValidation(available ? 'success' : 'error');
-        setPhoneMessage(available ? '사용 가능한 전화번호에요' : '이미 사용 중인 전화번호에요');
+        setPhoneMessage(
+          available
+            ? t('auth.register.basic.error.phoneAvailable')
+            : t('auth.register.basic.error.phoneTaken')
+        );
       } catch {
         setPhoneValidation('error');
-        setPhoneMessage('확인 중 오류가 발생했어요. 다시 시도해주세요.');
+        setPhoneMessage(t('auth.register.basic.error.checkError'));
       } finally {
         setPhoneChecking(false);
       }
@@ -201,7 +223,7 @@ const RegisterBasicScreen = () => {
       const { available } = await checkEmail(email);
       if (!available) {
         setEmailValidation('error');
-        setEmailMessage('이미 사용 중인 이메일이에요');
+        setEmailMessage(t('auth.register.basic.error.emailTaken'));
         return;
       }
 
@@ -209,7 +231,7 @@ const RegisterBasicScreen = () => {
 
       if (timerRef.current) clearInterval(timerRef.current);
       setEmailValidation('success');
-      setEmailMessage('인증 코드가 발송됐어요');
+      setEmailMessage(t('auth.register.basic.error.codeSent'));
       setEmailSent(true);
       setVerificationCode('');
       setCodeValidation(undefined);
@@ -228,7 +250,7 @@ const RegisterBasicScreen = () => {
       }, 1000);
     } catch {
       setEmailValidation('error');
-      setEmailMessage('인증 코드 발송에 실패했어요. 다시 시도해주세요.');
+      setEmailMessage(t('auth.register.basic.error.sendError'));
     } finally {
       setEmailChecking(false);
     }
@@ -240,7 +262,7 @@ const RegisterBasicScreen = () => {
 
     if (!/^\d{6}$/.test(code)) {
       setCodeValidation('error');
-      setCodeMessage('인증 코드는 6자리 숫자여야 해요');
+      setCodeMessage(t('auth.register.basic.error.codeFormat'));
       return;
     }
 
@@ -257,26 +279,26 @@ const RegisterBasicScreen = () => {
       }
       setEmailTimer(null);
       setCodeValidation('success');
-      setCodeMessage('이메일 인증이 완료되었어요');
+      setCodeMessage(t('auth.register.basic.error.emailVerified'));
       setEmailValidation('success');
-      setEmailMessage('이메일 인증이 완료되었어요');
+      setEmailMessage(t('auth.register.basic.error.emailVerified'));
     } catch (error) {
       setCodeValidation('error');
 
       if (error instanceof AuthApiError) {
         if (error.code === 'COMMON4001') {
-          setCodeMessage('입력값이 올바르지 않아요');
+          setCodeMessage(t('auth.register.basic.error.codeInvalid'));
         } else if (error.code === 'AUTH4002') {
-          setCodeMessage('인증 코드가 일치하지 않아요');
+          setCodeMessage(t('auth.register.basic.error.codeWrong'));
         } else if (error.code === 'AUTH4003') {
-          setCodeMessage('인증 코드가 만료되었어요. 다시 발송해주세요.');
+          setCodeMessage(t('auth.register.basic.error.codeExpired'));
         } else if (error.code === 'AUTH4292') {
-          setCodeMessage('인증 코드 입력 시도 횟수를 초과했어요.');
+          setCodeMessage(t('auth.register.basic.error.codeExceeded'));
         } else {
-          setCodeMessage('인증 확인에 실패했어요. 다시 시도해주세요.');
+          setCodeMessage(t('auth.register.basic.error.verifyError'));
         }
       } else {
-        setCodeMessage('인증 확인에 실패했어요. 다시 시도해주세요.');
+        setCodeMessage(t('auth.register.basic.error.verifyError'));
       }
     } finally {
       setCodeChecking(false);
@@ -297,12 +319,12 @@ const RegisterBasicScreen = () => {
       >
         <View style={styles.titleSection}>
           <View style={styles.titleRow}>
-            <Text style={styles.title}>새로운 계정 만들기</Text>
+            <Text style={styles.title}>{t('auth.register.basic.title')}</Text>
             <View style={styles.badge}>
               <Text style={styles.badgeText}>NEW</Text>
             </View>
           </View>
-          <Text style={styles.subtitle}>간단한 프로필 설정 후 바로 시작할 수 있어요.</Text>
+          <Text style={styles.subtitle}>{t('auth.register.basic.subtitle')}</Text>
         </View>
 
         <View style={styles.form}>
@@ -311,7 +333,7 @@ const RegisterBasicScreen = () => {
             name="name"
             render={({ field }) => (
               <FormField
-                label="이름"
+                label={t('auth.register.basic.name')}
                 value={field.value}
                 onChangeText={field.onChange}
                 autoCapitalize="words"
@@ -324,7 +346,7 @@ const RegisterBasicScreen = () => {
             name="id"
             render={({ field }) => (
               <FormField
-                label="아이디"
+                label={t('auth.register.basic.id')}
                 value={field.value}
                 onChangeText={(v) => {
                   field.onChange(v);
@@ -341,7 +363,7 @@ const RegisterBasicScreen = () => {
             name="phone"
             render={({ field }) => (
               <FormField
-                label="전화번호"
+                label={t('auth.register.basic.phone')}
                 value={field.value}
                 onChangeText={(v) => {
                   const digits = v.replace(/\D/g, '').slice(0, 11);
@@ -362,7 +384,7 @@ const RegisterBasicScreen = () => {
             name="email"
             render={({ field }) => (
               <FormField
-                label="이메일"
+                label={t('auth.register.basic.email')}
                 value={field.value}
                 onChangeText={(v) => {
                   field.onChange(v);
@@ -381,9 +403,9 @@ const RegisterBasicScreen = () => {
                 keyboardType="email-address"
                 rightButton={{
                   label: (() => {
-                    if (emailChecking) return '확인 중...';
+                    if (emailChecking) return t('auth.register.basic.verifying');
                     if (emailTimer !== null) return formatTimer(emailTimer);
-                    return '인증하기';
+                    return t('auth.register.basic.verify');
                   })(),
                   onPress: handleEmailVerify,
                   disabled: emailChecking,
@@ -398,11 +420,13 @@ const RegisterBasicScreen = () => {
             (() => {
               const isExpired = emailTimer === null && codeValidation !== 'success';
               const codeState: ValidationState = isExpired ? 'error' : codeValidation;
-              const codeMsg = isExpired ? '인증 시간이 만료됐어요. 재발송해주세요.' : codeMessage;
+              const codeMsg = isExpired
+                ? t('auth.register.basic.error.codeExpiredDisplay')
+                : codeMessage;
 
               return (
                 <FormField
-                  label="인증번호"
+                  label={t('auth.register.basic.verificationCode')}
                   value={verificationCode}
                   onChangeText={(v) => {
                     const digitsOnly = v.replace(/\D/g, '').slice(0, 6);
@@ -412,7 +436,7 @@ const RegisterBasicScreen = () => {
                   }}
                   keyboardType="number-pad"
                   rightButton={{
-                    label: codeChecking ? '확인 중...' : '확인',
+                    label: codeChecking ? t('auth.register.basic.verifying') : t('common.confirm'),
                     onPress: handleCodeConfirm,
                     disabled: codeChecking,
                   }}
@@ -427,7 +451,7 @@ const RegisterBasicScreen = () => {
             name="password"
             render={({ field }) => (
               <FormField
-                label="비밀번호"
+                label={t('auth.register.basic.password')}
                 value={field.value}
                 onChangeText={field.onChange}
                 secureTextEntry={!showPassword}
@@ -449,7 +473,7 @@ const RegisterBasicScreen = () => {
             name="passwordConfirm"
             render={({ field }) => (
               <FormField
-                label="비밀번호 확인"
+                label={t('auth.register.basic.passwordConfirm')}
                 value={field.value}
                 onChangeText={field.onChange}
                 secureTextEntry={!showPasswordConfirm}
@@ -461,7 +485,7 @@ const RegisterBasicScreen = () => {
                 })()}
                 validationMessage={
                   passwordConfirmValue.length > 0
-                    ? (errors.passwordConfirm?.message ?? '비밀번호가 일치합니다.')
+                    ? (errors.passwordConfirm?.message ?? t('auth.register.basic.passwordMatch'))
                     : undefined
                 }
               />
@@ -483,7 +507,7 @@ const RegisterBasicScreen = () => {
         </View>
 
         <PrimaryButton
-          label="다음으로 →"
+          label={t('common.next')}
           onPress={() => {
             const values = getValues();
             setBasicInfo({
@@ -508,8 +532,8 @@ const RegisterBasicScreen = () => {
 
         <TouchableOpacity onPress={() => router.push('/(auth)/login')}>
           <Text style={styles.loginText}>
-            이미 계정이 있으신가요?{'  '}
-            <Text style={styles.loginLink}>로그인</Text>
+            {t('auth.register.basic.hasAccount')}{'  '}
+            <Text style={styles.loginLink}>{t('auth.register.basic.loginLink')}</Text>
           </Text>
         </TouchableOpacity>
       </ScrollView>

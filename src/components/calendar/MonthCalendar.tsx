@@ -1,5 +1,6 @@
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import colors from '../../constants/colors';
 import fonts from '../../constants/fonts';
 
@@ -14,7 +15,7 @@ interface MonthCalendarProps {
   onNextMonth: () => void;
 }
 
-const DAY_NAMES = ['일', '월', '화', '수', '목', '금', '토'];
+const REF_SUNDAY = new Date(2024, 0, 7);
 
 const toDateStr = (y: number, m: number, d: number) =>
   `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
@@ -29,6 +30,18 @@ const MonthCalendar = ({
   onPrevMonth,
   onNextMonth,
 }: MonthCalendarProps) => {
+  const { t, i18n } = useTranslation();
+
+  const dayNames = Array.from({ length: 7 }, (_, i) =>
+    new Intl.DateTimeFormat(i18n.language, { weekday: 'short' }).format(
+      new Date(REF_SUNDAY.getFullYear(), REF_SUNDAY.getMonth(), REF_SUNDAY.getDate() + i)
+    )
+  );
+
+  const monthLabel = new Intl.DateTimeFormat(i18n.language, { year: 'numeric', month: 'long' }).format(
+    new Date(year, month, 1)
+  );
+
   const firstDayOfWeek = new Date(year, month, 1).getDay();
   const lastDate = new Date(year, month + 1, 0).getDate();
   const prevLastDate = new Date(year, month, 0).getDate();
@@ -68,25 +81,23 @@ const MonthCalendar = ({
           onPress={onPrevMonth}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           accessibilityRole="button"
-          accessibilityLabel="이전 달"
+          accessibilityLabel={t('calendar.prevMonth')}
         >
           <Ionicons name="chevron-back" size={16} color={colors.text.secondary} />
         </TouchableOpacity>
-        <Text style={styles.headerText}>
-          {year}년 {month + 1}월
-        </Text>
+        <Text style={styles.headerText}>{monthLabel}</Text>
         <TouchableOpacity
           onPress={onNextMonth}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           accessibilityRole="button"
-          accessibilityLabel="다음 달"
+          accessibilityLabel={t('calendar.nextMonth')}
         >
           <Ionicons name="chevron-forward" size={16} color={colors.text.secondary} />
         </TouchableOpacity>
       </View>
 
       <View style={styles.weekRow}>
-        {DAY_NAMES.map((name) => (
+        {dayNames.map((name) => (
           <View key={name} style={styles.dayCell}>
             <Text style={styles.dayName}>{name}</Text>
           </View>

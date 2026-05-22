@@ -1,5 +1,6 @@
 import { View, Text, TouchableOpacity } from 'react-native';
 import { AntDesign, Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import colors from '../../constants/colors';
 import styles from '../../styles/home/recentDocs';
 
@@ -53,13 +54,15 @@ const RECENT_DOCS: DocGroup[] = [
   },
 ];
 
-const RecentDocs = () => (
+const RecentDocs = () => {
+  const { t } = useTranslation();
+  return (
   <View style={styles.section}>
     <View style={styles.header}>
-      <Text style={styles.sectionTitle}>최근 가정통신문</Text>
+      <Text style={styles.sectionTitle}>{t('home.recentDocs.sectionTitle')}</Text>
       {/* TODO: 전체 문서 목록 화면으로 이동 예정 */}
       <TouchableOpacity onPress={() => {}} activeOpacity={0.7}>
-        <Text style={styles.moreText}>전체보기</Text>
+        <Text style={styles.moreText}>{t('home.recentDocs.more')}</Text>
       </TouchableOpacity>
     </View>
     <View style={styles.timeline}>
@@ -105,6 +108,7 @@ const RecentDocs = () => (
       ))}
     </View>
   </View>
-);
+  );
+};
 
 export default RecentDocs;

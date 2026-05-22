@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import SummaryCard from './SummaryCard';
 import {
   getNewsletterSummary,
@@ -14,32 +15,18 @@ interface Props {
   newsletterId?: number;
 }
 
-const QNA_ITEMS = [
-  {
-    q: '동의서를 왜 직접 제출해야 하나요?',
-    a: '한국 초등학교는 교외 활동 시 ',
-    aHighlight: '보호자 서명 원본',
-    aTail: '이 법적으로 필요해요. 카카오톡이나 앱 메시지로 대체가 안 돼요.',
-  },
-  {
-    q: '늦게 내면 어떻게 되나요?',
-    a: '마감일이 지나면 ',
-    aHighlight: '현장학습 참가가 불가',
-    aTail: '할 수 있어요. 늦으면 바로 담임 선생님께 직접 연락하세요.',
-  },
-];
-
-const mapSummaryError = (e: unknown): string => {
+const mapSummaryErrorKey = (e: unknown): string => {
   if (e instanceof NewsletterApiError) {
-    if (e.code === 'NL4092') return '아직 분석 중인 가정통신문이에요.';
-    if (e.code === 'NL4221') return '분석에 실패한 가정통신문이에요.';
-    if (e.code === 'NL4041') return '가정통신문을 찾을 수 없어요.';
-    if (e.code === 'NL4031') return '접근 권한이 없어요.';
+    if (e.code === 'NL4092') return 'scan.result.aiSummary.error.analyzing';
+    if (e.code === 'NL4221') return 'scan.result.aiSummary.error.analysisFailed';
+    if (e.code === 'NL4041') return 'scan.result.aiSummary.error.newsletterNotFound';
+    if (e.code === 'NL4031') return 'scan.result.aiSummary.error.noAccess';
   }
-  return '요약을 불러오는 데 실패했어요.';
+  return 'scan.result.aiSummary.error.summaryFailed';
 };
 
 const AISummaryTab = ({ newsletterId }: Props) => {
+  const { t } = useTranslation();
   const [summary, setSummary] = useState<NewsletterSummaryResult | null>(null);
   const [summaryLoading, setSummaryLoading] = useState(true);
   const [summaryError, setSummaryError] = useState<string | null>(null);
@@ -57,9 +44,9 @@ const AISummaryTab = ({ newsletterId }: Props) => {
     setTodoError(null);
 
     if (!newsletterId) {
-      setSummaryError('가정통신문 정보를 찾을 수 없어요.');
+      setSummaryError('scan.result.aiSummary.error.notFound');
       setSummaryLoading(false);
-      setTodoError('가정통신문 정보를 찾을 수 없어요.');
+      setTodoError('scan.result.aiSummary.error.notFound');
       setTodoLoading(false);
       return () => {};
     }
@@ -74,7 +61,7 @@ const AISummaryTab = ({ newsletterId }: Props) => {
         }
       })
       .catch((e) => {
-        if (!cancelled) setSummaryError(mapSummaryError(e));
+        if (!cancelled) setSummaryError(mapSummaryErrorKey(e));
       })
       .finally(() => {
         if (!cancelled) setSummaryLoading(false);
@@ -90,9 +77,9 @@ const AISummaryTab = ({ newsletterId }: Props) => {
       .catch((e) => {
         if (cancelled) return;
         if (e instanceof NewsletterApiError && e.code === 'NL4041') {
-          setTodoError('가정통신문을 찾을 수 없어요.');
+          setTodoError('scan.result.aiSummary.error.newsletterNotFound');
         } else {
-          setTodoError('할 일 목록을 불러오는 데 실패했어요.');
+          setTodoError('scan.result.aiSummary.error.todoFailed');
         }
       })
       .finally(() => {
@@ -104,9 +91,16 @@ const AISummaryTab = ({ newsletterId }: Props) => {
     };
   }, [newsletterId]);
 
+  const qnaItems = t('scan.result.aiSummary.qna', { returnObjects: true }) as Array<{
+    q: string;
+    a: string;
+    aHighlight: string;
+    aTail: string;
+  }>;
+
   const renderSummary = () => {
     if (summaryLoading) return <ActivityIndicator size="small" color={colors.primary[400]} />;
-    if (summaryError) return <Text style={styles.errorText}>{summaryError}</Text>;
+    if (summaryError) return <Text style={styles.errorText}>{t(summaryError)}</Text>;
     if (summary)
       return (
         <>
@@ -119,8 +113,8 @@ const AISummaryTab = ({ newsletterId }: Props) => {
 
   const renderTodos = () => {
     if (todoLoading) return <ActivityIndicator size="small" color={colors.primary[400]} />;
-    if (todoError) return <Text style={styles.errorText}>{todoError}</Text>;
-    if (todos.length === 0) return <Text style={styles.errorText}>등록된 할 일이 없어요.</Text>;
+    if (todoError) return <Text style={styles.errorText}>{t(todoError)}</Text>;
+    if (todos.length === 0) return <Text style={styles.errorText}>{t('scan.result.aiSummary.emptyTodo')}</Text>;
     return (
       <View style={styles.todoList}>
         {todos.map((item) => (
@@ -139,17 +133,17 @@ const AISummaryTab = ({ newsletterId }: Props) => {
 
   return (
     <View style={styles.list}>
-      <SummaryCard icon="bulb-outline" iconBg={colors.primary[400]} title="AI 요약">
+      <SummaryCard icon="bulb-outline" iconBg={colors.primary[400]} title={t('scan.result.aiSummary.summarySection')}>
         {renderSummary()}
       </SummaryCard>
 
-      <SummaryCard icon="alarm-outline" iconBg={colors.secondary[600]} title="오늘 할 일">
+      <SummaryCard icon="alarm-outline" iconBg={colors.secondary[600]} title={t('scan.result.aiSummary.todayTodo')}>
         {renderTodos()}
       </SummaryCard>
 
-      <SummaryCard icon="earth-outline" iconBg={colors.primary[400]} title="문화 맥락 안내">
+      <SummaryCard icon="earth-outline" iconBg={colors.primary[400]} title={t('scan.result.aiSummary.culturalContext')}>
         <View style={styles.qnaList}>
-          {QNA_ITEMS.map((item) => (
+          {qnaItems.map((item) => (
             <View key={item.q} style={styles.qnaItem}>
               <View style={styles.qnaRow}>
                 <Text style={styles.qLabel}>Q.</Text>

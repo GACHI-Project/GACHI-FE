@@ -27,7 +27,6 @@ const styles = StyleSheet.create({
   },
   card: {
     width: 150,
-    height: 120,
     borderRadius: 20,
     backgroundColor: colors.text.white,
     borderWidth: 1,
@@ -49,7 +48,6 @@ const styles = StyleSheet.create({
     fontFamily: fonts.semiBold,
     color: colors.text.primary,
     lineHeight: 16,
-    flex: 1,
   },
   guideBadge: {
     width: 52,

@@ -1,27 +1,31 @@
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import colors from '../../constants/colors';
 import fonts from '../../constants/fonts';
 
-const ScanBanner = () => (
-  <View style={styles.banner}>
-    <View style={styles.iconWrapper}>
-      <Ionicons name="scan-outline" size={28} color={colors.text.white} />
+const ScanBanner = () => {
+  const { t } = useTranslation();
+  return (
+    <View style={styles.banner}>
+      <View style={styles.iconWrapper}>
+        <Ionicons name="scan-outline" size={28} color={colors.text.white} />
+      </View>
+      <View style={styles.texts}>
+        <Text style={styles.title}>{t('home.scanBanner.title')}</Text>
+        <Text style={styles.desc}>{t('home.scanBanner.desc')}</Text>
+      </View>
+      <TouchableOpacity
+        style={styles.button}
+        activeOpacity={0.8}
+        onPress={() => router.push('/scan')}
+      >
+        <Text style={styles.buttonText}>{t('home.scanBanner.button')}</Text>
+      </TouchableOpacity>
     </View>
-    <View style={styles.texts}>
-      <Text style={styles.title}>가정통신문 스캔하기</Text>
-      <Text style={styles.desc}>찍기만 하면 번역 · 요약 · 체크리스트까지 한 번에</Text>
-    </View>
-    <TouchableOpacity
-      style={styles.button}
-      activeOpacity={0.8}
-      onPress={() => router.push('/scan')}
-    >
-      <Text style={styles.buttonText}>지금 스캔 →</Text>
-    </TouchableOpacity>
-  </View>
-);
+  );
+};
 
 export default ScanBanner;
 

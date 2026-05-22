@@ -2,6 +2,7 @@ import { useState, useMemo, useRef, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Ionicons, FontAwesome5 } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import colors from '../../src/constants/colors';
 import styles from '../../src/styles/calendar/calendar';
 import EventCard from '../../src/components/calendar/EventCard';
@@ -22,20 +23,22 @@ import {
 const todayDate = new Date();
 const today = `${todayDate.getFullYear()}-${String(todayDate.getMonth() + 1).padStart(2, '0')}-${String(todayDate.getDate()).padStart(2, '0')}`;
 
-const DAY_NAMES = ['일', '월', '화', '수', '목', '금', '토'];
-
-const formatDayLabel = (dateStr: string) => {
-  const [, month, day] = dateStr.split('-');
-  return `${parseInt(month, 10)}월 ${parseInt(day, 10)}일`;
+const formatDayLabel = (dateStr: string, locale: string) => {
+  const [year, month, day] = dateStr.split('-').map(Number);
+  return new Intl.DateTimeFormat(locale, { month: 'long', day: 'numeric' }).format(
+    new Date(year, month - 1, day)
+  );
 };
 
-const formatWeekDateHeader = (dateStr: string) => {
+const formatWeekDateHeader = (dateStr: string, locale: string) => {
   const [year, month, day] = dateStr.split('-').map(Number);
-  const d = new Date(year, month - 1, day);
-  return `${month}월 ${day}일 (${DAY_NAMES[d.getDay()]})`;
+  return new Intl.DateTimeFormat(locale, { month: 'long', day: 'numeric', weekday: 'short' }).format(
+    new Date(year, month - 1, day)
+  );
 };
 
 const CalendarScreen = () => {
+  const { t, i18n } = useTranslation();
   const [children, setChildren] = useState<ChildInfo[]>([]);
   const [selectedChildName, setSelectedChildName] = useState<string | undefined>(undefined);
   const [selectedDate, setSelectedDate] = useState<string>(today);
@@ -254,16 +257,16 @@ const CalendarScreen = () => {
           style={styles.iconButton}
           onPress={() => router.back()}
           accessibilityRole="button"
-          accessibilityLabel="뒤로가기"
+          accessibilityLabel={t('calendar.backAccessibility')}
         >
           <Ionicons name="arrow-back" size={16} color={colors.gray[300]} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>캘린더</Text>
+        <Text style={styles.headerTitle}>{t('calendar.title')}</Text>
         <TouchableOpacity
           style={[styles.iconButton, styles.calendarIconButton]}
           onPress={handleToggleMode}
           accessibilityRole="button"
-          accessibilityLabel={isWeekMode ? '월간 보기로 전환' : '주간 보기로 전환'}
+          accessibilityLabel={isWeekMode ? t('calendar.weekViewAccessibility') : t('calendar.monthViewAccessibility')}
         >
           <FontAwesome5
             name={isWeekMode ? 'calendar-alt' : 'calendar-week'}
@@ -292,7 +295,7 @@ const CalendarScreen = () => {
                 selectedChildName === undefined && styles.filterTextSelected,
               ]}
             >
-              전체
+              {t('common.all')}
             </Text>
           </TouchableOpacity>
           {children.map((child) => {
@@ -346,7 +349,7 @@ const CalendarScreen = () => {
             >
               <View style={styles.weekListContent}>
                 {weekEventGroups.length === 0 ? (
-                  <Text style={styles.emptyText}>이번 주 일정이 없어요</Text>
+                  <Text style={styles.emptyText}>{t('calendar.emptyWeek')}</Text>
                 ) : (
                   weekEventGroups.map((group) => (
                     <View
@@ -357,7 +360,7 @@ const CalendarScreen = () => {
                         }
                       }}
                     >
-                      <Text style={styles.weekDateHeader}>{formatWeekDateHeader(group.date)}</Text>
+                      <Text style={styles.weekDateHeader}>{formatWeekDateHeader(group.date, i18n.language)}</Text>
                       <View style={styles.cardGroup}>
                         {group.events.map((event) => (
                           <EventCard
@@ -398,11 +401,11 @@ const CalendarScreen = () => {
             </View>
           ) : (
             <ScrollView style={styles.list} showsVerticalScrollIndicator={false}>
-              <Text style={styles.dayLabel}>{formatDayLabel(selectedDate)}</Text>
+              <Text style={styles.dayLabel}>{formatDayLabel(selectedDate, i18n.language)}</Text>
               <View style={styles.listContent}>
                 {isDailyLoading && <ActivityIndicator size="small" color={colors.primary[400]} />}
                 {!isDailyLoading && dayEvents.length === 0 && (
-                  <Text style={styles.emptyText}>등록된 일정이 없어요</Text>
+                  <Text style={styles.emptyText}>{t('calendar.emptyDay')}</Text>
                 )}
                 {!isDailyLoading &&
                   dayEvents.map((event) => (

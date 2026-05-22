@@ -3,6 +3,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import Header from '../../src/components/common/Header';
 import ScanStepIndicator from '../../src/components/scan/ScanStepIndicator';
 import ScanChildPill from '../../src/components/scan/ScanChildPill';
@@ -13,6 +14,7 @@ import layout from '../../src/constants/layout';
 import { SCAN_FRAME_W, SCAN_FRAME_H, SCAN_DEFAULT_CHILD_COLOR } from '../../src/constants/scan';
 
 const ScanPreviewScreen = () => {
+  const { t } = useTranslation();
   const { photoUri, childId, childName, childColor, childGrade, source, fileType } =
     useLocalSearchParams<{
       photoUri: string;
@@ -29,11 +31,11 @@ const ScanPreviewScreen = () => {
   const isPdf =
     source === 'pdf' || fileType === 'application/pdf' || photoUri?.toLowerCase().endsWith('.pdf');
   const pdfFilename = photoUri?.split('/').pop() ?? 'document.pdf';
-  const retakeLabel = source === 'gallery' || isPdf ? '다시 선택하기' : '다시 찍기';
+  const retakeLabel = source === 'gallery' || isPdf ? t('scan.preview.reselect') : t('scan.preview.retake');
 
   return (
     <View style={styles.screen}>
-      <Header title="문서 스캔" />
+      <Header title={t('scan.title')} />
       <ScanStepIndicator currentStep={2} />
 
       {hasChild && (
@@ -47,14 +49,14 @@ const ScanPreviewScreen = () => {
             <Text style={styles.pdfFilename} numberOfLines={2}>
               {pdfFilename}
             </Text>
-            <Text style={styles.pdfLabel}>PDF 파일</Text>
+            <Text style={styles.pdfLabel}>{t('scan.preview.pdfLabel')}</Text>
           </View>
         ) : (
           <Image
             source={{ uri: photoUri }}
             style={styles.image}
             resizeMode="cover"
-            accessibilityLabel="스캔할 문서 미리보기"
+            accessibilityLabel={t('scan.preview.accessibilityPreview')}
           />
         )}
         <ScanCornerBrackets />
@@ -79,10 +81,9 @@ const ScanPreviewScreen = () => {
             })
           }
           activeOpacity={0.8}
-          accessibilityLabel="사용하기"
           accessibilityRole="button"
         >
-          <Text style={styles.confirmBtnText}>사용하기</Text>
+          <Text style={styles.confirmBtnText}>{t('scan.preview.use')}</Text>
         </TouchableOpacity>
       </View>
     </View>

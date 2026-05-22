@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import {
   getNewsletterTranslation,
   NewsletterTranslationResult,
@@ -13,6 +14,7 @@ interface Props {
 }
 
 const FullDocTab = ({ newsletterId }: Props) => {
+  const { t } = useTranslation();
   const [data, setData] = useState<NewsletterTranslationResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -23,7 +25,7 @@ const FullDocTab = ({ newsletterId }: Props) => {
     setData(null);
 
     if (!newsletterId) {
-      setError('가정통신문 정보를 찾을 수 없어요.');
+      setError(t('scan.result.fullDoc.error.notFound'));
       setLoading(false);
       return () => {};
     }
@@ -39,11 +41,11 @@ const FullDocTab = ({ newsletterId }: Props) => {
       .catch((e) => {
         if (cancelled) return;
         if (e instanceof NewsletterApiError && e.code === 'NL4004') {
-          setError('아직 분석이 완료되지 않은 가정통신문이에요.');
+          setError(t('scan.result.fullDoc.error.notAnalyzed'));
         } else if (e instanceof NewsletterApiError && e.code === 'NL4041') {
-          setError('가정통신문을 찾을 수 없어요.');
+          setError(t('scan.result.fullDoc.error.newsletterNotFound'));
         } else {
-          setError('문서를 불러오는 데 실패했어요.');
+          setError(t('scan.result.fullDoc.error.loadFailed'));
         }
         setLoading(false);
       });
@@ -51,7 +53,7 @@ const FullDocTab = ({ newsletterId }: Props) => {
     return () => {
       cancelled = true;
     };
-  }, [newsletterId]);
+  }, [newsletterId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (loading) {
     return (
@@ -64,7 +66,7 @@ const FullDocTab = ({ newsletterId }: Props) => {
   if (error || !data) {
     return (
       <View style={styles.centered}>
-        <Text style={styles.errorText}>{error ?? '문서를 불러오는 데 실패했어요.'}</Text>
+        <Text style={styles.errorText}>{error ?? t('scan.result.fullDoc.error.loadFailed')}</Text>
       </View>
     );
   }
@@ -75,7 +77,7 @@ const FullDocTab = ({ newsletterId }: Props) => {
     <View style={styles.container}>
       {showTranslation && (
         <View style={styles.section}>
-          <Text style={styles.sectionLabel}>번역된 문서</Text>
+          <Text style={styles.sectionLabel}>{t('scan.result.fullDoc.translated')}</Text>
           <View style={styles.card}>
             <Text style={styles.bodyText}>{data.translatedText}</Text>
           </View>
@@ -83,7 +85,7 @@ const FullDocTab = ({ newsletterId }: Props) => {
       )}
 
       <View style={styles.section}>
-        <Text style={styles.sectionLabel}>{showTranslation ? 'OCR 원문' : '원문'}</Text>
+        <Text style={styles.sectionLabel}>{showTranslation ? t('scan.result.fullDoc.ocrOriginal') : t('scan.result.fullDoc.original')}</Text>
         <View style={styles.card}>
           <Text style={styles.bodyText}>{data.originalText}</Text>
         </View>

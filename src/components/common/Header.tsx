@@ -1,6 +1,7 @@
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import colors from '../../constants/colors';
 import fonts from '../../constants/fonts';
 import layout from '../../constants/layout';
@@ -11,31 +12,35 @@ interface HeaderProps {
   onHelp?: () => void;
 }
 
-const Header = ({ title, onBack, onHelp }: HeaderProps) => (
-  <View style={styles.container}>
-    <TouchableOpacity
-      style={styles.iconButton}
-      onPress={onBack ?? (() => router.back())}
-      accessibilityRole="button"
-      accessibilityLabel="뒤로 가기"
-    >
-      <Ionicons name="arrow-back" size={16} color={colors.gray[300]} />
-    </TouchableOpacity>
-    <Text style={styles.title}>{title}</Text>
-    {onHelp ? (
+const Header = ({ title, onBack, onHelp }: HeaderProps) => {
+  const { t } = useTranslation();
+
+  return (
+    <View style={styles.container}>
       <TouchableOpacity
         style={styles.iconButton}
-        onPress={onHelp}
+        onPress={onBack ?? (() => router.back())}
         accessibilityRole="button"
-        accessibilityLabel="도움말"
+        accessibilityLabel={t('common.back')}
       >
-        <Ionicons name="help" size={16} color={colors.gray[300]} />
+        <Ionicons name="arrow-back" size={16} color={colors.gray[300]} />
       </TouchableOpacity>
-    ) : (
-      <View style={styles.iconSpacer} />
-    )}
-  </View>
-);
+      <Text style={styles.title}>{title}</Text>
+      {onHelp ? (
+        <TouchableOpacity
+          style={styles.iconButton}
+          onPress={onHelp}
+          accessibilityRole="button"
+          accessibilityLabel={t('common.help')}
+        >
+          <Ionicons name="help" size={16} color={colors.gray[300]} />
+        </TouchableOpacity>
+      ) : (
+        <View style={styles.iconSpacer} />
+      )}
+    </View>
+  );
+};
 
 export default Header;
 

@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
+import { useTranslation } from 'react-i18next';
 import AuthInput from '../../src/components/auth/AuthInput';
 import { PrimaryButton } from '../../src/components/common/Button';
 import { login, AuthApiError } from '../../src/api/auth';
@@ -11,6 +12,7 @@ import fonts from '../../src/constants/fonts';
 import layout from '../../src/constants/layout';
 
 const LoginScreen = () => {
+  const { t } = useTranslation();
   const [id, setId] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -29,16 +31,16 @@ const LoginScreen = () => {
     } catch (error) {
       if (error instanceof AuthApiError) {
         if (error.code === 'AUTH4011') {
-          setErrorMessage('아이디 또는 비밀번호가 올바르지 않아요');
+          setErrorMessage(t('auth.login.error.invalidCredentials'));
         } else if (error.code === 'AUTH4031') {
-          setErrorMessage('탈퇴한 계정이에요');
+          setErrorMessage(t('auth.login.error.withdrawnAccount'));
         } else if (error.code === 'AUTH4293') {
-          setErrorMessage('로그인 시도가 너무 많아요. 잠시 후 다시 시도해주세요');
+          setErrorMessage(t('auth.login.error.tooManyAttempts'));
         } else {
-          setErrorMessage('로그인 중 오류가 발생했어요. 다시 시도해주세요.');
+          setErrorMessage(t('auth.login.error.generic'));
         }
       } else {
-        setErrorMessage('네트워크 오류가 발생했어요. 다시 시도해주세요.');
+        setErrorMessage(t('common.networkError'));
       }
     } finally {
       setLoading(false);
@@ -49,7 +51,7 @@ const LoginScreen = () => {
     <View style={styles.screen}>
       <LinearGradient colors={[colors.primary[300], colors.primary[100]]} style={styles.gradient} />
       <View style={styles.container}>
-        <Text style={styles.title}>로그인하기</Text>
+        <Text style={styles.title}>{t('auth.login.title')}</Text>
 
         <AuthInput
           label="ID"
@@ -75,31 +77,31 @@ const LoginScreen = () => {
           >
             {stayLoggedIn && <Text style={styles.checkboxMark}>✓</Text>}
           </TouchableOpacity>
-          <Text style={styles.stayLoggedInText}>로그인 상태 유지</Text>
+          <Text style={styles.stayLoggedInText}>{t('auth.login.stayLoggedIn')}</Text>
         </View>
 
         {errorMessage && <Text style={styles.errorText}>{errorMessage}</Text>}
 
         <PrimaryButton
-          label={loading ? '로그인 중...' : '로그인'}
+          label={loading ? t('auth.login.loading') : t('auth.login.button')}
           onPress={handleLogin}
           disabled={!id || !password || loading}
         />
 
         <View style={styles.forgotRow}>
           <TouchableOpacity>
-            <Text style={styles.forgotText}>아이디 찾기</Text>
+            <Text style={styles.forgotText}>{t('auth.login.forgotId')}</Text>
           </TouchableOpacity>
           <View style={styles.forgotDivider} />
           <TouchableOpacity>
-            <Text style={styles.forgotText}>비밀번호 찾기</Text>
+            <Text style={styles.forgotText}>{t('auth.login.forgotPassword')}</Text>
           </TouchableOpacity>
         </View>
 
         <TouchableOpacity onPress={() => router.push('/(auth)/register/language')}>
           <Text style={styles.signUpText}>
-            계정이 없으신가요?{'  '}
-            <Text style={styles.signUpLink}>회원가입</Text>
+            {t('auth.login.noAccount')}{'  '}
+            <Text style={styles.signUpLink}>{t('auth.login.signUp')}</Text>
           </Text>
         </TouchableOpacity>
       </View>

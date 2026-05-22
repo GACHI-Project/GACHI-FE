@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { View, Text, ScrollView, TextInput, TouchableOpacity } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import StepHeader from '../../../src/components/common/StepHeader';
 import { PrimaryButton } from '../../../src/components/common/Button';
 import colors from '../../../src/constants/colors';
@@ -14,7 +15,6 @@ import { ChildPayload } from '../../../src/api/child';
 
 // ─── 상수 ────────────────────────────────────────────────────────────────────
 
-const ORDER_LABELS = ['첫째', '둘째', '셋째', '넷째', '다섯째', '여섯째', '일곱째'] as const;
 const GRADES = [1, 2, 3, 4, 5, 6] as const;
 const CALENDAR_COLORS = [
   '#FF6B6B',
@@ -78,12 +78,13 @@ interface SchoolPickerProps {
 }
 
 const SchoolPicker = ({ selectedSchool, schoolQuery, onUpdate }: SchoolPickerProps) => {
+  const { t } = useTranslation();
   const [focused, setFocused] = useState(false);
   const results = searchSchools(schoolQuery);
 
   return (
     <View style={cardStyles.section}>
-      <Text style={cardStyles.sectionLabel}>학교</Text>
+      <Text style={cardStyles.sectionLabel}>{t('auth.register.child.school')}</Text>
 
       {selectedSchool ? (
         <View style={cardStyles.schoolSelectedCard}>
@@ -100,7 +101,7 @@ const SchoolPicker = ({ selectedSchool, schoolQuery, onUpdate }: SchoolPickerPro
             onPress={() => onUpdate({ selectedSchool: null, schoolQuery: '' })}
             activeOpacity={0.7}
           >
-            <Text style={cardStyles.changeButtonText}>변경</Text>
+            <Text style={cardStyles.changeButtonText}>{t('common.change')}</Text>
           </TouchableOpacity>
         </View>
       ) : (
@@ -114,7 +115,7 @@ const SchoolPicker = ({ selectedSchool, schoolQuery, onUpdate }: SchoolPickerPro
             />
             <TextInput
               style={cardStyles.searchInput}
-              placeholder="학교명을 검색해 주세요"
+              placeholder={t('auth.register.child.schoolPlaceholder')}
               placeholderTextColor={colors.gray[200]}
               value={schoolQuery}
               onChangeText={(text) => onUpdate({ schoolQuery: text })}
@@ -163,32 +164,35 @@ interface GradePickerProps {
   onUpdate: (updates: Partial<ChildInfo>) => void;
 }
 
-const GradePicker = ({ grade, onUpdate }: GradePickerProps) => (
-  <View style={cardStyles.section}>
-    <Text style={cardStyles.sectionLabel}>초등학교 학년</Text>
-    <ScrollView
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      contentContainerStyle={cardStyles.gradeList}
-    >
-      {GRADES.map((g) => {
-        const selected = grade === g;
-        return (
-          <TouchableOpacity
-            key={g}
-            style={[cardStyles.gradeButton, selected && cardStyles.gradeButtonSelected]}
-            onPress={() => onUpdate({ grade: selected ? null : g })}
-            activeOpacity={0.75}
-          >
-            <Text style={[cardStyles.gradeText, selected && cardStyles.gradeTextSelected]}>
-              {g}학년
-            </Text>
-          </TouchableOpacity>
-        );
-      })}
-    </ScrollView>
-  </View>
-);
+const GradePicker = ({ grade, onUpdate }: GradePickerProps) => {
+  const { t } = useTranslation();
+  return (
+    <View style={cardStyles.section}>
+      <Text style={cardStyles.sectionLabel}>{t('auth.register.child.grade')}</Text>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={cardStyles.gradeList}
+      >
+        {GRADES.map((g) => {
+          const selected = grade === g;
+          return (
+            <TouchableOpacity
+              key={g}
+              style={[cardStyles.gradeButton, selected && cardStyles.gradeButtonSelected]}
+              onPress={() => onUpdate({ grade: selected ? null : g })}
+              activeOpacity={0.75}
+            >
+              <Text style={[cardStyles.gradeText, selected && cardStyles.gradeTextSelected]}>
+                {t('common.grade', { grade: g })}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </ScrollView>
+    </View>
+  );
+};
 
 // ─── ColorPicker ──────────────────────────────────────────────────────────────
 
@@ -197,26 +201,29 @@ interface ColorPickerProps {
   onUpdate: (updates: Partial<ChildInfo>) => void;
 }
 
-const ColorPicker = ({ calendarColor, onUpdate }: ColorPickerProps) => (
-  <View style={cardStyles.section}>
-    <Text style={cardStyles.sectionLabel}>캘린더 색상</Text>
-    <View style={cardStyles.colorRow}>
-      {CALENDAR_COLORS.map((color) => {
-        const selected = calendarColor === color;
-        return (
-          <TouchableOpacity
-            key={color}
-            style={[cardStyles.colorCircle, { backgroundColor: color }]}
-            onPress={() => onUpdate({ calendarColor: color })}
-            activeOpacity={0.8}
-          >
-            {selected && <Ionicons name="checkmark" size={15} color="#FFFFFF" />}
-          </TouchableOpacity>
-        );
-      })}
+const ColorPicker = ({ calendarColor, onUpdate }: ColorPickerProps) => {
+  const { t } = useTranslation();
+  return (
+    <View style={cardStyles.section}>
+      <Text style={cardStyles.sectionLabel}>{t('auth.register.child.calendarColor')}</Text>
+      <View style={cardStyles.colorRow}>
+        {CALENDAR_COLORS.map((color) => {
+          const selected = calendarColor === color;
+          return (
+            <TouchableOpacity
+              key={color}
+              style={[cardStyles.colorCircle, { backgroundColor: color }]}
+              onPress={() => onUpdate({ calendarColor: color })}
+              activeOpacity={0.8}
+            >
+              {selected && <Ionicons name="checkmark" size={15} color="#FFFFFF" />}
+            </TouchableOpacity>
+          );
+        })}
+      </View>
     </View>
-  </View>
-);
+  );
+};
 
 // ─── ChildCard ────────────────────────────────────────────────────────────────
 
@@ -228,60 +235,63 @@ interface ChildCardProps {
   onDelete: () => void;
 }
 
-const ChildCard = ({ child, order, isDeletable, onUpdate, onDelete }: ChildCardProps) => (
-  <View style={cardStyles.card}>
-    {/* 프로필 + 순서 + 삭제 버튼 */}
-    <View style={cardStyles.profileRow}>
-      <View
-        style={[
-          cardStyles.profileCircle,
-          { backgroundColor: child.calendarColor ?? colors.gray[200] },
-        ]}
+const ChildCard = ({ child, order, isDeletable, onUpdate, onDelete }: ChildCardProps) => {
+  const { t } = useTranslation();
+  return (
+    <View style={cardStyles.card}>
+      <View style={cardStyles.profileRow}>
+        <View
+          style={[
+            cardStyles.profileCircle,
+            { backgroundColor: child.calendarColor ?? colors.gray[200] },
+          ]}
+        />
+        <Text style={cardStyles.orderLabel}>{order}</Text>
+        {isDeletable && (
+          <TouchableOpacity
+            style={cardStyles.deleteButton}
+            onPress={onDelete}
+            activeOpacity={0.7}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Ionicons name="close" size={13} color={colors.gray[200]} />
+          </TouchableOpacity>
+        )}
+      </View>
+
+      <View style={cardStyles.section}>
+        <Text style={cardStyles.sectionLabel}>{t('auth.register.child.childName')}</Text>
+        <TextInput
+          style={cardStyles.nameInput}
+          placeholder={t('auth.register.child.childNamePlaceholder')}
+          placeholderTextColor={colors.gray[200]}
+          value={child.name}
+          onChangeText={(text) => onUpdate({ name: text })}
+          returnKeyType="done"
+        />
+        <View style={cardStyles.nameDivider} />
+      </View>
+
+      <SchoolPicker
+        selectedSchool={child.selectedSchool}
+        schoolQuery={child.schoolQuery}
+        onUpdate={onUpdate}
       />
-      <Text style={cardStyles.orderLabel}>{order}</Text>
-      {isDeletable && (
-        <TouchableOpacity
-          style={cardStyles.deleteButton}
-          onPress={onDelete}
-          activeOpacity={0.7}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        >
-          <Ionicons name="close" size={13} color={colors.gray[200]} />
-        </TouchableOpacity>
-      )}
+
+      <GradePicker grade={child.grade} onUpdate={onUpdate} />
+
+      <ColorPicker calendarColor={child.calendarColor} onUpdate={onUpdate} />
     </View>
-
-    {/* 아이 이름 */}
-    <View style={cardStyles.section}>
-      <Text style={cardStyles.sectionLabel}>아이 이름</Text>
-      <TextInput
-        style={cardStyles.nameInput}
-        placeholder="이름을 입력해 주세요"
-        placeholderTextColor={colors.gray[200]}
-        value={child.name}
-        onChangeText={(text) => onUpdate({ name: text })}
-        returnKeyType="done"
-      />
-      <View style={cardStyles.nameDivider} />
-    </View>
-
-    <SchoolPicker
-      selectedSchool={child.selectedSchool}
-      schoolQuery={child.schoolQuery}
-      onUpdate={onUpdate}
-    />
-
-    <GradePicker grade={child.grade} onUpdate={onUpdate} />
-
-    <ColorPicker calendarColor={child.calendarColor} onUpdate={onUpdate} />
-  </View>
-);
+  );
+};
 
 // ─── 메인 화면 ────────────────────────────────────────────────────────────────
 
 const RegisterChildScreen = () => {
+  const { t } = useTranslation();
   const [children, setChildren] = useState<ChildInfo[]>([createChild('1')]);
   const setStoreChildren = useRegisterStore((s) => s.setChildren);
+  const orderLabels = t('auth.register.child.order', { returnObjects: true }) as string[];
 
   const updateChild = (id: string, updates: Partial<ChildInfo>) => {
     setChildren((prev) => prev.map((c) => (c.id === id ? { ...c, ...updates } : c)));
@@ -306,27 +316,22 @@ const RegisterChildScreen = () => {
         showsVerticalScrollIndicator
         keyboardShouldPersistTaps="handled"
       >
-        {/* 타이틀 */}
         <View style={styles.titleSection}>
-          <Text style={styles.title}>우리 아이 정보를 알려주세요</Text>
-          <Text style={styles.subtitle}>
-            아이의 학년에 맞춰 가정통신문을 이해하기 쉽게 설명해드려요
-          </Text>
+          <Text style={styles.title}>{t('auth.register.child.title')}</Text>
+          <Text style={styles.subtitle}>{t('auth.register.child.subtitle')}</Text>
         </View>
 
-        {/* 자녀 카드 */}
         {children.map((child, index) => (
           <ChildCard
             key={child.id}
             child={child}
-            order={ORDER_LABELS[index]}
+            order={orderLabels[index]}
             isDeletable={index > 0}
             onUpdate={(updates) => updateChild(child.id, updates)}
             onDelete={() => removeChild(child.id)}
           />
         ))}
 
-        {/* 안내 배너 */}
         <View style={styles.banner}>
           <Ionicons
             name="information-circle"
@@ -334,28 +339,24 @@ const RegisterChildScreen = () => {
             color={colors.text.primary}
             style={styles.bannerIcon}
           />
-          <Text style={styles.bannerText}>
-            각 자녀의 색상은 캘린더에서 누구의 일정인지 바로 구분하는 데 사용돼요.
-          </Text>
+          <Text style={styles.bannerText}>{t('auth.register.child.colorHint')}</Text>
         </View>
 
-        {/* 자녀 추가 버튼 */}
         {children.length < 7 && (
           <TouchableOpacity style={styles.addButton} onPress={addChild} activeOpacity={0.7}>
             <View style={styles.addIconCircle}>
               <Ionicons name="add" size={12} color={colors.primary[100]} />
             </View>
-            <Text style={styles.addButtonText}>자녀 추가하기</Text>
+            <Text style={styles.addButtonText}>{t('auth.register.child.addChild')}</Text>
           </TouchableOpacity>
         )}
 
         <View style={styles.scrollBottom} />
       </ScrollView>
 
-      {/* 하단 고정 버튼 */}
       <View style={styles.footer}>
         <PrimaryButton
-          label="다음으로 →"
+          label={t('common.next')}
           disabled={children.length === 0 || !children.every(isChildComplete)}
           onPress={() => {
             const payloads: ChildPayload[] = children.map((child) => ({

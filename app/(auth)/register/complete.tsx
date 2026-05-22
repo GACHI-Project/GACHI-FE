@@ -4,6 +4,7 @@ import { router } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import Svg, { Circle, Defs, RadialGradient, Stop } from 'react-native-svg';
 import ConfettiCannon from 'react-native-confetti-cannon';
+import { useTranslation } from 'react-i18next';
 import { PrimaryButton } from '../../../src/components/common/Button';
 import colors from '../../../src/constants/colors';
 import fonts from '../../../src/constants/fonts';
@@ -17,6 +18,7 @@ import { useRegisterStore } from '../../../src/store/registerStore';
 type Status = 'loading' | 'done' | 'error';
 
 const RegisterCompleteScreen = () => {
+  const { t } = useTranslation();
   const confettiRef = useRef<React.ComponentRef<typeof ConfettiCannon>>(null);
   const [status, setStatus] = useState<Status>('loading');
   const [errorMessage, setErrorMessage] = useState<string>('');
@@ -43,7 +45,7 @@ const RegisterCompleteScreen = () => {
 
     if (!loginId) {
       setStatus('error');
-      setErrorMessage('회원가입 정보가 없어요. 처음부터 다시 시도해주세요.');
+      setErrorMessage(t('auth.register.complete.noInfo'));
       return;
     }
 
@@ -91,11 +93,11 @@ const RegisterCompleteScreen = () => {
       reset();
     } catch (error) {
       setErrorMessage(
-        error instanceof Error ? error.message : '오류가 발생했어요. 다시 시도해주세요.'
+        error instanceof Error ? error.message : t('auth.register.complete.error')
       );
       setStatus('error');
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     run();
@@ -120,7 +122,7 @@ const RegisterCompleteScreen = () => {
       <View style={[styles.container, styles.centered]}>
         <Text style={styles.errorText}>{errorMessage}</Text>
         <TouchableOpacity style={styles.retryButton} onPress={run} activeOpacity={0.7}>
-          <Text style={styles.retryButtonText}>다시 시도</Text>
+          <Text style={styles.retryButtonText}>{t('common.retry')}</Text>
         </TouchableOpacity>
       </View>
     );
@@ -147,18 +149,14 @@ const RegisterCompleteScreen = () => {
           </View>
         </View>
 
-        {/* 텍스트 */}
         <View style={styles.textSection}>
-          <Text style={styles.title}>가입이 완료됐어요!</Text>
-          <Text style={styles.subtitle}>
-            이제 가치와 함께 우리 아이의 학교 생활을 더 쉽게 알아가요
-          </Text>
+          <Text style={styles.title}>{t('auth.register.complete.title')}</Text>
+          <Text style={styles.subtitle}>{t('auth.register.complete.subtitle')}</Text>
         </View>
 
-        {/* 버튼 */}
         <View style={styles.buttonWrapper}>
           <PrimaryButton
-            label="로그인하러 가기 →"
+            label={t('auth.register.complete.button')}
             onPress={() => router.replace('/(auth)/login')}
           />
         </View>

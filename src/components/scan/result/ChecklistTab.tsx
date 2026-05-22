@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { getNewsletterChecklist, NewsletterApiError } from '../../../api/newsletter';
 import type { ChecklistItem } from '../../../api/newsletter';
 import colors from '../../../constants/colors';
@@ -11,17 +12,18 @@ interface Props {
 }
 
 const ChecklistTab = ({ newsletterId }: Props) => {
+  const { t } = useTranslation();
   const [items, setItems] = useState<ChecklistItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [errorKey, setErrorKey] = useState<string | null>(null);
 
   useEffect(() => {
     setLoading(true);
-    setError(null);
+    setErrorKey(null);
     setItems([]);
 
     if (!newsletterId) {
-      setError('가정통신문 정보를 찾을 수 없어요.');
+      setErrorKey('scan.result.checklist.error.notFound');
       setLoading(false);
       return () => {};
     }
@@ -35,9 +37,9 @@ const ChecklistTab = ({ newsletterId }: Props) => {
       .catch((e) => {
         if (cancelled) return;
         if (e instanceof NewsletterApiError && e.code === 'NL4041') {
-          setError('가정통신문을 찾을 수 없어요.');
+          setErrorKey('scan.result.checklist.error.newsletterNotFound');
         } else {
-          setError('체크리스트를 불러오는 데 실패했어요.');
+          setErrorKey('scan.result.checklist.error.loadFailed');
         }
       })
       .finally(() => {
@@ -69,10 +71,10 @@ const ChecklistTab = ({ newsletterId }: Props) => {
     );
   }
 
-  if (error) {
+  if (errorKey) {
     return (
       <View style={styles.centered}>
-        <Text style={styles.errorText}>{error}</Text>
+        <Text style={styles.errorText}>{t(errorKey)}</Text>
       </View>
     );
   }
@@ -80,7 +82,7 @@ const ChecklistTab = ({ newsletterId }: Props) => {
   if (items.length === 0) {
     return (
       <View style={styles.centered}>
-        <Text style={styles.errorText}>체크리스트 항목이 없어요.</Text>
+        <Text style={styles.errorText}>{t('scan.result.checklist.empty')}</Text>
       </View>
     );
   }
@@ -108,7 +110,7 @@ const ChecklistTab = ({ newsletterId }: Props) => {
           {item.isCompleted ? (
             <TouchableOpacity
               onPress={() => remove(item.checklistId)}
-              accessibilityLabel="항목 삭제"
+              accessibilityLabel={t('scan.result.checklist.deleteItem')}
               accessibilityRole="button"
             >
               <Ionicons name="trash-outline" size={20} color={colors.primary[500]} />

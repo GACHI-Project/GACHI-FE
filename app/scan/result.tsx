@@ -162,6 +162,7 @@ const ScanResultScreen = () => {
         onDismiss={() => router.replace('/(tabs)')}
         childName={displayChildName}
         newsletterId={newsletterId}
+        newsletterTitle={displayTitle}
       />
     </View>
   );

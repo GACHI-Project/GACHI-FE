@@ -58,9 +58,14 @@ const CalendarScreen = () => {
   });
 
   const [focusKey, setFocusKey] = useState(0);
+  const hasFocusedOnceRef = useRef(false);
 
   useFocusEffect(
     useCallback(() => {
+      if (!hasFocusedOnceRef.current) {
+        hasFocusedOnceRef.current = true;
+        return;
+      }
       setFocusKey((k) => k + 1);
     }, [])
   );

@@ -205,8 +205,10 @@
       "error": {
         "passwordWeak": "Password security level is too low",
         "passwordMismatch": "Passwords do not match",
-        "generic": "An error occurred. Please try again."
-      }
+        "generic": "An error occurred. Please try again.",
+        "noLoginId": "Invalid access. Please try finding your password again."
+      },
+      "goFindPassword": "Go to Find Password"
     }
   },
   "passwordStrength": {

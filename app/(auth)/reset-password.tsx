@@ -34,6 +34,31 @@ const ResetPasswordScreen = () => {
 
   const canSubmit = strength > 1 && passwordsMatch && !!loginId;
 
+  if (!loginId) {
+    return (
+      <View style={styles.container}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => router.back()}
+          accessibilityRole="button"
+          accessibilityLabel={t('common.back')}
+        >
+          <Ionicons name="chevron-back" size={18} color={colors.gray[300]} />
+        </TouchableOpacity>
+        <View style={styles.noLoginIdContainer}>
+          <Text style={styles.noLoginIdText}>{t('auth.resetPassword.error.noLoginId')}</Text>
+          <TouchableOpacity
+            onPress={() => router.replace('/(auth)/find-password')}
+            accessibilityRole="button"
+            accessibilityLabel={t('auth.resetPassword.goFindPassword')}
+          >
+            <Text style={styles.noLoginIdLink}>{t('auth.resetPassword.goFindPassword')}</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+
   const handleSubmit = async () => {
     if (!canSubmit || loading) return;
     setLoading(true);
@@ -192,6 +217,25 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontFamily: fonts.medium,
     color: colors.text.red,
+    textAlign: 'center',
+  },
+  noLoginIdContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 16,
+    paddingHorizontal: layout.screenPaddingHorizontal,
+  },
+  noLoginIdText: {
+    fontSize: 14,
+    fontFamily: fonts.medium,
+    color: colors.text.secondary,
+    textAlign: 'center',
+  },
+  noLoginIdLink: {
+    fontSize: 14,
+    fontFamily: fonts.semiBold,
+    color: colors.primary[500],
     textAlign: 'center',
   },
 });

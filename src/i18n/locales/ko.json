@@ -205,8 +205,10 @@
       "error": {
         "passwordWeak": "비밀번호 보안 강도가 위험 등급이에요",
         "passwordMismatch": "비밀번호가 일치하지 않아요",
-        "generic": "오류가 발생했어요. 다시 시도해주세요."
-      }
+        "generic": "오류가 발생했어요. 다시 시도해주세요.",
+        "noLoginId": "잘못된 접근이에요. 비밀번호 찾기를 다시 시도해주세요."
+      },
+      "goFindPassword": "비밀번호 찾기로 이동"
     }
   },
   "passwordStrength": {

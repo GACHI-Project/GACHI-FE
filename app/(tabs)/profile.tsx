@@ -1,9 +1,11 @@
-import { useState } from 'react';
-import { ScrollView, View, Text, TouchableOpacity, Image } from 'react-native';
+import { useState, useEffect } from 'react';
+import { ScrollView, View, Text, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
+import * as SecureStore from 'expo-secure-store';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { ChildInfo } from '../../src/types/child';
+import { fetchChildren, registerChild, ChildItem } from '../../src/api/child';
 import { CALENDAR_COLORS } from '../(auth)/register/child';
 import colors from '../../src/constants/colors';
 import styles from '../../src/styles/profile/profile';
@@ -15,10 +17,6 @@ const mockUser = {
   loginId: 'gachi-gayo22',
   joinDate: '2026.01',
 };
-const mockChildren = [
-  { id: '1', name: '김첫째', grade: 4, colorCode: '#2BAEE0' },
-  { id: '2', name: '김둘째', grade: 1, colorCode: '#FFD84D' },
-];
 const LANGUAGE_NAMES: Record<string, string> = {
   ko: '한국어',
   en: 'English',
@@ -32,9 +30,26 @@ const APP_VERSION = '1.0.0';
 const ProfileScreen = () => {
   const { t, i18n } = useTranslation();
   const currentLanguageName = LANGUAGE_NAMES[i18n.language] ?? i18n.language;
+  const [children, setChildren] = useState<ChildItem[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   const [editingChild, setEditingChild] = useState<ChildInfo | null>(null);
   const [sheetVisible, setSheetVisible] = useState(false);
   const [isNewChild, setIsNewChild] = useState(false);
+
+  useEffect(() => {
+    const load = async () => {
+      setIsLoading(true);
+      try {
+        const result = await fetchChildren();
+        setChildren(result);
+      } catch {
+        // 조회 실패 시 빈 목록 유지
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    load();
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -62,36 +77,45 @@ const ProfileScreen = () => {
 
         <Text style={styles.sectionLabel}>{t('profile.childInfo')}</Text>
         <View style={styles.card}>
-          {mockChildren.map((child, index) => {
-            const isLast = index === mockChildren.length - 1;
-            return (
-              <TouchableOpacity
-                key={child.id}
-                style={isLast ? styles.childRowLast : styles.childRow}
-                onPress={() => {
-                  setIsNewChild(false);
-                  setEditingChild({
-                    id: child.id,
-                    name: child.name,
-                    selectedSchool: null,
-                    schoolQuery: '',
-                    grade: child.grade,
-                    calendarColor: child.colorCode,
-                  });
-                  setSheetVisible(true);
-                }}
-              >
-                <View style={[styles.childAvatar, { backgroundColor: child.colorCode }]} />
-                <View style={styles.childInfo}>
-                  <Text style={styles.childName}>{child.name}</Text>
-                  <Text style={styles.childGrade}>
-                    {t('profile.grade', { grade: child.grade })}
-                  </Text>
-                </View>
-                <Ionicons name="chevron-forward" size={16} color={colors.text.secondary} />
-              </TouchableOpacity>
-            );
-          })}
+          {isLoading ? (
+            <ActivityIndicator style={styles.childRow} color={colors.primary[400]} />
+          ) : (
+            children.map((child, index) => {
+              const isLast = index === children.length - 1;
+              return (
+                <TouchableOpacity
+                  key={child.id}
+                  style={isLast ? styles.childRowLast : styles.childRow}
+                  onPress={() => {
+                    setIsNewChild(false);
+                    setEditingChild({
+                      id: String(child.id),
+                      name: child.name,
+                      selectedSchool: {
+                        name: child.schoolName,
+                        schoolCode: child.schoolCode,
+                        address: '',
+                        type: '',
+                      },
+                      schoolQuery: child.schoolName,
+                      grade: child.grade,
+                      calendarColor: child.colorCode,
+                    });
+                    setSheetVisible(true);
+                  }}
+                >
+                  <View style={[styles.childAvatar, { backgroundColor: child.colorCode }]} />
+                  <View style={styles.childInfo}>
+                    <Text style={styles.childName}>{child.name}</Text>
+                    <Text style={styles.childGrade}>
+                      {t('profile.grade', { grade: child.grade })}
+                    </Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={16} color={colors.text.secondary} />
+                </TouchableOpacity>
+              );
+            })
+          )}
         </View>
         <TouchableOpacity
           style={styles.addChildBtn}
@@ -155,7 +179,29 @@ const ProfileScreen = () => {
         child={editingChild}
         isNew={isNewChild}
         onClose={() => setSheetVisible(false)}
-        onSave={() => setSheetVisible(false)}
+        onSave={async (updated) => {
+          if (isNewChild) {
+            try {
+              const token = await SecureStore.getItemAsync('accessToken');
+              if (!token) throw new Error('UNAUTHORIZED');
+              await registerChild(
+                {
+                  name: updated.name,
+                  schoolName: updated.selectedSchool?.name ?? updated.schoolQuery,
+                  schoolCode: updated.selectedSchool?.schoolCode ?? '',
+                  grade: updated.grade ?? 1,
+                  colorCode: updated.calendarColor ?? '#2BAEE0',
+                },
+                token
+              );
+              const result = await fetchChildren();
+              setChildren(result);
+            } catch {
+              // 자녀 추가 실패 시 시트만 닫음
+            }
+          }
+          setSheetVisible(false);
+        }}
         onDelete={() => setSheetVisible(false)}
       />
     </View>

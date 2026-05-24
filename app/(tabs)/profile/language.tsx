@@ -67,7 +67,7 @@ const styles = StyleSheet.create({
   banner: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFD84D',
+    backgroundColor: colors.secondary[500],
     borderRadius: 15,
     padding: 15,
     marginHorizontal: layout.screenPaddingHorizontal,

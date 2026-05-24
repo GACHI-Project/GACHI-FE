@@ -100,7 +100,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   iconBox: {
-    backgroundColor: '#D6EAFF',
+    backgroundColor: colors.primary[100],
     borderRadius: 10,
     padding: 15,
   },
@@ -117,7 +117,7 @@ const styles = StyleSheet.create({
     lineHeight: 24,
   },
   warningBanner: {
-    backgroundColor: '#FFD84D',
+    backgroundColor: colors.secondary[500],
     borderRadius: 15,
     padding: 15,
     flexDirection: 'row',

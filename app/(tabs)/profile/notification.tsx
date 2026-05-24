@@ -1,13 +1,12 @@
 import { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import Header from '../../../src/components/common/Header';
 import Toggle from '../../../src/components/common/Toggle';
 import colors from '../../../src/constants/colors';
-import fonts from '../../../src/constants/fonts';
-import layout from '../../../src/constants/layout';
+import styles from '../../../src/styles/profile/profileNotification';
 
 type NotificationLevel = 'all' | 'important' | 'urgent';
 
@@ -39,29 +38,29 @@ const ITEM_CONFIGS: ItemConfig[] = [
   {
     key: 'deadline',
     iconName: 'calendar',
-    iconColor: '#E53935',
+    iconColor: colors.text.red,
     iconBg: 'rgba(225,0,0,0.1)',
     badgeStyle: 'urgent',
   },
   {
     key: 'checklist',
     iconName: 'check-square',
-    iconColor: '#F4C542',
-    iconBg: '#FFFBE6',
+    iconColor: colors.secondary[600],
+    iconBg: colors.secondary[100],
     badgeStyle: 'important',
   },
   {
     key: 'weekly',
     iconName: 'mail',
-    iconColor: '#F4C542',
-    iconBg: '#FFFBE6',
+    iconColor: colors.secondary[600],
+    iconBg: colors.secondary[100],
     badgeStyle: 'important',
   },
   {
     key: 'document',
     iconName: 'file-text',
     iconColor: colors.primary[400],
-    iconBg: '#D6EAFF',
+    iconBg: colors.primary[100],
     badgeStyle: 'general',
   },
 ];
@@ -204,178 +203,3 @@ const ProfileNotificationScreen = () => {
 };
 
 export default ProfileNotificationScreen;
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.text.white,
-    paddingTop: 60,
-  },
-  scroll: {
-    flex: 1,
-    backgroundColor: colors.text.white,
-  },
-  section: {},
-  disabled: {
-    opacity: 0.4,
-  },
-  sectionLabel: {
-    fontSize: 14,
-    fontFamily: fonts.semiBold,
-    color: colors.text.secondary,
-    paddingLeft: layout.screenPaddingHorizontal,
-    marginTop: 16,
-    marginBottom: 10,
-  },
-  // 전체 알림 카드
-  masterCard: {
-    backgroundColor: '#FEFEFE',
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: '#C8CAD0',
-    marginHorizontal: layout.screenPaddingHorizontal,
-    paddingHorizontal: 16,
-    height: 66,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  masterTextWrap: {
-    flex: 1,
-    gap: 6,
-  },
-  masterTitle: {
-    fontSize: 13,
-    fontFamily: fonts.semiBold,
-    color: colors.text.primary,
-  },
-  masterDesc: {
-    fontSize: 11,
-    fontFamily: fonts.medium,
-    color: colors.text.secondary,
-  },
-  // 세그먼트
-  segmentWrap: {
-    flexDirection: 'row',
-    backgroundColor: colors.gray[100],
-    borderRadius: 10,
-    padding: 3,
-    height: 36,
-    marginHorizontal: layout.screenPaddingHorizontal,
-  },
-  segmentTab: {
-    flex: 1,
-    height: 30,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 8,
-  },
-  segmentTabSelected: {
-    backgroundColor: colors.text.white,
-    borderWidth: 0.5,
-    borderColor: colors.gray[100],
-  },
-  segmentText: {
-    fontSize: 14,
-    fontFamily: fonts.regular,
-    color: colors.text.secondary,
-  },
-  segmentTextSelected: {
-    fontFamily: fonts.medium,
-    color: colors.primary[600],
-  },
-  // 알림 단계 설명 박스
-  levelDescBox: {
-    backgroundColor: colors.primary[0],
-    borderWidth: 1,
-    borderColor: colors.primary[100],
-    borderRadius: 10,
-    padding: 15,
-    marginTop: 10,
-    marginHorizontal: layout.screenPaddingHorizontal,
-  },
-  levelDescText: {
-    fontSize: 14,
-    fontFamily: fonts.medium,
-    color: colors.primary[600],
-    lineHeight: 20,
-  },
-  // 항목별 알림 카드
-  itemCard: {
-    backgroundColor: '#FEFEFE',
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: '#C8CAD0',
-    marginHorizontal: layout.screenPaddingHorizontal,
-    overflow: 'hidden',
-  },
-  itemRow: {
-    height: 64,
-    paddingHorizontal: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  iconBox: {
-    width: 40,
-    height: 40,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  itemTextWrap: {
-    flex: 1,
-    gap: 3,
-  },
-  itemTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  itemTitle: {
-    fontSize: 14,
-    fontFamily: fonts.semiBold,
-    color: colors.text.primary,
-  },
-  itemDesc: {
-    fontSize: 11,
-    fontFamily: fonts.regular,
-    color: colors.text.secondary,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: '#C8CAD0',
-    width: '100%',
-  },
-  // 뱃지
-  badge: {
-    height: 21,
-    borderRadius: 999,
-    paddingHorizontal: 8,
-    justifyContent: 'center',
-  },
-  badge_urgent: {
-    backgroundColor: 'rgba(225,0,0,0.1)',
-  },
-  badge_important: {
-    backgroundColor: '#FFFBE6',
-  },
-  badge_general: {
-    backgroundColor: '#D6EAFF',
-  },
-  badgeText: {
-    fontSize: 12,
-    fontFamily: fonts.medium,
-  },
-  badgeText_urgent: {
-    color: '#E53935',
-  },
-  badgeText_important: {
-    color: '#F4C542',
-  },
-  badgeText_general: {
-    color: colors.primary[400],
-  },
-  scrollBottom: {
-    height: 40,
-  },
-});

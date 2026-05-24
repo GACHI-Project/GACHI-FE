@@ -59,8 +59,10 @@ export const shortenAddress = (address: string): string => {
   return idx >= 0 ? tokens.slice(0, idx + 1).join(' ') : address;
 };
 
-export const formatSchoolMeta = (school: SchoolResult): string =>
-  `${school.type} • ${shortenAddress(school.address)}`;
+const formatSchoolMeta = (school: SchoolResult): string => {
+  if (!school.address) return school.type ?? '초등학교';
+  return `${school.type} • ${shortenAddress(school.address)}`;
+};
 
 export const searchSchools = (query: string): SchoolResult[] => {
   if (!query.trim()) return [];

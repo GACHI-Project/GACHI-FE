@@ -43,7 +43,23 @@ export const getTodayChecklists = async (): Promise<TodayChecklistItem[]> => {
       '/api/v1/checklists/today',
       { headers }
     );
-    return response.data.result.checklists;
+    return response.data.result.checklists ?? [];
+  } catch (error) {
+    throw wrapError(error);
+  }
+};
+
+export const toggleChecklistItem = async (
+  checklistId: number,
+  isCompleted: boolean
+): Promise<void> => {
+  try {
+    const headers = await getAuthHeader();
+    await apiClient.patch(
+      `/api/v1/checklists/${checklistId}/complete`,
+      { isCompleted },
+      { headers }
+    );
   } catch (error) {
     throw wrapError(error);
   }

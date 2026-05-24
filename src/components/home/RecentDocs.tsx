@@ -13,6 +13,7 @@ const RecentDocs = () => {
   const { t, i18n } = useTranslation();
   const [groups, setGroups] = useState<RecentNewsletterGroup[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -20,7 +21,9 @@ const RecentDocs = () => {
       .then((data) => {
         if (!cancelled) setGroups(data);
       })
-      .catch(() => {})
+      .catch(() => {
+        if (!cancelled) setError(true);
+      })
       .finally(() => {
         if (!cancelled) setLoading(false);
       });
@@ -41,6 +44,8 @@ const RecentDocs = () => {
 
       {loading ? (
         <ActivityIndicator size="small" color={colors.primary[400]} style={{ marginVertical: 16 }} />
+      ) : error ? (
+        <Text style={styles.docMeta}>{t('common.networkError')}</Text>
       ) : groups.length === 0 ? (
         <Text style={styles.docMeta}>{t('document.empty')}</Text>
       ) : (

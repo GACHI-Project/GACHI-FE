@@ -16,12 +16,14 @@ const TaskCard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [checked, setChecked] = useState<Record<number, boolean>>({});
+  const [pendingIds, setPendingIds] = useState<Record<number, boolean>>({});
   const [focusKey, setFocusKey] = useState(0);
 
   useFocusEffect(
     useCallback(() => {
       setFocusKey((k) => k + 1);
       setChecked({});
+      setPendingIds({});
     }, [])
   );
 
@@ -90,13 +92,22 @@ const TaskCard = () => {
     };
   }, []);
 
-  const toggleCheck = useCallback((id: number, currentChecked: boolean) => {
-    const next = !currentChecked;
-    setChecked((prev) => ({ ...prev, [id]: next }));
-    toggleChecklistItem(id, next).catch(() => {
-      setChecked((prev) => ({ ...prev, [id]: !next }));
-    });
-  }, []);
+  const toggleCheck = useCallback(
+    (id: number, currentChecked: boolean) => {
+      if (pendingIds[id]) return;
+      const next = !currentChecked;
+      setChecked((prev) => ({ ...prev, [id]: next }));
+      setPendingIds((prev) => ({ ...prev, [id]: true }));
+      toggleChecklistItem(id, next)
+        .catch(() => {
+          setChecked((prev) => ({ ...prev, [id]: !next }));
+        })
+        .finally(() => {
+          setPendingIds((prev) => ({ ...prev, [id]: false }));
+        });
+    },
+    [pendingIds]
+  );
 
   return (
     <View style={styles.card}>
@@ -107,13 +118,13 @@ const TaskCard = () => {
         </View>
         <View style={styles.summaryTexts}>
           <Text style={styles.summaryTitle}>
-            {loading
+            {loading || error
               ? ''
               : total === 0
                 ? t('home.taskCard.noTodo')
                 : t('home.taskCard.todayCount', { count: total })}
           </Text>
-          {!loading && <Text style={styles.summaryDesc}>{summaryDesc}</Text>}
+          {!loading && !error && <Text style={styles.summaryDesc}>{summaryDesc}</Text>}
         </View>
         <View style={styles.childCircles}>
           {distinctChildNames.map((name, index) => (
@@ -145,8 +156,9 @@ const TaskCard = () => {
                 style={[styles.checkbox, checked[item.checklistId] && styles.checkboxChecked]}
                 onPress={() => toggleCheck(item.checklistId, !!checked[item.checklistId])}
                 activeOpacity={0.7}
+                disabled={!!pendingIds[item.checklistId]}
                 accessibilityRole="checkbox"
-                accessibilityState={{ checked: !!checked[item.checklistId] }}
+                accessibilityState={{ checked: !!checked[item.checklistId], busy: !!pendingIds[item.checklistId] }}
                 accessibilityLabel={item.content}
               >
                 {checked[item.checklistId] && <Text style={styles.checkMark}>✓</Text>}

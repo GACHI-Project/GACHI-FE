@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { getTodayChecklists, toggleChecklistItem, type TodayChecklistItem } from '../../api/checklist';
 import { getMyChildren, type ChildResult } from '../../api/child';
@@ -16,9 +16,19 @@ const TaskCard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [checked, setChecked] = useState<Record<number, boolean>>({});
+  const [focusKey, setFocusKey] = useState(0);
+
+  useFocusEffect(
+    useCallback(() => {
+      setFocusKey((k) => k + 1);
+      setChecked({});
+    }, [])
+  );
 
   useEffect(() => {
     let cancelled = false;
+    setLoading(true);
+    setError(false);
     Promise.all([getTodayChecklists(), getMyChildren()])
       .then(([checklists, childList]) => {
         if (!cancelled) {
@@ -35,7 +45,7 @@ const TaskCard = () => {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [focusKey]);
 
   const colorMap = useMemo(() => {
     const map: Record<string, string> = {};

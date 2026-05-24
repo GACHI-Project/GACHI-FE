@@ -117,6 +117,7 @@ const FindPasswordScreen = () => {
             onChangeText={(v) => {
               setLoginId(v);
               setIdMsg(null);
+              setErrorMsg(null);
               setCodeSent(false);
               setEmailVerified(false);
             }}
@@ -130,6 +131,7 @@ const FindPasswordScreen = () => {
             onChangeText={(v) => {
               setEmail(v);
               setEmailMsg(null);
+              setErrorMsg(null);
               setCodeSent(false);
               setEmailVerified(false);
             }}

@@ -159,6 +159,7 @@ const FindIdScreen = () => {
               onChangeText={(v) => {
                 setEmail(v);
                 setEmailMsg(null);
+                setErrorMsg(null);
                 setCodeSent(false);
                 setEmailVerified(false);
               }}

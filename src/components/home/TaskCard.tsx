@@ -1,8 +1,8 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { getTodayChecklists, type TodayChecklistItem } from '../../api/checklist';
+import { getTodayChecklists, toggleChecklistItem, type TodayChecklistItem } from '../../api/checklist';
 import { getMyChildren, type ChildResult } from '../../api/child';
 import colors from '../../constants/colors';
 import styles from '../../styles/home/taskCard';
@@ -14,6 +14,7 @@ const TaskCard = () => {
   const [items, setItems] = useState<TodayChecklistItem[]>([]);
   const [children, setChildren] = useState<ChildResult[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [checked, setChecked] = useState<Record<number, boolean>>({});
 
   useEffect(() => {
@@ -25,7 +26,9 @@ const TaskCard = () => {
           setChildren(childList);
         }
       })
-      .catch(() => {})
+      .catch(() => {
+        if (!cancelled) setError(true);
+      })
       .finally(() => {
         if (!cancelled) setLoading(false);
       });
@@ -77,7 +80,13 @@ const TaskCard = () => {
     };
   }, []);
 
-  const toggleCheck = (id: number) => setChecked((prev) => ({ ...prev, [id]: !prev[id] }));
+  const toggleCheck = useCallback((id: number, currentChecked: boolean) => {
+    const next = !currentChecked;
+    setChecked((prev) => ({ ...prev, [id]: next }));
+    toggleChecklistItem(id, next).catch(() => {
+      setChecked((prev) => ({ ...prev, [id]: !next }));
+    });
+  }, []);
 
   return (
     <View style={styles.card}>
@@ -114,6 +123,8 @@ const TaskCard = () => {
 
       {loading ? (
         <ActivityIndicator size="small" color={colors.primary[400]} style={{ marginVertical: 16 }} />
+      ) : error ? (
+        <Text style={styles.emptyText}>{t('common.networkError')}</Text>
       ) : total === 0 ? (
         <Text style={styles.emptyText}>{t('home.taskCard.empty')}</Text>
       ) : (
@@ -122,8 +133,11 @@ const TaskCard = () => {
             <View style={styles.todoRow}>
               <TouchableOpacity
                 style={[styles.checkbox, checked[item.checklistId] && styles.checkboxChecked]}
-                onPress={() => toggleCheck(item.checklistId)}
+                onPress={() => toggleCheck(item.checklistId, !!checked[item.checklistId])}
                 activeOpacity={0.7}
+                accessibilityRole="checkbox"
+                accessibilityState={{ checked: !!checked[item.checklistId] }}
+                accessibilityLabel={item.content}
               >
                 {checked[item.checklistId] && <Text style={styles.checkMark}>✓</Text>}
               </TouchableOpacity>
@@ -158,6 +172,8 @@ const TaskCard = () => {
           <TouchableOpacity
             style={styles.moreButton}
             activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel={t('home.taskCard.moreItems', { count: hiddenCount })}
             onPress={() => router.push('/(tabs)/calendar')}
           >
             <Text style={styles.moreText}>

@@ -143,7 +143,7 @@ export const fetchWeeklyEvents = async (
 };
 
 export interface CalendarPreviewItem {
-  tempEventId: number;
+  tempEventId: string;
   title: string;
   extractedDate: string | null;
   isDateExtracted: boolean;
@@ -152,18 +152,18 @@ export interface CalendarPreviewItem {
 export const getCalendarPreview = async (newsletterId: number): Promise<CalendarPreviewItem[]> => {
   try {
     const headers = await getAuthHeader();
-    const response = await apiClient.get<{ result: { items: CalendarPreviewItem[] } }>(
+    const response = await apiClient.get<{ result: { events: CalendarPreviewItem[] } }>(
       `/api/v1/newsletters/${newsletterId}/calendar/preview`,
       { headers }
     );
-    return response.data.result.items;
+    return response.data.result?.events ?? [];
   } catch (error) {
     throw wrapError(error);
   }
 };
 
 export interface CalendarDatePatchEvent {
-  tempEventId: number;
+  tempEventId: string;
   correctedDate: string;
 }
 
@@ -184,7 +184,7 @@ export const patchCalendarPreviewDates = async (
 };
 
 export interface CalendarPostEvent {
-  tempEventId: number;
+  tempEventId: string;
   title: string;
   startAt: string;
   endAt: string | null;
@@ -202,6 +202,28 @@ export const postCalendarEvents = async (
       { headers }
     );
     return response.data.result;
+  } catch (error) {
+    throw wrapError(error);
+  }
+};
+
+export interface CalendarPreviewDummyEvent {
+  title: string;
+  extractedDate: string | null;
+  checklistIds: number[] | null;
+}
+
+export const injectCalendarPreviewDummy = async (
+  newsletterId: number,
+  events: CalendarPreviewDummyEvent[]
+): Promise<void> => {
+  try {
+    const headers = await getAuthHeader();
+    await apiClient.post(
+      `/api/v1/newsletters/${newsletterId}/calendar/preview/mock`,
+      { events },
+      { headers }
+    );
   } catch (error) {
     throw wrapError(error);
   }

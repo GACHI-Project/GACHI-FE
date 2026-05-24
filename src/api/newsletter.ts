@@ -204,3 +204,28 @@ export const getNewsletterStatus = async (
     throw wrapError(error);
   }
 };
+
+export interface RecentNewsletterItem {
+  newsletterId: number;
+  title: string;
+  childName: string | null;
+  childGrade: number | null;
+}
+
+export interface RecentNewsletterGroup {
+  date: string;
+  items: RecentNewsletterItem[];
+}
+
+export const getRecentNewsletters = async (limit = 5): Promise<RecentNewsletterGroup[]> => {
+  try {
+    const headers = await getAuthHeader();
+    const response = await apiClient.get<{ result: { groups: RecentNewsletterGroup[] } }>(
+      '/api/v1/newsletters/recent',
+      { headers, params: { limit } }
+    );
+    return response.data.result.groups ?? [];
+  } catch (error) {
+    throw wrapError(error);
+  }
+};

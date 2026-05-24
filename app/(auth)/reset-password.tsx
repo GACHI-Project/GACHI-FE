@@ -25,11 +25,12 @@ const ResetPasswordScreen = () => {
 
   const strength = getStrength(newPassword);
   const passwordsMatch = confirmPassword.length > 0 && newPassword === confirmPassword;
-  const confirmMsg = confirmPassword.length > 0
-    ? passwordsMatch
+  let confirmMsg: { text: string; state: 'success' | 'error' } | null = null;
+  if (confirmPassword.length > 0) {
+    confirmMsg = passwordsMatch
       ? { text: t('auth.resetPassword.passwordMatch'), state: 'success' as const }
-      : { text: t('auth.resetPassword.error.passwordMismatch'), state: 'error' as const }
-    : null;
+      : { text: t('auth.resetPassword.error.passwordMismatch'), state: 'error' as const };
+  }
 
   const canSubmit = strength > 1 && passwordsMatch && !!loginId;
 

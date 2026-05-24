@@ -31,7 +31,8 @@ const ScanPreviewScreen = () => {
   const isPdf =
     source === 'pdf' || fileType === 'application/pdf' || photoUri?.toLowerCase().endsWith('.pdf');
   const pdfFilename = photoUri?.split('/').pop() ?? 'document.pdf';
-  const retakeLabel = source === 'gallery' || isPdf ? t('scan.preview.reselect') : t('scan.preview.retake');
+  const retakeLabel =
+    source === 'gallery' || isPdf ? t('scan.preview.reselect') : t('scan.preview.retake');
 
   return (
     <View style={styles.screen}>

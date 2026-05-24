@@ -114,7 +114,8 @@ const AISummaryTab = ({ newsletterId }: Props) => {
   const renderTodos = () => {
     if (todoLoading) return <ActivityIndicator size="small" color={colors.primary[400]} />;
     if (todoError) return <Text style={styles.errorText}>{t(todoError)}</Text>;
-    if (todos.length === 0) return <Text style={styles.errorText}>{t('scan.result.aiSummary.emptyTodo')}</Text>;
+    if (todos.length === 0)
+      return <Text style={styles.errorText}>{t('scan.result.aiSummary.emptyTodo')}</Text>;
     return (
       <View style={styles.todoList}>
         {todos.map((item) => (
@@ -133,15 +134,27 @@ const AISummaryTab = ({ newsletterId }: Props) => {
 
   return (
     <View style={styles.list}>
-      <SummaryCard icon="bulb-outline" iconBg={colors.primary[400]} title={t('scan.result.aiSummary.summarySection')}>
+      <SummaryCard
+        icon="bulb-outline"
+        iconBg={colors.primary[400]}
+        title={t('scan.result.aiSummary.summarySection')}
+      >
         {renderSummary()}
       </SummaryCard>
 
-      <SummaryCard icon="alarm-outline" iconBg={colors.secondary[600]} title={t('scan.result.aiSummary.todayTodo')}>
+      <SummaryCard
+        icon="alarm-outline"
+        iconBg={colors.secondary[600]}
+        title={t('scan.result.aiSummary.todayTodo')}
+      >
         {renderTodos()}
       </SummaryCard>
 
-      <SummaryCard icon="earth-outline" iconBg={colors.primary[400]} title={t('scan.result.aiSummary.culturalContext')}>
+      <SummaryCard
+        icon="earth-outline"
+        iconBg={colors.primary[400]}
+        title={t('scan.result.aiSummary.culturalContext')}
+      >
         <View style={styles.qnaList}>
           {qnaItems.map((item) => (
             <View key={item.q} style={styles.qnaItem}>

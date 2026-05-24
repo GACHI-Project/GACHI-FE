@@ -80,7 +80,9 @@ const TaskCard = () => {
         </View>
         <View style={styles.summaryTexts}>
           <Text style={styles.summaryTitle}>
-            {total === 0 ? t('home.taskCard.noTodo') : t('home.taskCard.todayCount', { count: total })}
+            {total === 0
+              ? t('home.taskCard.noTodo')
+              : t('home.taskCard.todayCount', { count: total })}
           </Text>
           <Text style={styles.summaryDesc}>{summaryDesc}</Text>
         </View>
@@ -147,7 +149,9 @@ const TaskCard = () => {
             activeOpacity={0.7}
             onPress={() => router.push('/(tabs)/calendar')}
           >
-            <Text style={styles.moreText}>{t('home.taskCard.moreItems', { count: hiddenCount })}</Text>
+            <Text style={styles.moreText}>
+              {t('home.taskCard.moreItems', { count: hiddenCount })}
+            </Text>
           </TouchableOpacity>
         </>
       )}

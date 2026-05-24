@@ -32,9 +32,11 @@ const formatDayLabel = (dateStr: string, locale: string) => {
 
 const formatWeekDateHeader = (dateStr: string, locale: string) => {
   const [year, month, day] = dateStr.split('-').map(Number);
-  return new Intl.DateTimeFormat(locale, { month: 'long', day: 'numeric', weekday: 'short' }).format(
-    new Date(year, month - 1, day)
-  );
+  return new Intl.DateTimeFormat(locale, {
+    month: 'long',
+    day: 'numeric',
+    weekday: 'short',
+  }).format(new Date(year, month - 1, day));
 };
 
 const CalendarScreen = () => {
@@ -266,7 +268,9 @@ const CalendarScreen = () => {
           style={[styles.iconButton, styles.calendarIconButton]}
           onPress={handleToggleMode}
           accessibilityRole="button"
-          accessibilityLabel={isWeekMode ? t('calendar.weekViewAccessibility') : t('calendar.monthViewAccessibility')}
+          accessibilityLabel={
+            isWeekMode ? t('calendar.weekViewAccessibility') : t('calendar.monthViewAccessibility')
+          }
         >
           <FontAwesome5
             name={isWeekMode ? 'calendar-alt' : 'calendar-week'}
@@ -360,7 +364,9 @@ const CalendarScreen = () => {
                         }
                       }}
                     >
-                      <Text style={styles.weekDateHeader}>{formatWeekDateHeader(group.date, i18n.language)}</Text>
+                      <Text style={styles.weekDateHeader}>
+                        {formatWeekDateHeader(group.date, i18n.language)}
+                      </Text>
                       <View style={styles.cardGroup}>
                         {group.events.map((event) => (
                           <EventCard

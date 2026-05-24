@@ -100,7 +100,8 @@ const LoginScreen = () => {
 
         <TouchableOpacity onPress={() => router.push('/(auth)/register/language')}>
           <Text style={styles.signUpText}>
-            {t('auth.login.noAccount')}{'  '}
+            {t('auth.login.noAccount')}
+            {'  '}
             <Text style={styles.signUpLink}>{t('auth.login.signUp')}</Text>
           </Text>
         </TouchableOpacity>

@@ -20,35 +20,35 @@ const hexToRgba = (hex: string, alpha: number): string => {
 const DocumentCard = ({ item, onPress }: DocumentCardProps) => {
   const { t } = useTranslation();
   return (
-  <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.75}>
-    <View style={[styles.colorBar, { backgroundColor: item.calendarColor }]} />
+    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.75}>
+      <View style={[styles.colorBar, { backgroundColor: item.calendarColor }]} />
 
-    <View style={[styles.iconBox, { backgroundColor: hexToRgba(item.calendarColor, 0.3) }]}>
-      <AntDesign name="file-text" size={25} color={item.calendarColor} style={styles.docIcon} />
-    </View>
+      <View style={[styles.iconBox, { backgroundColor: hexToRgba(item.calendarColor, 0.3) }]}>
+        <AntDesign name="file-text" size={25} color={item.calendarColor} style={styles.docIcon} />
+      </View>
 
-    <View style={styles.info}>
-      <View style={styles.topRow}>
-        <Text style={styles.childInfo} numberOfLines={1}>
-          {item.childName} · {t('common.elementaryGrade', { grade: item.grade })}
+      <View style={styles.info}>
+        <View style={styles.topRow}>
+          <Text style={styles.childInfo} numberOfLines={1}>
+            {item.childName} · {t('common.elementaryGrade', { grade: item.grade })}
+          </Text>
+          {item.dDay !== null && (
+            <View style={styles.dDayBadge}>
+              <Text style={styles.dDayText}>D-{item.dDay}</Text>
+            </View>
+          )}
+        </View>
+
+        <Text style={styles.title} numberOfLines={2}>
+          {item.title}
         </Text>
-        {item.dDay !== null && (
-          <View style={styles.dDayBadge}>
-            <Text style={styles.dDayText}>D-{item.dDay}</Text>
-          </View>
-        )}
-      </View>
 
-      <Text style={styles.title} numberOfLines={2}>
-        {item.title}
-      </Text>
-
-      <View style={styles.bottomRow}>
-        <Text style={styles.date}>{item.date}</Text>
-        <Ionicons name="chevron-forward" size={20} color={colors.gray[200]} />
+        <View style={styles.bottomRow}>
+          <Text style={styles.date}>{item.date}</Text>
+          <Ionicons name="chevron-forward" size={20} color={colors.gray[200]} />
+        </View>
       </View>
-    </View>
-  </TouchableOpacity>
+    </TouchableOpacity>
   );
 };
 

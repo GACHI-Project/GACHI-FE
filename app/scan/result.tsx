@@ -115,7 +115,9 @@ const ScanResultScreen = () => {
             accessibilityRole="tab"
             accessibilityState={{ selected: activeTab === tab }}
           >
-            <Text style={[styles.tabLabel, activeTab === tab && styles.tabLabelActive]}>{t(`scan.result.tabs.${tab}`)}</Text>
+            <Text style={[styles.tabLabel, activeTab === tab && styles.tabLabelActive]}>
+              {t(`scan.result.tabs.${tab}`)}
+            </Text>
             {activeTab === tab && <View style={styles.tabUnderline} />}
           </TouchableOpacity>
         ))}

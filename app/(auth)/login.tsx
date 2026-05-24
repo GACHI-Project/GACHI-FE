@@ -89,11 +89,11 @@ const LoginScreen = () => {
         />
 
         <View style={styles.forgotRow}>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => router.push('/(auth)/find-id')}>
             <Text style={styles.forgotText}>{t('auth.login.forgotId')}</Text>
           </TouchableOpacity>
           <View style={styles.forgotDivider} />
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => router.push('/(auth)/find-password')}>
             <Text style={styles.forgotText}>{t('auth.login.forgotPassword')}</Text>
           </TouchableOpacity>
         </View>

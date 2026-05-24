@@ -522,5 +522,91 @@
     "title": "문서",
     "searchPlaceholder": "문서 제목 검색",
     "empty": "해당하는 문서가 없어요"
+  },
+  "profile": {
+    "title": "마이페이지",
+    "edit": "편집",
+    "joinDate": "가입일 {{date}}",
+    "languageChange": {
+      "title": "언어 변경",
+      "warning": "언어를 변경하면 앱이 재시작돼요.\n진행 중인 스캔이나 번역이 있으면 중단될 수 있어요.",
+      "save": "저장"
+    },
+    "childEdit": {
+      "save": "저장",
+      "delete": "이 자녀 삭제"
+    },
+    "childInfo": "자녀 정보",
+    "addChild": "+ 자녀 추가",
+    "grade": "초등학교 {{grade}}학년",
+    "appSettings": "앱 설정",
+    "appLanguage": "앱 언어",
+    "notification": "알림 설정",
+    "notificationOn": "켜짐",
+    "notificationOff": "꺼짐",
+    "etc": "기타",
+    "inquiry": "문의하기",
+    "privacy": "개인정보 처리방침",
+    "appVersion": "앱 버전",
+    "logout": "로그아웃",
+    "backAccessibility": "뒤로가기",
+    "helpAccessibility": "도움말",
+    "editProfile": {
+      "accountSection": "계정 정보",
+      "name": "이름",
+      "phone": "전화번호",
+      "email": "이메일",
+      "securitySection": "보안",
+      "changePassword": {
+        "title": "비밀번호 변경",
+        "currentPassword": "현재 비밀번호",
+        "newPassword": "새 비밀번호",
+        "confirmPassword": "새 비밀번호 확인",
+        "submit": "비밀번호 변경"
+      },
+      "withdraw": "탈퇴하기",
+      "withdrawTitle": "정말 탈퇴하시겠어요?",
+      "withdrawDesc": "탈퇴하면 계정과 모든 데이터가\n영구적으로 삭제돼요.",
+      "withdrawWarning": "저장된 문서, 자녀 정보, 캘린더 일정이 모두 삭제되며 복구할 수 없어요.",
+      "cancel": "취소"
+    },
+    "notificationSetting": {
+      "title": "알림 설정",
+      "masterSection": "전체 알림",
+      "masterTitle": "알림 받기",
+      "masterDesc": "알림 전체를 한 번에 켜고 끌 수 있어요",
+      "levelSection": "알림 단계",
+      "levelAll": "모든 알림",
+      "levelImportant": "중요 알림",
+      "levelUrgent": "긴급 알림",
+      "levelDesc": {
+        "all": "모든 가정통신문과 업데이트, 알림을 받아요",
+        "important": "중요도 높은 알림만 받아요. 마감 · 체크리스트 · 주간 요약 알림이 포함돼요.",
+        "urgent": "마감 등 꼭 필요한 알림만 받아요"
+      },
+      "itemSection": "항목별 알림",
+      "items": {
+        "deadline": {
+          "title": "마감 알림",
+          "desc": "마감 하루 전에 미리 알려드려요",
+          "badge": "긴급"
+        },
+        "checklist": {
+          "title": "체크리스트 알림",
+          "desc": "3일 전과 하루 전에 미완료 항목을 알려드려요",
+          "badge": "중요"
+        },
+        "weekly": {
+          "title": "주간 요약",
+          "desc": "매주 일요일, 이번 주 일정을 미리 안내해요",
+          "badge": "중요"
+        },
+        "document": {
+          "title": "새 문서 분석 완료",
+          "desc": "가정통신문 분석이 완료되면 알려드려요",
+          "badge": "일반"
+        }
+      }
+    }
   }
 }

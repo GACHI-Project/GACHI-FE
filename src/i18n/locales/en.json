@@ -148,6 +148,65 @@
       "sub": "Please read the required terms before checking.",
       "viewTerms": "View Terms",
       "viewPrivacy": "View Privacy Policy"
+    },
+    "findId": {
+      "title": "Find ID",
+      "subtitle": "You can find your ID using your registered email.",
+      "email": "Email",
+      "code": "Verification Code",
+      "send": "Send Code",
+      "sending": "Sending...",
+      "confirm": "Confirm",
+      "verifying": "Checking...",
+      "loading": "Checking...",
+      "submit": "Find ID →",
+      "foundTitle": "Account Found",
+      "foundDesc": "You can log in with the ID below.",
+      "idLabel": "ID",
+      "goLogin": "Go to Login",
+      "forgotPassword": "Forgot your password?",
+      "goFindPassword": "Find Password",
+      "error": {
+        "emailNotFound": "No account found for this email.",
+        "generic": "An error occurred. Please try again."
+      }
+    },
+    "findPassword": {
+      "title": "Find Password",
+      "subtitle": "Reset your password by verifying your ID and email.",
+      "id": "ID",
+      "email": "Email",
+      "code": "Verification Code",
+      "send": "Send Code",
+      "sending": "Sending...",
+      "confirm": "Confirm",
+      "verifying": "Checking...",
+      "submit": "Send Reset Link →",
+      "idFound": "Account found for this ID.",
+      "forgotId": "Forgot your ID?",
+      "goFindId": "Find ID",
+      "error": {
+        "idNotFound": "No account found for this ID.",
+        "emailNotFound": "No account found for this email.",
+        "generic": "An error occurred. Please try again."
+      }
+    },
+    "resetPassword": {
+      "title": "Reset Password",
+      "subtitle": "Please enter a new password for your account.",
+      "newPassword": "New Password",
+      "newPasswordConfirm": "Confirm New Password",
+      "submit": "Reset Password",
+      "submitting": "Resetting...",
+      "successTitle": "Password Changed",
+      "successDesc": "Your password has been reset successfully.\nPlease log in again with your new password.",
+      "goLogin": "Go to Login →",
+      "passwordMatch": "Passwords match.",
+      "error": {
+        "passwordWeak": "Password security level is too low",
+        "passwordMismatch": "Passwords do not match",
+        "generic": "An error occurred. Please try again."
+      }
     }
   },
   "passwordStrength": {

@@ -9,7 +9,8 @@ export type SupportedLanguage = LanguageType;
 
 const LANGUAGE_KEY = 'app_language';
 
-const VALID_LANGUAGES: LanguageType[] = ['ko', 'en', 'vi', 'zh'];
+// TODO: vi.json, zh.json 번역 파일 추가 후 VALID_LANGUAGES에 복구 예정
+const VALID_LANGUAGES: LanguageType[] = ['ko', 'en'];
 
 const getInitialLanguage = async (): Promise<SupportedLanguage> => {
   // TODO: API 연동 후 로그인 시 서버에서 받은 언어로 교체

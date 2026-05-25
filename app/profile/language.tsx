@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, Alert } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
@@ -37,9 +37,13 @@ const ProfileLanguageScreen = () => {
         <PrimaryButton
           label={t('profile.languageChange.save')}
           onPress={async () => {
-            await i18n.changeLanguage(selected);
-            await saveLanguage(selected);
-            router.back();
+            try {
+              await i18n.changeLanguage(selected);
+              await saveLanguage(selected);
+              router.back();
+            } catch {
+              Alert.alert('오류', '언어 변경에 실패했어요. 다시 시도해주세요.');
+            }
           }}
         />
       </View>

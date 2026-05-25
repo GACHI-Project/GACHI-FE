@@ -205,7 +205,8 @@ const ProfileScreen = () => {
               const result = await fetchChildren();
               setChildren(result);
             } catch {
-              // 자녀 추가 실패 시 시트만 닫음
+              Alert.alert('오류', '자녀 추가에 실패했어요. 다시 시도해주세요.');
+              return; // 시트 유지
             }
           } else {
             Alert.alert('준비 중', '자녀 수정 기능은 현재 준비 중이에요.');

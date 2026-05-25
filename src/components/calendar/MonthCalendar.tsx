@@ -38,9 +38,10 @@ const MonthCalendar = ({
     )
   );
 
-  const monthLabel = new Intl.DateTimeFormat(i18n.language, { year: 'numeric', month: 'long' }).format(
-    new Date(year, month, 1)
-  );
+  const monthLabel = new Intl.DateTimeFormat(i18n.language, {
+    year: 'numeric',
+    month: 'long',
+  }).format(new Date(year, month, 1));
 
   const firstDayOfWeek = new Date(year, month, 1).getDay();
   const lastDate = new Date(year, month + 1, 0).getDate();

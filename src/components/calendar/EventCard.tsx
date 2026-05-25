@@ -48,7 +48,9 @@ const EventCard = ({ event, expanded, isPast, onToggleExpand, onToggleCheck }: E
               onPress={onToggleExpand}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               accessibilityRole="button"
-              accessibilityLabel={expanded ? t('calendar.checklist.collapse') : t('calendar.checklist.expand')}
+              accessibilityLabel={
+                expanded ? t('calendar.checklist.collapse') : t('calendar.checklist.expand')
+              }
               accessibilityState={{ expanded }}
             >
               <Ionicons

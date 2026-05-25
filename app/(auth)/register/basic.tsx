@@ -532,7 +532,8 @@ const RegisterBasicScreen = () => {
 
         <TouchableOpacity onPress={() => router.push('/(auth)/login')}>
           <Text style={styles.loginText}>
-            {t('auth.register.basic.hasAccount')}{'  '}
+            {t('auth.register.basic.hasAccount')}
+            {'  '}
             <Text style={styles.loginLink}>{t('auth.register.basic.loginLink')}</Text>
           </Text>
         </TouchableOpacity>

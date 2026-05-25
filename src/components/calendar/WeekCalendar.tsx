@@ -31,51 +31,51 @@ const WeekCalendar = ({ weekDates, today, markedDates, onPrev, onNext }: WeekCal
   };
 
   return (
-  <View style={styles.container}>
-    <View style={styles.rangeHeader}>
-      <TouchableOpacity
-        onPress={onPrev}
-        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        accessibilityRole="button"
-        accessibilityLabel={t('calendar.prevWeek')}
-      >
-        <Ionicons name="chevron-back" size={16} color={colors.text.secondary} />
-      </TouchableOpacity>
-      <Text style={styles.rangeText}>
-        {formatMonthDay(weekDates[0])} ~ {formatMonthDay(weekDates[6])}
-      </Text>
-      <TouchableOpacity
-        onPress={onNext}
-        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        accessibilityRole="button"
-        accessibilityLabel={t('calendar.nextWeek')}
-      >
-        <Ionicons name="chevron-forward" size={16} color={colors.text.secondary} />
-      </TouchableOpacity>
-    </View>
+    <View style={styles.container}>
+      <View style={styles.rangeHeader}>
+        <TouchableOpacity
+          onPress={onPrev}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          accessibilityRole="button"
+          accessibilityLabel={t('calendar.prevWeek')}
+        >
+          <Ionicons name="chevron-back" size={16} color={colors.text.secondary} />
+        </TouchableOpacity>
+        <Text style={styles.rangeText}>
+          {formatMonthDay(weekDates[0])} ~ {formatMonthDay(weekDates[6])}
+        </Text>
+        <TouchableOpacity
+          onPress={onNext}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          accessibilityRole="button"
+          accessibilityLabel={t('calendar.nextWeek')}
+        >
+          <Ionicons name="chevron-forward" size={16} color={colors.text.secondary} />
+        </TouchableOpacity>
+      </View>
 
-    <View style={styles.datesRow}>
-      {weekDates.map((dateStr, index) => {
-        const day = parseInt(dateStr.split('-')[2], 10);
-        const isToday = dateStr === today;
-        const dots = markedDates[dateStr]?.dots ?? [];
+      <View style={styles.datesRow}>
+        {weekDates.map((dateStr, index) => {
+          const day = parseInt(dateStr.split('-')[2], 10);
+          const isToday = dateStr === today;
+          const dots = markedDates[dateStr]?.dots ?? [];
 
-        return (
-          <View key={dateStr} style={styles.dayCell}>
-            <Text style={styles.dayName}>{dayNames[index]}</Text>
-            <View style={[styles.dateCircle, isToday && styles.todayCircle]}>
-              <Text style={[styles.dateText, isToday && styles.todayText]}>{day}</Text>
+          return (
+            <View key={dateStr} style={styles.dayCell}>
+              <Text style={styles.dayName}>{dayNames[index]}</Text>
+              <View style={[styles.dateCircle, isToday && styles.todayCircle]}>
+                <Text style={[styles.dateText, isToday && styles.todayText]}>{day}</Text>
+              </View>
+              <View style={styles.dotsRow}>
+                {dots.slice(0, 4).map((dot) => (
+                  <View key={dot.key} style={[styles.dot, { backgroundColor: dot.color }]} />
+                ))}
+              </View>
             </View>
-            <View style={styles.dotsRow}>
-              {dots.slice(0, 4).map((dot) => (
-                <View key={dot.key} style={[styles.dot, { backgroundColor: dot.color }]} />
-              ))}
-            </View>
-          </View>
-        );
-      })}
+          );
+        })}
+      </View>
     </View>
-  </View>
   );
 };
 

@@ -97,9 +97,11 @@ const ScanLoadingScreen = () => {
             return;
           }
           if (result.status === 'FAILED') {
-            Alert.alert(t('scan.loading.error.analysisFailed'), t('scan.loading.error.analysisFailedMsg'), [
-              { text: t('common.confirm'), onPress: () => router.back() },
-            ]);
+            Alert.alert(
+              t('scan.loading.error.analysisFailed'),
+              t('scan.loading.error.analysisFailedMsg'),
+              [{ text: t('common.confirm'), onPress: () => router.back() }]
+            );
             return;
           }
         } catch {
@@ -126,7 +128,9 @@ const ScanLoadingScreen = () => {
           else if (error.code === 'NL4002') message = t('scan.loading.error.unsupportedFormat');
           else if (error.code === 'NL4003') message = t('scan.loading.error.fileTooLarge');
         }
-        Alert.alert(t('scan.loading.error.uploadFailed'), message, [{ text: t('common.confirm'), onPress: () => router.back() }]);
+        Alert.alert(t('scan.loading.error.uploadFailed'), message, [
+          { text: t('common.confirm'), onPress: () => router.back() },
+        ]);
       });
 
     return () => {
@@ -257,7 +261,9 @@ const ScanLoadingScreen = () => {
           )}
           <View style={styles.statusTexts}>
             <Text style={styles.statusTitle}>
-              {isComplete ? t('scan.loading.complete') : (progressMessage || t('scan.loading.preparing'))}
+              {isComplete
+                ? t('scan.loading.complete')
+                : progressMessage || t('scan.loading.preparing')}
             </Text>
             {!isComplete && (
               <Text style={styles.statusSubtitle}>{t('scan.loading.analyzing')}</Text>

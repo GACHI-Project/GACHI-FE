@@ -85,7 +85,11 @@ const FullDocTab = ({ newsletterId }: Props) => {
       )}
 
       <View style={styles.section}>
-        <Text style={styles.sectionLabel}>{showTranslation ? t('scan.result.fullDoc.ocrOriginal') : t('scan.result.fullDoc.original')}</Text>
+        <Text style={styles.sectionLabel}>
+          {showTranslation
+            ? t('scan.result.fullDoc.ocrOriginal')
+            : t('scan.result.fullDoc.original')}
+        </Text>
         <View style={styles.card}>
           <Text style={styles.bodyText}>{data.originalText}</Text>
         </View>

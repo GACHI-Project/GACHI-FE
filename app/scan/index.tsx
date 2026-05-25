@@ -37,7 +37,9 @@ const ScanChildSelectScreen = () => {
         setChildren(result);
         if (result.length > 0) setSelectedId(result[0].id);
       })
-      .catch(() => Alert.alert(t('scan.select.error.errorTitle'), t('scan.select.error.loadChildren')))
+      .catch(() =>
+        Alert.alert(t('scan.select.error.errorTitle'), t('scan.select.error.loadChildren'))
+      )
       .finally(() => setLoading(false));
   }, [t]);
 
@@ -79,7 +81,10 @@ const ScanChildSelectScreen = () => {
     try {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert(t('scan.select.error.permissionTitle'), t('scan.select.error.galleryPermission'));
+        Alert.alert(
+          t('scan.select.error.permissionTitle'),
+          t('scan.select.error.galleryPermission')
+        );
         return;
       }
       const result = await ImagePicker.launchImageLibraryAsync({

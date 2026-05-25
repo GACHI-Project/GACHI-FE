@@ -130,3 +130,23 @@ export const signup = async (payload: {
     throw wrapError(error);
   }
 };
+
+// TODO: 백엔드 API 연결 전 임시 mock — 실제 엔드포인트 확정 후 교체 필요
+export const findLoginId = async (_email: string): Promise<{ loginId: string }> => {
+  await new Promise<void>((resolve) => { setTimeout(resolve, 600); });
+  return { loginId: 'gachi-gayo22' };
+};
+
+// TODO: 백엔드 API 연결 전 임시 mock — 실제 엔드포인트 확정 후 교체 필요
+export const sendFindPasswordCode = async (_loginId: string, _email: string): Promise<void> => {
+  await new Promise<void>((resolve) => { setTimeout(resolve, 600); });
+};
+
+// TODO: 백엔드 API 연결 전 임시 mock — 실제 엔드포인트 확정 후 교체 필요
+export const resetPassword = async (
+  _loginId: string,
+  _newPassword: string,
+  _newPasswordConfirm: string
+): Promise<void> => {
+  await new Promise<void>((resolve) => { setTimeout(resolve, 600); });
+};

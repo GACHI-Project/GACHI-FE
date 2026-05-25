@@ -57,57 +57,57 @@ const RECENT_DOCS: DocGroup[] = [
 const RecentDocs = () => {
   const { t } = useTranslation();
   return (
-  <View style={styles.section}>
-    <View style={styles.header}>
-      <Text style={styles.sectionTitle}>{t('home.recentDocs.sectionTitle')}</Text>
-      {/* TODO: 전체 문서 목록 화면으로 이동 예정 */}
-      <TouchableOpacity onPress={() => {}} activeOpacity={0.7}>
-        <Text style={styles.moreText}>{t('home.recentDocs.more')}</Text>
-      </TouchableOpacity>
-    </View>
-    <View style={styles.timeline}>
-      {RECENT_DOCS.map((group) => (
-        <View key={group.rawDate} style={styles.group}>
-          <View style={styles.dateRow}>
-            <View style={styles.dateDot} />
-            <Text style={styles.dateText}>{group.date}</Text>
-          </View>
-          <View style={styles.timelineBody}>
-            <View style={styles.lineColumn}>
-              <View style={styles.line} />
+    <View style={styles.section}>
+      <View style={styles.header}>
+        <Text style={styles.sectionTitle}>{t('home.recentDocs.sectionTitle')}</Text>
+        {/* TODO: 전체 문서 목록 화면으로 이동 예정 */}
+        <TouchableOpacity onPress={() => {}} activeOpacity={0.7}>
+          <Text style={styles.moreText}>{t('home.recentDocs.more')}</Text>
+        </TouchableOpacity>
+      </View>
+      <View style={styles.timeline}>
+        {RECENT_DOCS.map((group) => (
+          <View key={group.rawDate} style={styles.group}>
+            <View style={styles.dateRow}>
+              <View style={styles.dateDot} />
+              <Text style={styles.dateText}>{group.date}</Text>
             </View>
-            <View style={styles.cardsArea}>
-              {group.items.map((doc) => (
-                // TODO: 문서 상세 화면으로 이동 예정 router.push(`/(tabs)/documents/${doc.id}`)
-                <TouchableOpacity
-                  key={doc.id}
-                  style={styles.docCard}
-                  activeOpacity={0.8}
-                  onPress={() => {}}
-                >
-                  <View style={styles.docIconBox}>
-                    <AntDesign
-                      name="file-done"
-                      size={25}
-                      color={colors.text.white}
-                      style={styles.docIcon}
-                    />
-                  </View>
-                  <View style={styles.docTexts}>
-                    <Text style={styles.docTitle}>{doc.title}</Text>
-                    <Text style={styles.docMeta}>
-                      {doc.childName} · {doc.grade}
-                    </Text>
-                  </View>
-                  <Ionicons name="chevron-forward" size={24} color={colors.gray[200]} />
-                </TouchableOpacity>
-              ))}
+            <View style={styles.timelineBody}>
+              <View style={styles.lineColumn}>
+                <View style={styles.line} />
+              </View>
+              <View style={styles.cardsArea}>
+                {group.items.map((doc) => (
+                  // TODO: 문서 상세 화면으로 이동 예정 router.push(`/(tabs)/documents/${doc.id}`)
+                  <TouchableOpacity
+                    key={doc.id}
+                    style={styles.docCard}
+                    activeOpacity={0.8}
+                    onPress={() => {}}
+                  >
+                    <View style={styles.docIconBox}>
+                      <AntDesign
+                        name="file-done"
+                        size={25}
+                        color={colors.text.white}
+                        style={styles.docIcon}
+                      />
+                    </View>
+                    <View style={styles.docTexts}>
+                      <Text style={styles.docTitle}>{doc.title}</Text>
+                      <Text style={styles.docMeta}>
+                        {doc.childName} · {doc.grade}
+                      </Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={24} color={colors.gray[200]} />
+                  </TouchableOpacity>
+                ))}
+              </View>
             </View>
           </View>
-        </View>
-      ))}
+        ))}
+      </View>
     </View>
-  </View>
   );
 };
 

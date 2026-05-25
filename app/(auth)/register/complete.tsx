@@ -92,9 +92,7 @@ const RegisterCompleteScreen = () => {
       setStatus('done');
       reset();
     } catch (error) {
-      setErrorMessage(
-        error instanceof Error ? error.message : t('auth.register.complete.error')
-      );
+      setErrorMessage(error instanceof Error ? error.message : t('auth.register.complete.error'));
       setStatus('error');
     }
   }, [t]);

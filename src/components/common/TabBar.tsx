@@ -77,7 +77,9 @@ const TabBar = ({ state, navigation, insets }: BottomTabBarProps) => {
                   </Svg>
                   <Ionicons name={tab.icon} size={26} color={colors.text.white} />
                 </View>
-                <Text style={[styles.label, isActive && styles.activeLabel]}>{t(tab.labelKey)}</Text>
+                <Text style={[styles.label, isActive && styles.activeLabel]}>
+                  {t(tab.labelKey)}
+                </Text>
               </TouchableOpacity>
             );
           }

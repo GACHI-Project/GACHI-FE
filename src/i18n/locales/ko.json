@@ -181,7 +181,7 @@
       "sending": "발송 중...",
       "confirm": "확인",
       "verifying": "확인 중...",
-      "submit": "재설정 링크 보내기 →",
+      "submit": "비밀번호 재설정하기 →",
       "idFound": "해당 아이디의 계정이 존재해요.",
       "forgotId": "아이디가 기억나지 않나요?",
       "goFindId": "아이디 찾기",
@@ -238,14 +238,17 @@
     "taskCard": {
       "noTodo": "오늘 할 일 없음",
       "todayCount": "오늘 처리할 항목 {{count}}건",
+      "todayCount_one": "오늘 처리할 항목 {{count}}건",
       "todayCount_other": "오늘 처리할 항목 {{count}}건",
       "todayEmpty": "오늘 처리할 항목이 없어요",
       "childCount": "{{name}} {{count}}건",
+      "childCount_one": "{{name}} {{count}}건",
       "childCount_other": "{{name}} {{count}}건",
       "remaining": "남아 있어요",
       "empty": "오늘은 처리할 항목이 없어요 🎉",
       "today": "오늘",
       "moreItems": "{{count}}개 더보기 →",
+      "moreItems_one": "{{count}}개 더보기 →",
       "moreItems_other": "{{count}}개 더보기 →"
     },
     "scanBanner": {
@@ -261,15 +264,15 @@
         "button": "대화 시작"
       },
       "guide": {
-        "title": ["학교 문화", "해설 가이드"],
-        "desc": "한국 학교 문화를 쉽게 이해하세요. 필요한 행동까지 안내해드려요.",
-        "button": "가이드 시작"
+        "title": ["한국 학교", "생활 안내서"],
+        "desc": "학교생활에서 자주 헷갈리는 내용을 질문과 답변으로 쉽게 확인해보세요.",
+        "button": "안내서 둘러보기"
       }
     },
     "guideCards": {
       "sectionTitle": "이런 내용, 궁금하셨나요?",
       "more": "더보기",
-      "badge": "✓ 가이드",
+      "badge": "✓ FAQ",
       "questions": [
         "동의서를 꼭 직접 내야 하나요?",
         "담임 선생님께 연락 드려야 할까요?",

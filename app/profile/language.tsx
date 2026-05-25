@@ -3,14 +3,14 @@ import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
-import Header from '../../../src/components/common/Header';
-import LanguageSelector from '../../../src/components/profile/LanguageSelector';
-import { PrimaryButton } from '../../../src/components/common/Button';
-import { LanguageType } from '../../../src/types/language';
-import { saveLanguage } from '../../../src/i18n';
-import colors from '../../../src/constants/colors';
-import fonts from '../../../src/constants/fonts';
-import layout from '../../../src/constants/layout';
+import Header from '../../src/components/common/Header';
+import LanguageSelector from '../../src/components/profile/LanguageSelector';
+import { PrimaryButton } from '../../src/components/common/Button';
+import { LanguageType } from '../../src/types/language';
+import { saveLanguage } from '../../src/i18n';
+import colors from '../../src/constants/colors';
+import fonts from '../../src/constants/fonts';
+import layout from '../../src/constants/layout';
 
 const VALID_LANGS: LanguageType[] = ['ko', 'en', 'vi', 'zh'];
 
@@ -22,10 +22,7 @@ const ProfileLanguageScreen = () => {
 
   return (
     <View style={styles.container}>
-      <Header
-        title={t('profile.languageChange.title')}
-        onBack={() => router.push('/(tabs)/profile')}
-      />
+      <Header title={t('profile.languageChange.title')} onBack={() => router.back()} />
       <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
         <View style={styles.banner}>
           <Ionicons name="information-circle" size={18} color={colors.text.primary} />
@@ -41,9 +38,7 @@ const ProfileLanguageScreen = () => {
           label={t('profile.languageChange.save')}
           onPress={async () => {
             await i18n.changeLanguage(selected);
-            if (selected === 'ko' || selected === 'en') {
-              await saveLanguage(selected);
-            }
+            await saveLanguage(selected);
             router.back();
           }}
         />

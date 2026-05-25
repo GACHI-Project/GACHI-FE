@@ -1,5 +1,13 @@
 import { useState, useEffect } from 'react';
-import { ScrollView, View, Text, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
+import {
+  ScrollView,
+  View,
+  Text,
+  TouchableOpacity,
+  Image,
+  ActivityIndicator,
+  Alert,
+} from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
@@ -199,10 +207,15 @@ const ProfileScreen = () => {
             } catch {
               // 자녀 추가 실패 시 시트만 닫음
             }
+          } else {
+            Alert.alert('준비 중', '자녀 수정 기능은 현재 준비 중이에요.');
           }
           setSheetVisible(false);
         }}
-        onDelete={() => setSheetVisible(false)}
+        onDelete={() => {
+          Alert.alert('준비 중', '자녀 삭제 기능은 현재 준비 중이에요.');
+          setSheetVisible(false);
+        }}
       />
     </View>
   );

@@ -72,7 +72,7 @@ const styles = StyleSheet.create({
   withdrawBtn: {
     height: 55,
     borderRadius: 12,
-    backgroundColor: 'rgba(229,57,53,0.2)',
+    backgroundColor: 'rgba(229, 57, 53, 0.2)',
     marginHorizontal: layout.screenPaddingHorizontal,
     marginTop: 20,
     marginBottom: 40,
@@ -86,7 +86,7 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(217,217,217,0.5)',
+    backgroundColor: 'rgba(217, 217, 217, 0.5)',
     justifyContent: 'center',
   },
   modalCard: {
@@ -164,6 +164,9 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: fonts.semiBold,
     color: colors.gray[200],
+  },
+  withdrawModalBtnDisabled: {
+    opacity: 0.4,
   },
 });
 

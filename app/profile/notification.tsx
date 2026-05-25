@@ -3,10 +3,10 @@ import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import Header from '../../../src/components/common/Header';
-import Toggle from '../../../src/components/common/Toggle';
-import colors from '../../../src/constants/colors';
-import styles from '../../../src/styles/profile/profileNotification';
+import Header from '../../src/components/common/Header';
+import Toggle from '../../src/components/common/Toggle';
+import colors from '../../src/constants/colors';
+import styles from '../../src/styles/profile/profileNotification';
 
 type NotificationLevel = 'all' | 'important' | 'urgent';
 
@@ -100,7 +100,7 @@ const ProfileNotificationScreen = () => {
     <View style={styles.container}>
       <Header
         title={t('profile.notificationSetting.title')}
-        onBack={() => router.push('/(tabs)/profile')}
+        onBack={() => router.back()}
         onHelp={() => {}}
       />
 

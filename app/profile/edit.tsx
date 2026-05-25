@@ -11,9 +11,9 @@ import {
 import { Ionicons, FontAwesome5 } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import Header from '../../../src/components/common/Header';
-import colors from '../../../src/constants/colors';
-import styles from '../../../src/styles/profile/profileEdit';
+import Header from '../../src/components/common/Header';
+import colors from '../../src/constants/colors';
+import styles from '../../src/styles/profile/profileEdit';
 
 const mockUser = {
   loginId: 'gachi-gayo22',
@@ -28,14 +28,10 @@ const ProfileEditScreen = () => {
 
   return (
     <View style={styles.container}>
-      <Header
-        title={t('profile.edit')}
-        onBack={() => router.push('/(tabs)/profile')}
-        onHelp={() => {}}
-      />
+      <Header title={t('profile.edit')} onBack={() => router.back()} onHelp={() => {}} />
       <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
         <View style={styles.profileCard}>
-          <Image source={require('../../../assets/icon.png')} style={styles.avatar} />
+          <Image source={require('../../assets/icon.png')} style={styles.avatar} />
           <Text style={styles.loginId}>{mockUser.loginId}</Text>
         </View>
 
@@ -61,7 +57,7 @@ const ProfileEditScreen = () => {
         <View style={styles.card}>
           <TouchableOpacity
             style={styles.row}
-            onPress={() => router.push('/(tabs)/profile/password')}
+            onPress={() => router.push('/profile/password')}
             activeOpacity={0.7}
           >
             <Text style={styles.rowLabel}>{t('profile.editProfile.changePassword.title')}</Text>
@@ -106,9 +102,9 @@ const ProfileEditScreen = () => {
                     <Text style={styles.cancelBtnText}>{t('profile.editProfile.cancel')}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
-                    style={styles.withdrawModalBtn}
-                    onPress={() => setWithdrawModalVisible(false)}
-                    activeOpacity={0.8}
+                    style={[styles.withdrawModalBtn, styles.withdrawModalBtnDisabled]}
+                    disabled
+                    activeOpacity={1}
                   >
                     <Text style={styles.withdrawModalBtnText}>
                       {t('profile.editProfile.withdraw')}

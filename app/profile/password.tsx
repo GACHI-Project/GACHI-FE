@@ -1,14 +1,14 @@
 import { useState } from 'react';
-import { View, ScrollView, StyleSheet } from 'react-native';
+import { View, ScrollView, StyleSheet, Alert } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import Header from '../../../src/components/common/Header';
-import FormField from '../../../src/components/auth/FormField';
-import PasswordStrengthBar, { getStrength } from '../../../src/components/auth/PasswordStrengthBar';
-import { PrimaryButton } from '../../../src/components/common/Button';
-import { validatePassword } from '../../../src/validation/auth';
-import colors from '../../../src/constants/colors';
-import layout from '../../../src/constants/layout';
+import Header from '../../src/components/common/Header';
+import FormField from '../../src/components/auth/FormField';
+import PasswordStrengthBar, { getStrength } from '../../src/components/auth/PasswordStrengthBar';
+import { PrimaryButton } from '../../src/components/common/Button';
+import { validatePassword } from '../../src/validation/auth';
+import colors from '../../src/constants/colors';
+import layout from '../../src/constants/layout';
 
 const ProfilePasswordScreen = () => {
   const { t } = useTranslation();
@@ -37,7 +37,7 @@ const ProfilePasswordScreen = () => {
     <View style={styles.container}>
       <Header
         title={t('profile.editProfile.changePassword.title')}
-        onBack={() => router.push('/(tabs)/profile/edit')}
+        onBack={() => router.back()}
         onHelp={() => {}}
       />
       <ScrollView
@@ -91,7 +91,7 @@ const ProfilePasswordScreen = () => {
 
         <PrimaryButton
           label={t('profile.editProfile.changePassword.submit')}
-          onPress={() => {}}
+          onPress={() => Alert.alert('준비 중', '비밀번호 변경 기능은 현재 준비 중이에요.')}
           disabled={!canSubmit}
         />
       </ScrollView>

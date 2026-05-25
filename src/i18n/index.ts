@@ -3,15 +3,18 @@ import { initReactI18next } from 'react-i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import ko from './locales/ko.json';
 import en from './locales/en.json';
+import { LanguageType } from '../types/language';
 
-export type SupportedLanguage = 'ko' | 'en';
+export type SupportedLanguage = LanguageType;
 
 const LANGUAGE_KEY = 'app_language';
+
+const VALID_LANGUAGES: LanguageType[] = ['ko', 'en', 'vi', 'zh'];
 
 const getInitialLanguage = async (): Promise<SupportedLanguage> => {
   // TODO: API 연동 후 로그인 시 서버에서 받은 언어로 교체
   const saved = await AsyncStorage.getItem(LANGUAGE_KEY);
-  if (saved === 'ko' || saved === 'en') return saved;
+  if (saved && (VALID_LANGUAGES as string[]).includes(saved)) return saved as SupportedLanguage;
   return 'en';
 };
 

@@ -1,7 +1,7 @@
-import { useState, useMemo, useRef, useEffect } from 'react';
+import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Ionicons, FontAwesome5 } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import colors from '../../src/constants/colors';
 import styles from '../../src/styles/calendar/calendar';
@@ -57,6 +57,19 @@ const CalendarScreen = () => {
     month: todayDate.getMonth(),
   });
 
+  const [focusKey, setFocusKey] = useState(0);
+  const hasFocusedOnceRef = useRef(false);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (!hasFocusedOnceRef.current) {
+        hasFocusedOnceRef.current = true;
+        return;
+      }
+      setFocusKey((k) => k + 1);
+    }, [])
+  );
+
   const weekScrollRef = useRef<ScrollView>(null);
   const weekOffsetRef = useRef(weekOffset);
   const shouldAutoScrollRef = useRef(weekOffset === 0);
@@ -104,7 +117,7 @@ const CalendarScreen = () => {
       .finally(() => {
         if (reqId === weeklyReqIdRef.current) setIsLoading(false);
       });
-  }, [isWeekMode, weekDates, selectedChildName]);
+  }, [isWeekMode, weekDates, selectedChildName, focusKey]);
 
   // 월간 마커
   useEffect(() => {
@@ -120,7 +133,7 @@ const CalendarScreen = () => {
       .finally(() => {
         if (reqId === monthlyReqIdRef.current) setIsLoading(false);
       });
-  }, [isWeekMode, calendarMonth.year, calendarMonth.month, selectedChildName]);
+  }, [isWeekMode, calendarMonth.year, calendarMonth.month, selectedChildName, focusKey]);
 
   // 일간 이벤트
   useEffect(() => {
@@ -136,7 +149,7 @@ const CalendarScreen = () => {
       .finally(() => {
         if (reqId === dailyReqIdRef.current) setIsDailyLoading(false);
       });
-  }, [isWeekMode, selectedDate, selectedChildName]);
+  }, [isWeekMode, selectedDate, selectedChildName, focusKey]);
 
   const markedDatesMap = useMemo(() => {
     const map: Record<string, { dots: { key: string; color: string }[] }> = {};

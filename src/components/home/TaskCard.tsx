@@ -1,64 +1,88 @@
-import { useState, useMemo } from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
-import { router } from 'expo-router';
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { router, useFocusEffect } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import { getTodayChecklists, toggleChecklistItem, type TodayChecklistItem } from '../../api/checklist';
+import { getMyChildren, type ChildResult } from '../../api/child';
+import colors from '../../constants/colors';
 import styles from '../../styles/home/taskCard';
-
-interface Child {
-  id: string;
-  color: string;
-}
-
-interface TodoItem {
-  id: string;
-  title: string;
-  childName: string;
-  childId: string;
-  description: string;
-}
-
-const CHILDREN: Child[] = [
-  { id: '1', color: '#26DE81' },
-  { id: '2', color: '#FFCC2F' },
-];
-
-const TODO_ITEMS: TodoItem[] = [
-  {
-    id: '1',
-    title: '현장학습 동의서 제출',
-    childName: '첫째',
-    childId: '1',
-    description: '담임 선생님께 오늘까지',
-  },
-  {
-    id: '2',
-    title: '학부모 상담 신청',
-    childName: '둘째',
-    childId: '2',
-    description: '오늘까지 상담 시간 신청',
-  },
-];
 
 const VISIBLE_COUNT = 2;
 
 const TaskCard = () => {
   const { t } = useTranslation();
-  const [checked, setChecked] = useState<Record<string, boolean>>({});
+  const [items, setItems] = useState<TodayChecklistItem[]>([]);
+  const [children, setChildren] = useState<ChildResult[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [checked, setChecked] = useState<Record<number, boolean>>({});
+  const [pendingIds, setPendingIds] = useState<Record<number, boolean>>({});
+  const [focusKey, setFocusKey] = useState(0);
 
-  const total = TODO_ITEMS.length;
-  const visibleItems = TODO_ITEMS.slice(0, VISIBLE_COUNT);
+  useFocusEffect(
+    useCallback(() => {
+      setFocusKey((k) => k + 1);
+      setChecked({});
+      setPendingIds({});
+    }, [])
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setError(false);
+    Promise.all([getTodayChecklists(), getMyChildren()])
+      .then(([checklists, childList]) => {
+        if (!cancelled) {
+          setItems(checklists);
+          setChildren(childList);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setError(true);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [focusKey]);
+
+  const colorMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    children.forEach((c) => {
+      map[c.name] = c.colorCode;
+    });
+    return map;
+  }, [children]);
+
+  const total = items.length;
+  const visibleItems = items.slice(0, VISIBLE_COUNT);
   const hiddenCount = Math.max(total - VISIBLE_COUNT, 0);
+
+  const distinctChildNames = useMemo(() => {
+    const seen = new Set<string>();
+    const result: string[] = [];
+    items.forEach((item) => {
+      if (!seen.has(item.childName)) {
+        seen.add(item.childName);
+        result.push(item.childName);
+      }
+    });
+    return result;
+  }, [items]);
+
   const summaryDesc = useMemo(() => {
     if (total === 0) return t('home.taskCard.todayEmpty');
-    const childCounts = CHILDREN.map((child) => ({
-      name: TODO_ITEMS.find((item) => item.childId === child.id)?.childName ?? '',
-      count: TODO_ITEMS.filter((item) => item.childId === child.id).length,
-    }));
-    return `${childCounts
-      .filter((c) => c.count > 0)
-      .map((c) => t('home.taskCard.childCount', { name: c.name, count: c.count }))
+    const grouped: Record<string, number> = {};
+    items.forEach((item) => {
+      grouped[item.childName] = (grouped[item.childName] ?? 0) + 1;
+    });
+    return `${Object.entries(grouped)
+      .map(([name, count]) => t('home.taskCard.childCount', { name, count }))
       .join(' · ')} ${t('home.taskCard.remaining')}`;
-  }, [t]);
+  }, [items, t]);
 
   const { todayMonth, todayDay } = useMemo(() => {
     const now = new Date();
@@ -68,11 +92,25 @@ const TaskCard = () => {
     };
   }, []);
 
-  const toggleCheck = (id: string) => setChecked((prev) => ({ ...prev, [id]: !prev[id] }));
+  const toggleCheck = useCallback(
+    (id: number, currentChecked: boolean) => {
+      if (pendingIds[id]) return;
+      const next = !currentChecked;
+      setChecked((prev) => ({ ...prev, [id]: next }));
+      setPendingIds((prev) => ({ ...prev, [id]: true }));
+      toggleChecklistItem(id, next)
+        .catch(() => {
+          setChecked((prev) => ({ ...prev, [id]: !next }));
+        })
+        .finally(() => {
+          setPendingIds((prev) => ({ ...prev, [id]: false }));
+        });
+    },
+    [pendingIds]
+  );
 
   return (
     <View style={styles.card}>
-      {/* Summary row */}
       <View style={styles.summaryRow}>
         <View style={styles.dateBadge}>
           <Text style={styles.dateMonth}>{todayMonth}</Text>
@@ -80,19 +118,21 @@ const TaskCard = () => {
         </View>
         <View style={styles.summaryTexts}>
           <Text style={styles.summaryTitle}>
-            {total === 0
-              ? t('home.taskCard.noTodo')
-              : t('home.taskCard.todayCount', { count: total })}
+            {loading || error
+              ? ''
+              : total === 0
+                ? t('home.taskCard.noTodo')
+                : t('home.taskCard.todayCount', { count: total })}
           </Text>
-          <Text style={styles.summaryDesc}>{summaryDesc}</Text>
+          {!loading && !error && <Text style={styles.summaryDesc}>{summaryDesc}</Text>}
         </View>
         <View style={styles.childCircles}>
-          {CHILDREN.map((child, index) => (
+          {distinctChildNames.map((name, index) => (
             <View
-              key={child.id}
+              key={name}
               style={[
                 styles.childCircle,
-                { backgroundColor: child.color },
+                { backgroundColor: colorMap[name] ?? colors.primary[300] },
                 index > 0 && styles.childCircleOverlap,
               ]}
             />
@@ -102,34 +142,41 @@ const TaskCard = () => {
 
       <View style={styles.divider} />
 
-      {/* Todo items */}
-      {total === 0 ? (
+      {loading ? (
+        <ActivityIndicator size="small" color={colors.primary[400]} style={{ marginVertical: 16 }} />
+      ) : error ? (
+        <Text style={styles.emptyText}>{t('common.networkError')}</Text>
+      ) : total === 0 ? (
         <Text style={styles.emptyText}>{t('home.taskCard.empty')}</Text>
       ) : (
         visibleItems.map((item, index) => (
-          <View key={item.id}>
+          <View key={item.checklistId}>
             <View style={styles.todoRow}>
               <TouchableOpacity
-                style={[styles.checkbox, checked[item.id] && styles.checkboxChecked]}
-                onPress={() => toggleCheck(item.id)}
+                style={[styles.checkbox, checked[item.checklistId] && styles.checkboxChecked]}
+                onPress={() => toggleCheck(item.checklistId, !!checked[item.checklistId])}
                 activeOpacity={0.7}
+                disabled={!!pendingIds[item.checklistId]}
+                accessibilityRole="checkbox"
+                accessibilityState={{ checked: !!checked[item.checklistId], busy: !!pendingIds[item.checklistId] }}
+                accessibilityLabel={item.content}
               >
-                {checked[item.id] && <Text style={styles.checkMark}>✓</Text>}
+                {checked[item.checklistId] && <Text style={styles.checkMark}>✓</Text>}
               </TouchableOpacity>
               <View style={styles.todoContent}>
-                <Text style={[styles.todoTitle, checked[item.id] && styles.todoTitleDone]}>
-                  {item.title}
+                <Text style={[styles.todoTitle, checked[item.checklistId] && styles.todoTitleDone]}>
+                  {item.content}
                 </Text>
                 <View style={styles.todoMeta}>
                   <View
                     style={[
                       styles.childTag,
-                      { backgroundColor: CHILDREN.find((c) => c.id === item.childId)?.color },
+                      { backgroundColor: colorMap[item.childName] ?? colors.primary[300] },
                     ]}
                   >
                     <Text style={styles.childTagText}>{item.childName}</Text>
                   </View>
-                  <Text style={styles.todoDesc}>{item.description}</Text>
+                  {item.detail ? <Text style={styles.todoDesc}>{item.detail}</Text> : null}
                 </View>
               </View>
               <View style={styles.todayBadge}>
@@ -147,6 +194,8 @@ const TaskCard = () => {
           <TouchableOpacity
             style={styles.moreButton}
             activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel={t('home.taskCard.moreItems', { count: hiddenCount })}
             onPress={() => router.push('/(tabs)/calendar')}
           >
             <Text style={styles.moreText}>

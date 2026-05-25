@@ -5,15 +5,15 @@ Effective Date: April 15, 2026
 GACHI (the "Service") takes your personal information seriously and complies with applicable laws including the Personal Information Protection Act. This policy explains what personal information we collect, for what purposes, and how we protect and manage it.
 
 1. Personal Information We Collect
-The Service may collect the following personal information during membership registration, identity verification, and service provision.
+The Service may collect the following personal information during membership registration, account verification, and service provision.
 
 1) Information collected at registration
-• Name, username, phone number, email address, password
+• Name, login ID, phone number, email address, password
 
 2) Additional information that may be collected during use
-• Child's name, grade or class, and school name
+• Child's name, grade level or class information, and school name
 • Other child-related information entered directly by the member
-• Newsletter images, document files, or text contained within them
+• School notice images, document files, or text contained within them
 • Inquiry content and information provided during customer support
 
 3) Information automatically generated or collected during use
@@ -24,7 +24,7 @@ The Service uses collected personal information for the following purposes:
 • Verifying membership intent and identifying members
 • Login and account management
 • Preventing duplicate registrations and fraudulent use
-• Providing core features such as newsletter translation, summarization, explanation, and action guides
+• Providing core features such as school notice translation, summarization, explanation, and action guides
 • Providing personalized service based on child and school information
 • Providing supplementary services such as schedule notifications and saving features
 • Improving service quality, analyzing errors, enhancing features, and managing operations
@@ -36,7 +36,7 @@ The Service destroys personal information without delay once the purpose of its 
 • Minimum account identification information to prevent fraudulent re-registration and misuse after withdrawal: 30 days after withdrawal
 • Information required to be retained under applicable law: for the period prescribed by that law
 • Child and school information entered by members for service use may be retained until account deletion or direct removal by the member.
-• Uploaded newsletters, analysis results, and summaries may be stored for service provision and member convenience, and will be deleted promptly upon account deletion or member deletion request, or stored separately if required by law.
+• Uploaded school notices, analysis results, and summaries may be stored for service provision and member convenience, and will be deleted promptly upon account deletion or upon the member's deletion request, or stored separately if required by law.
 
 4. Third-Party Disclosure of Personal Information
 The Service does not, as a rule, provide users' personal information to third parties. Exceptions include:
@@ -73,14 +73,14 @@ The Service implements the following measures to securely manage users' personal
 9. Handling of Child-Related Information
 • The Service collects and uses child-related information entered by members only within the scope necessary to provide personalized service.
 • The Service recognizes that child-related information must be handled with sensitivity, and collects only the minimum information necessary for service provision.
-• The Service does not require the entry of sensitive or excessive personal information about children, such as resident registration numbers, passport numbers, or health information.
-• Members who enter child information bear lawful authority and responsibility for providing that information.
+• The Service does not require the entry of sensitive or excessive personal information about children, such as Korean resident registration numbers, passport numbers, or health information.
+• Members who enter child information must have the lawful authority to provide that information and are responsible for doing so.
 
 10. Uploaded Documents and Analyzed Data
-• The Service may process newsletter images, document files uploaded by members, and text extracted from them within the scope of service provision, including translation, summarization, explanation, and action guide generation.
-• Information contained in uploaded documents may be stored and analyzed to perform requested functions, deliver results, improve errors, and enhance service quality.
+• The Service may process school notice images, document files uploaded by members, and text extracted from them within the scope of service provision, including translation, summarization, explanation, and action guide generation.
+• Information contained in uploaded documents may be stored and analyzed to perform requested functions, deliver results, analyze and resolve errors, and improve service quality.
 • Members must verify whether documents contain sensitive content or personal information before uploading, and must only upload materials that do not infringe third-party rights.
-• The Service may restrict storage, delete, or limit use of documents that may violate applicable law or infringe third-party rights.
+• The Service may refuse to store, delete, or restrict the use of documents that may violate applicable law or infringe third-party rights.
 
 11. Privacy Officer and Contact Information
 The Service operates the following contact channels for privacy-related inquiries, complaints, and remedies:

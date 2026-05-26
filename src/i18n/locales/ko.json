@@ -15,7 +15,8 @@
     "saving": "저장 중...",
     "change": "변경",
     "elementaryGrade": "초등학교 {{grade}}학년",
-    "grade": "{{grade}}학년"
+    "grade": "{{grade}}학년",
+    "preparing": "준비 중"
   },
   "tabs": {
     "home": "홈",
@@ -530,7 +531,8 @@
     "languageChange": {
       "title": "언어 변경",
       "warning": "언어를 변경하면 앱이 재시작돼요.\n진행 중인 스캔이나 번역이 있으면 중단될 수 있어요.",
-      "save": "저장"
+      "save": "저장",
+      "saveError": "언어 변경에 실패했어요. 다시 시도해주세요."
     },
     "childEdit": {
       "save": "저장",
@@ -562,7 +564,8 @@
         "currentPassword": "현재 비밀번호",
         "newPassword": "새 비밀번호",
         "confirmPassword": "새 비밀번호 확인",
-        "submit": "비밀번호 변경"
+        "submit": "비밀번호 변경",
+        "preparingMessage": "비밀번호 변경 기능은 현재 준비 중이에요."
       },
       "withdraw": "탈퇴하기",
       "withdrawTitle": "정말 탈퇴하시겠어요?",

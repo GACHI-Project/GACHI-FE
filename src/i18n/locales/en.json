@@ -15,7 +15,8 @@
     "saving": "Saving...",
     "change": "Change",
     "elementaryGrade": "Grade {{grade}}",
-    "grade": "Grade {{grade}}"
+    "grade": "Grade {{grade}}",
+    "preparing": "Coming Soon"
   },
   "tabs": {
     "home": "Home",
@@ -533,7 +534,8 @@
     "languageChange": {
       "title": "Change Language",
       "warning": "The app will restart when you change the language.\nAny scans or translations in progress may be interrupted.",
-      "save": "Save"
+      "save": "Save",
+      "saveError": "Failed to change language. Please try again."
     },
     "childEdit": {
       "save": "Save",
@@ -565,7 +567,8 @@
         "currentPassword": "Current Password",
         "newPassword": "New Password",
         "confirmPassword": "Confirm New Password",
-        "submit": "Change Password"
+        "submit": "Change Password",
+        "preparingMessage": "Password change feature is coming soon."
       },
       "withdraw": "Withdraw",
       "withdrawTitle": "Are you sure you want to leave?",

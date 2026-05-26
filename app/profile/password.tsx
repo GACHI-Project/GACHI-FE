@@ -91,7 +91,7 @@ const ProfilePasswordScreen = () => {
 
         <PrimaryButton
           label={t('profile.editProfile.changePassword.submit')}
-          onPress={() => Alert.alert('준비 중', '비밀번호 변경 기능은 현재 준비 중이에요.')}
+          onPress={() => Alert.alert(t('common.preparing'), t('profile.editProfile.changePassword.preparingMessage'))}
           disabled={!canSubmit}
         />
       </ScrollView>

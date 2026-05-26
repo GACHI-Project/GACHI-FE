@@ -38,11 +38,11 @@ const ProfileLanguageScreen = () => {
           label={t('profile.languageChange.save')}
           onPress={async () => {
             try {
-              await i18n.changeLanguage(selected);
               await saveLanguage(selected);
+              await i18n.changeLanguage(selected);
               router.back();
             } catch {
-              Alert.alert('오류', '언어 변경에 실패했어요. 다시 시도해주세요.');
+              Alert.alert(t('common.error'), t('profile.languageChange.saveError'));
             }
           }}
         />

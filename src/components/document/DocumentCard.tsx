@@ -32,11 +32,6 @@ const DocumentCard = ({ item, onPress }: DocumentCardProps) => {
           <Text style={styles.childInfo} numberOfLines={1}>
             {item.childName} · {t('common.elementaryGrade', { grade: item.grade })}
           </Text>
-          {item.dDay !== null && (
-            <View style={styles.dDayBadge}>
-              <Text style={styles.dDayText}>D-{item.dDay}</Text>
-            </View>
-          )}
         </View>
 
         <Text style={styles.title} numberOfLines={2}>
@@ -97,17 +92,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: fonts.medium,
     color: colors.text.secondary,
-  },
-  dDayBadge: {
-    backgroundColor: colors.primary[100],
-    borderRadius: 12,
-    paddingHorizontal: 13,
-    paddingVertical: 5,
-  },
-  dDayText: {
-    fontSize: 11,
-    fontFamily: fonts.medium,
-    color: colors.primary[500],
   },
   title: {
     fontSize: 16,

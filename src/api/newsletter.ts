@@ -229,3 +229,41 @@ export const getRecentNewsletters = async (limit = 5): Promise<RecentNewsletterG
     throw wrapError(error);
   }
 };
+
+export interface NewsletterItem {
+  newsletterId: number;
+  title: string;
+  childName: string | null;
+  childGrade: number | null;
+  childColor: string | null;
+  isCalendarRegistered: boolean;
+  createdAt: string;
+}
+
+export interface NewsletterListResult {
+  newsletters: NewsletterItem[];
+  totalCount: number;
+}
+
+export const fetchNewsletters = async (params: {
+  childName?: string;
+  search?: string;
+  page?: number;
+  sort?: 'recent' | 'oldest';
+}): Promise<NewsletterListResult> => {
+  try {
+    const headers = await getAuthHeader();
+    const queryParams: Record<string, string | number> = {};
+    if (params.childName) queryParams.childName = params.childName;
+    if (params.search) queryParams.search = params.search;
+    if (params.page !== undefined) queryParams.page = params.page;
+    if (params.sort) queryParams.sort = params.sort;
+    const response = await apiClient.get<{ result: NewsletterListResult }>('/api/v1/newsletters', {
+      headers,
+      params: queryParams,
+    });
+    return response.data.result;
+  } catch (error) {
+    throw wrapError(error);
+  }
+};

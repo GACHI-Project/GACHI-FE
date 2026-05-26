@@ -521,6 +521,7 @@
   "document": {
     "title": "문서",
     "searchPlaceholder": "문서 제목 검색",
-    "empty": "해당하는 문서가 없어요"
+    "empty": "해당하는 문서가 없어요",
+    "detail": "문서 상세"
   }
 }

@@ -524,6 +524,7 @@
   "document": {
     "title": "Documents",
     "searchPlaceholder": "Search document title",
-    "empty": "No matching documents"
+    "empty": "No matching documents",
+    "detail": "Document Detail"
   }
 }

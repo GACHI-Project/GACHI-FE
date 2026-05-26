@@ -95,3 +95,7 @@ export const getMyChildren = async (): Promise<ChildResult[]> => {
     throw wrapError(error);
   }
 };
+
+export type ChildItem = ChildResult;
+
+export const fetchChildren = async (): Promise<ChildItem[]> => getMyChildren();

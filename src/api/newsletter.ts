@@ -148,7 +148,7 @@ export const getNewsletterChecklist = async (
 export interface NewsletterDetail {
   newsletterId: number;
   title: string;
-  childName: string;
+  childName: string | null;
   summary: string;
   originalText: string;
   translatedText: string | null;

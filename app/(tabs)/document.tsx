@@ -29,7 +29,7 @@ const toDocumentItem = (doc: NewsletterItem): DocumentItem => ({
   id: String(doc.newsletterId),
   childId: doc.childName ?? '',
   childName: doc.childName ?? '',
-  grade: doc.childGrade ?? 0,
+  grade: doc.childGrade,
   calendarColor: doc.childColor ?? colors.primary[400],
   title: doc.title,
   date: formatDate(doc.createdAt),
@@ -47,6 +47,17 @@ const DocumentScreen = () => {
   const [selectedChildName, setSelectedChildName] = useState<string | undefined>(undefined);
   const [searchQuery, setSearchQuery] = useState('');
   const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isMountedRef = useRef(false);
+  const selectedChildNameRef = useRef(selectedChildName);
+  const searchQueryRef = useRef(searchQuery);
+
+  useEffect(() => {
+    selectedChildNameRef.current = selectedChildName;
+  }, [selectedChildName]);
+
+  useEffect(() => {
+    searchQueryRef.current = searchQuery;
+  }, [searchQuery]);
 
   useEffect(() => {
     fetchChildren()
@@ -99,8 +110,12 @@ const DocumentScreen = () => {
 
   useFocusEffect(
     useCallback(() => {
-      loadNewsletters(selectedChildName, searchQuery.trim() || undefined);
-    }, [selectedChildName, searchQuery]) // eslint-disable-line react-hooks/exhaustive-deps
+      if (!isMountedRef.current) {
+        isMountedRef.current = true;
+        return;
+      }
+      loadNewsletters(selectedChildNameRef.current, searchQueryRef.current.trim() || undefined);
+    }, []) // eslint-disable-line react-hooks/exhaustive-deps
   );
 
   const handleChildFilter = (childName: string | undefined) => {

@@ -30,7 +30,8 @@ const DocumentCard = ({ item, onPress }: DocumentCardProps) => {
       <View style={styles.info}>
         <View style={styles.topRow}>
           <Text style={styles.childInfo} numberOfLines={1}>
-            {item.childName} · {t('common.elementaryGrade', { grade: item.grade })}
+            {item.childName}
+            {item.grade !== null ? ` · ${t('common.elementaryGrade', { grade: item.grade })}` : ''}
           </Text>
         </View>
 

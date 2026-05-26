@@ -14,7 +14,7 @@ import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { ChildInfo } from '../../src/types/child';
 import { fetchChildren, registerChild, ChildItem } from '../../src/api/child';
-import { CALENDAR_COLORS } from '../(auth)/register/child';
+import { CALENDAR_COLORS } from '../../src/constants/child';
 import colors from '../../src/constants/colors';
 import styles from '../../src/styles/profile/profile';
 import Header from '../../src/components/common/Header';

@@ -3,6 +3,12 @@ import colors from '../../constants/colors';
 import fonts from '../../constants/fonts';
 
 const cardStyles = StyleSheet.create({
+  cardEdit: {
+    backgroundColor: 'transparent',
+    borderWidth: 0,
+    shadowOpacity: 0,
+    elevation: 0,
+  },
   card: {
     backgroundColor: colors.text.white,
     borderRadius: 20,

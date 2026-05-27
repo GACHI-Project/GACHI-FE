@@ -1,0 +1,190 @@
+import { StyleSheet } from 'react-native';
+import colors from '../../constants/colors';
+import fonts from '../../constants/fonts';
+import layout from '../../constants/layout';
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.text.white,
+    paddingTop: 60,
+  },
+  screen: {
+    flex: 1,
+    backgroundColor: colors.text.white,
+  },
+  profileCard: {
+    backgroundColor: colors.text.white,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#EEEEEE',
+    marginHorizontal: layout.screenPaddingHorizontal,
+    marginTop: 10,
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+  },
+  avatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+  },
+  profileInfo: {
+    flex: 1,
+    gap: 4,
+  },
+  profileName: {
+    fontSize: 17,
+    fontFamily: fonts.medium,
+    color: colors.text.primary,
+  },
+  profileSubRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  idBadge: {
+    backgroundColor: colors.gray[100],
+    borderRadius: 999,
+    paddingHorizontal: 7,
+    height: 21,
+    justifyContent: 'center',
+  },
+  idBadgeText: {
+    fontSize: 12,
+    fontFamily: fonts.regular,
+    color: colors.text.secondary,
+  },
+  joinDate: {
+    fontSize: 12,
+    fontFamily: fonts.regular,
+    color: colors.text.secondary,
+  },
+  editBtn: {
+    backgroundColor: colors.secondary[200],
+    borderWidth: 1,
+    borderColor: colors.secondary[500],
+    borderRadius: 999,
+    width: 52,
+    height: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  editBtnText: {
+    fontSize: 12,
+    fontFamily: fonts.medium,
+    color: colors.text.primary,
+  },
+  sectionLabel: {
+    fontSize: 14,
+    fontFamily: fonts.semiBold,
+    color: colors.text.secondary,
+    paddingLeft: layout.screenPaddingHorizontal,
+    marginTop: 20,
+    marginBottom: 10,
+  },
+  card: {
+    backgroundColor: colors.text.white,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#EEEEEE',
+    marginHorizontal: layout.screenPaddingHorizontal,
+  },
+  row: {
+    height: 52,
+    paddingHorizontal: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: '#EEEEEE',
+  },
+  rowLast: {
+    height: 52,
+    paddingHorizontal: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  rowLabel: {
+    flex: 1,
+    fontSize: 14,
+    fontFamily: fonts.medium,
+    color: colors.text.primary,
+  },
+  rowValue: {
+    fontSize: 14,
+    fontFamily: fonts.medium,
+    color: colors.text.secondary,
+    marginRight: 4,
+  },
+  childRow: {
+    height: 64,
+    paddingHorizontal: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#EEEEEE',
+  },
+  childRowLast: {
+    height: 64,
+    paddingHorizontal: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  childAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  childInfo: {
+    flex: 1,
+    gap: 2,
+  },
+  childName: {
+    fontSize: 14,
+    fontFamily: fonts.medium,
+    color: colors.text.primary,
+  },
+  childGrade: {
+    fontSize: 12,
+    fontFamily: fonts.medium,
+    color: colors.text.secondary,
+  },
+  addChildBtn: {
+    height: 44,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.primary[400],
+    borderStyle: 'dashed',
+    marginHorizontal: layout.screenPaddingHorizontal,
+    marginTop: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  addChildText: {
+    fontSize: 12,
+    fontFamily: fonts.semiBold,
+    color: colors.primary[400],
+  },
+  logoutBtn: {
+    height: 55,
+    borderRadius: 12,
+    backgroundColor: 'rgba(229, 57, 53, 0.2)',
+    marginHorizontal: layout.screenPaddingHorizontal,
+    marginTop: 20,
+    marginBottom: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  logoutText: {
+    fontSize: 16,
+    fontFamily: fonts.semiBold,
+    color: colors.text.red,
+  },
+});
+
+export default styles;

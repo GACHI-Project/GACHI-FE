@@ -15,7 +15,8 @@
     "saving": "Saving...",
     "change": "Change",
     "elementaryGrade": "Grade {{grade}}",
-    "grade": "Grade {{grade}}"
+    "grade": "Grade {{grade}}",
+    "preparing": "Coming Soon"
   },
   "tabs": {
     "home": "Home",
@@ -525,5 +526,93 @@
     "title": "Documents",
     "searchPlaceholder": "Search by document title",
     "empty": "No matching documents"
+  },
+  "profile": {
+    "title": "My Page",
+    "edit": "Edit",
+    "joinDate": "Joined {{date}}",
+    "languageChange": {
+      "title": "Change Language",
+      "warning": "The app will restart when you change the language.\nAny scans or translations in progress may be interrupted.",
+      "save": "Save",
+      "saveError": "Failed to change language. Please try again."
+    },
+    "childEdit": {
+      "save": "Save",
+      "delete": "Delete This Child"
+    },
+    "childInfo": "Children",
+    "addChild": "+ Add Child",
+    "grade": "Grade {{grade}}",
+    "appSettings": "App Settings",
+    "appLanguage": "App Language",
+    "notification": "Notifications",
+    "notificationOn": "On",
+    "notificationOff": "Off",
+    "etc": "Other",
+    "inquiry": "Contact Us",
+    "privacy": "Privacy Policy",
+    "appVersion": "App Version",
+    "logout": "Log Out",
+    "backAccessibility": "Go back",
+    "helpAccessibility": "Help",
+    "editProfile": {
+      "accountSection": "Account Info",
+      "name": "Name",
+      "phone": "Phone",
+      "email": "Email",
+      "securitySection": "Security",
+      "changePassword": {
+        "title": "Change Password",
+        "currentPassword": "Current Password",
+        "newPassword": "New Password",
+        "confirmPassword": "Confirm New Password",
+        "submit": "Change Password",
+        "preparingMessage": "Password change feature is coming soon."
+      },
+      "withdraw": "Withdraw",
+      "withdrawTitle": "Are you sure you want to leave?",
+      "withdrawDesc": "Your account and all data will be\npermanently deleted.",
+      "withdrawWarning": "All saved documents, child info, and calendar events will be deleted and cannot be recovered.",
+      "cancel": "Cancel"
+    },
+    "notificationSetting": {
+      "title": "Notification Settings",
+      "masterSection": "All Notifications",
+      "masterTitle": "Receive Notifications",
+      "masterDesc": "Turn all notifications on or off at once",
+      "levelSection": "Notification Level",
+      "levelAll": "All",
+      "levelImportant": "Important",
+      "levelUrgent": "Urgent Only",
+      "levelDesc": {
+        "all": "Receive all school notices, updates, and alerts",
+        "important": "Receive only high-priority alerts. Includes deadline, checklist, and weekly summary.",
+        "urgent": "Receive only essential alerts like deadlines"
+      },
+      "itemSection": "Item Notifications",
+      "items": {
+        "deadline": {
+          "title": "Deadline Alert",
+          "desc": "Notifies you one day before a deadline",
+          "badge": "Urgent"
+        },
+        "checklist": {
+          "title": "Checklist Alert",
+          "desc": "Notifies 3 days and 1 day before incomplete items are due",
+          "badge": "Important"
+        },
+        "weekly": {
+          "title": "Weekly Summary",
+          "desc": "Every Sunday, get a summary of this week's schedule",
+          "badge": "Important"
+        },
+        "document": {
+          "title": "Document Analysis Complete",
+          "desc": "Notifies when your school notice analysis is complete",
+          "badge": "General"
+        }
+      }
+    }
   }
 }

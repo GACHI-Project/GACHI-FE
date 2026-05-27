@@ -48,6 +48,7 @@ const DocumentScreen = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isMountedRef = useRef(false);
+  const isLoadingMoreRef = useRef(false);
   const selectedChildNameRef = useRef(selectedChildName);
   const searchQueryRef = useRef(searchQuery);
 
@@ -80,7 +81,8 @@ const DocumentScreen = () => {
   };
 
   const loadMore = async () => {
-    if (isLoadingMore || newsletters.length >= totalCount) return;
+    if (isLoadingMoreRef.current || isLoading || newsletters.length >= totalCount) return;
+    isLoadingMoreRef.current = true;
     setIsLoadingMore(true);
     const nextPage = page + 1;
     try {
@@ -94,6 +96,7 @@ const DocumentScreen = () => {
     } catch {
       // 추가 목록 조회 실패
     } finally {
+      isLoadingMoreRef.current = false;
       setIsLoadingMore(false);
     }
   };

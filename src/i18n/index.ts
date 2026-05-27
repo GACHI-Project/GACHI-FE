@@ -9,13 +9,13 @@ export type SupportedLanguage = LanguageType;
 
 const LANGUAGE_KEY = 'app_language';
 
-// TODO: vi.json, zh.json 번역 파일 추가 후 VALID_LANGUAGES에 복구 예정
-const VALID_LANGUAGES: LanguageType[] = ['ko', 'en'];
+// TODO: vi.json, zh.json 번역 파일 추가 후 복구 예정
+export const SUPPORTED_LANGUAGES: LanguageType[] = ['ko', 'en'];
 
 const getInitialLanguage = async (): Promise<SupportedLanguage> => {
   // TODO: API 연동 후 로그인 시 서버에서 받은 언어로 교체
   const saved = await AsyncStorage.getItem(LANGUAGE_KEY);
-  if (saved && (VALID_LANGUAGES as string[]).includes(saved)) return saved as SupportedLanguage;
+  if (saved && (SUPPORTED_LANGUAGES as string[]).includes(saved)) return saved as SupportedLanguage;
   return 'en';
 };
 

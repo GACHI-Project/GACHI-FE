@@ -2,6 +2,7 @@ import { View, Image } from 'react-native';
 import SelectionCard from '../common/SelectionCard';
 import styles from '../../styles/register/language';
 import { LanguageType, LanguageOption } from '../../types/language';
+import { SUPPORTED_LANGUAGES } from '../../i18n';
 import KRFlag from '../../../assets/flags/KR.png';
 import USFlag from '../../../assets/flags/US.png';
 import VNFlag from '../../../assets/flags/VN.png';
@@ -19,24 +20,29 @@ interface LanguageSelectorProps {
   onSelect: (lang: LanguageType) => void;
 }
 
-const LanguageSelector = ({ selected, onSelect }: LanguageSelectorProps) => (
-  <View style={styles.cardList}>
-    {LANGUAGE_OPTIONS.map((option) => (
-      <SelectionCard
-        key={option.type}
-        name={option.name}
-        label={option.label}
-        leftElement={
-          <View style={styles.flagWrapper}>
-            <Image source={option.flag} style={styles.flagImage} />
-          </View>
-        }
-        selected={selected === option.type}
-        onPress={() => onSelect(option.type)}
-        size="lg"
-      />
-    ))}
-  </View>
-);
+const LanguageSelector = ({ selected, onSelect }: LanguageSelectorProps) => {
+  const filteredOptions = LANGUAGE_OPTIONS.filter((option) =>
+    SUPPORTED_LANGUAGES.includes(option.type)
+  );
+  return (
+    <View style={styles.cardList}>
+      {filteredOptions.map((option) => (
+        <SelectionCard
+          key={option.type}
+          name={option.name}
+          label={option.label}
+          leftElement={
+            <View style={styles.flagWrapper}>
+              <Image source={option.flag} style={styles.flagImage} />
+            </View>
+          }
+          selected={selected === option.type}
+          onPress={() => onSelect(option.type)}
+          size="lg"
+        />
+      ))}
+    </View>
+  );
+};
 
 export default LanguageSelector;

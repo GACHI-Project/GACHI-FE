@@ -7,18 +7,19 @@ import Header from '../../src/components/common/Header';
 import LanguageSelector from '../../src/components/profile/LanguageSelector';
 import { PrimaryButton } from '../../src/components/common/Button';
 import { LanguageType } from '../../src/types/language';
-import { saveLanguage } from '../../src/i18n';
+import { saveLanguage, SUPPORTED_LANGUAGES } from '../../src/i18n';
 import colors from '../../src/constants/colors';
 import fonts from '../../src/constants/fonts';
 import layout from '../../src/constants/layout';
 
-const VALID_LANGS: LanguageType[] = ['ko', 'en', 'vi', 'zh'];
-
 const ProfileLanguageScreen = () => {
   const { t, i18n } = useTranslation();
   const [selected, setSelected] = useState<LanguageType>(
-    VALID_LANGS.includes(i18n.language as LanguageType) ? (i18n.language as LanguageType) : 'ko'
+    SUPPORTED_LANGUAGES.includes(i18n.language as LanguageType)
+      ? (i18n.language as LanguageType)
+      : 'ko'
   );
+  const [isLoading, setIsLoading] = useState(false);
 
   return (
     <View style={styles.container}>
@@ -36,13 +37,17 @@ const ProfileLanguageScreen = () => {
       <View style={styles.footer}>
         <PrimaryButton
           label={t('profile.languageChange.save')}
+          disabled={isLoading}
           onPress={async () => {
+            setIsLoading(true);
             try {
               await saveLanguage(selected);
               await i18n.changeLanguage(selected);
               router.back();
             } catch {
               Alert.alert(t('common.error'), t('profile.languageChange.saveError'));
+            } finally {
+              setIsLoading(false);
             }
           }}
         />

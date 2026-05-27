@@ -10,6 +10,8 @@ import { validatePassword } from '../../src/validation/auth';
 import colors from '../../src/constants/colors';
 import layout from '../../src/constants/layout';
 
+const MIN_PASSWORD_STRENGTH = 2;
+
 const ProfilePasswordScreen = () => {
   const { t } = useTranslation();
   const [currentPassword, setCurrentPassword] = useState('');
@@ -23,7 +25,7 @@ const ProfilePasswordScreen = () => {
     if (!newPassword) return undefined;
     const err = validatePassword(newPassword, {});
     if (err) return err;
-    if (getStrength(newPassword) < 2) return t('auth.register.basic.error.passwordWeak');
+    if (getStrength(newPassword) < MIN_PASSWORD_STRENGTH) return t('auth.register.basic.error.passwordWeak');
     return undefined;
   })();
 

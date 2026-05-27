@@ -52,6 +52,7 @@ apiClient.interceptors.response.use(
       return new Promise<string>((resolve, reject) => {
         failedQueue.push({ resolve, reject });
       }).then((token) => {
+        originalRequest._retry = true;
         originalRequest.headers.Authorization = `Bearer ${token}`;
         return apiClient(originalRequest);
       });
@@ -62,7 +63,7 @@ apiClient.interceptors.response.use(
 
     try {
       const storedRefresh = await SecureStore.getItemAsync('refreshToken');
-      if (!storedRefresh) throw new Error('no_refresh_token');
+      if (!storedRefresh) return Promise.reject(error);
 
       const { data } = await axios.post(
         `${apiClient.defaults.baseURL}/api/v1/auth/reissue`,

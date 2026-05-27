@@ -34,7 +34,7 @@
       "button": "Log In",
       "loading": "Logging in...",
       "forgotId": "Find ID",
-      "forgotPassword": "Find Password",
+      "forgotPassword": "Forgot Password?",
       "noAccount": "Don't have an account?",
       "signUp": "Sign Up",
       "error": {
@@ -60,7 +60,7 @@
         "verificationCode": "Verification Code",
         "password": "Password",
         "passwordConfirm": "Confirm Password",
-        "verify": "Verify",
+        "verify": "Send Code",
         "verifying": "Checking...",
         "hasAccount": "Already have an account?",
         "loginLink": "Log In",
@@ -91,10 +91,10 @@
       },
       "child": {
         "title": "Tell us about your child",
-        "subtitle": "We'll explain school notices according to your child's grade level",
+        "subtitle": "We'll explain school notices based on your child’s grade level",
         "school": "School",
         "schoolPlaceholder": "Search for a school",
-        "grade": "Elementary School Grade",
+        "grade": "Elementary Grade",
         "calendarColor": "Calendar Color",
         "childName": "Child's Name",
         "childNamePlaceholder": "Enter name",
@@ -103,7 +103,7 @@
         "order": ["1st", "2nd", "3rd", "4th", "5th", "6th", "7th"]
       },
       "notification": {
-        "title": "Set your notification preferences",
+        "title": "Choose your notification settings",
         "subtitle": "Choose how you'd like to receive notifications",
         "sectionLabel": "Notification Level",
         "settingsTip": "You can change notification settings at any time in Settings",
@@ -123,13 +123,13 @@
           },
           "none": {
             "title": "No Notifications",
-            "desc": "Check the app yourself when needed"
+            "desc": "Check the app whenever you need to"
           }
         }
       },
       "complete": {
         "title": "Registration Complete!",
-        "subtitle": "Now explore your child's school life more easily with GACHI",
+        "subtitle": "GACHI will help you navigate your child’s school life more easily",
         "button": "Go to Login →",
         "noInfo": "No registration info found. Please start over.",
         "error": "An error occurred. Please try again."
@@ -159,20 +159,20 @@
       "confirm": "Confirm",
       "verifying": "Checking...",
       "loading": "Checking...",
-      "submit": "Find ID →",
+      "submit": "Check ID →",
       "foundTitle": "Account Found",
       "foundDesc": "You can log in with the ID below.",
       "idLabel": "ID",
       "goLogin": "Go to Login",
       "forgotPassword": "Forgot your password?",
-      "goFindPassword": "Find Password",
+      "goFindPassword": "Forgot Password",
       "error": {
         "emailNotFound": "No account found for this email.",
         "generic": "An error occurred. Please try again."
       }
     },
     "findPassword": {
-      "title": "Find Password",
+      "title": "Forgot Password",
       "subtitle": "Reset your password by verifying your ID and email.",
       "id": "ID",
       "email": "Email",
@@ -181,7 +181,7 @@
       "sending": "Sending...",
       "confirm": "Confirm",
       "verifying": "Checking...",
-      "submit": "Send Reset Link →",
+      "submit": "Reset Password →",
       "idFound": "Account found for this ID.",
       "forgotId": "Forgot your ID?",
       "goFindId": "Find ID",
@@ -260,19 +260,19 @@
       "sectionTitle": "Key Features",
       "ai": {
         "title": ["Ask", "AI"],
-        "desc": "Ask questions about anything unclear. AI explains with full context.",
+        "desc": "Ask questions about anything unclear. AI will explain the full context too.",
         "button": "Start Chat"
       },
       "guide": {
-        "title": ["School Culture", "Guide"],
-        "desc": "Understand Korean school culture easily. Get guidance on what to do.",
-        "button": "Start Guide"
+        "title": ["Korean School", "Life Guide"],
+        "desc": "Find quick answers to common questions about school life.",
+        "button": "Open Guide"
       }
     },
     "guideCards": {
       "sectionTitle": "Common Questions",
       "more": "More",
-      "badge": "✓ Guide",
+      "badge": "✓ FAQ",
       "questions": [
         "Do I really need to submit the consent form in person?",
         "Should I contact the homeroom teacher?",
@@ -312,7 +312,7 @@
     ],
     "evening": [
       "Great work today 🌇",
-      "Shall we check remaining school schedules? 💛",
+      "Want to check any remaining school schedules? 💛",
       "Wrap up the day with GACHI ✨",
       "Prepare ahead for tomorrow 🌆",
       "Check important alerts one more time tonight 📬",
@@ -418,7 +418,7 @@
         "ocrOriginal": "OCR Original",
         "error": {
           "notFound": "School notice info not found.",
-          "notAnalyzed": "This document hasn't been fully analyzed yet.",
+          "notAnalyzed": "This school notice hasn’t been fully analyzed yet.",
           "newsletterNotFound": "School notice not found.",
           "loadFailed": "Failed to load document."
         }
@@ -436,7 +436,7 @@
         "summarySection": "AI Summary",
         "todayTodo": "Today's Tasks",
         "culturalContext": "Cultural Context",
-        "emptyTodo": "No tasks registered.",
+        "emptyTodo": "No tasks yet.",
         "error": {
           "notFound": "School notice info not found.",
           "analyzing": "This school notice is still being analyzed.",
@@ -465,7 +465,7 @@
         "title": "Add to Calendar?",
         "subtitleAutoDate": "A schedule will be automatically created\nbased on the extracted date.",
         "subtitleManualDate": "Please enter the date manually.",
-        "dateNotFound": "No date found in document.\nYou can register by entering a date manually.",
+        "dateNotFound": "No date found in document.\nYou can add it by entering a date manually.",
         "dateEditor": "Change Date",
         "year": "Y",
         "month": "M",
@@ -492,7 +492,7 @@
           "loadFailed": "Failed to load schedule info.",
           "expired": "AI is still analyzing or preview data has expired.",
           "registerFailed": "Registration Failed",
-          "registerDefault": "Failed to register schedule.",
+          "registerDefault": "Failed to add schedule.",
           "invalidInput": "Invalid input.",
           "newsletterNotFound": "School notice not found.",
           "dateFormat": "Invalid date format.",
@@ -508,7 +508,7 @@
   "calendar": {
     "title": "Calendar",
     "emptyWeek": "No events this week",
-    "emptyDay": "No events registered",
+    "emptyDay": "No events scheduled",
     "weekViewAccessibility": "Switch to monthly view",
     "monthViewAccessibility": "Switch to weekly view",
     "backAccessibility": "Go back",

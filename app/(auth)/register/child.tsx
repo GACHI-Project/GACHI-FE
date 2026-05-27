@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import StepHeader from '../../../src/components/common/StepHeader';
 import { PrimaryButton } from '../../../src/components/common/Button';
 import colors from '../../../src/constants/colors';
+import { GRADES, CALENDAR_COLORS, MOCK_SCHOOLS } from '../../../src/constants/child';
 import { SchoolResult } from '../../../src/types/school';
 import { ChildInfo } from '../../../src/types/child';
 import cardStyles from '../../../src/styles/register/childCard';
@@ -13,38 +14,15 @@ import styles from '../../../src/styles/register/child';
 import { useRegisterStore } from '../../../src/store/registerStore';
 import { ChildPayload } from '../../../src/api/child';
 
-// ─── 상수 ────────────────────────────────────────────────────────────────────
-
-const GRADES = [1, 2, 3, 4, 5, 6] as const;
-const CALENDAR_COLORS = [
-  '#FF6B6B',
-  '#FF9F43',
-  '#FFCC2F',
-  '#26DE81',
-  '#2BAEE0',
-  '#A55EEA',
-  '#FD79A8',
-] as const;
-
-// 실제 구현 시 API 검색으로 대체
-const MOCK_SCHOOLS: SchoolResult[] = [
-  { name: '서울까치초등학교', address: '서울특별시 노원구', type: '초등학교' },
-  { name: '서울삼청초등학교', address: '서울특별시 종로구 북촌로 136', type: '초등학교' },
-  { name: '강남초등학교', address: '서울특별시 강남구 테헤란로 212', type: '초등학교' },
-  { name: '강남언북초등학교', address: '서울특별시 강남구 선릉로 100길 5', type: '초등학교' },
-  { name: '한강초등학교', address: '서울특별시 마포구 와우산로 21', type: '초등학교' },
-  { name: '한강중앙초등학교', address: '서울특별시 영등포구 여의대로 42', type: '초등학교' },
-];
-
 // ─── 헬퍼 ────────────────────────────────────────────────────────────────────
 
-const isChildComplete = (child: ChildInfo): boolean =>
+export const isChildComplete = (child: ChildInfo): boolean =>
   child.name.trim().length > 0 &&
   (child.selectedSchool !== null || child.schoolQuery.trim().length > 0) &&
   child.grade !== null &&
   child.calendarColor !== null;
 
-const createChild = (id: string): ChildInfo => ({
+export const createChild = (id: string): ChildInfo => ({
   id,
   name: '',
   selectedSchool: null,
@@ -53,16 +31,18 @@ const createChild = (id: string): ChildInfo => ({
   calendarColor: CALENDAR_COLORS[0],
 });
 
-const shortenAddress = (address: string): string => {
+export const shortenAddress = (address: string): string => {
   const tokens = address.split(' ');
   const idx = tokens.findIndex((t) => t.endsWith('구') || t.endsWith('군'));
   return idx >= 0 ? tokens.slice(0, idx + 1).join(' ') : address;
 };
 
-const formatSchoolMeta = (school: SchoolResult): string =>
-  `${school.type} • ${shortenAddress(school.address)}`;
+const formatSchoolMeta = (school: SchoolResult): string => {
+  if (!school.address) return school.type ?? '초등학교';
+  return `${school.type} • ${shortenAddress(school.address)}`;
+};
 
-const searchSchools = (query: string): SchoolResult[] => {
+export const searchSchools = (query: string): SchoolResult[] => {
   if (!query.trim()) return [];
   return MOCK_SCHOOLS.filter(
     (s) => s.name.includes(query.trim()) || s.address.includes(query.trim())
@@ -77,7 +57,7 @@ interface SchoolPickerProps {
   onUpdate: (updates: Partial<ChildInfo>) => void;
 }
 
-const SchoolPicker = ({ selectedSchool, schoolQuery, onUpdate }: SchoolPickerProps) => {
+export const SchoolPicker = ({ selectedSchool, schoolQuery, onUpdate }: SchoolPickerProps) => {
   const { t } = useTranslation();
   const [focused, setFocused] = useState(false);
   const results = searchSchools(schoolQuery);
@@ -164,7 +144,7 @@ interface GradePickerProps {
   onUpdate: (updates: Partial<ChildInfo>) => void;
 }
 
-const GradePicker = ({ grade, onUpdate }: GradePickerProps) => {
+export const GradePicker = ({ grade, onUpdate }: GradePickerProps) => {
   const { t } = useTranslation();
   return (
     <View style={cardStyles.section}>
@@ -201,7 +181,7 @@ interface ColorPickerProps {
   onUpdate: (updates: Partial<ChildInfo>) => void;
 }
 
-const ColorPicker = ({ calendarColor, onUpdate }: ColorPickerProps) => {
+export const ColorPicker = ({ calendarColor, onUpdate }: ColorPickerProps) => {
   const { t } = useTranslation();
   return (
     <View style={cardStyles.section}>
@@ -231,14 +211,22 @@ interface ChildCardProps {
   child: ChildInfo;
   order: string;
   isDeletable: boolean;
+  variant?: 'register' | 'edit';
   onUpdate: (updates: Partial<ChildInfo>) => void;
   onDelete: () => void;
 }
 
-const ChildCard = ({ child, order, isDeletable, onUpdate, onDelete }: ChildCardProps) => {
+export const ChildCard = ({
+  child,
+  order,
+  isDeletable,
+  variant = 'register',
+  onUpdate,
+  onDelete,
+}: ChildCardProps) => {
   const { t } = useTranslation();
   return (
-    <View style={cardStyles.card}>
+    <View style={[cardStyles.card, variant === 'edit' && cardStyles.cardEdit]}>
       <View style={cardStyles.profileRow}>
         <View
           style={[
@@ -246,7 +234,7 @@ const ChildCard = ({ child, order, isDeletable, onUpdate, onDelete }: ChildCardP
             { backgroundColor: child.calendarColor ?? colors.gray[200] },
           ]}
         />
-        <Text style={cardStyles.orderLabel}>{order}</Text>
+        <Text style={cardStyles.orderLabel}>{variant === 'edit' ? child.name : order}</Text>
         {isDeletable && (
           <TouchableOpacity
             style={cardStyles.deleteButton}

@@ -435,7 +435,7 @@
       },
       "aiSummary": {
         "summarySection": "AI 요약",
-        "todayTodo": "오늘 할 일",
+        "todayTodo": "해야 할 일",
         "culturalContext": "문화 맥락 안내",
         "emptyTodo": "등록된 할 일이 없어요.",
         "error": {

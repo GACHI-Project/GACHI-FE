@@ -261,7 +261,7 @@
       "sectionTitle": "Key Features",
       "ai": {
         "title": ["Ask", "AI"],
-        "desc": "Ask questions about anything unclear. AI will explain the full context too.",
+        "desc": "Ask questions about anything unclear. AI will explain the full context.",
         "button": "Start Chat"
       },
       "guide": {
@@ -435,7 +435,7 @@
       },
       "aiSummary": {
         "summarySection": "AI Summary",
-        "todayTodo": "Today's Tasks",
+        "todayTodo": "Todo",
         "culturalContext": "Cultural Context",
         "emptyTodo": "No tasks yet.",
         "error": {

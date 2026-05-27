@@ -28,16 +28,18 @@ const DocumentCard = ({ item, onPress }: DocumentCardProps) => {
       </View>
 
       <View style={styles.info}>
-        <View style={styles.topRow}>
-          <Text style={styles.childInfo} numberOfLines={1}>
-            {item.childName} · {t('common.elementaryGrade', { grade: item.grade })}
-          </Text>
-          {item.dDay !== null && (
-            <View style={styles.dDayBadge}>
-              <Text style={styles.dDayText}>D-{item.dDay}</Text>
-            </View>
-          )}
-        </View>
+        {(item.childName || item.grade !== null) && (
+          <View style={styles.topRow}>
+            <Text style={styles.childInfo} numberOfLines={1}>
+              {[
+                item.childName,
+                item.grade !== null ? t('common.elementaryGrade', { grade: item.grade }) : null,
+              ]
+                .filter(Boolean)
+                .join(' · ')}
+            </Text>
+          </View>
+        )}
 
         <Text style={styles.title} numberOfLines={2}>
           {item.title}
@@ -97,17 +99,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: fonts.medium,
     color: colors.text.secondary,
-  },
-  dDayBadge: {
-    backgroundColor: colors.primary[100],
-    borderRadius: 12,
-    paddingHorizontal: 13,
-    paddingVertical: 5,
-  },
-  dDayText: {
-    fontSize: 11,
-    fontFamily: fonts.medium,
-    color: colors.primary[500],
   },
   title: {
     fontSize: 16,

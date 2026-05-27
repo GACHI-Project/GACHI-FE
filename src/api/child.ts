@@ -98,6 +98,4 @@ export const getMyChildren = async (): Promise<ChildResult[]> => {
 
 export type ChildItem = ChildResult;
 
-export const fetchChildren = async (): Promise<ChildItem[]> => {
-  return getMyChildren();
-};
+export const fetchChildren = async (): Promise<ChildItem[]> => getMyChildren();

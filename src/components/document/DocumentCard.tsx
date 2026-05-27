@@ -28,12 +28,18 @@ const DocumentCard = ({ item, onPress }: DocumentCardProps) => {
       </View>
 
       <View style={styles.info}>
-        <View style={styles.topRow}>
-          <Text style={styles.childInfo} numberOfLines={1}>
-            {item.childName}
-            {item.grade !== null ? ` · ${t('common.elementaryGrade', { grade: item.grade })}` : ''}
-          </Text>
-        </View>
+        {(item.childName || item.grade !== null) && (
+          <View style={styles.topRow}>
+            <Text style={styles.childInfo} numberOfLines={1}>
+              {[
+                item.childName,
+                item.grade !== null ? t('common.elementaryGrade', { grade: item.grade }) : null,
+              ]
+                .filter(Boolean)
+                .join(' · ')}
+            </Text>
+          </View>
+        )}
 
         <Text style={styles.title} numberOfLines={2}>
           {item.title}

@@ -615,5 +615,14 @@
         }
       }
     }
+  },
+  "notifications": {
+    "title": "알림 목록",
+    "today": "오늘",
+    "yesterday": "어제",
+    "empty": "알림이 없어요",
+    "settings": "알림 설정",
+    "settingsMenu": "알림 설정",
+    "markAllRead": "모두 읽음"
   }
 }

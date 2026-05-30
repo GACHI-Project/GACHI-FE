@@ -38,28 +38,28 @@ const ITEM_CONFIGS: ItemConfig[] = [
   {
     key: 'deadline',
     iconName: 'calendar',
-    iconColor: colors.text.red,
-    iconBg: 'rgba(225,0,0,0.1)',
+    iconColor: '#F9A0A0',
+    iconBg: '#FCEBEB',
     badgeStyle: 'urgent',
   },
   {
     key: 'checklist',
     iconName: 'check-square',
-    iconColor: colors.secondary[600],
+    iconColor: colors.secondary[500],
     iconBg: colors.secondary[100],
     badgeStyle: 'important',
   },
   {
     key: 'weekly',
     iconName: 'mail',
-    iconColor: colors.secondary[600],
+    iconColor: colors.secondary[500],
     iconBg: colors.secondary[100],
     badgeStyle: 'important',
   },
   {
     key: 'document',
     iconName: 'file-text',
-    iconColor: colors.primary[400],
+    iconColor: colors.primary[300],
     iconBg: colors.primary[100],
     badgeStyle: 'general',
   },
@@ -152,7 +152,7 @@ const ProfileNotificationScreen = () => {
                 <View key={config.key}>
                   <View style={styles.itemRow}>
                     <View style={[styles.iconBox, { backgroundColor: config.iconBg }]}>
-                      <Feather name={config.iconName} size={20} color={config.iconColor} />
+                      <Feather name={config.iconName} size={24} color={config.iconColor} />
                     </View>
                     <View style={styles.itemTextWrap}>
                       <View style={styles.itemTitleRow}>

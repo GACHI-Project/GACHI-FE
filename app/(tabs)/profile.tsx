@@ -14,17 +14,18 @@ import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { ChildInfo } from '../../src/types/child';
 import { fetchChildren, registerChild, ChildItem } from '../../src/api/child';
+import { fetchMyInfo, UserInfo } from '../../src/api/user';
 import { CALENDAR_COLORS } from '../../src/constants/child';
 import colors from '../../src/constants/colors';
 import styles from '../../src/styles/profile/profile';
 import Header from '../../src/components/common/Header';
 import ChildEditSheet from '../../src/components/profile/ChildEditSheet';
 
-const mockUser = {
-  name: 'Linh Nguyễn',
-  loginId: 'gachi-gayo22',
-  joinDate: '2026.01',
+const formatJoinDate = (iso: string) => {
+  const d = new Date(iso);
+  return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}`;
 };
+
 const LANGUAGE_NAMES: Record<string, string> = {
   ko: '한국어',
   en: 'English',
@@ -32,12 +33,12 @@ const LANGUAGE_NAMES: Record<string, string> = {
   zh: '中文',
 };
 
-const mockNotification = true;
 const APP_VERSION = '1.0.0';
 
 const ProfileScreen = () => {
   const { t, i18n } = useTranslation();
   const currentLanguageName = LANGUAGE_NAMES[i18n.language] ?? i18n.language;
+  const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [children, setChildren] = useState<ChildItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [editingChild, setEditingChild] = useState<ChildInfo | null>(null);
@@ -55,6 +56,12 @@ const ProfileScreen = () => {
       } finally {
         setIsLoading(false);
       }
+      try {
+        const user = await fetchMyInfo();
+        setUserInfo(user);
+      } catch (e) {
+        console.error('사용자 정보 조회 실패:', e);
+      }
     };
     load();
   }, []);
@@ -67,13 +74,15 @@ const ProfileScreen = () => {
           <Image source={require('../../assets/icon.png')} style={styles.avatar} />
 
           <View style={styles.profileInfo}>
-            <Text style={styles.profileName}>{mockUser.name}</Text>
+            <Text style={styles.profileName}>{userInfo?.name ?? ''}</Text>
             <View style={styles.profileSubRow}>
               <View style={styles.idBadge}>
-                <Text style={styles.idBadgeText}>{mockUser.loginId}</Text>
+                <Text style={styles.idBadgeText}>{userInfo?.loginId ?? ''}</Text>
               </View>
               <Text style={styles.joinDate}>
-                {t('profile.joinDate', { date: mockUser.joinDate })}
+                {t('profile.joinDate', {
+                  date: userInfo ? formatJoinDate(userInfo.createdAt) : '',
+                })}
               </Text>
             </View>
           </View>
@@ -156,7 +165,9 @@ const ProfileScreen = () => {
           >
             <Text style={styles.rowLabel}>{t('profile.notification')}</Text>
             <Text style={styles.rowValue}>
-              {mockNotification ? t('profile.notificationOn') : t('profile.notificationOff')}
+              {userInfo?.notificationEnabled
+                ? t('profile.notificationOn')
+                : t('profile.notificationOff')}
             </Text>
             <Ionicons name="chevron-forward" size={16} color={colors.text.secondary} />
           </TouchableOpacity>

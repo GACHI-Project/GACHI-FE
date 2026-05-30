@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -12,19 +12,20 @@ import { Ionicons, FontAwesome5 } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import Header from '../../src/components/common/Header';
+import { fetchMyInfo, UserInfo } from '../../src/api/user';
 import colors from '../../src/constants/colors';
 import styles from '../../src/styles/profile/profileEdit';
-
-const mockUser = {
-  loginId: 'gachi-gayo22',
-  name: 'Linh Nguyễn',
-  phone: '010-0000-0000',
-  email: 'gachi-gayo@example.com',
-};
 
 const ProfileEditScreen = () => {
   const { t } = useTranslation();
   const [withdrawModalVisible, setWithdrawModalVisible] = useState(false);
+  const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
+
+  useEffect(() => {
+    fetchMyInfo()
+      .then(setUserInfo)
+      .catch((e) => console.error('사용자 정보 조회 실패:', e));
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -32,24 +33,24 @@ const ProfileEditScreen = () => {
       <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
         <View style={styles.profileCard}>
           <Image source={require('../../assets/icon.png')} style={styles.avatar} />
-          <Text style={styles.loginId}>{mockUser.loginId}</Text>
+          <Text style={styles.loginId}>{userInfo?.loginId ?? ''}</Text>
         </View>
 
         <Text style={styles.sectionLabel}>{t('profile.editProfile.accountSection')}</Text>
         <View style={styles.card}>
           <View style={styles.row}>
             <Text style={styles.rowLabel}>{t('profile.editProfile.name')}</Text>
-            <Text style={styles.rowValue}>{mockUser.name}</Text>
+            <Text style={styles.rowValue}>{userInfo?.name ?? ''}</Text>
           </View>
           <View style={styles.divider} />
           <View style={styles.row}>
             <Text style={styles.rowLabel}>{t('profile.editProfile.phone')}</Text>
-            <Text style={styles.rowValue}>{mockUser.phone}</Text>
+            <Text style={styles.rowValue}>—</Text>
           </View>
           <View style={styles.divider} />
           <View style={styles.row}>
             <Text style={styles.rowLabel}>{t('profile.editProfile.email')}</Text>
-            <Text style={styles.rowValue}>{mockUser.email}</Text>
+            <Text style={styles.rowValue}>{userInfo?.email ?? ''}</Text>
           </View>
         </View>
 

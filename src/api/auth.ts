@@ -42,9 +42,9 @@ const processQueue = (error: unknown, token: string | null = null) => {
 apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
-    const originalRequest = error.config as typeof error.config & { _retry?: boolean };
+    const originalRequest = error.config as typeof error.config & { retried?: boolean };
 
-    if (error.response?.status !== 401 || originalRequest._retry) {
+    if (error.response?.status !== 401 || originalRequest.retried) {
       return Promise.reject(error);
     }
 
@@ -52,13 +52,13 @@ apiClient.interceptors.response.use(
       return new Promise<string>((resolve, reject) => {
         failedQueue.push({ resolve, reject });
       }).then((token) => {
-        originalRequest._retry = true;
+        originalRequest.retried = true;
         originalRequest.headers.Authorization = `Bearer ${token}`;
         return apiClient(originalRequest);
       });
     }
 
-    originalRequest._retry = true;
+    originalRequest.retried = true;
     isRefreshing = true;
 
     try {
@@ -198,13 +198,17 @@ export const signup = async (payload: {
 
 // TODO: 백엔드 API 연결 전 임시 mock — 실제 엔드포인트 확정 후 교체 필요
 export const findLoginId = async (_email: string): Promise<{ loginId: string }> => {
-  await new Promise<void>((resolve) => { setTimeout(resolve, 600); });
+  await new Promise<void>((resolve) => {
+    setTimeout(resolve, 600);
+  });
   return { loginId: 'gachi-gayo22' };
 };
 
 // TODO: 백엔드 API 연결 전 임시 mock — 실제 엔드포인트 확정 후 교체 필요
 export const sendFindPasswordCode = async (_loginId: string, _email: string): Promise<void> => {
-  await new Promise<void>((resolve) => { setTimeout(resolve, 600); });
+  await new Promise<void>((resolve) => {
+    setTimeout(resolve, 600);
+  });
 };
 
 // TODO: 백엔드 API 연결 전 임시 mock — 실제 엔드포인트 확정 후 교체 필요
@@ -213,5 +217,7 @@ export const resetPassword = async (
   _newPassword: string,
   _newPasswordConfirm: string
 ): Promise<void> => {
-  await new Promise<void>((resolve) => { setTimeout(resolve, 600); });
+  await new Promise<void>((resolve) => {
+    setTimeout(resolve, 600);
+  });
 };

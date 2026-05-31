@@ -43,7 +43,11 @@ const RecentDocs = () => {
       </View>
 
       {loading ? (
-        <ActivityIndicator size="small" color={colors.primary[400]} style={{ marginVertical: 16 }} />
+        <ActivityIndicator
+          size="small"
+          color={colors.primary[400]}
+          style={{ marginVertical: 16 }}
+        />
       ) : error ? (
         <Text style={styles.docMeta}>{t('common.networkError')}</Text>
       ) : groups.length === 0 ? (
@@ -54,9 +58,7 @@ const RecentDocs = () => {
             <View key={group.date} style={styles.group}>
               <View style={styles.dateRow}>
                 <View style={styles.dateDot} />
-                <Text style={styles.dateText}>
-                  {formatGroupDate(group.date, i18n.language)}
-                </Text>
+                <Text style={styles.dateText}>{formatGroupDate(group.date, i18n.language)}</Text>
               </View>
               <View style={styles.timelineBody}>
                 <View style={styles.lineColumn}>

@@ -103,150 +103,142 @@ const mapRegisterError = (e: unknown): string => {
   return i18n.t('scan.result.saveBottomSheet.error.registerDefault');
 };
 
-const DateInputFields = memo(({
-  year,
-  month,
-  day,
-  onYearChange,
-  onMonthChange,
-  onDayChange,
-}: DateInputFieldsProps) => {
-  const { t } = useTranslation();
-  return (
-    <View style={styles.dateInputRow}>
-      <View style={styles.dateInputWrap}>
-        <TextInput
-          style={styles.dateInput}
-          value={year}
-          onChangeText={onYearChange}
-          keyboardType="number-pad"
-          maxLength={4}
-          accessibilityLabel={t('scan.result.saveBottomSheet.yearLabel')}
-        />
-        <Text style={styles.dateUnit}>{t('scan.result.saveBottomSheet.year')}</Text>
-      </View>
-      <View style={styles.dateInputWrap}>
-        <TextInput
-          style={styles.dateInput}
-          value={month}
-          onChangeText={onMonthChange}
-          keyboardType="number-pad"
-          maxLength={2}
-          accessibilityLabel={t('scan.result.saveBottomSheet.monthLabel')}
-        />
-        <Text style={styles.dateUnit}>{t('scan.result.saveBottomSheet.month')}</Text>
-      </View>
-      <View style={styles.dateInputWrap}>
-        <TextInput
-          style={styles.dateInput}
-          value={day}
-          onChangeText={onDayChange}
-          keyboardType="number-pad"
-          maxLength={2}
-          accessibilityLabel={t('scan.result.saveBottomSheet.dayLabel')}
-        />
-        <Text style={styles.dateUnit}>{t('scan.result.saveBottomSheet.day')}</Text>
-      </View>
-    </View>
-  );
-});
-
-const EventCard = memo(({
-  item,
-  es,
-  childName,
-  onUpdate,
-  onDateConfirm,
-  getDisplayDate,
-}: EventCardProps) => {
-  const { t } = useTranslation();
-  const displayDate = getDisplayDate(es.year, es.month, es.day);
-
-  const handleEditToggle = useCallback(
-    () => onUpdate(item.tempEventId, { isEditing: !es.isEditing }),
-    [onUpdate, item.tempEventId, es.isEditing]
-  );
-  const handleConfirm = useCallback(
-    () => onDateConfirm(item.tempEventId),
-    [onDateConfirm, item.tempEventId]
-  );
-  const handleYearChange = useCallback(
-    (v: string) => onUpdate(item.tempEventId, { year: v }),
-    [onUpdate, item.tempEventId]
-  );
-  const handleMonthChange = useCallback(
-    (v: string) => onUpdate(item.tempEventId, { month: v }),
-    [onUpdate, item.tempEventId]
-  );
-  const handleDayChange = useCallback(
-    (v: string) => onUpdate(item.tempEventId, { day: v }),
-    [onUpdate, item.tempEventId]
-  );
-
-  return (
-    <View style={styles.eventCard}>
-      <View style={styles.eventHeader}>
-        <View style={styles.eventDot} />
-        <Text style={styles.eventTitle}>{item.title} · {childName}</Text>
-      </View>
-      {item.isDateExtracted ? (
-        <View style={styles.eventDateRow}>
-          <Text style={styles.eventDate}>{displayDate}</Text>
-          <TouchableOpacity
-            style={styles.editBadge}
-            onPress={handleEditToggle}
-            accessibilityRole="button"
-            accessibilityLabel={t('scan.result.saveBottomSheet.accessibilityEdit')}
-          >
-            <Text style={styles.editBadgeText}>
-              {es.isEditing
-                ? t('scan.result.saveBottomSheet.isEditing')
-                : t('scan.result.saveBottomSheet.edit')}
-            </Text>
-          </TouchableOpacity>
-        </View>
-      ) : (
-        <>
-          <View style={styles.divider} />
-          <DateInputFields
-            year={es.year}
-            month={es.month}
-            day={es.day}
-            onYearChange={handleYearChange}
-            onMonthChange={handleMonthChange}
-            onDayChange={handleDayChange}
+const DateInputFields = memo(
+  ({ year, month, day, onYearChange, onMonthChange, onDayChange }: DateInputFieldsProps) => {
+    const { t } = useTranslation();
+    return (
+      <View style={styles.dateInputRow}>
+        <View style={styles.dateInputWrap}>
+          <TextInput
+            style={styles.dateInput}
+            value={year}
+            onChangeText={onYearChange}
+            keyboardType="number-pad"
+            maxLength={4}
+            accessibilityLabel={t('scan.result.saveBottomSheet.yearLabel')}
           />
-        </>
-      )}
-      {item.isDateExtracted && es.isEditing && (
-        <View style={styles.dateEditorCard}>
-          <Text style={styles.dateEditorLabel}>
-            {t('scan.result.saveBottomSheet.dateEditor')}
+          <Text style={styles.dateUnit}>{t('scan.result.saveBottomSheet.year')}</Text>
+        </View>
+        <View style={styles.dateInputWrap}>
+          <TextInput
+            style={styles.dateInput}
+            value={month}
+            onChangeText={onMonthChange}
+            keyboardType="number-pad"
+            maxLength={2}
+            accessibilityLabel={t('scan.result.saveBottomSheet.monthLabel')}
+          />
+          <Text style={styles.dateUnit}>{t('scan.result.saveBottomSheet.month')}</Text>
+        </View>
+        <View style={styles.dateInputWrap}>
+          <TextInput
+            style={styles.dateInput}
+            value={day}
+            onChangeText={onDayChange}
+            keyboardType="number-pad"
+            maxLength={2}
+            accessibilityLabel={t('scan.result.saveBottomSheet.dayLabel')}
+          />
+          <Text style={styles.dateUnit}>{t('scan.result.saveBottomSheet.day')}</Text>
+        </View>
+      </View>
+    );
+  }
+);
+
+const EventCard = memo(
+  ({ item, es, childName, onUpdate, onDateConfirm, getDisplayDate }: EventCardProps) => {
+    const { t } = useTranslation();
+    const displayDate = getDisplayDate(es.year, es.month, es.day);
+
+    const handleEditToggle = useCallback(
+      () => onUpdate(item.tempEventId, { isEditing: !es.isEditing }),
+      [onUpdate, item.tempEventId, es.isEditing]
+    );
+    const handleConfirm = useCallback(
+      () => onDateConfirm(item.tempEventId),
+      [onDateConfirm, item.tempEventId]
+    );
+    const handleYearChange = useCallback(
+      (v: string) => onUpdate(item.tempEventId, { year: v }),
+      [onUpdate, item.tempEventId]
+    );
+    const handleMonthChange = useCallback(
+      (v: string) => onUpdate(item.tempEventId, { month: v }),
+      [onUpdate, item.tempEventId]
+    );
+    const handleDayChange = useCallback(
+      (v: string) => onUpdate(item.tempEventId, { day: v }),
+      [onUpdate, item.tempEventId]
+    );
+
+    return (
+      <View style={styles.eventCard}>
+        <View style={styles.eventHeader}>
+          <View style={styles.eventDot} />
+          <Text style={styles.eventTitle}>
+            {item.title} · {childName}
           </Text>
-          <DateInputFields
-            year={es.year}
-            month={es.month}
-            day={es.day}
-            onYearChange={handleYearChange}
-            onMonthChange={handleMonthChange}
-            onDayChange={handleDayChange}
-          />
-          <TouchableOpacity
-            style={styles.dateConfirmBtn}
-            onPress={handleConfirm}
-            activeOpacity={0.8}
-            accessibilityRole="button"
-            accessibilityLabel={t('scan.result.saveBottomSheet.accessibilityDateConfirm')}
-          >
-            <Text style={styles.dateConfirmBtnText}>
-              {t('scan.result.saveBottomSheet.dateConfirm')}
-            </Text>
-          </TouchableOpacity>
         </View>
-      )}
-    </View>
-  );
-});
+        {item.isDateExtracted ? (
+          <View style={styles.eventDateRow}>
+            <Text style={styles.eventDate}>{displayDate}</Text>
+            <TouchableOpacity
+              style={styles.editBadge}
+              onPress={handleEditToggle}
+              accessibilityRole="button"
+              accessibilityLabel={t('scan.result.saveBottomSheet.accessibilityEdit')}
+            >
+              <Text style={styles.editBadgeText}>
+                {es.isEditing
+                  ? t('scan.result.saveBottomSheet.isEditing')
+                  : t('scan.result.saveBottomSheet.edit')}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <>
+            <View style={styles.divider} />
+            <DateInputFields
+              year={es.year}
+              month={es.month}
+              day={es.day}
+              onYearChange={handleYearChange}
+              onMonthChange={handleMonthChange}
+              onDayChange={handleDayChange}
+            />
+          </>
+        )}
+        {item.isDateExtracted && es.isEditing && (
+          <View style={styles.dateEditorCard}>
+            <Text style={styles.dateEditorLabel}>
+              {t('scan.result.saveBottomSheet.dateEditor')}
+            </Text>
+            <DateInputFields
+              year={es.year}
+              month={es.month}
+              day={es.day}
+              onYearChange={handleYearChange}
+              onMonthChange={handleMonthChange}
+              onDayChange={handleDayChange}
+            />
+            <TouchableOpacity
+              style={styles.dateConfirmBtn}
+              onPress={handleConfirm}
+              activeOpacity={0.8}
+              accessibilityRole="button"
+              accessibilityLabel={t('scan.result.saveBottomSheet.accessibilityDateConfirm')}
+            >
+              <Text style={styles.dateConfirmBtnText}>
+                {t('scan.result.saveBottomSheet.dateConfirm')}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
+      </View>
+    );
+  }
+);
 
 const SaveBottomSheet = ({
   visible,
@@ -275,7 +267,9 @@ const SaveBottomSheet = ({
   );
 
   const newsletterTitleRef = useRef(newsletterTitle);
-  useEffect(() => { newsletterTitleRef.current = newsletterTitle; }, [newsletterTitle]);
+  useEffect(() => {
+    newsletterTitleRef.current = newsletterTitle;
+  }, [newsletterTitle]);
 
   const opacity = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(SHEET_HEIGHT)).current;
@@ -511,9 +505,7 @@ const SaveBottomSheet = ({
             {step === 'success' ? (
               <>
                 <View style={styles.textBlock}>
-                  <Text style={styles.title}>
-                    {t('scan.result.saveBottomSheet.successTitle')}
-                  </Text>
+                  <Text style={styles.title}>{t('scan.result.saveBottomSheet.successTitle')}</Text>
                   <Text style={styles.subtitle}>
                     {t('scan.result.saveBottomSheet.successSubtitle')}
                   </Text>
@@ -531,7 +523,9 @@ const SaveBottomSheet = ({
                         <View style={styles.eventHeader}>
                           <View style={styles.eventDot} />
                           <View style={styles.successEventInfo}>
-                            <Text style={styles.eventTitle}>{p.title} · {childName}</Text>
+                            <Text style={styles.eventTitle}>
+                              {p.title} · {childName}
+                            </Text>
                             {es && (
                               <Text style={styles.eventDate}>
                                 {getDisplayDate(es.year, es.month, es.day)}

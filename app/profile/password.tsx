@@ -25,7 +25,8 @@ const ProfilePasswordScreen = () => {
     if (!newPassword) return undefined;
     const err = validatePassword(newPassword, {});
     if (err) return err;
-    if (getStrength(newPassword) < MIN_PASSWORD_STRENGTH) return t('auth.register.basic.error.passwordWeak');
+    if (getStrength(newPassword) < MIN_PASSWORD_STRENGTH)
+      return t('auth.register.basic.error.passwordWeak');
     return undefined;
   })();
 
@@ -93,7 +94,12 @@ const ProfilePasswordScreen = () => {
 
         <PrimaryButton
           label={t('profile.editProfile.changePassword.submit')}
-          onPress={() => Alert.alert(t('common.preparing'), t('profile.editProfile.changePassword.preparingMessage'))}
+          onPress={() =>
+            Alert.alert(
+              t('common.preparing'),
+              t('profile.editProfile.changePassword.preparingMessage')
+            )
+          }
           disabled={!canSubmit}
         />
       </ScrollView>

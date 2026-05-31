@@ -100,6 +100,22 @@ const styles = StyleSheet.create({
   loader: {
     marginTop: 60,
   },
+  errorBox: {
+    alignItems: 'center',
+    marginTop: 60,
+    gap: 12,
+  },
+  retryBtn: {
+    backgroundColor: colors.primary[400],
+    borderRadius: 8,
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+  },
+  retryBtnText: {
+    fontSize: 14,
+    fontFamily: fonts.medium,
+    color: colors.text.white,
+  },
   emptyText: {
     fontSize: 14,
     fontFamily: fonts.medium,

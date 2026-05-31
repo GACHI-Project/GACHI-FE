@@ -626,6 +626,7 @@
     "markAllRead": "모두 읽음",
     "timeJustNow": "방금",
     "timeMinutesAgo": "{{count}}분 전",
-    "timeHoursAgo": "{{count}}시간 전"
+    "timeHoursAgo": "{{count}}시간 전",
+    "loadError": "알림을 불러오지 못했어요"
   }
 }

@@ -38,8 +38,8 @@ const ITEM_CONFIGS: ItemConfig[] = [
   {
     key: 'deadline',
     iconName: 'calendar',
-    iconColor: '#F9A0A0',
-    iconBg: '#FCEBEB',
+    iconColor: colors.pink[300],
+    iconBg: colors.pink[100],
     badgeStyle: 'urgent',
   },
   {

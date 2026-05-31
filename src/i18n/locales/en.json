@@ -626,6 +626,7 @@
     "markAllRead": "Mark all as read",
     "timeJustNow": "Just now",
     "timeMinutesAgo": "{{count}}m ago",
-    "timeHoursAgo": "{{count}}h ago"
+    "timeHoursAgo": "{{count}}h ago",
+    "loadError": "Failed to load notifications"
   }
 }

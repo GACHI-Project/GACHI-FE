@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { View, Text, FlatList, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { router } from 'expo-router';
@@ -45,12 +45,20 @@ const NotificationsScreen = () => {
   const [notifications, setNotifications] = useState<NotificationApiItem[]>([]);
   const [children, setChildren] = useState<ChildInfo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [selectedChildName, setSelectedChildName] = useState<string | undefined>(undefined);
   const [cursor, setCursor] = useState<number | null>(null);
   const [hasNext, setHasNext] = useState(false);
   const [isFetchingMore, setIsFetchingMore] = useState(false);
 
+  const notificationsRef = useRef<NotificationApiItem[]>([]);
   useEffect(() => {
+    notificationsRef.current = notifications;
+  }, [notifications]);
+
+  const loadInitial = useCallback(() => {
+    setIsLoading(true);
+    setLoadError(false);
     Promise.all([fetchNotifications({ size: 20 }), fetchChildren()])
       .then(([notifResult, childrenResult]) => {
         setNotifications(notifResult.notifications);
@@ -58,9 +66,13 @@ const NotificationsScreen = () => {
         setHasNext(notifResult.hasNext);
         setChildren(childrenResult);
       })
-      .catch(() => {})
+      .catch(() => setLoadError(true))
       .finally(() => setIsLoading(false));
   }, []);
+
+  useEffect(() => {
+    loadInitial();
+  }, [loadInitial]);
 
   const loadMore = useCallback(async () => {
     if (!hasNext || isFetchingMore) return;
@@ -71,28 +83,25 @@ const NotificationsScreen = () => {
       setCursor(result.nextCursor);
       setHasNext(result.hasNext);
     } catch {
-      // ignore
+      // ignore — 무한 스크롤 실패는 조용히 처리
     } finally {
       setIsFetchingMore(false);
     }
   }, [hasNext, isFetchingMore, cursor]);
 
   const markAsRead = useCallback((id: number) => {
-    setNotifications((prev) => {
-      const target = prev.find((n) => n.id === id);
-      if (!target || target.read) return prev;
-      markNotificationRead(id).catch(() => {
-        setNotifications((p) => p.map((n) => (n.id === id ? { ...n, read: false } : n)));
-      });
-      return prev.map((n) => (n.id === id ? { ...n, read: true } : n));
+    const target = notificationsRef.current.find((n) => n.id === id);
+    if (!target || target.read) return;
+    setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
+    markNotificationRead(id).catch(() => {
+      setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: false } : n)));
     });
   }, []);
 
   const handleMarkAllRead = useCallback(() => {
-    setNotifications((prev) => {
-      markAllNotificationsRead().catch(() => setNotifications(prev));
-      return prev.map((n) => ({ ...n, read: true }));
-    });
+    const snapshot = notificationsRef.current;
+    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    markAllNotificationsRead().catch(() => setNotifications(snapshot));
   }, []);
 
   const handlePress = useCallback(
@@ -208,6 +217,40 @@ const NotificationsScreen = () => {
     );
   };
 
+  const renderContent = () => {
+    if (isLoading) {
+      return <ActivityIndicator size="large" color={colors.primary[400]} style={styles.loader} />;
+    }
+    if (loadError) {
+      return (
+        <View style={styles.errorBox}>
+          <Text style={styles.emptyText}>{t('notifications.loadError')}</Text>
+          <TouchableOpacity style={styles.retryBtn} onPress={loadInitial} activeOpacity={0.8}>
+            <Text style={styles.retryBtnText}>{t('common.retry')}</Text>
+          </TouchableOpacity>
+        </View>
+      );
+    }
+    return (
+      <FlatList
+        data={flatRows}
+        keyExtractor={(row) => (row.kind === 'header' ? `h-${row.date}` : `n-${row.data.id}`)}
+        renderItem={({ item: row }) =>
+          row.kind === 'header' ? renderDateHeader(row.date) : renderItem(row.data)
+        }
+        onEndReached={loadMore}
+        onEndReachedThreshold={0.3}
+        ListEmptyComponent={<Text style={styles.emptyText}>{t('notifications.empty')}</Text>}
+        ListFooterComponent={
+          isFetchingMore ? (
+            <ActivityIndicator size="small" color={colors.primary[400]} style={styles.loader} />
+          ) : null
+        }
+        showsVerticalScrollIndicator={false}
+      />
+    );
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.headerWrap}>
@@ -238,26 +281,7 @@ const NotificationsScreen = () => {
         onSelect={setSelectedChildName}
       />
 
-      {isLoading ? (
-        <ActivityIndicator size="large" color={colors.primary[400]} style={styles.loader} />
-      ) : (
-        <FlatList
-          data={flatRows}
-          keyExtractor={(row) => (row.kind === 'header' ? `h-${row.date}` : `n-${row.data.id}`)}
-          renderItem={({ item: row }) =>
-            row.kind === 'header' ? renderDateHeader(row.date) : renderItem(row.data)
-          }
-          onEndReached={loadMore}
-          onEndReachedThreshold={0.3}
-          ListEmptyComponent={<Text style={styles.emptyText}>{t('notifications.empty')}</Text>}
-          ListFooterComponent={
-            isFetchingMore ? (
-              <ActivityIndicator size="small" color={colors.primary[400]} style={styles.loader} />
-            ) : null
-          }
-          showsVerticalScrollIndicator={false}
-        />
-      )}
+      {renderContent()}
     </View>
   );
 };

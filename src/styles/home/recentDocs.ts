@@ -97,6 +97,9 @@ const styles = StyleSheet.create({
     fontFamily: fonts.medium,
     color: colors.text.secondary,
   },
+  loadingIndicator: {
+    marginVertical: 16,
+  },
 });
 
 export default styles;

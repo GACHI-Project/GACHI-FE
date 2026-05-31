@@ -9,11 +9,10 @@ import ScanBanner from '../../src/components/home/ScanBanner';
 import FeatureSection from '../../src/components/home/FeatureSection';
 import GuideCards from '../../src/components/home/GuideCards';
 import RecentDocs from '../../src/components/home/RecentDocs';
-import i18n from '../../src/i18n';
 import colors from '../../src/constants/colors';
 import styles from '../../src/styles/home/homeScreen';
 
-const getGreetingByTime = (): string => {
+const getGreetingByTime = (t: (key: string, options?: object) => unknown): string => {
   const hour = new Date().getHours();
 
   let key: string;
@@ -29,14 +28,14 @@ const getGreetingByTime = (): string => {
     key = 'greetings.night';
   }
 
-  const arr = i18n.t(key, { returnObjects: true }) as string[];
+  const arr = t(key, { returnObjects: true }) as string[];
   return arr[Math.floor(Math.random() * arr.length)];
 };
 
 const HomeScreen = () => {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
-  const greetingText = useMemo(() => getGreetingByTime(), [i18n.language]);
+  const greetingText = useMemo(() => getGreetingByTime(t), [t]);
 
   return (
     <View style={styles.screen}>

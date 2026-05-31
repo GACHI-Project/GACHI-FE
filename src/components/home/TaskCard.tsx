@@ -2,7 +2,11 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { getTodayChecklists, toggleChecklistItem, type TodayChecklistItem } from '../../api/checklist';
+import {
+  getTodayChecklists,
+  toggleChecklistItem,
+  type TodayChecklistItem,
+} from '../../api/checklist';
 import { getMyChildren, type ChildResult } from '../../api/child';
 import colors from '../../constants/colors';
 import styles from '../../styles/home/taskCard';
@@ -143,7 +147,11 @@ const TaskCard = () => {
       <View style={styles.divider} />
 
       {loading ? (
-        <ActivityIndicator size="small" color={colors.primary[400]} style={{ marginVertical: 16 }} />
+        <ActivityIndicator
+          size="small"
+          color={colors.primary[400]}
+          style={{ marginVertical: 16 }}
+        />
       ) : error ? (
         <Text style={styles.emptyText}>{t('common.networkError')}</Text>
       ) : total === 0 ? (
@@ -158,7 +166,10 @@ const TaskCard = () => {
                 activeOpacity={0.7}
                 disabled={!!pendingIds[item.checklistId]}
                 accessibilityRole="checkbox"
-                accessibilityState={{ checked: !!checked[item.checklistId], busy: !!pendingIds[item.checklistId] }}
+                accessibilityState={{
+                  checked: !!checked[item.checklistId],
+                  busy: !!pendingIds[item.checklistId],
+                }}
                 accessibilityLabel={item.content}
               >
                 {checked[item.checklistId] && <Text style={styles.checkMark}>✓</Text>}

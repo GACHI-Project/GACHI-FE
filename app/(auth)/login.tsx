@@ -8,8 +8,7 @@ import AuthInput from '../../src/components/auth/AuthInput';
 import { PrimaryButton } from '../../src/components/common/Button';
 import { login, AuthApiError } from '../../src/api/auth';
 import { getMe } from '../../src/api/user';
-import { saveLanguage, SUPPORTED_LANGUAGES } from '../../src/i18n';
-import i18n, { SupportedLanguage } from '../../src/i18n';
+import i18n, { saveLanguage, SUPPORTED_LANGUAGES, SupportedLanguage } from '../../src/i18n';
 import { fromServerLanguageCode } from '../../src/types/language';
 import colors from '../../src/constants/colors';
 import fonts from '../../src/constants/fonts';
@@ -32,12 +31,14 @@ const LoginScreen = () => {
       await SecureStore.setItemAsync('accessToken', result.accessToken);
       await SecureStore.setItemAsync('refreshToken', result.refreshToken);
 
-      const me = await getMe();
-      const lang = fromServerLanguageCode(me.languageCode) as SupportedLanguage;
-      if (SUPPORTED_LANGUAGES.includes(lang)) {
-        await saveLanguage(lang);
-        await i18n.changeLanguage(lang);
-      }
+      try {
+        const me = await getMe();
+        const lang = fromServerLanguageCode(me.languageCode) as SupportedLanguage;
+        if (SUPPORTED_LANGUAGES.includes(lang)) {
+          await saveLanguage(lang);
+          await i18n.changeLanguage(lang);
+        }
+      } catch {}
 
       router.replace('/(tabs)');
     } catch (error) {

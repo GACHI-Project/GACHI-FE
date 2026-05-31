@@ -534,7 +534,7 @@
     "joinDate": "Joined {{date}}",
     "languageChange": {
       "title": "Change Language",
-      "warning": "The app will restart when you change the language.\nAny scans or translations in progress may be interrupted.",
+      "warning": "Changing the language will update both the app's display language and the language used to translate documents you scan.",
       "save": "Save",
       "saveError": "Failed to change language. Please try again."
     },

@@ -10,6 +10,7 @@ import { login, AuthApiError } from '../../src/api/auth';
 import { getMe } from '../../src/api/user';
 import i18n, { saveLanguage, SUPPORTED_LANGUAGES, SupportedLanguage } from '../../src/i18n';
 import { fromServerLanguageCode } from '../../src/types/language';
+import { registerDevicePushToken } from '../../src/utils/pushToken';
 import colors from '../../src/constants/colors';
 import fonts from '../../src/constants/fonts';
 import layout from '../../src/constants/layout';
@@ -43,6 +44,7 @@ const LoginScreen = () => {
       }
 
       router.replace('/(tabs)');
+      registerDevicePushToken().catch(() => {});
     } catch (error) {
       if (error instanceof AuthApiError) {
         if (error.code === 'AUTH4011') {

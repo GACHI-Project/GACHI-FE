@@ -1,7 +1,7 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import colors from '../../src/constants/colors';
 import styles from '../../src/styles/calendar/calendar';
@@ -58,6 +58,16 @@ const CalendarScreen = () => {
     year: todayDate.getFullYear(),
     month: todayDate.getMonth(),
   });
+
+  const { date: dateParam } = useLocalSearchParams<{ date?: string }>();
+
+  useEffect(() => {
+    if (!dateParam) return;
+    setSelectedDate(dateParam);
+    setIsWeekMode(false);
+    const [y, m] = dateParam.split('-').map(Number);
+    setCalendarMonth({ year: y, month: m - 1 });
+  }, [dateParam]);
 
   const [focusKey, setFocusKey] = useState(0);
   const hasFocusedOnceRef = useRef(false);

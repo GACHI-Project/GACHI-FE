@@ -623,6 +623,9 @@
     "empty": "알림이 없어요",
     "settings": "알림 설정",
     "settingsMenu": "알림 설정",
-    "markAllRead": "모두 읽음"
+    "markAllRead": "모두 읽음",
+    "timeJustNow": "방금",
+    "timeMinutesAgo": "{{count}}분 전",
+    "timeHoursAgo": "{{count}}시간 전"
   }
 }

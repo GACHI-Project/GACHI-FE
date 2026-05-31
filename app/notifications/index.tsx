@@ -1,128 +1,210 @@
-import { useState } from 'react';
-import { View, Text, ScrollView } from 'react-native';
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import { View, Text, FlatList, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import Header from '../../src/components/common/Header';
 import HeaderMenuButton from '../../src/components/common/HeaderMenuButton';
 import ChildFilterBar from '../../src/components/common/ChildFilterBar';
+import {
+  fetchNotifications,
+  markNotificationRead,
+  markAllNotificationsRead,
+  type NotificationApiItem,
+  type NotificationType,
+} from '../../src/api/notifications';
+import { fetchChildren, type ChildInfo } from '../../src/api/calendar';
 import colors from '../../src/constants/colors';
 import styles from '../../src/styles/notifications/notifications';
 
 type FeatherName = React.ComponentProps<typeof Feather>['name'];
 
-interface NotificationItem {
-  id: string;
-  type: 'deadline' | 'document' | 'checklist' | 'weekly';
-  title: string;
-  body: string;
-  childName: string | null;
-  timeLabel: string;
-  isRead: boolean;
-  date: 'today' | 'yesterday';
-}
-
-const MOCK_NOTIFICATIONS: NotificationItem[] = [
-  {
-    id: '1',
-    type: 'deadline',
-    title: '봄 현장체험학습 동의서 제출',
-    body: '봄 현장체험학습 동의서를 오늘까지 제출해야 해요',
-    childName: '김첫째',
-    timeLabel: '방금',
-    isRead: false,
-    date: 'today',
-  },
-  {
-    id: '2',
-    type: 'document',
-    title: '새 가정통신문 분석 완료',
-    body: '4월 급식 안내문 분석이 완료됐어요',
-    childName: '김둘째',
-    timeLabel: '1시간 전',
-    isRead: false,
-    date: 'today',
-  },
-  {
-    id: '3',
-    type: 'checklist',
-    title: '미완료 할 일이 있어요',
-    body: '동의서 서명하기 외 1개',
-    childName: '김첫째',
-    timeLabel: '3시간 전',
-    isRead: false,
-    date: 'today',
-  },
-  {
-    id: '4',
-    type: 'weekly',
-    title: '이번 주 요약이 도착했어요',
-    body: '완료 2개 · 미완료 1개 · 다가오는 일정 1개',
-    childName: null,
-    timeLabel: '어제',
-    isRead: true,
-    date: 'yesterday',
-  },
-  {
-    id: '5',
-    type: 'deadline',
-    title: '학부모 상담 마감 D-3',
-    body: '3일 뒤 마감이에요',
-    childName: '김둘째',
-    timeLabel: '어제',
-    isRead: true,
-    date: 'yesterday',
-  },
-];
-
-const MOCK_CHILDREN = [
-  { id: 1, name: '김첫째', colorCode: '#2BAEE0' },
-  { id: 2, name: '김둘째', colorCode: '#FFD84D' },
-];
-
-const ICON_CONFIG: Record<
-  NotificationItem['type'],
-  { bg: string; icon: FeatherName; color: string }
-> = {
-  deadline: { bg: '#FCEBEB', icon: 'calendar', color: '#F9A0A0' },
-  document: { bg: colors.primary[100], icon: 'file-text', color: colors.primary[300] },
-  checklist: { bg: colors.secondary[100], icon: 'check-square', color: colors.secondary[500] },
-  weekly: { bg: colors.secondary[100], icon: 'mail', color: colors.secondary[500] },
+const ICON_CONFIG: Record<NotificationType, { bg: string; icon: FeatherName; color: string }> = {
+  NEWSLETTER_ANALYSIS: { bg: colors.primary[100], icon: 'file-text', color: colors.primary[300] },
+  CALENDAR_EVENT: { bg: colors.pink[100], icon: 'calendar', color: colors.pink[300] },
+  DEADLINE_REMINDER: { bg: colors.pink[100], icon: 'clock', color: colors.text.red },
+  CHECKLIST_DUE: { bg: colors.secondary[100], icon: 'check-square', color: colors.secondary[500] },
+  WEEKLY_SUMMARY: { bg: colors.secondary[100], icon: 'mail', color: colors.secondary[500] },
+  SYSTEM: { bg: colors.primary[100], icon: 'info', color: colors.primary[400] },
+  ANNOUNCEMENT: { bg: colors.primary[100], icon: 'bell', color: colors.primary[400] },
 };
 
-const NotificationsScreen = () => {
-  const { t } = useTranslation();
-  const [selectedChildName, setSelectedChildName] = useState<string | undefined>(undefined);
+const formatDateStr = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
-  const filtered = MOCK_NOTIFICATIONS.filter(
-    (n) => selectedChildName === undefined || n.childName === selectedChildName
+type ListRow = { kind: 'header'; date: string } | { kind: 'item'; data: NotificationApiItem };
+
+const NotificationsScreen = () => {
+  const { t, i18n: i18nInstance } = useTranslation();
+  const now = new Date();
+  const todayStr = formatDateStr(now);
+  const yesterdayDate = new Date(now);
+  yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+  const yesterdayStr = formatDateStr(yesterdayDate);
+
+  const [notifications, setNotifications] = useState<NotificationApiItem[]>([]);
+  const [children, setChildren] = useState<ChildInfo[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [selectedChildName, setSelectedChildName] = useState<string | undefined>(undefined);
+  const [cursor, setCursor] = useState<number | null>(null);
+  const [hasNext, setHasNext] = useState(false);
+  const [isFetchingMore, setIsFetchingMore] = useState(false);
+
+  useEffect(() => {
+    Promise.all([fetchNotifications({ size: 20 }), fetchChildren()])
+      .then(([notifResult, childrenResult]) => {
+        setNotifications(notifResult.notifications);
+        setCursor(notifResult.nextCursor);
+        setHasNext(notifResult.hasNext);
+        setChildren(childrenResult);
+      })
+      .catch(() => {})
+      .finally(() => setIsLoading(false));
+  }, []);
+
+  const loadMore = useCallback(async () => {
+    if (!hasNext || isFetchingMore) return;
+    setIsFetchingMore(true);
+    try {
+      const result = await fetchNotifications({ cursor: cursor ?? undefined, size: 20 });
+      setNotifications((prev) => [...prev, ...result.notifications]);
+      setCursor(result.nextCursor);
+      setHasNext(result.hasNext);
+    } catch {
+      // ignore
+    } finally {
+      setIsFetchingMore(false);
+    }
+  }, [hasNext, isFetchingMore, cursor]);
+
+  const markAsRead = useCallback((id: number) => {
+    setNotifications((prev) => {
+      const target = prev.find((n) => n.id === id);
+      if (!target || target.read) return prev;
+      markNotificationRead(id).catch(() => {
+        setNotifications((p) => p.map((n) => (n.id === id ? { ...n, read: false } : n)));
+      });
+      return prev.map((n) => (n.id === id ? { ...n, read: true } : n));
+    });
+  }, []);
+
+  const handleMarkAllRead = useCallback(() => {
+    setNotifications((prev) => {
+      markAllNotificationsRead().catch(() => setNotifications(prev));
+      return prev.map((n) => ({ ...n, read: true }));
+    });
+  }, []);
+
+  const handlePress = useCallback(
+    (item: NotificationApiItem) => {
+      markAsRead(item.id);
+      switch (item.type) {
+        case 'NEWSLETTER_ANALYSIS':
+          if (item.payload.newsletterId) {
+            router.push({
+              pathname: '/scan/result',
+              params: { newsletterId: item.payload.newsletterId },
+            });
+          }
+          break;
+        case 'CALENDAR_EVENT':
+        case 'DEADLINE_REMINDER':
+        case 'CHECKLIST_DUE':
+          router.push({
+            pathname: '/(tabs)/calendar',
+            params: item.payload.targetDate ? { date: item.payload.targetDate } : {},
+          });
+          break;
+        case 'WEEKLY_SUMMARY':
+          router.push('/(tabs)/calendar');
+          break;
+        default:
+          break;
+      }
+    },
+    [markAsRead]
   );
 
-  const todayItems = filtered.filter((n) => n.date === 'today');
-  const yesterdayItems = filtered.filter((n) => n.date === 'yesterday');
+  const getTimeLabel = (createdAt: string): string => {
+    const diffMin = Math.floor((Date.now() - new Date(createdAt).getTime()) / 60000);
+    if (diffMin < 1) return t('notifications.timeJustNow');
+    if (diffMin < 60) return t('notifications.timeMinutesAgo', { count: diffMin });
+    const diffHour = Math.floor(diffMin / 60);
+    if (diffHour < 24) return t('notifications.timeHoursAgo', { count: diffHour });
+    return '';
+  };
 
-  const renderItem = (item: NotificationItem) => {
+  const getDateLabel = (dateStr: string): string => {
+    if (dateStr === todayStr) return t('notifications.today');
+    if (dateStr === yesterdayStr) return t('notifications.yesterday');
+    const [year, month, day] = dateStr.split('-').map(Number);
+    return new Intl.DateTimeFormat(i18nInstance.language, {
+      month: 'long',
+      day: 'numeric',
+    }).format(new Date(year, month - 1, day));
+  };
+
+  const filtered = useMemo(
+    () =>
+      selectedChildName === undefined
+        ? notifications
+        : notifications.filter((n) => n.payload.childName === selectedChildName),
+    [notifications, selectedChildName]
+  );
+
+  const groupedByDate = useMemo(() => {
+    const groups: Record<string, NotificationApiItem[]> = {};
+    filtered.forEach((item) => {
+      const dateKey = item.createdAt.split('T')[0];
+      if (!groups[dateKey]) groups[dateKey] = [];
+      groups[dateKey].push(item);
+    });
+    return Object.entries(groups).sort(([a], [b]) => b.localeCompare(a));
+  }, [filtered]);
+
+  const flatRows = useMemo<ListRow[]>(
+    () =>
+      groupedByDate.flatMap(([date, items]) => [
+        { kind: 'header', date } as ListRow,
+        ...items.map((data) => ({ kind: 'item', data }) as ListRow),
+      ]),
+    [groupedByDate]
+  );
+
+  const renderDateHeader = (date: string) => (
+    <View style={styles.dateLabelRow}>
+      <Text style={styles.dateLabelText}>{getDateLabel(date)}</Text>
+    </View>
+  );
+
+  const renderItem = (item: NotificationApiItem) => {
     const config = ICON_CONFIG[item.type];
+    const timeLabel = getTimeLabel(item.createdAt);
     return (
-      <View key={item.id} style={item.isRead ? styles.notifRowRead : styles.notifRowUnread}>
+      <TouchableOpacity
+        key={item.id}
+        style={item.read ? styles.notifRowRead : styles.notifRowUnread}
+        onPress={() => handlePress(item)}
+        activeOpacity={0.7}
+      >
         <View style={[styles.iconBox, { backgroundColor: config.bg }]}>
           <Feather name={config.icon} size={24} color={config.color} />
         </View>
         <View style={styles.textArea}>
           <View style={styles.notifTitleRow}>
             <Text style={styles.notifTitle}>{item.title}</Text>
-            <Text style={styles.timeText}>{item.timeLabel}</Text>
+            {timeLabel ? <Text style={styles.timeText}>{timeLabel}</Text> : null}
           </View>
           <Text style={styles.notifBody}>{item.body}</Text>
-          {item.childName !== null && (
+          {item.payload.childName != null && (
             <View style={styles.tagRow}>
               <View style={styles.childTag}>
-                <Text style={styles.childTagText}>{item.childName}</Text>
+                <Text style={styles.childTagText}>{item.payload.childName}</Text>
               </View>
             </View>
           )}
         </View>
-      </View>
+      </TouchableOpacity>
     );
   };
 
@@ -142,7 +224,7 @@ const NotificationsScreen = () => {
                 },
                 {
                   label: t('notifications.markAllRead'),
-                  onPress: () => console.log('모두 읽음'),
+                  onPress: handleMarkAllRead,
                 },
               ]}
             />
@@ -151,30 +233,31 @@ const NotificationsScreen = () => {
       </View>
 
       <ChildFilterBar
-        items={MOCK_CHILDREN}
+        items={children}
         selectedChildName={selectedChildName}
         onSelect={setSelectedChildName}
       />
 
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {filtered.length === 0 && <Text style={styles.emptyText}>{t('notifications.empty')}</Text>}
-        {todayItems.length > 0 && (
-          <>
-            <View style={styles.dateLabelRow}>
-              <Text style={styles.dateLabelText}>{t('notifications.today')}</Text>
-            </View>
-            {todayItems.map(renderItem)}
-          </>
-        )}
-        {yesterdayItems.length > 0 && (
-          <>
-            <View style={styles.dateLabelRow}>
-              <Text style={styles.dateLabelText}>{t('notifications.yesterday')}</Text>
-            </View>
-            {yesterdayItems.map(renderItem)}
-          </>
-        )}
-      </ScrollView>
+      {isLoading ? (
+        <ActivityIndicator size="large" color={colors.primary[400]} style={styles.loader} />
+      ) : (
+        <FlatList
+          data={flatRows}
+          keyExtractor={(row) => (row.kind === 'header' ? `h-${row.date}` : `n-${row.data.id}`)}
+          renderItem={({ item: row }) =>
+            row.kind === 'header' ? renderDateHeader(row.date) : renderItem(row.data)
+          }
+          onEndReached={loadMore}
+          onEndReachedThreshold={0.3}
+          ListEmptyComponent={<Text style={styles.emptyText}>{t('notifications.empty')}</Text>}
+          ListFooterComponent={
+            isFetchingMore ? (
+              <ActivityIndicator size="small" color={colors.primary[400]} style={styles.loader} />
+            ) : null
+          }
+          showsVerticalScrollIndicator={false}
+        />
+      )}
     </View>
   );
 };

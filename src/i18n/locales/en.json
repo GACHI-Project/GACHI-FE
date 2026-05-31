@@ -623,6 +623,9 @@
     "empty": "No notifications",
     "settings": "Notification Settings",
     "settingsMenu": "Notification Settings",
-    "markAllRead": "Mark all as read"
+    "markAllRead": "Mark all as read",
+    "timeJustNow": "Just now",
+    "timeMinutesAgo": "{{count}}m ago",
+    "timeHoursAgo": "{{count}}h ago"
   }
 }

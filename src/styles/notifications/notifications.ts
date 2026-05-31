@@ -97,6 +97,9 @@ const styles = StyleSheet.create({
     color: colors.text.secondary,
   },
 
+  loader: {
+    marginTop: 60,
+  },
   emptyText: {
     fontSize: 14,
     fontFamily: fonts.medium,

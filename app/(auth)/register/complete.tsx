@@ -30,6 +30,7 @@ const RegisterCompleteScreen = () => {
       name,
       email,
       phoneNumber,
+      languageCode,
       children,
       signupDone,
       loginDone,
@@ -59,6 +60,7 @@ const RegisterCompleteScreen = () => {
           passwordConfirm: password,
           phoneNumber,
           consentAgreed: true,
+          languageCode,
         });
         setSignupDone(true);
       }

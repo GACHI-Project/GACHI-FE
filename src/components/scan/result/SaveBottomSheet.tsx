@@ -249,7 +249,7 @@ const SaveBottomSheet = ({
   newsletterId,
   newsletterTitle,
 }: Props) => {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
 
   const [show, setShow] = useState(false);
@@ -298,7 +298,7 @@ const SaveBottomSheet = ({
       }).format(date);
       return `${dateStr} · ${t('scan.result.saveBottomSheet.fullDay')}`;
     },
-    [i18n.language, t]
+    [t]
   );
 
   // 미리보기 데이터 fetch (임시: AI 파이프라인 연결 전 더미 주입 후 preview 조회)
@@ -337,20 +337,20 @@ const SaveBottomSheet = ({
         const items = await getCalendarPreview(newsletterId);
         if (cancelled) return;
         setPreviews(items);
-        const states: Record<string, EventState> = {};
-        for (const item of items) {
+        const states = items.reduce<Record<string, EventState>>((acc, item) => {
           if (item.extractedDate) {
             const [y, m, d] = item.extractedDate.split('-');
-            states[item.tempEventId] = {
+            acc[item.tempEventId] = {
               year: y,
               month: String(Number(m)),
               day: String(Number(d)),
               isEditing: false,
             };
           } else {
-            states[item.tempEventId] = { year: '', month: '', day: '', isEditing: false };
+            acc[item.tempEventId] = { year: '', month: '', day: '', isEditing: false };
           }
-        }
+          return acc;
+        }, {});
         setEventStates(states);
       } catch (e) {
         if (cancelled) return;
@@ -574,15 +574,18 @@ const SaveBottomSheet = ({
                   showsVerticalScrollIndicator={false}
                   keyboardShouldPersistTaps="handled"
                 >
-                  {previewLoading ? (
+                  {previewLoading && (
                     <ActivityIndicator
                       size="small"
                       color={colors.primary[400]}
                       style={localStyles.loadingIndicator}
                     />
-                  ) : previewError ? (
+                  )}
+                  {!previewLoading && previewError && (
                     <Text style={localStyles.errorText}>{previewError}</Text>
-                  ) : (
+                  )}
+                  {!previewLoading &&
+                    !previewError &&
                     previews.map((p) => {
                       const es = eventStates[p.tempEventId];
                       if (!es) return null;
@@ -597,8 +600,7 @@ const SaveBottomSheet = ({
                           getDisplayDate={getDisplayDate}
                         />
                       );
-                    })
-                  )}
+                    })}
                 </ScrollView>
 
                 <View style={styles.buttons}>

@@ -165,6 +165,9 @@ const styles = StyleSheet.create({
     fontFamily: fonts.semiBold,
     color: colors.text.secondary,
   },
+  loadingIndicator: {
+    marginVertical: 16,
+  },
 });
 
 export default styles;

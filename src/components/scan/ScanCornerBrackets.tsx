@@ -6,19 +6,19 @@ const ScanCornerBrackets = () => (
   <>
     <View style={[styles.corner, styles.topLeft]} pointerEvents="none">
       <View style={[styles.cornerH, styles.top]} />
-      <View style={[styles.cornerV, styles.topLeft]} />
+      <View style={[styles.cornerV, styles.innerTopLeft]} />
     </View>
     <View style={[styles.corner, styles.topRight]} pointerEvents="none">
       <View style={[styles.cornerH, styles.top]} />
-      <View style={[styles.cornerV, styles.topRight]} />
+      <View style={[styles.cornerV, styles.innerTopRight]} />
     </View>
     <View style={[styles.corner, styles.bottomLeft]} pointerEvents="none">
       <View style={[styles.cornerH, styles.bottom]} />
-      <View style={[styles.cornerV, styles.bottomLeft]} />
+      <View style={[styles.cornerV, styles.innerBottomLeft]} />
     </View>
     <View style={[styles.corner, styles.bottomRight]} pointerEvents="none">
       <View style={[styles.cornerH, styles.bottom]} />
-      <View style={[styles.cornerV, styles.bottomRight]} />
+      <View style={[styles.cornerV, styles.innerBottomRight]} />
     </View>
   </>
 );
@@ -52,4 +52,8 @@ const styles = StyleSheet.create({
   bottomRight: { bottom: 16, right: 16 },
   top: { top: 0 },
   bottom: { bottom: 0 },
+  innerTopLeft: { top: 0, left: 0 },
+  innerTopRight: { top: 0, right: 0 },
+  innerBottomLeft: { bottom: 0, left: 0 },
+  innerBottomRight: { bottom: 0, right: 0 },
 });

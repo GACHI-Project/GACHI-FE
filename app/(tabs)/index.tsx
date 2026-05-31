@@ -4,6 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { router } from 'expo-router';
 import TaskCard from '../../src/components/home/TaskCard';
 import ScanBanner from '../../src/components/home/ScanBanner';
 import FeatureSection from '../../src/components/home/FeatureSection';
@@ -45,7 +46,11 @@ const HomeScreen = () => {
             <Text style={styles.greeting}>{greetingText}</Text>
             <Text style={styles.username}>{t('home.usernameFormat', { name: '김까치' })}</Text>
           </View>
-          <TouchableOpacity style={styles.bellButton} activeOpacity={0.7}>
+          <TouchableOpacity
+            style={styles.bellButton}
+            activeOpacity={0.7}
+            onPress={() => router.push('/notifications')}
+          >
             <Ionicons name="notifications-outline" size={22} color={colors.primary[600]} />
           </TouchableOpacity>
         </View>

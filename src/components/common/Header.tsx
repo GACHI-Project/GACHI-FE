@@ -10,10 +10,30 @@ interface HeaderProps {
   title: string;
   onBack?: () => void;
   onHelp?: () => void;
+  rightComponent?: React.ReactNode;
 }
 
-const Header = ({ title, onBack, onHelp }: HeaderProps) => {
+const Header = ({ title, onBack, onHelp, rightComponent }: HeaderProps) => {
   const { t } = useTranslation();
+
+  const renderRight = () => {
+    if (rightComponent) {
+      return rightComponent;
+    }
+    if (onHelp) {
+      return (
+        <TouchableOpacity
+          style={styles.iconButton}
+          onPress={onHelp}
+          accessibilityRole="button"
+          accessibilityLabel={t('common.help')}
+        >
+          <Ionicons name="help" size={16} color={colors.gray[300]} />
+        </TouchableOpacity>
+      );
+    }
+    return <View style={styles.iconSpacer} />;
+  };
 
   return (
     <View style={styles.container}>
@@ -26,18 +46,7 @@ const Header = ({ title, onBack, onHelp }: HeaderProps) => {
         <Ionicons name="arrow-back" size={16} color={colors.gray[300]} />
       </TouchableOpacity>
       <Text style={styles.title}>{title}</Text>
-      {onHelp ? (
-        <TouchableOpacity
-          style={styles.iconButton}
-          onPress={onHelp}
-          accessibilityRole="button"
-          accessibilityLabel={t('common.help')}
-        >
-          <Ionicons name="help" size={16} color={colors.gray[300]} />
-        </TouchableOpacity>
-      ) : (
-        <View style={styles.iconSpacer} />
-      )}
+      {renderRight()}
     </View>
   );
 };

@@ -609,11 +609,24 @@
           "badge": "Important"
         },
         "document": {
-          "title": "Document Analysis Complete",
+          "title": "Analysis Complete",
           "desc": "Notifies when your school notice analysis is complete",
           "badge": "General"
         }
       }
     }
+  },
+  "notifications": {
+    "title": "Notifications",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "empty": "No notifications",
+    "settings": "Notification Settings",
+    "settingsMenu": "Notification Settings",
+    "markAllRead": "Mark all as read",
+    "timeJustNow": "Just now",
+    "timeMinutesAgo": "{{count}}m ago",
+    "timeHoursAgo": "{{count}}h ago",
+    "loadError": "Failed to load notifications"
   }
 }

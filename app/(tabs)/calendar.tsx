@@ -1,13 +1,15 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { Ionicons, FontAwesome5 } from '@expo/vector-icons';
-import { router, useFocusEffect } from 'expo-router';
+import { FontAwesome5 } from '@expo/vector-icons';
+import { useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import colors from '../../src/constants/colors';
 import styles from '../../src/styles/calendar/calendar';
+import Header from '../../src/components/common/Header';
 import EventCard from '../../src/components/calendar/EventCard';
 import WeekCalendar from '../../src/components/calendar/WeekCalendar';
 import MonthCalendar from '../../src/components/calendar/MonthCalendar';
+import ChildFilterBar from '../../src/components/common/ChildFilterBar';
 import {
   fetchMonthlyMarkers,
   fetchDailyEvents,
@@ -56,6 +58,16 @@ const CalendarScreen = () => {
     year: todayDate.getFullYear(),
     month: todayDate.getMonth(),
   });
+
+  const { date: dateParam } = useLocalSearchParams<{ date?: string }>();
+
+  useEffect(() => {
+    if (!dateParam) return;
+    setSelectedDate(dateParam);
+    setIsWeekMode(false);
+    const [y, m] = dateParam.split('-').map(Number);
+    setCalendarMonth({ year: y, month: m - 1 });
+  }, [dateParam]);
 
   const [focusKey, setFocusKey] = useState(0);
   const hasFocusedOnceRef = useRef(false);
@@ -267,72 +279,37 @@ const CalendarScreen = () => {
   return (
     <View style={styles.container}>
       {/* 헤더 */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.iconButton}
-          onPress={() => router.back()}
-          accessibilityRole="button"
-          accessibilityLabel={t('calendar.backAccessibility')}
-        >
-          <Ionicons name="arrow-back" size={16} color={colors.gray[300]} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>{t('calendar.title')}</Text>
-        <TouchableOpacity
-          style={[styles.iconButton, styles.calendarIconButton]}
-          onPress={handleToggleMode}
-          accessibilityRole="button"
-          accessibilityLabel={
-            isWeekMode ? t('calendar.weekViewAccessibility') : t('calendar.monthViewAccessibility')
+      <View style={styles.headerWrap}>
+        <Header
+          title={t('calendar.title')}
+          rightComponent={
+            <TouchableOpacity
+              style={[styles.iconButton, styles.calendarIconButton]}
+              onPress={handleToggleMode}
+              accessibilityRole="button"
+              accessibilityLabel={
+                isWeekMode
+                  ? t('calendar.weekViewAccessibility')
+                  : t('calendar.monthViewAccessibility')
+              }
+            >
+              <FontAwesome5
+                name={isWeekMode ? 'calendar-alt' : 'calendar-week'}
+                size={14}
+                color={colors.primary[400]}
+                solid
+              />
+            </TouchableOpacity>
           }
-        >
-          <FontAwesome5
-            name={isWeekMode ? 'calendar-alt' : 'calendar-week'}
-            size={14}
-            color={colors.primary[400]}
-            solid
-          />
-        </TouchableOpacity>
+        />
       </View>
 
       {/* 자녀 필터바 */}
-      <View style={styles.filterBar}>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.filterContent}
-        >
-          <TouchableOpacity
-            style={[styles.filterBtn, selectedChildName === undefined && styles.filterBtnSelected]}
-            onPress={() => setSelectedChildName(undefined)}
-            activeOpacity={0.7}
-          >
-            <Text
-              style={[
-                styles.filterText,
-                selectedChildName === undefined && styles.filterTextSelected,
-              ]}
-            >
-              {t('common.all')}
-            </Text>
-          </TouchableOpacity>
-          {children.map((child) => {
-            const selected = selectedChildName === child.name;
-            return (
-              <TouchableOpacity
-                key={child.id}
-                style={[styles.filterBtn, selected && styles.filterBtnSelected]}
-                onPress={() => setSelectedChildName(child.name)}
-                activeOpacity={0.7}
-              >
-                <View style={[styles.filterDot, { backgroundColor: child.colorCode }]} />
-                <Text style={[styles.filterText, selected && styles.filterTextSelected]}>
-                  {child.name}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
-      </View>
+      <ChildFilterBar
+        items={children}
+        selectedChildName={selectedChildName}
+        onSelect={setSelectedChildName}
+      />
 
       {isWeekMode ? (
         <>

@@ -107,10 +107,11 @@ export default StyleSheet.create({
     overflow: 'hidden',
   },
   itemRow: {
-    height: 64,
+    // height: 64,
     paddingHorizontal: 16,
+    paddingVertical: 12,
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: 10,
   },
   iconBox: {
@@ -128,11 +129,13 @@ export default StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
+    flex: 1,
   },
   itemTitle: {
     fontSize: 14,
     fontFamily: fonts.semiBold,
     color: colors.text.primary,
+    flexShrink: 1,
   },
   itemDesc: {
     fontSize: 11,

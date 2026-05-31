@@ -10,19 +10,9 @@ export default StyleSheet.create({
   },
 
   // 헤더
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingTop: 60,
-    paddingBottom: 12,
-    paddingHorizontal: layout.screenPaddingHorizontal,
+  headerWrap: {
     backgroundColor: colors.text.white,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontFamily: fonts.semiBold,
-    color: colors.text.primary,
+    paddingTop: 60,
   },
   iconButton: {
     width: 30,
@@ -35,46 +25,6 @@ export default StyleSheet.create({
   },
   calendarIconButton: {
     borderColor: colors.primary[400],
-  },
-
-  // 자녀 필터바
-  filterBar: {
-    height: 53,
-    backgroundColor: colors.text.white,
-    justifyContent: 'center',
-  },
-  filterContent: {
-    alignItems: 'center',
-    paddingHorizontal: layout.screenPaddingHorizontal,
-    gap: 10,
-  },
-  filterBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    height: 31,
-    borderRadius: 15,
-    borderWidth: 1,
-    borderColor: colors.gray[200],
-    paddingHorizontal: 14,
-    backgroundColor: colors.text.white,
-    gap: 6,
-  },
-  filterBtnSelected: {
-    backgroundColor: colors.primary[500],
-    borderWidth: 0,
-  },
-  filterText: {
-    fontSize: 14,
-    fontFamily: fonts.semiBold,
-    color: colors.text.secondary,
-  },
-  filterTextSelected: {
-    color: colors.text.white,
-  },
-  filterDot: {
-    width: 5,
-    height: 5,
-    borderRadius: 99,
   },
 
   // 로딩

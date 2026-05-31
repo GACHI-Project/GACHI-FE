@@ -16,6 +16,10 @@ const colors = {
     200: '#FFF3B5',
     100: '#FFFBE6',
   },
+  pink: {
+    100: '#FCEBEB',
+    300: '#F9A0A0',
+  },
   gray: {
     300: '#999EA8',
     200: '#C8CAD0',

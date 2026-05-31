@@ -8,10 +8,9 @@ import { PrimaryButton, SecondaryButton } from '../../../src/components/common/B
 import SelectionCard from '../../../src/components/common/SelectionCard';
 import colors from '../../../src/constants/colors';
 import styles from '../../../src/styles/register/language';
-import { LanguageType, LanguageOption } from '../../../src/types/language';
+import { LanguageType, LanguageOption, toServerLanguageCode } from '../../../src/types/language';
 import { saveLanguage } from '../../../src/i18n';
 import { useRegisterStore } from '../../../src/store/registerStore';
-import { toServerLanguageCode } from '../../../src/types/language';
 import KRFlag from '../../../assets/flags/KR.png';
 import USFlag from '../../../assets/flags/US.png';
 import VNFlag from '../../../assets/flags/VN.png';

@@ -38,7 +38,9 @@ const LoginScreen = () => {
           await saveLanguage(lang);
           await i18n.changeLanguage(lang);
         }
-      } catch {}
+      } catch {
+        /* language sync failure should not block login */
+      }
 
       router.replace('/(tabs)');
     } catch (error) {

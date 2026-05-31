@@ -7,6 +7,7 @@ interface RegisterState {
   name: string;
   email: string;
   phoneNumber: string;
+  languageCode: string;
   children: ChildPayload[];
   signupDone: boolean;
   loginDone: boolean;
@@ -18,6 +19,7 @@ interface RegisterState {
     email: string;
     phoneNumber: string;
   }) => void;
+  setLanguageCode: (v: string) => void;
   setChildren: (v: ChildPayload[]) => void;
   setSignupDone: (v: boolean) => void;
   setLoginDone: (v: boolean) => void;
@@ -31,6 +33,7 @@ const initialState = {
   name: '',
   email: '',
   phoneNumber: '',
+  languageCode: 'KO',
   children: [],
   signupDone: false,
   loginDone: false,
@@ -52,6 +55,7 @@ export const useRegisterStore = create<RegisterState>((set) => ({
         ...(changed ? { signupDone: false, loginDone: false } : {}),
       };
     }),
+  setLanguageCode: (v) => set({ languageCode: v }),
   setChildren: (v) => set({ children: v, registeredChildrenCount: 0 }),
   setSignupDone: (v) => set({ signupDone: v }),
   setLoginDone: (v) => set({ loginDone: v }),

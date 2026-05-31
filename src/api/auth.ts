@@ -186,6 +186,7 @@ export const signup = async (payload: {
   passwordConfirm: string;
   phoneNumber: string;
   consentAgreed: boolean;
+  languageCode: string;
 }): Promise<SignupResult> => {
   try {
     const response = await apiClient.post('/api/v1/auth/signup', payload);

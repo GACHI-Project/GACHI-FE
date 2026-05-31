@@ -10,6 +10,8 @@ import colors from '../../../src/constants/colors';
 import styles from '../../../src/styles/register/language';
 import { LanguageType, LanguageOption } from '../../../src/types/language';
 import { saveLanguage } from '../../../src/i18n';
+import { useRegisterStore } from '../../../src/store/registerStore';
+import { toServerLanguageCode } from '../../../src/types/language';
 import KRFlag from '../../../assets/flags/KR.png';
 import USFlag from '../../../assets/flags/US.png';
 import VNFlag from '../../../assets/flags/VN.png';
@@ -24,6 +26,7 @@ const LANGUAGE_OPTIONS: LanguageOption[] = [
 
 const RegisterLanguageScreen = () => {
   const { t, i18n } = useTranslation();
+  const setLanguageCode = useRegisterStore((s) => s.setLanguageCode);
   const [selected, setSelected] = useState<LanguageType>('ko');
 
   return (
@@ -67,10 +70,9 @@ const RegisterLanguageScreen = () => {
           <PrimaryButton
             label={t('common.next')}
             onPress={async () => {
+              setLanguageCode(toServerLanguageCode(selected));
+              await saveLanguage(selected);
               await i18n.changeLanguage(selected);
-              if (selected === 'ko' || selected === 'en') {
-                await saveLanguage(selected);
-              }
               router.push('/(auth)/register/basic');
             }}
           />

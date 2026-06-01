@@ -36,7 +36,9 @@ export interface UserInfo {
   email: string;
   name: string;
   languageCode: string;
+  phoneNumber: string;
   notificationEnabled: boolean;
+  notificationPreference: string;
   createdAt: string;
 }
 

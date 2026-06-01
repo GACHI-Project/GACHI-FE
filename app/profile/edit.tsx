@@ -45,7 +45,7 @@ const ProfileEditScreen = () => {
           <View style={styles.divider} />
           <View style={styles.row}>
             <Text style={styles.rowLabel}>{t('profile.editProfile.phone')}</Text>
-            <Text style={styles.rowValue}>—</Text>
+            <Text style={styles.rowValue}>{userInfo?.phoneNumber ?? ''}</Text>
           </View>
           <View style={styles.divider} />
           <View style={styles.row}>

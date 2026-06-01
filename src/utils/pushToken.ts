@@ -26,7 +26,7 @@ export const registerDevicePushToken = async (): Promise<void> => {
   }
 
   try {
-    const platform = Platform.OS === 'ios' ? 'IOS' : ('ANDROID' as const);
+    const platform = 'EXPO' as const;
     const appVersion = Constants.expoConfig?.version ?? '1.0.0';
     const { data: token } = await Notifications.getExpoPushTokenAsync({ projectId });
     const deviceId =

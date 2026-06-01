@@ -7,6 +7,9 @@ import { useTranslation } from 'react-i18next';
 import AuthInput from '../../src/components/auth/AuthInput';
 import { PrimaryButton } from '../../src/components/common/Button';
 import { login, AuthApiError } from '../../src/api/auth';
+import { getMe } from '../../src/api/user';
+import i18n, { saveLanguage, SUPPORTED_LANGUAGES, SupportedLanguage } from '../../src/i18n';
+import { fromServerLanguageCode } from '../../src/types/language';
 import colors from '../../src/constants/colors';
 import fonts from '../../src/constants/fonts';
 import layout from '../../src/constants/layout';
@@ -27,6 +30,18 @@ const LoginScreen = () => {
       const result = await login(id, password, stayLoggedIn);
       await SecureStore.setItemAsync('accessToken', result.accessToken);
       await SecureStore.setItemAsync('refreshToken', result.refreshToken);
+
+      try {
+        const me = await getMe();
+        const lang = fromServerLanguageCode(me.languageCode) as SupportedLanguage;
+        if (SUPPORTED_LANGUAGES.includes(lang)) {
+          await saveLanguage(lang);
+          await i18n.changeLanguage(lang);
+        }
+      } catch {
+        /* language sync failure should not block login */
+      }
+
       router.replace('/(tabs)');
     } catch (error) {
       if (error instanceof AuthApiError) {

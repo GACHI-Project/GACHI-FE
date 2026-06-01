@@ -6,8 +6,9 @@ import { useTranslation } from 'react-i18next';
 import Header from '../../src/components/common/Header';
 import LanguageSelector from '../../src/components/profile/LanguageSelector';
 import { PrimaryButton } from '../../src/components/common/Button';
-import { LanguageType } from '../../src/types/language';
+import { LanguageType, toServerLanguageCode } from '../../src/types/language';
 import { saveLanguage, SUPPORTED_LANGUAGES } from '../../src/i18n';
+import { updateLanguage } from '../../src/api/user';
 import colors from '../../src/constants/colors';
 import fonts from '../../src/constants/fonts';
 import layout from '../../src/constants/layout';
@@ -41,6 +42,7 @@ const ProfileLanguageScreen = () => {
           onPress={async () => {
             setIsLoading(true);
             try {
+              await updateLanguage(toServerLanguageCode(selected));
               await saveLanguage(selected);
               await i18n.changeLanguage(selected);
               router.back();

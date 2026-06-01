@@ -2,7 +2,11 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { getTodayChecklists, toggleChecklistItem, type TodayChecklistItem } from '../../api/checklist';
+import {
+  getTodayChecklists,
+  toggleChecklistItem,
+  type TodayChecklistItem,
+} from '../../api/checklist';
 import { getMyChildren, type ChildResult } from '../../api/child';
 import colors from '../../constants/colors';
 import styles from '../../styles/home/taskCard';
@@ -82,7 +86,7 @@ const TaskCard = () => {
     return `${Object.entries(grouped)
       .map(([name, count]) => t('home.taskCard.childCount', { name, count }))
       .join(' · ')} ${t('home.taskCard.remaining')}`;
-  }, [items, t]);
+  }, [items, t, total]);
 
   const { todayMonth, todayDay } = useMemo(() => {
     const now = new Date();
@@ -109,6 +113,66 @@ const TaskCard = () => {
     [pendingIds]
   );
 
+  const summaryTitle = (() => {
+    if (loading || error) return '';
+    if (total === 0) return t('home.taskCard.noTodo');
+    return t('home.taskCard.todayCount', { count: total });
+  })();
+
+  const renderBody = () => {
+    if (loading) {
+      return (
+        <ActivityIndicator
+          size="small"
+          color={colors.primary[400]}
+          style={styles.loadingIndicator}
+        />
+      );
+    }
+    if (error) return <Text style={styles.emptyText}>{t('common.networkError')}</Text>;
+    if (total === 0) return <Text style={styles.emptyText}>{t('home.taskCard.empty')}</Text>;
+    return visibleItems.map((item, index) => (
+      <View key={item.checklistId}>
+        <View style={styles.todoRow}>
+          <TouchableOpacity
+            style={[styles.checkbox, checked[item.checklistId] && styles.checkboxChecked]}
+            onPress={() => toggleCheck(item.checklistId, !!checked[item.checklistId])}
+            activeOpacity={0.7}
+            disabled={!!pendingIds[item.checklistId]}
+            accessibilityRole="checkbox"
+            accessibilityState={{
+              checked: !!checked[item.checklistId],
+              busy: !!pendingIds[item.checklistId],
+            }}
+            accessibilityLabel={item.content}
+          >
+            {checked[item.checklistId] && <Text style={styles.checkMark}>✓</Text>}
+          </TouchableOpacity>
+          <View style={styles.todoContent}>
+            <Text style={[styles.todoTitle, checked[item.checklistId] && styles.todoTitleDone]}>
+              {item.content}
+            </Text>
+            <View style={styles.todoMeta}>
+              <View
+                style={[
+                  styles.childTag,
+                  { backgroundColor: colorMap[item.childName] ?? colors.primary[300] },
+                ]}
+              >
+                <Text style={styles.childTagText}>{item.childName}</Text>
+              </View>
+              {item.detail ? <Text style={styles.todoDesc}>{item.detail}</Text> : null}
+            </View>
+          </View>
+          <View style={styles.todayBadge}>
+            <Text style={styles.todayText}>{t('home.taskCard.today')}</Text>
+          </View>
+        </View>
+        {index < visibleItems.length - 1 && <View style={styles.divider} />}
+      </View>
+    ));
+  };
+
   return (
     <View style={styles.card}>
       <View style={styles.summaryRow}>
@@ -117,13 +181,7 @@ const TaskCard = () => {
           <Text style={styles.dateDay}>{todayDay}</Text>
         </View>
         <View style={styles.summaryTexts}>
-          <Text style={styles.summaryTitle}>
-            {loading || error
-              ? ''
-              : total === 0
-                ? t('home.taskCard.noTodo')
-                : t('home.taskCard.todayCount', { count: total })}
-          </Text>
+          <Text style={styles.summaryTitle}>{summaryTitle}</Text>
           {!loading && !error && <Text style={styles.summaryDesc}>{summaryDesc}</Text>}
         </View>
         <View style={styles.childCircles}>
@@ -142,51 +200,7 @@ const TaskCard = () => {
 
       <View style={styles.divider} />
 
-      {loading ? (
-        <ActivityIndicator size="small" color={colors.primary[400]} style={{ marginVertical: 16 }} />
-      ) : error ? (
-        <Text style={styles.emptyText}>{t('common.networkError')}</Text>
-      ) : total === 0 ? (
-        <Text style={styles.emptyText}>{t('home.taskCard.empty')}</Text>
-      ) : (
-        visibleItems.map((item, index) => (
-          <View key={item.checklistId}>
-            <View style={styles.todoRow}>
-              <TouchableOpacity
-                style={[styles.checkbox, checked[item.checklistId] && styles.checkboxChecked]}
-                onPress={() => toggleCheck(item.checklistId, !!checked[item.checklistId])}
-                activeOpacity={0.7}
-                disabled={!!pendingIds[item.checklistId]}
-                accessibilityRole="checkbox"
-                accessibilityState={{ checked: !!checked[item.checklistId], busy: !!pendingIds[item.checklistId] }}
-                accessibilityLabel={item.content}
-              >
-                {checked[item.checklistId] && <Text style={styles.checkMark}>✓</Text>}
-              </TouchableOpacity>
-              <View style={styles.todoContent}>
-                <Text style={[styles.todoTitle, checked[item.checklistId] && styles.todoTitleDone]}>
-                  {item.content}
-                </Text>
-                <View style={styles.todoMeta}>
-                  <View
-                    style={[
-                      styles.childTag,
-                      { backgroundColor: colorMap[item.childName] ?? colors.primary[300] },
-                    ]}
-                  >
-                    <Text style={styles.childTagText}>{item.childName}</Text>
-                  </View>
-                  {item.detail ? <Text style={styles.todoDesc}>{item.detail}</Text> : null}
-                </View>
-              </View>
-              <View style={styles.todayBadge}>
-                <Text style={styles.todayText}>{t('home.taskCard.today')}</Text>
-              </View>
-            </View>
-            {index < visibleItems.length - 1 && <View style={styles.divider} />}
-          </View>
-        ))
-      )}
+      {renderBody()}
 
       {hiddenCount > 0 && (
         <>

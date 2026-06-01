@@ -62,3 +62,16 @@ export const updateLanguage = async (languageCode: string): Promise<void> => {
     throw wrapError(error);
   }
 };
+
+export type NotificationPreference = 'ALL' | 'IMPORTANT' | 'URGENT_ONLY' | 'OFF';
+
+export const updateNotificationPreference = async (
+  notificationPreference: NotificationPreference
+): Promise<void> => {
+  try {
+    const headers = await getAuthHeader();
+    await apiClient.patch('/api/v1/users/me/notification', { notificationPreference }, { headers });
+  } catch (error) {
+    throw wrapError(error);
+  }
+};

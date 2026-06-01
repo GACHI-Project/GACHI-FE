@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   ScrollView,
   View,
@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { ChildInfo } from '../../src/types/child';
 import { fetchChildren, registerChild, ChildItem } from '../../src/api/child';
@@ -56,15 +56,17 @@ const ProfileScreen = () => {
       } finally {
         setIsLoading(false);
       }
-      try {
-        const user = await fetchMyInfo();
-        setUserInfo(user);
-      } catch (e) {
-        console.error('사용자 정보 조회 실패:', e);
-      }
     };
     load();
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchMyInfo()
+        .then(setUserInfo)
+        .catch(() => {});
+    }, [])
+  );
 
   return (
     <View style={styles.container}>
@@ -165,9 +167,9 @@ const ProfileScreen = () => {
           >
             <Text style={styles.rowLabel}>{t('profile.notification')}</Text>
             <Text style={styles.rowValue}>
-              {userInfo?.notificationEnabled
-                ? t('profile.notificationOn')
-                : t('profile.notificationOff')}
+              {userInfo?.notificationPreference === 'OFF'
+                ? t('profile.notificationOff')
+                : t('profile.notificationOn')}
             </Text>
             <Ionicons name="chevron-forward" size={16} color={colors.text.secondary} />
           </TouchableOpacity>

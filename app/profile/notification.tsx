@@ -1,10 +1,15 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import Header from '../../src/components/common/Header';
 import Toggle from '../../src/components/common/Toggle';
+import {
+  fetchMyInfo,
+  updateNotificationPreference,
+  type NotificationPreference,
+} from '../../src/api/user';
 import colors from '../../src/constants/colors';
 import styles from '../../src/styles/profile/profileNotification';
 
@@ -71,6 +76,18 @@ const LEVEL_PRESETS: Record<NotificationLevel, Record<ItemKey, boolean>> = {
   urgent: { deadline: true, checklist: false, weekly: false, document: false },
 };
 
+const prefToLevel = (pref: NotificationPreference): NotificationLevel => {
+  if (pref === 'ALL') return 'all';
+  if (pref === 'URGENT_ONLY') return 'urgent';
+  return 'important';
+};
+
+const levelToPref = (lv: NotificationLevel): NotificationPreference => {
+  if (lv === 'all') return 'ALL';
+  if (lv === 'urgent') return 'URGENT_ONLY';
+  return 'IMPORTANT';
+};
+
 const ProfileNotificationScreen = () => {
   const { t } = useTranslation();
   const [masterOn, setMasterOn] = useState(true);
@@ -82,6 +99,31 @@ const ProfileNotificationScreen = () => {
     document: false,
   });
 
+  useEffect(() => {
+    fetchMyInfo()
+      .then((user) => {
+        const pref = user.notificationPreference as NotificationPreference;
+        if (pref === 'OFF') {
+          setMasterOn(false);
+        } else {
+          const lv = prefToLevel(pref);
+          setMasterOn(true);
+          setLevel(lv);
+          setItems(LEVEL_PRESETS[lv]);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const handleMasterToggle = async (value: boolean) => {
+    setMasterOn(value);
+    if (!value) {
+      await updateNotificationPreference('OFF').catch(() => setMasterOn(true));
+    } else {
+      await updateNotificationPreference(levelToPref(level)).catch(() => setMasterOn(false));
+    }
+  };
+
   const handleItemToggle = (key: ItemKey) => {
     const newItems = { ...items, [key]: !items[key] };
     setItems(newItems);
@@ -91,9 +133,10 @@ const ProfileNotificationScreen = () => {
     if (matched) setLevel(matched[0] as NotificationLevel);
   };
 
-  const handleLevelChange = (newLevel: NotificationLevel) => {
+  const handleLevelChange = async (newLevel: NotificationLevel) => {
     setLevel(newLevel);
     setItems(LEVEL_PRESETS[newLevel]);
+    await updateNotificationPreference(levelToPref(newLevel)).catch(() => {});
   };
 
   return (
@@ -112,7 +155,7 @@ const ProfileNotificationScreen = () => {
             <Text style={styles.masterTitle}>{t('profile.notificationSetting.masterTitle')}</Text>
             <Text style={styles.masterDesc}>{t('profile.notificationSetting.masterDesc')}</Text>
           </View>
-          <Toggle value={masterOn} onValueChange={setMasterOn} />
+          <Toggle value={masterOn} onValueChange={handleMasterToggle} />
         </View>
 
         {/* 알림 단계 */}

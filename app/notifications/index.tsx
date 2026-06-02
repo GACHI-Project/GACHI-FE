@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { View, Text, FlatList, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import Header from '../../src/components/common/Header';
 import HeaderMenuButton from '../../src/components/common/HeaderMenuButton';
@@ -77,6 +77,12 @@ const NotificationsScreen = () => {
   useEffect(() => {
     loadInitial();
   }, [loadInitial]);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadInitial();
+    }, [loadInitial])
+  );
 
   const loadMore = useCallback(async () => {
     if (!hasNext || isFetchingMore) return;

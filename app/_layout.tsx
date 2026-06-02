@@ -5,7 +5,10 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as SplashScreen from 'expo-splash-screen';
 import * as Font from 'expo-font';
+import * as Notifications from 'expo-notifications';
 import { initI18n } from '../src/i18n';
+import { useNotificationStore } from '../src/store/notificationStore';
+import { fetchUnreadCount } from '../src/api/notifications';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
@@ -19,6 +22,7 @@ const FONTS = {
 
 const RootLayout = () => {
   const [ready, setReady] = useState(false);
+  const { setUnreadCount } = useNotificationStore();
 
   useEffect(() => {
     Promise.all([Font.loadAsync(FONTS), initI18n()]).finally(() => {
@@ -26,6 +30,15 @@ const RootLayout = () => {
       SplashScreen.hideAsync().catch(() => {});
     });
   }, []);
+
+  useEffect(() => {
+    const subscription = Notifications.addNotificationReceivedListener(() => {
+      fetchUnreadCount()
+        .then(setUnreadCount)
+        .catch(() => {});
+    });
+    return () => subscription.remove();
+  }, [setUnreadCount]);
 
   if (!ready) return null;
 

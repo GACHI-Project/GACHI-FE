@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Modal,
   TouchableWithoutFeedback,
+  Alert,
 } from 'react-native';
 import { Ionicons, FontAwesome5 } from '@expo/vector-icons';
 import { router } from 'expo-router';
@@ -20,11 +21,18 @@ const ProfileEditScreen = () => {
   const { t } = useTranslation();
   const [withdrawModalVisible, setWithdrawModalVisible] = useState(false);
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
+  const [loadError, setLoadError] = useState(false);
 
   useEffect(() => {
     fetchMyInfo()
-      .then(setUserInfo)
-      .catch(() => {});
+      .then((info) => {
+        setUserInfo(info);
+        setLoadError(false);
+      })
+      .catch(() => {
+        setLoadError(true);
+        Alert.alert(t('common.error'), t('common.networkError'));
+      });
   }, []);
 
   return (

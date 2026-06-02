@@ -8,7 +8,6 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
-import * as SecureStore from 'expo-secure-store';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -111,10 +110,14 @@ const ProfileScreen = () => {
                       id: String(child.id),
                       name: child.name,
                       selectedSchool: {
-                        name: child.schoolName,
                         schoolCode: child.schoolCode,
-                        address: '',
-                        type: '',
+                        schoolName: child.schoolName,
+                        englishSchoolName: '',
+                        schoolKind: '',
+                        officeCode: '',
+                        officeName: '',
+                        locationName: '',
+                        roadAddress: '',
                       },
                       schoolQuery: child.schoolName,
                       grade: child.grade,
@@ -203,23 +206,22 @@ const ProfileScreen = () => {
         onSave={async (updated) => {
           if (isNewChild) {
             try {
-              const token = await SecureStore.getItemAsync('accessToken');
-              if (!token) throw new Error('UNAUTHORIZED');
-              await registerChild(
-                {
-                  name: updated.name,
-                  schoolName: updated.selectedSchool?.name ?? updated.schoolQuery,
-                  schoolCode: updated.selectedSchool?.schoolCode ?? '',
-                  grade: updated.grade ?? 1,
-                  colorCode: updated.calendarColor ?? '#2BAEE0',
-                },
-                token
-              );
+              await registerChild({
+                name: updated.name,
+                schoolName: updated.selectedSchool?.schoolName ?? updated.schoolQuery,
+                schoolCode: updated.selectedSchool?.schoolCode ?? '',
+                officeCode: updated.selectedSchool?.officeCode ?? '',
+                grade: updated.grade ?? 1,
+                colorCode: updated.calendarColor ?? '#2BAEE0',
+              });
               const result = await fetchChildren();
               setChildren(result);
-            } catch {
-              Alert.alert('오류', '자녀 추가에 실패했어요. 다시 시도해주세요.');
-              return; // 시트 유지
+            } catch (e) {
+              Alert.alert(
+                '오류',
+                e instanceof Error ? e.message : '자녀 추가에 실패했어요. 다시 시도해주세요.'
+              );
+              return;
             }
           } else {
             Alert.alert('준비 중', '자녀 수정 기능은 현재 준비 중이에요.');

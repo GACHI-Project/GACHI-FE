@@ -65,29 +65,23 @@ const RegisterCompleteScreen = () => {
         setSignupDone(true);
       }
 
-      let accessToken: string;
-
       if (!loginDone) {
         const result = await login(loginId, password, false);
         await SecureStore.setItemAsync('accessToken', result.accessToken);
         await SecureStore.setItemAsync('refreshToken', result.refreshToken);
         setLoginDone(true);
-        accessToken = result.accessToken;
       } else {
         const stored = await SecureStore.getItemAsync('accessToken');
-        if (stored) {
-          accessToken = stored;
-        } else {
+        if (!stored) {
           const result = await login(loginId, password, false);
           await SecureStore.setItemAsync('accessToken', result.accessToken);
           await SecureStore.setItemAsync('refreshToken', result.refreshToken);
-          accessToken = result.accessToken;
         }
       }
 
       await children.slice(registeredChildrenCount).reduce(async (prev, child) => {
         await prev;
-        await registerChild(child, accessToken);
+        await registerChild(child);
         incrementRegisteredChildrenCount();
       }, Promise.resolve());
 

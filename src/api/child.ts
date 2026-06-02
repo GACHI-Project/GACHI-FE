@@ -22,12 +22,6 @@ const wrapError = (error: unknown): Error => {
   return error instanceof Error ? error : new Error(String(error));
 };
 
-const childApiClient = axios.create({
-  baseURL: 'https://43.202.191.103',
-  headers: { 'Content-Type': 'application/json' },
-  timeout: 10000,
-});
-
 const getAuthHeader = async () => {
   const token = await SecureStore.getItemAsync('accessToken');
   if (!token) throw new ChildApiError('UNAUTHORIZED', '로그인이 필요합니다.');
@@ -38,6 +32,7 @@ export interface ChildPayload {
   name: string;
   schoolName: string;
   schoolCode: string;
+  officeCode: string;
   grade: number;
   colorCode: string;
 }
@@ -47,18 +42,17 @@ export interface ChildResult {
   name: string;
   schoolName: string;
   schoolCode: string;
+  officeCode: string;
   grade: number;
   colorCode: string;
   createdAt: string;
 }
 
-export const registerChild = async (
-  child: ChildPayload,
-  accessToken: string
-): Promise<ChildResult> => {
+export const registerChild = async (child: ChildPayload): Promise<ChildResult> => {
   try {
-    const response = await childApiClient.post<{ result: ChildResult }>('/api/v1/children', child, {
-      headers: { Authorization: `Bearer ${accessToken}` },
+    const headers = await getAuthHeader();
+    const response = await apiClient.post<{ result: ChildResult }>('/api/v1/children', child, {
+      headers,
     });
     return response.data.result;
   } catch (error) {
@@ -66,16 +60,12 @@ export const registerChild = async (
   }
 };
 
-export const registerChildren = async (
-  children: ChildPayload[],
-  accessToken: string
-): Promise<ChildResult[]> => {
+export const registerChildren = async (children: ChildPayload[]): Promise<ChildResult[]> => {
   try {
+    const headers = await getAuthHeader();
     const results = await Promise.all(
       children.map((child) =>
-        childApiClient.post<{ result: ChildResult }>('/api/v1/children', child, {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        })
+        apiClient.post<{ result: ChildResult }>('/api/v1/children', child, { headers })
       )
     );
     return results.map((res) => res.data.result);

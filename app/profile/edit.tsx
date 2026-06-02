@@ -24,7 +24,7 @@ const ProfileEditScreen = () => {
   useEffect(() => {
     fetchMyInfo()
       .then(setUserInfo)
-      .catch((e) => console.error('사용자 정보 조회 실패:', e));
+      .catch(() => {});
   }, []);
 
   return (

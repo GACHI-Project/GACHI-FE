@@ -47,11 +47,11 @@ const styles = StyleSheet.create({
   },
   badge: {
     position: 'absolute',
-    top: 0,
-    right: 0,
+    top: 9,
+    right: 9,
     width: 4,
     height: 4,
-    borderRadius: 4,
+    borderRadius: 2,
     backgroundColor: colors.text.red,
   },
   contentWrapper: {

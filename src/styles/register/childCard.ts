@@ -146,6 +146,9 @@ const cardStyles = StyleSheet.create({
     color: colors.text.primary,
     padding: 0,
   },
+  searchLoader: {
+    marginTop: 8,
+  },
   searchResults: {
     borderWidth: 1,
     borderColor: colors.gray[200],

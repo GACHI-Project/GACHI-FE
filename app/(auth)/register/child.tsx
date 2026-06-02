@@ -1,12 +1,20 @@
-import { useState } from 'react';
-import { View, Text, ScrollView, TextInput, TouchableOpacity } from 'react-native';
+import { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  ScrollView,
+  TextInput,
+  TouchableOpacity,
+  ActivityIndicator,
+} from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import StepHeader from '../../../src/components/common/StepHeader';
 import { PrimaryButton } from '../../../src/components/common/Button';
 import colors from '../../../src/constants/colors';
-import { GRADES, CALENDAR_COLORS, MOCK_SCHOOLS } from '../../../src/constants/child';
+import { GRADES, CALENDAR_COLORS } from '../../../src/constants/child';
+import { searchSchools } from '../../../src/api/school';
 import { SchoolResult } from '../../../src/types/school';
 import { ChildInfo } from '../../../src/types/child';
 import cardStyles from '../../../src/styles/register/childCard';
@@ -31,23 +39,8 @@ export const createChild = (id: string): ChildInfo => ({
   calendarColor: CALENDAR_COLORS[0],
 });
 
-export const shortenAddress = (address: string): string => {
-  const tokens = address.split(' ');
-  const idx = tokens.findIndex((t) => t.endsWith('구') || t.endsWith('군'));
-  return idx >= 0 ? tokens.slice(0, idx + 1).join(' ') : address;
-};
-
-const formatSchoolMeta = (school: SchoolResult): string => {
-  if (!school.address) return school.type ?? '초등학교';
-  return `${school.type} • ${shortenAddress(school.address)}`;
-};
-
-export const searchSchools = (query: string): SchoolResult[] => {
-  if (!query.trim()) return [];
-  return MOCK_SCHOOLS.filter(
-    (s) => s.name.includes(query.trim()) || s.address.includes(query.trim())
-  );
-};
+const formatSchoolMeta = (school: SchoolResult): string =>
+  school.roadAddress || school.locationName || '';
 
 // ─── SchoolPicker ─────────────────────────────────────────────────────────────
 
@@ -60,7 +53,31 @@ interface SchoolPickerProps {
 export const SchoolPicker = ({ selectedSchool, schoolQuery, onUpdate }: SchoolPickerProps) => {
   const { t } = useTranslation();
   const [focused, setFocused] = useState(false);
-  const results = searchSchools(schoolQuery);
+  const [results, setResults] = useState<SchoolResult[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+
+  useEffect(() => {
+    if (!schoolQuery.trim()) {
+      setResults([]);
+      return () => {};
+    }
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      setIsSearching(true);
+      try {
+        const schools = await searchSchools(schoolQuery.trim());
+        if (!cancelled) setResults(schools);
+      } catch {
+        if (!cancelled) setResults([]);
+      } finally {
+        if (!cancelled) setIsSearching(false);
+      }
+    }, 500);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [schoolQuery]);
 
   return (
     <View style={cardStyles.section}>
@@ -73,8 +90,10 @@ export const SchoolPicker = ({ selectedSchool, schoolQuery, onUpdate }: SchoolPi
               <Ionicons name="school" size={15} color={colors.text.white} />
             </View>
             <View style={cardStyles.schoolInfo}>
-              <Text style={cardStyles.schoolName}>{selectedSchool.name}</Text>
-              <Text style={cardStyles.schoolAddress}>{formatSchoolMeta(selectedSchool)}</Text>
+              <Text style={cardStyles.schoolName}>{selectedSchool.schoolName}</Text>
+              {formatSchoolMeta(selectedSchool) ? (
+                <Text style={cardStyles.schoolAddress}>{formatSchoolMeta(selectedSchool)}</Text>
+              ) : null}
             </View>
           </View>
           <TouchableOpacity
@@ -105,11 +124,19 @@ export const SchoolPicker = ({ selectedSchool, schoolQuery, onUpdate }: SchoolPi
             />
           </View>
 
-          {results.length > 0 && (
+          {isSearching && (
+            <ActivityIndicator
+              size="small"
+              color={colors.primary[400]}
+              style={cardStyles.searchLoader}
+            />
+          )}
+
+          {!isSearching && results.length > 0 && (
             <View style={cardStyles.searchResults}>
               {results.map((school, idx) => (
                 <TouchableOpacity
-                  key={school.name}
+                  key={school.schoolCode}
                   style={[
                     cardStyles.searchResultItem,
                     idx < results.length - 1 && cardStyles.searchResultDivider,
@@ -122,7 +149,7 @@ export const SchoolPicker = ({ selectedSchool, schoolQuery, onUpdate }: SchoolPi
                       <Ionicons name="school" size={15} color={colors.primary[400]} />
                     </View>
                     <View style={cardStyles.schoolInfo}>
-                      <Text style={cardStyles.searchResultName}>{school.name}</Text>
+                      <Text style={cardStyles.searchResultName}>{school.schoolName}</Text>
                       <Text style={cardStyles.searchResultAddress}>{formatSchoolMeta(school)}</Text>
                     </View>
                     <Ionicons name="chevron-forward" size={16} color={colors.gray[200]} />
@@ -349,8 +376,9 @@ const RegisterChildScreen = () => {
           onPress={() => {
             const payloads: ChildPayload[] = children.map((child) => ({
               name: child.name,
-              schoolName: child.selectedSchool?.name ?? child.schoolQuery,
+              schoolName: child.selectedSchool?.schoolName ?? child.schoolQuery,
               schoolCode: child.selectedSchool?.schoolCode ?? '',
+              officeCode: child.selectedSchool?.officeCode ?? '',
               grade: child.grade ?? 1,
               colorCode: child.calendarColor ?? '#2BAEE0',
             }));

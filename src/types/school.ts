@@ -1,6 +1,10 @@
 export interface SchoolResult {
-  name: string;
-  address: string;
-  type: string;
-  schoolCode?: string;
+  schoolCode: string;
+  schoolName: string;
+  englishSchoolName: string;
+  schoolKind: string;
+  officeCode: string;
+  officeName: string;
+  locationName: string;
+  roadAddress: string;
 }

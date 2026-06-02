@@ -207,7 +207,7 @@ export const getNewsletterStatus = async (
 
 export interface RecentNewsletterItem {
   newsletterId: number;
-  title: string;
+  title: string | null;
   childName: string | null;
   childGrade: number | null;
 }
@@ -232,7 +232,7 @@ export const getRecentNewsletters = async (limit = 5): Promise<RecentNewsletterG
 
 export interface NewsletterItem {
   newsletterId: number;
-  title: string;
+  title: string | null;
   childName: string | null;
   childGrade: number | null;
   childColor: string | null;

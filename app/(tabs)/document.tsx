@@ -31,7 +31,7 @@ const toDocumentItem = (doc: NewsletterItem): DocumentItem => ({
   childName: doc.childName ?? '',
   grade: doc.childGrade,
   calendarColor: doc.childColor ?? colors.primary[400],
-  title: doc.title,
+  title: doc.title ?? '',
   date: formatDate(doc.createdAt),
 });
 
@@ -132,13 +132,15 @@ const DocumentScreen = () => {
     if (newsletters.length === 0) {
       return <Text style={styles.emptyText}>{t('document.empty')}</Text>;
     }
-    return newsletters.map((doc) => (
-      <DocumentCard
-        key={doc.newsletterId}
-        item={toDocumentItem(doc)}
-        onPress={() => router.push(`/newsletter/${doc.newsletterId}`)}
-      />
-    ));
+    return newsletters
+      .filter((doc) => doc.title != null)
+      .map((doc) => (
+        <DocumentCard
+          key={doc.newsletterId}
+          item={toDocumentItem(doc)}
+          onPress={() => router.push(`/newsletter/${doc.newsletterId}`)}
+        />
+      ));
   };
 
   return (

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { View, Text, FlatList, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import Header from '../../src/components/common/Header';
 import HeaderMenuButton from '../../src/components/common/HeaderMenuButton';
@@ -14,6 +14,7 @@ import {
   type NotificationType,
 } from '../../src/api/notifications';
 import { fetchChildren, type ChildInfo } from '../../src/api/calendar';
+import { useNotificationStore } from '../../src/store/notificationStore';
 import colors from '../../src/constants/colors';
 import styles from '../../src/styles/notifications/notifications';
 
@@ -42,6 +43,8 @@ const NotificationsScreen = () => {
   yesterdayDate.setDate(yesterdayDate.getDate() - 1);
   const yesterdayStr = formatDateStr(yesterdayDate);
 
+  const { setUnreadCount } = useNotificationStore();
+
   const [notifications, setNotifications] = useState<NotificationApiItem[]>([]);
   const [children, setChildren] = useState<ChildInfo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -65,14 +68,17 @@ const NotificationsScreen = () => {
         setCursor(notifResult.nextCursor);
         setHasNext(notifResult.hasNext);
         setChildren(childrenResult);
+        setUnreadCount(notifResult.notifications.filter((n) => !n.read).length);
       })
       .catch(() => setLoadError(true))
       .finally(() => setIsLoading(false));
-  }, []);
+  }, [setUnreadCount]);
 
-  useEffect(() => {
-    loadInitial();
-  }, [loadInitial]);
+  useFocusEffect(
+    useCallback(() => {
+      loadInitial();
+    }, [loadInitial])
+  );
 
   const loadMore = useCallback(async () => {
     if (!hasNext || isFetchingMore) return;
@@ -89,20 +95,29 @@ const NotificationsScreen = () => {
     }
   }, [hasNext, isFetchingMore, cursor]);
 
-  const markAsRead = useCallback((id: number) => {
-    const target = notificationsRef.current.find((n) => n.id === id);
-    if (!target || target.read) return;
-    setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
-    markNotificationRead(id).catch(() => {
-      setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: false } : n)));
-    });
-  }, []);
+  const markAsRead = useCallback(
+    (id: number) => {
+      const target = notificationsRef.current.find((n) => n.id === id);
+      if (!target || target.read) return;
+      setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
+      setUnreadCount(Math.max(0, notificationsRef.current.filter((n) => !n.read).length - 1));
+      markNotificationRead(id).catch(() => {
+        setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: false } : n)));
+        setUnreadCount(notificationsRef.current.filter((n) => !n.read).length);
+      });
+    },
+    [setUnreadCount]
+  );
 
   const handleMarkAllRead = useCallback(() => {
     const snapshot = notificationsRef.current;
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-    markAllNotificationsRead().catch(() => setNotifications(snapshot));
-  }, []);
+    setUnreadCount(0);
+    markAllNotificationsRead().catch(() => {
+      setNotifications(snapshot);
+      setUnreadCount(snapshot.filter((n) => !n.read).length);
+    });
+  }, [setUnreadCount]);
 
   const handlePress = useCallback(
     (item: NotificationApiItem) => {

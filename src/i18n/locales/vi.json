@@ -1,0 +1,706 @@
+{
+  "common": {
+    "back": "Quay lại",
+    "help": "Trợ giúp",
+    "close": "Đóng",
+    "confirm": "Xác nhận",
+    "next": "Tiếp theo →",
+    "later": "Để sau",
+    "retry": "Thử lại",
+    "all": "Tất cả",
+    "today": "Hôm nay",
+    "error": "Lỗi",
+    "networkError": "Đã xảy ra lỗi mạng. Vui lòng thử lại.",
+    "modalClose": "Đóng hộp thoại",
+    "saving": "Đang lưu...",
+    "change": "Thay đổi",
+    "elementaryGrade": "Lớp {{grade}} tiểu học",
+    "grade": "Lớp {{grade}}",
+    "preparing": "Đang chuẩn bị"
+  },
+  "tabs": {
+    "home": "Trang chủ",
+    "document": "Tài liệu",
+    "scan": "Quét",
+    "calendar": "Lịch",
+    "profile": "Hồ sơ"
+  },
+  "stepHeader": {
+    "step": "Bước {{current}} / {{total}}"
+  },
+  "auth": {
+    "login": {
+      "title": "Đăng nhập",
+      "stayLoggedIn": "Duy trì đăng nhập",
+      "button": "Đăng nhập",
+      "loading": "Đang đăng nhập...",
+      "forgotId": "Quên tên đăng nhập",
+      "forgotPassword": "Quên mật khẩu",
+      "noAccount": "Bạn chưa có tài khoản?",
+      "signUp": "Đăng ký",
+      "error": {
+        "invalidCredentials": "Tên đăng nhập hoặc mật khẩu không đúng",
+        "withdrawnAccount": "Tài khoản này đã bị xóa",
+        "tooManyAttempts": "Bạn đã thử đăng nhập quá nhiều lần. Vui lòng thử lại sau",
+        "generic": "Đã xảy ra lỗi khi đăng nhập. Vui lòng thử lại."
+      }
+    },
+    "register": {
+      "language": {
+        "title": "Vui lòng chọn ngôn ngữ bạn muốn sử dụng",
+        "subtitle": "Chúng tôi sẽ dịch và giải thích thông báo từ trường học bằng ngôn ngữ bạn đã chọn",
+        "settingsTip": "Bạn có thể thay đổi ngôn ngữ bất cứ lúc nào trong phần cài đặt"
+      },
+      "basic": {
+        "title": "Tạo tài khoản mới",
+        "subtitle": "Chỉ cần thiết lập hồ sơ đơn giản là có thể bắt đầu ngay.",
+        "name": "Họ và tên",
+        "id": "Tên đăng nhập",
+        "phone": "Số điện thoại",
+        "email": "Email",
+        "verificationCode": "Mã xác nhận",
+        "password": "Mật khẩu",
+        "passwordConfirm": "Xác nhận mật khẩu",
+        "verify": "Xác minh",
+        "verifying": "Đang xác minh...",
+        "hasAccount": "Bạn đã có tài khoản?",
+        "loginLink": "Đăng nhập",
+        "passwordMatch": "Mật khẩu khớp.",
+        "error": {
+          "nameRequired": "Vui lòng nhập họ và tên",
+          "phoneFormat": "Định dạng số điện thoại không hợp lệ",
+          "passwordWeak": "Độ bảo mật mật khẩu ở mức nguy hiểm",
+          "passwordMismatch": "Mật khẩu không khớp",
+          "termsRequired": "Vui lòng đồng ý với điều khoản",
+          "idAvailable": "Tên đăng nhập có thể sử dụng",
+          "idTaken": "Tên đăng nhập đã được sử dụng",
+          "phoneAvailable": "Số điện thoại có thể sử dụng",
+          "phoneTaken": "Số điện thoại đã được đăng ký",
+          "emailTaken": "Email đã được đăng ký",
+          "codeSent": "Mã xác nhận đã được gửi",
+          "codeExpiredDisplay": "Thời gian xác minh đã hết hạn. Vui lòng gửi lại.",
+          "emailVerified": "Xác minh email đã hoàn tất",
+          "codeFormat": "Mã xác nhận phải là 6 chữ số",
+          "checkError": "Đã xảy ra lỗi khi kiểm tra. Vui lòng thử lại.",
+          "sendError": "Gửi mã xác nhận thất bại. Vui lòng thử lại.",
+          "codeInvalid": "Giá trị nhập vào không hợp lệ",
+          "codeWrong": "Mã xác nhận không khớp",
+          "codeExpired": "Mã xác nhận đã hết hạn. Vui lòng gửi lại.",
+          "codeExceeded": "Bạn đã vượt quá số lần nhập mã xác nhận.",
+          "verifyError": "Xác minh thất bại. Vui lòng thử lại."
+        }
+      },
+      "child": {
+        "title": "Vui lòng cho biết thông tin về con bạn",
+        "subtitle": "Chúng tôi sẽ giải thích thông báo từ trường học phù hợp với trình độ của con",
+        "school": "Trường học",
+        "schoolPlaceholder": "Tìm kiếm tên trường",
+        "grade": "Lớp tiểu học",
+        "calendarColor": "Màu lịch",
+        "childName": "Tên con",
+        "childNamePlaceholder": "Vui lòng nhập tên",
+        "colorHint": "Màu sắc của từng con sẽ giúp phân biệt lịch của ai ngay trong lịch.",
+        "addChild": "Thêm con",
+        "order": ["Con thứ nhất", "Con thứ hai", "Con thứ ba", "Con thứ tư", "Con thứ năm", "Con thứ sáu", "Con thứ bảy"]
+      },
+      "notification": {
+        "title": "Vui lòng cài đặt cách nhận thông báo",
+        "subtitle": "Thiết lập thông báo theo cách bạn muốn",
+        "sectionLabel": "Mức độ thông báo",
+        "settingsTip": "Bạn có thể thay đổi cách nhận thông báo bất cứ lúc nào trong phần cài đặt",
+        "options": {
+          "important": {
+            "title": "Thông báo quan trọng",
+            "desc": "Nhận thông báo về ngày hạn chót và nội dung cần xác nhận sớm",
+            "badge": "Đề xuất"
+          },
+          "urgent": {
+            "title": "Chỉ thông báo khẩn cấp",
+            "desc": "Chỉ nhận các thông báo thực sự cần thiết như ngày hạn chót"
+          },
+          "all": {
+            "title": "Tất cả thông báo",
+            "desc": "Nhận tất cả thông báo từ trường, cập nhật và thông tin"
+          },
+          "none": {
+            "title": "Không nhận thông báo",
+            "desc": "Không nhận thông báo, tự kiểm tra trong ứng dụng khi cần"
+          }
+        }
+      },
+      "complete": {
+        "title": "Đăng ký thành công!",
+        "subtitle": "Hãy cùng Gachi tìm hiểu dễ dàng hơn về cuộc sống học đường của con",
+        "button": "Đi đến đăng nhập →",
+        "noInfo": "Không có thông tin đăng ký. Vui lòng thử lại từ đầu.",
+        "error": "Đã xảy ra lỗi. Vui lòng thử lại."
+      }
+    },
+    "terms": {
+      "title": "Điều khoản sử dụng",
+      "confirm": "Xác nhận"
+    },
+    "privacy": {
+      "title": "Chính sách quyền riêng tư",
+      "confirm": "Đồng ý và tiếp tục"
+    },
+    "termsCheckbox": {
+      "main": "Tôi đồng ý với điều khoản sử dụng và chính sách quyền riêng tư.",
+      "sub": "Vui lòng đọc các điều khoản bắt buộc trước khi tích.",
+      "viewTerms": "Xem điều khoản sử dụng",
+      "viewPrivacy": "Xem chính sách quyền riêng tư"
+    },
+    "findId": {
+      "title": "Tìm tên đăng nhập",
+      "subtitle": "Bạn có thể tìm tên đăng nhập qua email đã đăng ký.",
+      "email": "Email",
+      "code": "Mã xác nhận",
+      "send": "Xác minh",
+      "sending": "Đang gửi...",
+      "confirm": "Xác nhận",
+      "verifying": "Đang xác minh...",
+      "loading": "Đang kiểm tra...",
+      "submit": "Xem tên đăng nhập →",
+      "foundTitle": "Tài khoản đã được đăng ký",
+      "foundDesc": "Bạn có thể đăng nhập bằng tên đăng nhập bên dưới.",
+      "idLabel": "ID",
+      "goLogin": "Đi đến đăng nhập",
+      "forgotPassword": "Bạn không nhớ mật khẩu?",
+      "goFindPassword": "Tìm mật khẩu",
+      "error": {
+        "emailNotFound": "Không có tài khoản nào được đăng ký với email này.",
+        "generic": "Đã xảy ra lỗi. Vui lòng thử lại."
+      }
+    },
+    "findPassword": {
+      "title": "Tìm mật khẩu",
+      "subtitle": "Bạn có thể đặt lại mật khẩu bằng cách xác minh tên đăng nhập và email.",
+      "id": "Tên đăng nhập",
+      "email": "Email",
+      "code": "Mã xác nhận",
+      "send": "Xác minh",
+      "sending": "Đang gửi...",
+      "confirm": "Xác nhận",
+      "verifying": "Đang xác minh...",
+      "submit": "Đặt lại mật khẩu →",
+      "idFound": "Tài khoản với tên đăng nhập này tồn tại.",
+      "forgotId": "Bạn không nhớ tên đăng nhập?",
+      "goFindId": "Tìm tên đăng nhập",
+      "error": {
+        "idNotFound": "Không tìm thấy tài khoản với tên đăng nhập này.",
+        "emailNotFound": "Không tìm thấy tài khoản với email này.",
+        "generic": "Đã xảy ra lỗi. Vui lòng thử lại."
+      }
+    },
+    "resetPassword": {
+      "title": "Đặt lại mật khẩu",
+      "subtitle": "Để bảo mật tài khoản, vui lòng nhập mật khẩu mới.",
+      "newPassword": "Mật khẩu mới",
+      "newPasswordConfirm": "Xác nhận mật khẩu mới",
+      "submit": "Đặt lại mật khẩu",
+      "submitting": "Đang đặt lại...",
+      "successTitle": "Thay đổi mật khẩu thành công",
+      "successDesc": "Đặt lại mật khẩu đã hoàn tất.\nVui lòng đăng nhập lại bằng mật khẩu mới để đảm bảo an toàn.",
+      "goLogin": "Đi đến đăng nhập →",
+      "passwordMatch": "Mật khẩu khớp.",
+      "error": {
+        "passwordWeak": "Độ bảo mật mật khẩu ở mức nguy hiểm",
+        "passwordMismatch": "Mật khẩu không khớp",
+        "generic": "Đã xảy ra lỗi. Vui lòng thử lại.",
+        "noLoginId": "Truy cập không hợp lệ. Vui lòng thử lại quá trình tìm mật khẩu."
+      },
+      "goFindPassword": "Đi đến tìm mật khẩu"
+    }
+  },
+  "passwordStrength": {
+    "label": "Độ bảo mật :",
+    "danger": "Nguy hiểm",
+    "normal": "Trung bình",
+    "safe": "An toàn",
+    "verySafe": "Rất an toàn"
+  },
+  "validation": {
+    "passwordLength": "Mật khẩu phải có từ 8 đến 20 ký tự",
+    "passwordTypes": "Phải bao gồm ít nhất 2 trong số: chữ cái, số, ký tự đặc biệt",
+    "passwordSpace": "Mật khẩu không được chứa khoảng trắng",
+    "passwordRepeat": "Không được dùng cùng một ký tự liên tiếp 3 lần trở lên",
+    "passwordSequential": "Không được dùng ký tự hoặc số liên tiếp từ 4 ký tự trở lên",
+    "passwordContainsId": "Mật khẩu không được chứa tên đăng nhập",
+    "passwordContainsEmail": "Mật khẩu không được chứa địa chỉ email",
+    "passwordContainsPhone": "Mật khẩu không được chứa số điện thoại",
+    "idMin": "Tên đăng nhập phải có ít nhất 4 ký tự",
+    "idMax": "Tên đăng nhập không được vượt quá 50 ký tự",
+    "idFormat": "Chỉ được dùng chữ cái, số, dấu chấm (.), gạch dưới (_), gạch ngang (-)",
+    "phoneFormat": "Định dạng số điện thoại không hợp lệ",
+    "emailFormat": "Định dạng email không hợp lệ"
+  },
+  "home": {
+    "usernameFormat": "{{name}}",
+    "taskCard": {
+      "noTodo": "Hôm nay không có việc cần làm",
+      "todayCount": "Hôm nay có {{count}} mục cần xử lý",
+      "todayCount_one": "Hôm nay có {{count}} mục cần xử lý",
+      "todayCount_other": "Hôm nay có {{count}} mục cần xử lý",
+      "todayEmpty": "Hôm nay không có mục nào cần xử lý",
+      "childCount": "{{name}} {{count}} mục",
+      "childCount_one": "{{name}} {{count}} mục",
+      "childCount_other": "{{name}} {{count}} mục",
+      "remaining": "còn lại",
+      "empty": "Hôm nay không có mục nào cần xử lý 🎉",
+      "today": "Hôm nay",
+      "moreItems": "Xem thêm {{count}} →",
+      "moreItems_one": "Xem thêm {{count}} →",
+      "moreItems_other": "Xem thêm {{count}} →"
+    },
+    "scanBanner": {
+      "title": "Quét thông báo từ trường",
+      "desc": "Chỉ cần chụp ảnh là có ngay bản dịch · tóm tắt · danh sách việc cần làm",
+      "button": "Quét ngay →"
+    },
+    "features": {
+      "sectionTitle": "Tính năng chính",
+      "ai": {
+        "title": ["Hỏi", "AI"],
+        "desc": "Đặt câu hỏi ngay về nội dung khó hiểu. AI sẽ giải thích cả ngữ cảnh cho bạn.",
+        "button": "Bắt đầu trò chuyện"
+      },
+      "guide": {
+        "title": ["Hướng dẫn cuộc sống", "học đường tại Hàn Quốc"],
+        "desc": "Tra cứu dễ dàng những điều hay nhầm lẫn trong cuộc sống học đường qua hỏi đáp.",
+        "button": "Xem hướng dẫn"
+      }
+    },
+    "guideCards": {
+      "sectionTitle": "Bạn có thắc mắc về những điều này không?",
+      "more": "Xem thêm",
+      "badge": "✓ FAQ",
+      "questions": [
+        "Có nhất thiết phải nộp đơn đồng ý trực tiếp không?",
+        "Tôi có cần liên hệ với giáo viên chủ nhiệm không?",
+        "Cần chuẩn bị những đồ dùng gì?",
+        "Có phải mua riêng đồng phục thể dục không?"
+      ]
+    },
+    "recentDocs": {
+      "sectionTitle": "Thông báo gần đây",
+      "more": "Xem tất cả"
+    }
+  },
+  "greetings": {
+    "morning": [
+      "Chào buổi sáng ☀️",
+      "Hãy cùng Gachi hôm nay nhé 🌼",
+      "Kiểm tra tin tức trường học dễ dàng thôi 📄",
+      "Ngày mới, tin tức mới đang chờ bạn 🌤",
+      "Hãy xem trước lịch học của con nhé 🎒",
+      "Bắt đầu ngày mới thật vững chắc nào 💪"
+    ],
+    "lunch": [
+      "Tranh thủ giờ trưa kiểm tra một chút nhé 🍽",
+      "Đừng bỏ lỡ tin tức quan trọng từ trường 🌿",
+      "Gachi sẽ hỗ trợ bạn hôm nay nữa ✨",
+      "Nghỉ một chút và kiểm tra thông báo hôm nay nhé ☕",
+      "Có thể có đồ dùng cần chuẩn bị hôm nay đó 📋",
+      "Tranh thủ giờ trưa, xem qua một tin nhé 🌞"
+    ],
+    "afternoon": [
+      "Buổi chiều vẫn dễ dàng tìm thông tin cần thiết ☁️",
+      "Kiểm tra tin tức trường học hôm nay nhé 🍀",
+      "Cùng xem đồ dùng và lịch học nào 📚",
+      "Chuẩn bị cho ngày mai, kiểm tra ngay bây giờ 📅",
+      "Trước khi con về nhà, xem lại thông báo một lần nữa 🏫",
+      "Kiểm tra xem có tin tức nào bị bỏ lỡ không nhé 🔔"
+    ],
+    "evening": [
+      "Bạn đã vất vả cả ngày rồi 🌇",
+      "Cùng xem lịch học còn lại không? 💛",
+      "Cùng Gachi nhìn lại cả ngày nào ✨",
+      "Chuẩn bị trước cho ngày mai nhé 🌆",
+      "Buổi tối, kiểm tra thêm một lần thông báo quan trọng 📬",
+      "Xem lại thông báo từ trường đã nhận hôm nay nhé? 📝"
+    ],
+    "night": [
+      "Dù muộn rồi, vẫn thoải mái kiểm tra nhé 🌙",
+      "Xem những việc cần chuẩn bị cho ngày mai nào ⭐",
+      "Chỉ hiển thị những tin tức quan trọng cho bạn thôi 🌌",
+      "Kiểm tra thông báo cuối cùng trong ngày nhé 🌛",
+      "Ngày mai Gachi cũng sẽ đồng hành cùng bạn 💤",
+      "Trước khi nghỉ ngơi, xem lịch ngày mai một chút nhé 🌠"
+    ]
+  },
+  "scan": {
+    "title": "Quét tài liệu",
+    "helpModal": {
+      "title": "Hướng dẫn sử dụng tính năng quét",
+      "confirm": "Đã hiểu",
+      "step1": {
+        "title": "Vui lòng chọn con trước",
+        "desc": "Chúng tôi sẽ phân tích tài liệu chính xác hơn theo trình độ lớp học của con"
+      },
+      "step2": {
+        "title": "Chụp ảnh hoặc chọn thông báo từ trường",
+        "desc": "Hãy trải phẳng tờ giấy để chữ được rõ ràng khi chụp"
+      },
+      "step3": {
+        "title": "AI sẽ tự động phân tích",
+        "desc": "Dịch · tóm tắt · danh sách việc cần làm được tạo ra chỉ trong một lần"
+      }
+    },
+    "childPill": {
+      "suffix": "thông báo của",
+      "change": "Thay đổi",
+      "changeAccessibility": "Thay đổi con"
+    },
+    "select": {
+      "title": "Đây là thông báo của con nào?",
+      "subtitle": "Khi chọn con, chúng tôi sẽ phân tích tài liệu phù hợp với trình độ lớp học",
+      "unknown": "Tôi không biết đây là thông báo của con nào",
+      "camera": "Chụp bằng máy ảnh",
+      "gallery": "Chọn từ thư viện ảnh",
+      "pdf": "Tải lên tài liệu PDF",
+      "error": {
+        "loadChildren": "Không thể tải thông tin về con.",
+        "pdf": "Không thể tải PDF.",
+        "gallery": "Không thể tải thư viện ảnh.",
+        "galleryPermission": "Cần quyền truy cập thư viện ảnh.",
+        "permissionTitle": "Cần quyền truy cập",
+        "errorTitle": "Lỗi"
+      }
+    },
+    "camera": {
+      "permissionText": "Cần quyền truy cập máy ảnh",
+      "allowPermission": "Cho phép truy cập",
+      "captureError": "Chụp ảnh thất bại",
+      "captureErrorMsg": "Vui lòng thử lại.",
+      "galleryPermission": "Cần quyền truy cập thư viện ảnh.",
+      "galleryError": "Không thể tải thư viện ảnh.",
+      "accessibilityGallery": "Chọn từ thư viện ảnh",
+      "accessibilityCapture": "Chụp ảnh",
+      "accessibilityFlip": "Chuyển đổi camera",
+      "permissionTitle": "Cần quyền truy cập",
+      "errorTitle": "Lỗi"
+    },
+    "preview": {
+      "pdfLabel": "Tệp PDF",
+      "accessibilityPreview": "Xem trước tài liệu cần quét",
+      "retake": "Chụp lại",
+      "reselect": "Chọn lại",
+      "use": "Sử dụng"
+    },
+    "loading": {
+      "preparing": "Đang chuẩn bị tài liệu",
+      "analyzing": "Đang phân tích văn bản và bố cục",
+      "complete": "Đã hoàn tất dịch và tóm tắt!",
+      "scanComplete": "Quét hoàn tất!",
+      "next": "Tiếp theo →",
+      "accessibilityNext": "Tiếp theo",
+      "error": {
+        "analysisFailed": "Phân tích thất bại",
+        "analysisFailedMsg": "Phân tích tài liệu thất bại. Vui lòng thử lại.",
+        "uploadFailed": "Tải lên thất bại",
+        "uploadDefault": "Tải lên thất bại. Vui lòng thử lại.",
+        "duplicate": "Thông báo này đã được tải lên rồi.",
+        "unsupportedFormat": "Định dạng tệp không được hỗ trợ.",
+        "fileTooLarge": "Kích thước tệp vượt quá 10MB."
+      }
+    },
+    "result": {
+      "title": "Kết quả quét",
+      "tabs": {
+        "full": "Toàn bộ tài liệu",
+        "checklist": "Danh sách việc cần làm",
+        "aiSummary": "Tóm tắt AI"
+      },
+      "chat": "Trò chuyện với AI",
+      "save": "Lưu",
+      "fullDoc": {
+        "translated": "Tài liệu đã dịch",
+        "original": "Bản gốc",
+        "ocrOriginal": "Bản gốc OCR",
+        "error": {
+          "notFound": "Không tìm thấy thông tin thông báo.",
+          "notAnalyzed": "Thông báo này chưa hoàn tất phân tích.",
+          "newsletterNotFound": "Không tìm thấy thông báo.",
+          "loadFailed": "Tải tài liệu thất bại."
+        }
+      },
+      "checklist": {
+        "empty": "Không có mục nào trong danh sách.",
+        "deleteItem": "Xóa mục",
+        "error": {
+          "notFound": "Không tìm thấy thông tin thông báo.",
+          "newsletterNotFound": "Không tìm thấy thông báo.",
+          "loadFailed": "Tải danh sách thất bại."
+        }
+      },
+      "aiSummary": {
+        "summarySection": "Tóm tắt AI",
+        "todayTodo": "Việc cần làm",
+        "culturalContext": "Hướng dẫn bối cảnh văn hóa",
+        "emptyTodo": "Không có việc cần làm nào được đăng ký.",
+        "error": {
+          "notFound": "Không tìm thấy thông tin thông báo.",
+          "analyzing": "Thông báo này đang được phân tích.",
+          "analysisFailed": "Thông báo này đã phân tích thất bại.",
+          "newsletterNotFound": "Không tìm thấy thông báo.",
+          "noAccess": "Bạn không có quyền truy cập.",
+          "summaryFailed": "Tải tóm tắt thất bại.",
+          "todoFailed": "Tải danh sách việc cần làm thất bại."
+        },
+        "qna": [
+          {
+            "q": "Tại sao phải nộp đơn đồng ý trực tiếp?",
+            "a": "Các trường tiểu học ở Hàn Quốc yêu cầu ",
+            "aHighlight": "chữ ký gốc của phụ huynh",
+            "aTail": " theo quy định pháp lý cho các hoạt động ngoài trường. Không thể thay thế bằng tin nhắn KakaoTalk hay ứng dụng."
+          },
+          {
+            "q": "Nộp trễ thì sao?",
+            "a": "Nếu quá hạn, ",
+            "aHighlight": "con có thể không được tham gia dã ngoại",
+            "aTail": ". Nếu trễ, hãy liên hệ trực tiếp với giáo viên chủ nhiệm ngay."
+          }
+        ]
+      },
+      "saveBottomSheet": {
+        "title": "Bạn có muốn đăng ký lịch vào lịch không?",
+        "subtitleAutoDate": "Lịch sẽ được tạo tự động\ndựa trên thông tin ngày đã trích xuất.",
+        "subtitleManualDate": "Vui lòng nhập ngày trực tiếp.",
+        "dateNotFound": "Không tìm thấy ngày trong tài liệu.\nBạn có thể đăng ký bằng cách nhập ngày trực tiếp.",
+        "dateEditor": "Thay đổi ngày",
+        "year": "Năm",
+        "month": "Tháng",
+        "day": "Ngày",
+        "fullDay": "Cả ngày",
+        "weekdays": ["Chủ nhật", "Thứ hai", "Thứ ba", "Thứ tư", "Thứ năm", "Thứ sáu", "Thứ bảy"],
+        "isEditing": "✏️ Đang chỉnh sửa",
+        "edit": "✏️ Chỉnh sửa",
+        "no": "Không",
+        "register": "✓ Có, đăng ký",
+        "successTitle": "Đã đăng ký vào lịch!",
+        "successSubtitle": "Chúng tôi sẽ thông báo khi ngày hạn chót đến gần.",
+        "viewCalendar": "Xem trong lịch",
+        "close": "Đóng",
+        "accessibilityEdit": "Chỉnh sửa lịch",
+        "dateConfirm": "Xác nhận",
+        "accessibilityDateConfirm": "Xác nhận ngày",
+        "accessibilityClose": "Đóng hộp thoại",
+        "yearLabel": "Năm",
+        "monthLabel": "Tháng",
+        "dayLabel": "Ngày",
+        "error": {
+          "invalidDate": "Vui lòng nhập ngày hợp lệ.",
+          "loadFailed": "Tải thông tin lịch thất bại.",
+          "expired": "Đang phân tích AI hoặc dữ liệu xem trước đã hết hạn.",
+          "registerFailed": "Đăng ký thất bại",
+          "registerDefault": "Đăng ký lịch thất bại.",
+          "invalidInput": "Giá trị nhập vào không hợp lệ.",
+          "newsletterNotFound": "Không tìm thấy thông báo.",
+          "dateFormat": "Định dạng ngày không hợp lệ.",
+          "previewExpired": "Dữ liệu xem trước đã hết hạn. Vui lòng thử lại.",
+          "dateSaveFailed": "Lưu ngày thất bại",
+          "dateSaveDefault": "Lưu ngày thất bại.",
+          "noPreviewMsg": "Vui lòng tải thông tin xem trước lịch trước.",
+          "errorTitle": "Lỗi"
+        }
+      }
+    }
+  },
+  "calendar": {
+    "title": "Lịch",
+    "emptyWeek": "Tuần này không có lịch",
+    "emptyDay": "Không có lịch nào được đăng ký",
+    "weekViewAccessibility": "Chuyển sang chế độ xem tháng",
+    "monthViewAccessibility": "Chuyển sang chế độ xem tuần",
+    "backAccessibility": "Quay lại",
+    "prevWeek": "Tuần trước",
+    "nextWeek": "Tuần sau",
+    "prevMonth": "Tháng trước",
+    "nextMonth": "Tháng sau",
+    "checklist": {
+      "collapse": "Thu gọn danh sách",
+      "expand": "Mở rộng danh sách"
+    }
+  },
+  "document": {
+    "title": "Tài liệu",
+    "searchPlaceholder": "Tìm kiếm tiêu đề tài liệu",
+    "empty": "Không có tài liệu nào phù hợp",
+    "detail": "Chi tiết tài liệu"
+  },
+  "profile": {
+    "title": "Trang cá nhân",
+    "edit": "Chỉnh sửa",
+    "joinDate": "Ngày tham gia {{date}}",
+    "languageChange": {
+      "title": "Thay đổi ngôn ngữ",
+      "warning": "Khi thay đổi ngôn ngữ, tất cả văn bản trong ứng dụng và ngôn ngữ dịch của các tài liệu được quét sau đó cũng sẽ thay đổi theo.",
+      "save": "Lưu",
+      "saveError": "Thay đổi ngôn ngữ thất bại. Vui lòng thử lại."
+    },
+    "childEdit": {
+      "save": "Lưu",
+      "delete": "Xóa con này"
+    },
+    "childInfo": "Thông tin con",
+    "addChild": "+ Thêm con",
+    "grade": "Lớp {{grade}} tiểu học",
+    "appSettings": "Cài đặt ứng dụng",
+    "appLanguage": "Ngôn ngữ ứng dụng",
+    "notification": "Cài đặt thông báo",
+    "notificationOn": "Bật",
+    "notificationOff": "Tắt",
+    "etc": "Khác",
+    "inquiry": "Liên hệ hỗ trợ",
+    "privacy": "Chính sách quyền riêng tư",
+    "appVersion": "Phiên bản ứng dụng",
+    "logout": "Đăng xuất",
+    "backAccessibility": "Quay lại",
+    "helpAccessibility": "Trợ giúp",
+    "editProfile": {
+      "accountSection": "Thông tin tài khoản",
+      "name": "Họ và tên",
+      "phone": "Số điện thoại",
+      "email": "Email",
+      "securitySection": "Bảo mật",
+      "changePassword": {
+        "title": "Thay đổi mật khẩu",
+        "currentPassword": "Mật khẩu hiện tại",
+        "newPassword": "Mật khẩu mới",
+        "confirmPassword": "Xác nhận mật khẩu mới",
+        "submit": "Thay đổi mật khẩu",
+        "preparingMessage": "Tính năng thay đổi mật khẩu hiện đang được chuẩn bị."
+      },
+      "withdraw": "Hủy tài khoản",
+      "withdrawTitle": "Bạn có chắc muốn hủy tài khoản không?",
+      "withdrawDesc": "Khi hủy tài khoản, tài khoản và toàn bộ dữ liệu\nsẽ bị xóa vĩnh viễn.",
+      "withdrawWarning": "Tất cả tài liệu đã lưu, thông tin về con và lịch sẽ bị xóa và không thể khôi phục.",
+      "cancel": "Hủy"
+    },
+    "notificationSetting": {
+      "title": "Cài đặt thông báo",
+      "masterSection": "Tất cả thông báo",
+      "masterTitle": "Nhận thông báo",
+      "masterDesc": "Bật hoặc tắt tất cả thông báo cùng một lúc",
+      "levelSection": "Mức độ thông báo",
+      "levelAll": "Tất cả thông báo",
+      "levelImportant": "Thông báo quan trọng",
+      "levelUrgent": "Thông báo khẩn cấp",
+      "levelDesc": {
+        "all": "Nhận tất cả thông báo từ trường, cập nhật và thông tin",
+        "important": "Chỉ nhận thông báo có độ ưu tiên cao. Bao gồm thông báo về hạn chót, danh sách việc cần làm và tóm tắt hàng tuần.",
+        "urgent": "Chỉ nhận các thông báo thực sự cần thiết như hạn chót"
+      },
+      "itemSection": "Thông báo theo từng mục",
+      "items": {
+        "deadline": {
+          "title": "Thông báo hạn chót",
+          "desc": "Thông báo trước một ngày khi đến hạn",
+          "badge": "Khẩn cấp"
+        },
+        "checklist": {
+          "title": "Thông báo danh sách việc cần làm",
+          "desc": "Thông báo các mục chưa hoàn thành trước 3 ngày và 1 ngày",
+          "badge": "Quan trọng"
+        },
+        "weekly": {
+          "title": "Tóm tắt hàng tuần",
+          "desc": "Thông báo lịch trong tuần vào mỗi Chủ nhật",
+          "badge": "Quan trọng"
+        },
+        "document": {
+          "title": "Phân tích tài liệu mới hoàn tất",
+          "desc": "Thông báo khi phân tích thông báo từ trường hoàn tất",
+          "badge": "Thông thường"
+        }
+      }
+    }
+  },
+  "notifications": {
+    "title": "Danh sách thông báo",
+    "today": "Hôm nay",
+    "yesterday": "Hôm qua",
+    "empty": "Không có thông báo",
+    "settings": "Cài đặt thông báo",
+    "settingsMenu": "Cài đặt thông báo",
+    "markAllRead": "Đánh dấu tất cả đã đọc",
+    "timeJustNow": "Vừa xong",
+    "timeMinutesAgo": "{{count}} phút trước",
+    "timeHoursAgo": "{{count}} giờ trước",
+    "loadError": "Không thể tải thông báo"
+  },
+  "guide": {
+    "title": "Bạn muốn hỏi về điều gì?",
+    "subtitle": "Bạn có thể nhanh chóng tìm kiếm thông tin cần thiết về giấy tờ, sự kiện, bữa ăn học đường và nhiều hơn nữa.",
+    "searchPlaceholder": "Tìm kiếm tiêu đề tài liệu",
+    "popularTitle": "Câu hỏi được tìm kiếm nhiều nhất hiện tại",
+    "popularQuestions": [
+      "Không nộp đơn đồng ý tham quan dã ngoại thì sao?",
+      "Có bắt buộc phải tham dự cuộc họp phụ huynh không?"
+    ],
+    "questionCount": "{{count}} câu hỏi",
+    "totalCount": "Tổng cộng {{count}} câu hỏi",
+    "sections": [
+      {
+        "label": "Cuộc sống học đường hàng ngày",
+        "categories": [
+          { "name": "Giấy tờ · Đơn đồng ý", "key": "documents" },
+          { "name": "Điểm danh · Lịch học", "key": "attendance" },
+          { "name": "Sự kiện trường học", "key": "events" },
+          { "name": "Bữa ăn · Đồ dùng học tập", "key": "meals" }
+        ]
+      },
+      {
+        "label": "Học tập và hoạt động ngoại khóa",
+        "categories": [
+          { "name": "Ngoại khóa · Nhóm trông trẻ", "key": "afterschool" },
+          { "name": "Môn học · Lớp học", "key": "subjects" },
+          { "name": "Điểm số · Đánh giá", "key": "grades" },
+          { "name": "Liên lạc với giáo viên", "key": "teacher" }
+        ]
+      },
+      {
+        "label": "Nội quy và hệ thống hành chính",
+        "categories": [
+          { "name": "Sức khỏe · An toàn", "key": "health" },
+          { "name": "Nội quy trường học", "key": "rules" },
+          { "name": "Thông tin đa văn hóa", "key": "multicultural" },
+          { "name": "Nhập học · Chuyển trường", "key": "enrollment" }
+        ]
+      }
+    ],
+    "qa": {
+      "documents": {
+        "tabs": ["Tất cả", "Thông báo từ trường", "Tham quan dã ngoại", "Thanh toán học đường", "Điểm danh/Chứng nhận"],
+        "items": [
+          { "id": "1", "tag": "Thông báo từ trường", "question": "Có nhất thiết phải nộp thông báo hỏi về ý kiến không?", "answer": "Thông báo hỏi về ý kiến là tài liệu trường thu thập nhu cầu, bất kể có tham gia hay không đều phải nộp." },
+          { "id": "2", "tag": "Thông báo từ trường", "question": "Trong ví dụ thông báo, 'phiếu trả lời' là tài liệu gì?", "answer": "Đây là tài liệu mà phụ huynh cần đánh dấu hoặc ký tên và gửi lại cho trường. Hãy cắt theo đường kẻ chấm ở phần dưới tờ thông báo giấy và nhờ con mang đến cho giáo viên chủ nhiệm." },
+          { "id": "3", "tag": "Thông báo từ trường", "question": "Ký đồng ý qua ứng dụng di động (e알리미, 하이클래스 v.v.) như thế nào?", "answer": "Bạn có thể ký điện tử trực tiếp trong ứng dụng hoặc nhấn nút đồng ý. Có thể xử lý trong ứng dụng mà không cần in ra." },
+          { "id": "4", "tag": "Thông báo từ trường", "question": "Không nộp đơn đồng ý thu thập và sử dụng thông tin cá nhân thì có bất lợi gì không?", "answer": "Nếu không nộp, việc sử dụng các dịch vụ liên quan có thể bị hạn chế, và có thể khó tham gia các hoạt động của trường hoặc đăng ký một số chương trình." },
+          { "id": "5", "tag": "Thông báo từ trường", "question": "Nộp tài liệu như đơn đăng ký lớp ngoại khóa theo thứ tự đến trước được trước như thế nào?", "answer": "Tài liệu theo thứ tự đến trước được trước sẽ được nộp trực tuyến hoặc trực tiếp theo hướng dẫn của trường. Hãy chắc chắn kiểm tra thời hạn nộp." },
+          { "id": "6", "tag": "Thông báo từ trường", "question": "Đơn đăng ký lớp trông trẻ đầu học kỳ cần những giấy tờ chứng minh gì?", "answer": "Gia đình có cả hai bố mẹ đi làm cần giấy xác nhận công tác, gia đình một bố hoặc một mẹ cần giấy tờ chứng minh liên quan. Mỗi trường có yêu cầu khác nhau nên hãy kiểm tra thông báo của trường." },
+          { "id": "7", "tag": "Thông báo từ trường", "question": "Dù không đăng ký sữa học đường có bắt buộc phải nộp đơn đồng ý không?", "answer": "Một số trường yêu cầu nộp để xác nhận không đăng ký dù không muốn. Hãy kiểm tra thông báo của trường." },
+          { "id": "8", "tag": "Thông báo từ trường", "question": "Khi con bị mất thông báo, làm thế nào để lấy lại mẫu tài liệu?", "answer": "Bạn có thể hỏi giáo viên chủ nhiệm hoặc tải xuống từ website hoặc ứng dụng của trường." },
+          { "id": "9", "tag": "Thông báo từ trường", "question": "Nếu con khó tự nộp tài liệu, phụ huynh có thể trực tiếp mang đến lớp không?", "answer": "Được. Nếu liên hệ trước với giáo viên chủ nhiệm để sắp xếp thời gian ghé thăm sẽ thuận tiện hơn." },
+          { "id": "10", "tag": "Tham quan dã ngoại", "question": "Không nộp đơn đồng ý tham quan dã ngoại thì sao?", "answer": "Nếu không nộp đơn đồng ý, con sẽ không thể tham gia tham quan. Dù không muốn tham gia, trong một số trường hợp vẫn phải nộp phiếu xác nhận không tham gia." },
+          { "id": "11", "tag": "Tham quan dã ngoại", "question": "Chi phí tham quan dã ngoại được thanh toán như thế nào?", "answer": "Hầu hết được thanh toán qua hệ thống thanh toán học đường hoặc tài khoản do trường chỉ định. Hãy chắc chắn tuân thủ hạn thanh toán ghi trong thông báo." },
+          { "id": "12", "tag": "Thanh toán học đường", "question": "Hệ thống thanh toán học đường là gì?", "answer": "Hệ thống thanh toán học đường là hệ thống thanh toán tự động các khoản phí của trường. Nếu đăng ký đầu học kỳ, tiền ăn, tiền tham quan v.v. sẽ được trừ tự động." },
+          { "id": "13", "tag": "Thanh toán học đường", "question": "Tôi muốn thay đổi tài khoản thanh toán học đường thì làm thế nào?", "answer": "Hãy đến phòng hành chính của trường và điền vào đơn thay đổi hệ thống thanh toán. Trong một số trường hợp cần đến ngân hàng nên hãy hỏi trường trước." },
+          { "id": "14", "tag": "Điểm danh/Chứng nhận", "question": "Làm thế nào để lấy giấy xác nhận nghỉ học?", "answer": "Bạn có thể đến phòng hành chính của trường hoặc sử dụng dịch vụ cấp chứng nhận trên website của trường. Một số trường cũng có thể cấp qua Chính phủ điện tử." },
+          { "id": "15", "tag": "Điểm danh/Chứng nhận", "question": "Nếu thông tin điểm danh bị ghi sai thì làm thế nào để sửa?", "answer": "Hãy liên hệ ngay với giáo viên chủ nhiệm để yêu cầu sửa. Có thể cần giấy tờ chứng minh liên quan (giấy chẩn đoán bệnh, ý kiến của bác sĩ v.v.)." }
+        ]
+      },
+      "attendance": { "tabs": ["Tất cả"], "items": [] },
+      "events": { "tabs": ["Tất cả"], "items": [] },
+      "meals": { "tabs": ["Tất cả"], "items": [] },
+      "afterschool": { "tabs": ["Tất cả"], "items": [] },
+      "subjects": { "tabs": ["Tất cả"], "items": [] },
+      "grades": { "tabs": ["Tất cả"], "items": [] },
+      "teacher": { "tabs": ["Tất cả"], "items": [] },
+      "health": { "tabs": ["Tất cả"], "items": [] },
+      "rules": { "tabs": ["Tất cả"], "items": [] },
+      "multicultural": { "tabs": ["Tất cả"], "items": [] },
+      "enrollment": { "tabs": ["Tất cả"], "items": [] }
+    }
+  }
+}

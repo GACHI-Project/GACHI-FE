@@ -8,6 +8,7 @@ import AuthInput from '../../src/components/auth/AuthInput';
 import { PrimaryButton } from '../../src/components/common/Button';
 import { login, AuthApiError } from '../../src/api/auth';
 import { getMe } from '../../src/api/user';
+import { useUserStore } from '../../src/store/userStore';
 import i18n, { saveLanguage, SUPPORTED_LANGUAGES, SupportedLanguage } from '../../src/i18n';
 import { fromServerLanguageCode } from '../../src/types/language';
 import { registerDevicePushToken } from '../../src/utils/pushToken';
@@ -24,6 +25,8 @@ const LoginScreen = () => {
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | undefined>();
 
+  const setName = useUserStore((s) => s.setName);
+
   const handleLogin = async () => {
     setLoading(true);
     setErrorMessage(undefined);
@@ -34,6 +37,7 @@ const LoginScreen = () => {
 
       try {
         const me = await getMe();
+        setName(me.name);
         const lang = fromServerLanguageCode(me.languageCode) as SupportedLanguage;
         if (SUPPORTED_LANGUAGES.includes(lang)) {
           await saveLanguage(lang);

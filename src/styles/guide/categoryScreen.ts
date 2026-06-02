@@ -83,6 +83,8 @@ const styles = StyleSheet.create({
   qaCard: {
     shadowColor: '#4DA3FF',
     shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
     elevation: 2,
     borderRadius: 12,
     backgroundColor: colors.text.white,

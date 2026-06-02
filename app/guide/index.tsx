@@ -25,8 +25,10 @@ interface Section {
 const GuideScreen = () => {
   const { t } = useTranslation();
 
-  const popularQuestions = t('guide.popularQuestions', { returnObjects: true }) as string[];
-  const sections = t('guide.sections', { returnObjects: true }) as Section[];
+  const rawPopular = t('guide.popularQuestions', { returnObjects: true });
+  const popularQuestions = Array.isArray(rawPopular) ? (rawPopular as string[]) : [];
+  const rawSections = t('guide.sections', { returnObjects: true });
+  const sections = Array.isArray(rawSections) ? (rawSections as Section[]) : [];
 
   return (
     <View style={styles.container}>
@@ -88,9 +90,18 @@ const GuideScreen = () => {
                   </Text>
                   <View style={styles.categoryTexts}>
                     <Text style={styles.categoryName}>{cat.name}</Text>
-                    <Text style={styles.categoryCount}>
-                      {t('guide.questionCount', { count: 15 })}
-                    </Text>
+                    {(() => {
+                      const qa = t(`guide.qa.${cat.key}`, { returnObjects: true });
+                      const count =
+                        qa && typeof qa === 'object' && 'items' in qa
+                          ? (qa as { items: unknown[] }).items.length
+                          : 0;
+                      return (
+                        <Text style={styles.categoryCount}>
+                          {t('guide.questionCount', { count })}
+                        </Text>
+                      );
+                    })()}
                   </View>
                 </TouchableOpacity>
               ))}

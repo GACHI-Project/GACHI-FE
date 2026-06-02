@@ -764,7 +764,18 @@
             "answer": "Contact the homeroom teacher immediately to request a correction. Supporting documents such as a doctor's note may be required."
           }
         ]
-      }
+      },
+      "attendance": { "tabs": ["All"], "items": [] },
+      "events": { "tabs": ["All"], "items": [] },
+      "meals": { "tabs": ["All"], "items": [] },
+      "afterschool": { "tabs": ["All"], "items": [] },
+      "subjects": { "tabs": ["All"], "items": [] },
+      "grades": { "tabs": ["All"], "items": [] },
+      "teacher": { "tabs": ["All"], "items": [] },
+      "health": { "tabs": ["All"], "items": [] },
+      "rules": { "tabs": ["All"], "items": [] },
+      "multicultural": { "tabs": ["All"], "items": [] },
+      "enrollment": { "tabs": ["All"], "items": [] }
     }
   }
 }

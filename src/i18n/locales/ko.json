@@ -689,7 +689,18 @@
           { "id": "14", "tag": "출결/증명", "question": "결석 확인서는 어떻게 발급받나요?", "answer": "학교 행정실에 방문하거나 학교 홈페이지의 증명서 발급 서비스를 이용하시면 됩니다. 일부 학교는 정부24에서도 발급 가능합니다." },
           { "id": "15", "tag": "출결/증명", "question": "출결 사항이 잘못 기재된 경우 어떻게 수정하나요?", "answer": "담임 선생님께 즉시 연락하여 수정을 요청하세요. 관련 증빙 서류(진단서, 의사 소견서 등)가 필요할 수 있습니다." }
         ]
-      }
+      },
+      "attendance": { "tabs": ["전체"], "items": [] },
+      "events": { "tabs": ["전체"], "items": [] },
+      "meals": { "tabs": ["전체"], "items": [] },
+      "afterschool": { "tabs": ["전체"], "items": [] },
+      "subjects": { "tabs": ["전체"], "items": [] },
+      "grades": { "tabs": ["전체"], "items": [] },
+      "teacher": { "tabs": ["전체"], "items": [] },
+      "health": { "tabs": ["전체"], "items": [] },
+      "rules": { "tabs": ["전체"], "items": [] },
+      "multicultural": { "tabs": ["전체"], "items": [] },
+      "enrollment": { "tabs": ["전체"], "items": [] }
     }
   }
 }

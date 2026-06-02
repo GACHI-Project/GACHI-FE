@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Platform } from 'react-native';
 import { Stack } from 'expo-router';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -9,8 +9,28 @@ import * as Notifications from 'expo-notifications';
 import { initI18n } from '../src/i18n';
 import { useNotificationStore } from '../src/store/notificationStore';
 import { fetchUnreadCount } from '../src/api/notifications';
+import colors from '../src/constants/colors';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
+
+if (Platform.OS === 'android') {
+  Notifications.setNotificationChannelAsync('default', {
+    name: 'default',
+    importance: Notifications.AndroidImportance.MAX,
+    vibrationPattern: [0, 250, 250, 250],
+    lightColor: colors.primary[400],
+  });
+}
+
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
+    shouldPlaySound: true,
+    shouldSetBadge: true,
+  }),
+});
 
 // eslint-disable-next-line global-require, @typescript-eslint/no-require-imports
 const FONTS = {

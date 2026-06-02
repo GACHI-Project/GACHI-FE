@@ -44,7 +44,6 @@ const RecentDocs = () => {
         <ActivityIndicator
           size="small"
           color={colors.primary[400]}
-<<<<<<< HEAD
           style={styles.loadingIndicator}
         />
       );

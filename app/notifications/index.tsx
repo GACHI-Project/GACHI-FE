@@ -74,10 +74,6 @@ const NotificationsScreen = () => {
       .finally(() => setIsLoading(false));
   }, [setUnreadCount]);
 
-  useEffect(() => {
-    loadInitial();
-  }, [loadInitial]);
-
   useFocusEffect(
     useCallback(() => {
       loadInitial();

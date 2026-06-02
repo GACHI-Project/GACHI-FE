@@ -19,7 +19,7 @@ export const registerDevicePushToken = async (): Promise<void> => {
     return;
   }
 
-  const projectId = Constants.expoConfig?.extra?.eas?.projectId;
+  const projectId = Constants.expoConfig?.extra?.eas?.projectId ?? Constants.easConfig?.projectId;
   if (!projectId) {
     console.error('[PushToken] EAS projectId를 찾을 수 없습니다');
     return;
@@ -35,7 +35,7 @@ export const registerDevicePushToken = async (): Promise<void> => {
         : ((await Application.getIosIdForVendorAsync()) ?? 'ios-unknown');
 
     await registerPushToken({ platform, token, deviceId, appVersion });
-    console.log('[PushToken] 서버 등록 성공:', token);
+    console.log('[PushToken] 서버 등록 성공');
   } catch (error) {
     console.error('[PushToken] 등록 중 에러 발생:', error);
   }

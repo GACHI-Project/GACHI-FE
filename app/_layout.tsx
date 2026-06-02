@@ -52,12 +52,17 @@ const RootLayout = () => {
   }, []);
 
   useEffect(() => {
-    const subscription = Notifications.addNotificationReceivedListener(() => {
+    const syncUnreadCount = () => {
       fetchUnreadCount()
         .then(setUnreadCount)
         .catch(() => {});
-    });
-    return () => subscription.remove();
+    };
+    const receivedSub = Notifications.addNotificationReceivedListener(syncUnreadCount);
+    const responseSub = Notifications.addNotificationResponseReceivedListener(syncUnreadCount);
+    return () => {
+      receivedSub.remove();
+      responseSub.remove();
+    };
   }, [setUnreadCount]);
 
   if (!ready) return null;

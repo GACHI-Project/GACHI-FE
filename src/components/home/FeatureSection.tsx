@@ -1,6 +1,7 @@
 import { View, Text, Image, TouchableOpacity, ImageSourcePropType } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import colors from '../../constants/colors';
 import styles from '../../styles/home/featureSection';
@@ -60,6 +61,7 @@ const FeatureSection = () => {
               <TouchableOpacity
                 style={[styles.cardButton, { backgroundColor: card.buttonColor }]}
                 activeOpacity={0.8}
+                onPress={() => (card.id === 'guide' ? router.push('/guide') : undefined)}
               >
                 <Ionicons
                   name={card.id === 'ai' ? 'chatbubble-outline' : 'albums-outline'}

@@ -2,11 +2,13 @@ import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { useMemo } from 'react';
+import { useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { useUserStore } from '../../src/store/userStore';
+import { fetchUnreadCount } from '../../src/api/notifications';
+import { useNotificationStore } from '../../src/store/notificationStore';
 import TaskCard from '../../src/components/home/TaskCard';
 import ScanBanner from '../../src/components/home/ScanBanner';
 import FeatureSection from '../../src/components/home/FeatureSection';
@@ -41,6 +43,16 @@ const HomeScreen = () => {
   const name = useUserStore((s) => s.name);
   const greetingText = useMemo(() => getGreetingByTime(t), [t]);
 
+  const { unreadCount, setUnreadCount } = useNotificationStore();
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchUnreadCount()
+        .then(setUnreadCount)
+        .catch(() => {});
+    }, [setUnreadCount])
+  );
+
   return (
     <View style={styles.screen}>
       <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
@@ -55,6 +67,7 @@ const HomeScreen = () => {
             onPress={() => router.push('/notifications')}
           >
             <Ionicons name="notifications-outline" size={22} color={colors.primary[600]} />
+            {unreadCount > 0 && <View style={styles.badge} />}
           </TouchableOpacity>
         </View>
       </View>

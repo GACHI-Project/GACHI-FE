@@ -4,7 +4,9 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import { router } from 'expo-router';
+import { useUserStore } from '../../src/store/userStore';
 import TaskCard from '../../src/components/home/TaskCard';
 import ScanBanner from '../../src/components/home/ScanBanner';
 import FeatureSection from '../../src/components/home/FeatureSection';
@@ -13,7 +15,7 @@ import RecentDocs from '../../src/components/home/RecentDocs';
 import colors from '../../src/constants/colors';
 import styles from '../../src/styles/home/homeScreen';
 
-const getGreetingByTime = (t: (key: string, options?: object) => unknown): string => {
+const getGreetingByTime = (t: TFunction): string => {
   const hour = new Date().getHours();
 
   let key: string;
@@ -36,6 +38,7 @@ const getGreetingByTime = (t: (key: string, options?: object) => unknown): strin
 const HomeScreen = () => {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const name = useUserStore((s) => s.name);
   const greetingText = useMemo(() => getGreetingByTime(t), [t]);
 
   return (
@@ -44,7 +47,7 @@ const HomeScreen = () => {
         <View style={styles.headerInner}>
           <View style={styles.headerTexts}>
             <Text style={styles.greeting}>{greetingText}</Text>
-            <Text style={styles.username}>{t('home.usernameFormat', { name: '김까치' })}</Text>
+            <Text style={styles.username}>{t('home.usernameFormat', { name })}</Text>
           </View>
           <TouchableOpacity
             style={styles.bellButton}

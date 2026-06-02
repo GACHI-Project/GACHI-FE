@@ -628,5 +628,154 @@
     "timeMinutesAgo": "{{count}}m ago",
     "timeHoursAgo": "{{count}}h ago",
     "loadError": "Failed to load notifications"
+  },
+  "guide": {
+    "title": "What would you like to know?",
+    "subtitle": "Find answers about documents, events, meals, and more.",
+    "searchPlaceholder": "Search by title",
+    "popularTitle": "Frequently Asked Questions",
+    "popularQuestions": [
+      "What happens if I don't submit the field trip consent form?",
+      "Do I have to attend the parent-teacher meeting?"
+    ],
+    "questionCount": "{{count}} questions",
+    "totalCount": "{{count}} questions total",
+    "sections": [
+      {
+        "label": "Daily School Life",
+        "categories": [
+          { "name": "Documents & Consent", "key": "documents" },
+          { "name": "Attendance & Schedule", "key": "attendance" },
+          { "name": "School Events", "key": "events" },
+          { "name": "Meals & Supplies", "key": "meals" }
+        ]
+      },
+      {
+        "label": "Classes & After-School",
+        "categories": [
+          { "name": "After-School Care", "key": "afterschool" },
+          { "name": "Subjects & Classes", "key": "subjects" },
+          { "name": "Grades & Assessment", "key": "grades" },
+          { "name": "Teacher Communication", "key": "teacher" }
+        ]
+      },
+      {
+        "label": "Rules & Administration",
+        "categories": [
+          { "name": "Health & Safety", "key": "health" },
+          { "name": "School Rules", "key": "rules" },
+          { "name": "Multicultural Info", "key": "multicultural" },
+          { "name": "Enrollment & Transfer", "key": "enrollment" }
+        ]
+      }
+    ],
+    "qa": {
+      "documents": {
+        "tabs": ["All", "School Notices", "Field Trips", "School Banking", "Attendance"],
+        "items": [
+          {
+            "id": "1",
+            "tag": "School Notices",
+            "question": "Do I need to submit a notice even just to indicate my preference?",
+            "answer": "Yes, preference notices are used by the school to gauge demand. You must submit them regardless of whether you plan to participate."
+          },
+          {
+            "id": "2",
+            "tag": "School Notices",
+            "question": "What is a 'reply form' in a school notice?",
+            "answer": "It's a form parents must fill in, sign, and return to school. Cut along the dotted line at the bottom of the paper notice and send it back with your child to the homeroom teacher."
+          },
+          {
+            "id": "3",
+            "tag": "School Notices",
+            "question": "How do I sign a consent form that came through a mobile app (e-Alimi, Hiclass, etc.)?",
+            "answer": "You can sign electronically or tap the agree button directly in the app. No printing is required."
+          },
+          {
+            "id": "4",
+            "tag": "School Notices",
+            "question": "What happens if I don't submit the personal information consent form?",
+            "answer": "Related services may be restricted, and your child may not be able to join school events or apply for certain programs."
+          },
+          {
+            "id": "5",
+            "tag": "School Notices",
+            "question": "How do I submit forms that close on a first-come, first-served basis?",
+            "answer": "Submit these forms online or in person as directed by the school. Be sure to check the deadline."
+          },
+          {
+            "id": "6",
+            "tag": "School Notices",
+            "question": "What documents do I need for the daycare classroom application at the start of the semester?",
+            "answer": "Dual-income households need an employment certificate; single-parent households need relevant proof. Requirements vary by school, so check the notice."
+          },
+          {
+            "id": "7",
+            "tag": "School Notices",
+            "question": "Do I need to submit the milk lunch preference form even if I'm not applying?",
+            "answer": "Some schools require submission to confirm non-participation. Please check your school's notice."
+          },
+          {
+            "id": "8",
+            "tag": "School Notices",
+            "question": "How do I get another copy of a school notice my child lost?",
+            "answer": "Contact the homeroom teacher, or download it from the school website or app."
+          },
+          {
+            "id": "9",
+            "tag": "School Notices",
+            "question": "Can a guardian bring documents directly to the classroom if the child has difficulty submitting them?",
+            "answer": "Yes, please contact the homeroom teacher in advance to arrange a convenient visit time."
+          },
+          {
+            "id": "10",
+            "tag": "Field Trips",
+            "question": "What happens if I don't submit the field trip consent form?",
+            "answer": "Without the consent form, your child cannot participate. Even if you don't wish to participate, you may still need to submit a non-participation confirmation."
+          },
+          {
+            "id": "11",
+            "tag": "Field Trips",
+            "question": "How do I pay for field trip fees?",
+            "answer": "Most fees are paid via school banking or the school's designated account. Pay by the deadline stated in the notice."
+          },
+          {
+            "id": "12",
+            "tag": "School Banking",
+            "question": "What is school banking?",
+            "answer": "School banking is a direct debit system used by schools to collect fees automatically. Once set up at the start of the semester, fees such as school meals and field trips are deducted automatically."
+          },
+          {
+            "id": "13",
+            "tag": "School Banking",
+            "question": "How do I change my school banking account?",
+            "answer": "Visit the school office and fill out a school banking change form. A bank visit may also be required, so contact the school first."
+          },
+          {
+            "id": "14",
+            "tag": "Attendance",
+            "question": "How do I get an absence certificate?",
+            "answer": "Visit the school office or use the school's online certificate service. Some schools also allow issuance through the Government24 portal."
+          },
+          {
+            "id": "15",
+            "tag": "Attendance",
+            "question": "How do I correct an error in my child's attendance record?",
+            "answer": "Contact the homeroom teacher immediately to request a correction. Supporting documents such as a doctor's note may be required."
+          }
+        ]
+      },
+      "attendance": { "tabs": ["All"], "items": [] },
+      "events": { "tabs": ["All"], "items": [] },
+      "meals": { "tabs": ["All"], "items": [] },
+      "afterschool": { "tabs": ["All"], "items": [] },
+      "subjects": { "tabs": ["All"], "items": [] },
+      "grades": { "tabs": ["All"], "items": [] },
+      "teacher": { "tabs": ["All"], "items": [] },
+      "health": { "tabs": ["All"], "items": [] },
+      "rules": { "tabs": ["All"], "items": [] },
+      "multicultural": { "tabs": ["All"], "items": [] },
+      "enrollment": { "tabs": ["All"], "items": [] }
+    }
   }
 }

@@ -1,4 +1,5 @@
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import styles from '../../styles/home/guideCards';
 
@@ -13,8 +14,7 @@ const GuideCards = () => {
     <View style={styles.section}>
       <View style={styles.header}>
         <Text style={styles.sectionTitle}>{t('home.guideCards.sectionTitle')}</Text>
-        {/* TODO: 가이드 전체 목록 화면으로 이동 예정 */}
-        <TouchableOpacity onPress={() => {}} activeOpacity={0.7}>
+        <TouchableOpacity onPress={() => router.push('/guide')} activeOpacity={0.7}>
           <Text style={styles.moreText}>{t('home.guideCards.more')}</Text>
         </TouchableOpacity>
       </View>
@@ -24,12 +24,11 @@ const GuideCards = () => {
         contentContainerStyle={styles.scrollContent}
       >
         {questions.map((question, index) => (
-          // TODO: 가이드 상세 화면으로 이동 예정
           <TouchableOpacity
             key={question}
             style={styles.card}
             activeOpacity={0.8}
-            onPress={() => {}}
+            onPress={() => router.push('/guide')}
           >
             <Text style={styles.cardEmoji}>{GUIDE_EMOJIS[index] ?? '📌'}</Text>
             <Text style={styles.cardQuestion}>{question}</Text>

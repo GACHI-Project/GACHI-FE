@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { AntDesign, Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
+import { router } from 'expo-router';
 import { getRecentNewsletters, type RecentNewsletterGroup } from '../../api/newsletter';
 import colors from '../../constants/colors';
 import styles from '../../styles/home/recentDocs';
@@ -19,7 +20,12 @@ const RecentDocs = () => {
     let cancelled = false;
     getRecentNewsletters(5)
       .then((data) => {
-        if (!cancelled) setGroups(data);
+        if (!cancelled) {
+          const filtered = data
+            .map((g) => ({ ...g, items: g.items.filter((doc) => doc.title != null) }))
+            .filter((g) => g.items.length > 0);
+          setGroups(filtered);
+        }
       })
       .catch(() => {
         if (!cancelled) setError(true);
@@ -42,8 +48,12 @@ const RecentDocs = () => {
         />
       );
     }
-    if (error) return <Text style={styles.docMeta}>{t('common.networkError')}</Text>;
-    if (groups.length === 0) return <Text style={styles.docMeta}>{t('document.empty')}</Text>;
+    if (error) {
+      return <Text style={styles.docMeta}>{t('common.networkError')}</Text>;
+    }
+    if (groups.length === 0) {
+      return <Text style={styles.docMeta}>{t('document.empty')}</Text>;
+    }
     return (
       <View style={styles.timeline}>
         {groups.map((group) => (
@@ -58,12 +68,11 @@ const RecentDocs = () => {
               </View>
               <View style={styles.cardsArea}>
                 {group.items.map((doc) => (
-                  // TODO: 문서 상세 화면으로 이동 예정 router.push(`/(tabs)/documents/${doc.newsletterId}`)
                   <TouchableOpacity
                     key={doc.newsletterId}
                     style={styles.docCard}
                     activeOpacity={0.8}
-                    onPress={() => {}}
+                    onPress={() => router.push(`/newsletter/${doc.newsletterId}`)}
                   >
                     <View style={styles.docIconBox}>
                       <AntDesign
@@ -74,7 +83,7 @@ const RecentDocs = () => {
                       />
                     </View>
                     <View style={styles.docTexts}>
-                      <Text style={styles.docTitle}>{doc.title}</Text>
+                      <Text style={styles.docTitle}>{doc.title!}</Text>
                       <Text style={styles.docMeta}>
                         {[
                           doc.childName,
@@ -106,7 +115,6 @@ const RecentDocs = () => {
           <Text style={styles.moreText}>{t('home.recentDocs.more')}</Text>
         </TouchableOpacity>
       </View>
-
       {renderContent()}
     </View>
   );

@@ -106,7 +106,7 @@ export const markAllNotificationsRead = async (): Promise<number> => {
 };
 
 export interface RegisterPushTokenParams {
-  platform: 'IOS' | 'ANDROID';
+  platform: 'IOS' | 'ANDROID' | 'EXPO';
   token: string;
   deviceId: string;
   appVersion: string;
@@ -120,6 +120,19 @@ export interface PushTokenResult {
   enabled: boolean;
   lastRegisteredAt: string;
 }
+
+export const fetchUnreadCount = async (): Promise<number> => {
+  try {
+    const headers = await getAuthHeader();
+    const { data } = await apiClient.get<{ result: { unreadCount: number } }>(
+      '/api/v1/notifications/unread-count',
+      { headers }
+    );
+    return data.result.unreadCount;
+  } catch (error) {
+    throw wrapError(error);
+  }
+};
 
 export const registerPushToken = async (
   params: RegisterPushTokenParams

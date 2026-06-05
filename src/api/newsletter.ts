@@ -245,6 +245,24 @@ export interface NewsletterListResult {
   totalCount: number;
 }
 
+export interface ConversationTopic {
+  topicId: number;
+  topic: string;
+}
+
+export const getConversationTopics = async (newsletterId: number): Promise<ConversationTopic[]> => {
+  try {
+    const headers = await getAuthHeader();
+    const response = await apiClient.get<{ result: { topics: ConversationTopic[] } }>(
+      `/api/v1/newsletters/${newsletterId}/conversation-topics`,
+      { headers }
+    );
+    return response.data.result.topics ?? [];
+  } catch (error) {
+    throw wrapError(error);
+  }
+};
+
 export const fetchNewsletters = async (params: {
   childName?: string;
   search?: string;

@@ -130,6 +130,19 @@ const styles = StyleSheet.create({
     color: colors.text.primary,
     lineHeight: 22,
   },
+  centered: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  errorText: {
+    fontSize: 14,
+    fontFamily: fonts.medium,
+    color: colors.text.secondary,
+  },
+  detailSpinner: {
+    paddingVertical: 16,
+  },
 });
 
 export default styles;

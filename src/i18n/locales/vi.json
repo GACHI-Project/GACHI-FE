@@ -16,7 +16,8 @@
     "change": "Thay đổi",
     "elementaryGrade": "Lớp {{grade}} tiểu học",
     "grade": "Lớp {{grade}}",
-    "preparing": "Đang chuẩn bị"
+    "preparing": "Đang chuẩn bị",
+    "cancel": "Hủy"
   },
   "tabs": {
     "home": "Trang chủ",
@@ -268,12 +269,18 @@
     "features": {
       "sectionTitle": "Tính năng chính",
       "ai": {
-        "title": ["Hỏi", "AI"],
+        "title": [
+          "Hỏi",
+          "AI"
+        ],
         "desc": "Đặt câu hỏi ngay về nội dung khó hiểu. AI sẽ giải thích cả ngữ cảnh cho bạn.",
         "button": "Bắt đầu trò chuyện"
       },
       "guide": {
-        "title": ["Hướng dẫn cuộc sống", "học đường tại Hàn Quốc"],
+        "title": [
+          "Hướng dẫn cuộc sống",
+          "học đường tại Hàn Quốc"
+        ],
         "desc": "Tra cứu dễ dàng những điều hay nhầm lẫn trong cuộc sống học đường qua hỏi đáp.",
         "button": "Xem hướng dẫn"
       }
@@ -487,7 +494,15 @@
         "month": "Tháng",
         "day": "Ngày",
         "fullDay": "Cả ngày",
-        "weekdays": ["Chủ nhật", "Thứ hai", "Thứ ba", "Thứ tư", "Thứ năm", "Thứ sáu", "Thứ bảy"],
+        "weekdays": [
+          "Chủ nhật",
+          "Thứ hai",
+          "Thứ ba",
+          "Thứ tư",
+          "Thứ năm",
+          "Thứ sáu",
+          "Thứ bảy"
+        ],
         "isEditing": "✏️ Đang chỉnh sửa",
         "edit": "✏️ Chỉnh sửa",
         "no": "Không",
@@ -659,28 +674,64 @@
       {
         "label": "Cuộc sống học đường hàng ngày",
         "categories": [
-          { "name": "Giấy tờ · Đơn đồng ý", "key": "documents" },
-          { "name": "Điểm danh · Lịch học", "key": "attendance" },
-          { "name": "Sự kiện trường học", "key": "events" },
-          { "name": "Bữa ăn · Đồ dùng học tập", "key": "meals" }
+          {
+            "name": "Giấy tờ · Đơn đồng ý",
+            "key": "documents"
+          },
+          {
+            "name": "Điểm danh · Lịch học",
+            "key": "attendance"
+          },
+          {
+            "name": "Sự kiện trường học",
+            "key": "events"
+          },
+          {
+            "name": "Bữa ăn · Đồ dùng học tập",
+            "key": "meals"
+          }
         ]
       },
       {
         "label": "Học tập và hoạt động ngoại khóa",
         "categories": [
-          { "name": "Ngoại khóa · Nhóm trông trẻ", "key": "afterschool" },
-          { "name": "Môn học · Lớp học", "key": "subjects" },
-          { "name": "Điểm số · Đánh giá", "key": "grades" },
-          { "name": "Liên lạc với giáo viên", "key": "teacher" }
+          {
+            "name": "Ngoại khóa · Nhóm trông trẻ",
+            "key": "afterschool"
+          },
+          {
+            "name": "Môn học · Lớp học",
+            "key": "subjects"
+          },
+          {
+            "name": "Điểm số · Đánh giá",
+            "key": "grades"
+          },
+          {
+            "name": "Liên lạc với giáo viên",
+            "key": "teacher"
+          }
         ]
       },
       {
         "label": "Nội quy và hệ thống hành chính",
         "categories": [
-          { "name": "Sức khỏe · An toàn", "key": "health" },
-          { "name": "Nội quy trường học", "key": "rules" },
-          { "name": "Thông tin đa văn hóa", "key": "multicultural" },
-          { "name": "Nhập học · Chuyển trường", "key": "enrollment" }
+          {
+            "name": "Sức khỏe · An toàn",
+            "key": "health"
+          },
+          {
+            "name": "Nội quy trường học",
+            "key": "rules"
+          },
+          {
+            "name": "Thông tin đa văn hóa",
+            "key": "multicultural"
+          },
+          {
+            "name": "Nhập học · Chuyển trường",
+            "key": "enrollment"
+          }
         ]
       }
     ],
@@ -786,18 +837,76 @@
           }
         ]
       },
-      "attendance": { "tabs": ["Tất cả"], "items": [] },
-      "events": { "tabs": ["Tất cả"], "items": [] },
-      "meals": { "tabs": ["Tất cả"], "items": [] },
-      "afterschool": { "tabs": ["Tất cả"], "items": [] },
-      "subjects": { "tabs": ["Tất cả"], "items": [] },
-      "grades": { "tabs": ["Tất cả"], "items": [] },
-      "teacher": { "tabs": ["Tất cả"], "items": [] },
-      "health": { "tabs": ["Tất cả"], "items": [] },
-      "rules": { "tabs": ["Tất cả"], "items": [] },
-      "multicultural": { "tabs": ["Tất cả"], "items": [] },
-      "enrollment": { "tabs": ["Tất cả"], "items": [] }
-    }
+      "attendance": {
+        "tabs": [
+          "Tất cả"
+        ],
+        "items": []
+      },
+      "events": {
+        "tabs": [
+          "Tất cả"
+        ],
+        "items": []
+      },
+      "meals": {
+        "tabs": [
+          "Tất cả"
+        ],
+        "items": []
+      },
+      "afterschool": {
+        "tabs": [
+          "Tất cả"
+        ],
+        "items": []
+      },
+      "subjects": {
+        "tabs": [
+          "Tất cả"
+        ],
+        "items": []
+      },
+      "grades": {
+        "tabs": [
+          "Tất cả"
+        ],
+        "items": []
+      },
+      "teacher": {
+        "tabs": [
+          "Tất cả"
+        ],
+        "items": []
+      },
+      "health": {
+        "tabs": [
+          "Tất cả"
+        ],
+        "items": []
+      },
+      "rules": {
+        "tabs": [
+          "Tất cả"
+        ],
+        "items": []
+      },
+      "multicultural": {
+        "tabs": [
+          "Tất cả"
+        ],
+        "items": []
+      },
+      "enrollment": {
+        "tabs": [
+          "Tất cả"
+        ],
+        "items": []
+      }
+    },
+    "loadFailed": "Không thể tải câu hỏi.",
+    "searchHint": "Nhập từ khóa tìm kiếm.",
+    "searchEmpty": "Không tìm thấy kết quả."
   },
   "chat": {
     "title": "까치 (Kachi)",

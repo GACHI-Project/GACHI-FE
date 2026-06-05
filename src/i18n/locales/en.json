@@ -16,7 +16,8 @@
     "change": "Change",
     "elementaryGrade": "Grade {{grade}}",
     "grade": "Grade {{grade}}",
-    "preparing": "Coming Soon"
+    "preparing": "Coming Soon",
+    "cancel": "Cancel"
   },
   "tabs": {
     "home": "Home",
@@ -101,7 +102,15 @@
         "childNamePlaceholder": "Enter name",
         "colorHint": "Each child's color is used to quickly identify whose schedule it is on the calendar.",
         "addChild": "Add Child",
-        "order": ["1st", "2nd", "3rd", "4th", "5th", "6th", "7th"]
+        "order": [
+          "1st",
+          "2nd",
+          "3rd",
+          "4th",
+          "5th",
+          "6th",
+          "7th"
+        ]
       },
       "notification": {
         "title": "Choose your notification settings",
@@ -260,12 +269,18 @@
     "features": {
       "sectionTitle": "Key Features",
       "ai": {
-        "title": ["Ask", "AI"],
+        "title": [
+          "Ask",
+          "AI"
+        ],
         "desc": "Ask questions about anything unclear. AI will explain the full context.",
         "button": "Start Chat"
       },
       "guide": {
-        "title": ["Korean School", "Life Guide"],
+        "title": [
+          "Korean School",
+          "Life Guide"
+        ],
         "desc": "Find quick answers to common questions about school life.",
         "button": "Open Guide"
       }
@@ -479,7 +494,15 @@
         "month": "M",
         "day": "D",
         "fullDay": "All Day",
-        "weekdays": ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+        "weekdays": [
+          "Sun",
+          "Mon",
+          "Tue",
+          "Wed",
+          "Thu",
+          "Fri",
+          "Sat"
+        ],
         "isEditing": "✏️ Editing",
         "edit": "✏️ Edit",
         "no": "No",
@@ -651,34 +674,76 @@
       {
         "label": "Daily School Life",
         "categories": [
-          { "name": "Documents & Consent", "key": "documents" },
-          { "name": "Attendance & Schedule", "key": "attendance" },
-          { "name": "School Events", "key": "events" },
-          { "name": "Meals & Supplies", "key": "meals" }
+          {
+            "name": "Documents & Consent",
+            "key": "documents"
+          },
+          {
+            "name": "Attendance & Schedule",
+            "key": "attendance"
+          },
+          {
+            "name": "School Events",
+            "key": "events"
+          },
+          {
+            "name": "Meals & Supplies",
+            "key": "meals"
+          }
         ]
       },
       {
         "label": "Classes & After-School",
         "categories": [
-          { "name": "After-School Care", "key": "afterschool" },
-          { "name": "Subjects & Classes", "key": "subjects" },
-          { "name": "Grades & Assessment", "key": "grades" },
-          { "name": "Teacher Communication", "key": "teacher" }
+          {
+            "name": "After-School Care",
+            "key": "afterschool"
+          },
+          {
+            "name": "Subjects & Classes",
+            "key": "subjects"
+          },
+          {
+            "name": "Grades & Assessment",
+            "key": "grades"
+          },
+          {
+            "name": "Teacher Communication",
+            "key": "teacher"
+          }
         ]
       },
       {
         "label": "Rules & Administration",
         "categories": [
-          { "name": "Health & Safety", "key": "health" },
-          { "name": "School Rules", "key": "rules" },
-          { "name": "Multicultural Info", "key": "multicultural" },
-          { "name": "Enrollment & Transfer", "key": "enrollment" }
+          {
+            "name": "Health & Safety",
+            "key": "health"
+          },
+          {
+            "name": "School Rules",
+            "key": "rules"
+          },
+          {
+            "name": "Multicultural Info",
+            "key": "multicultural"
+          },
+          {
+            "name": "Enrollment & Transfer",
+            "key": "enrollment"
+          }
         ]
       }
     ],
     "qa": {
       "documents": {
-        "tabs": ["All", "School Notices", "Field Trips", "School Banking", "Attendance"],
+        "tabs": [
+          "All",
+          "School Notices",
+          "Field Trips",
+          "School Banking",
+          "Attendance"
+        ],
         "items": [
           {
             "id": "1",
@@ -772,18 +837,76 @@
           }
         ]
       },
-      "attendance": { "tabs": ["All"], "items": [] },
-      "events": { "tabs": ["All"], "items": [] },
-      "meals": { "tabs": ["All"], "items": [] },
-      "afterschool": { "tabs": ["All"], "items": [] },
-      "subjects": { "tabs": ["All"], "items": [] },
-      "grades": { "tabs": ["All"], "items": [] },
-      "teacher": { "tabs": ["All"], "items": [] },
-      "health": { "tabs": ["All"], "items": [] },
-      "rules": { "tabs": ["All"], "items": [] },
-      "multicultural": { "tabs": ["All"], "items": [] },
-      "enrollment": { "tabs": ["All"], "items": [] }
-    }
+      "attendance": {
+        "tabs": [
+          "All"
+        ],
+        "items": []
+      },
+      "events": {
+        "tabs": [
+          "All"
+        ],
+        "items": []
+      },
+      "meals": {
+        "tabs": [
+          "All"
+        ],
+        "items": []
+      },
+      "afterschool": {
+        "tabs": [
+          "All"
+        ],
+        "items": []
+      },
+      "subjects": {
+        "tabs": [
+          "All"
+        ],
+        "items": []
+      },
+      "grades": {
+        "tabs": [
+          "All"
+        ],
+        "items": []
+      },
+      "teacher": {
+        "tabs": [
+          "All"
+        ],
+        "items": []
+      },
+      "health": {
+        "tabs": [
+          "All"
+        ],
+        "items": []
+      },
+      "rules": {
+        "tabs": [
+          "All"
+        ],
+        "items": []
+      },
+      "multicultural": {
+        "tabs": [
+          "All"
+        ],
+        "items": []
+      },
+      "enrollment": {
+        "tabs": [
+          "All"
+        ],
+        "items": []
+      }
+    },
+    "loadFailed": "Failed to load questions.",
+    "searchHint": "Type to search.",
+    "searchEmpty": "No results found."
   },
   "chat": {
     "title": "까치 (Kachi)",

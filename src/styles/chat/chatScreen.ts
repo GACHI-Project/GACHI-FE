@@ -1,0 +1,237 @@
+import { StyleSheet } from 'react-native';
+import colors from '../../constants/colors';
+import fonts from '../../constants/fonts';
+import layout from '../../constants/layout';
+
+const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: colors.text.white,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    paddingTop: 60,
+    paddingBottom: 12,
+    paddingHorizontal: layout.screenPaddingHorizontal,
+    backgroundColor: colors.text.white,
+  },
+  backButton: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    borderWidth: 1,
+    borderColor: colors.gray[200],
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerCenter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  headerTexts: {
+    gap: 2,
+  },
+  headerName: {
+    fontSize: 18,
+    fontFamily: fonts.bold,
+    color: colors.text.primary,
+  },
+  headerStatusRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  headerDot: {
+    fontSize: 12,
+    fontFamily: fonts.medium,
+    color: '#2CDA00',
+  },
+  headerStatusText: {
+    fontSize: 12,
+    fontFamily: fonts.medium,
+    color: colors.text.secondary,
+  },
+  listContent: {
+    paddingBottom: 16,
+  },
+  dateSeparatorWrapper: {
+    alignItems: 'center',
+    marginVertical: 16,
+  },
+  dateSeparator: {
+    backgroundColor: colors.gray[100],
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dateSeparatorText: {
+    fontSize: 12,
+    fontFamily: fonts.medium,
+    color: colors.text.secondary,
+  },
+  welcomeCard: {
+    backgroundColor: colors.gray[100],
+    borderRadius: 20,
+    padding: 20,
+    marginHorizontal: layout.screenPaddingHorizontal,
+    marginBottom: 12,
+  },
+  welcomeCardTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 12,
+  },
+  welcomeCardTexts: {
+    flex: 1,
+    gap: 4,
+  },
+  welcomeCardName: {
+    fontSize: 16,
+    fontFamily: fonts.bold,
+    color: colors.text.primary,
+  },
+  welcomeCardSubtitle: {
+    fontSize: 12,
+    fontFamily: fonts.medium,
+    color: colors.text.secondary,
+  },
+  welcomeCardText: {
+    fontSize: 14,
+    fontFamily: fonts.medium,
+    color: colors.text.primary,
+    lineHeight: 20,
+  },
+  userMessageRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'flex-end',
+    paddingHorizontal: layout.screenPaddingHorizontal,
+    marginVertical: 10,
+    gap: 6,
+  },
+  userBubble: {
+    backgroundColor: colors.primary[400],
+    borderRadius: 24,
+    borderBottomRightRadius: 5,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    maxWidth: '75%',
+    shadowColor: colors.gray[300],
+    shadowOpacity: 0.5,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
+  },
+  userText: {
+    fontSize: 14,
+    fontFamily: fonts.medium,
+    color: colors.text.white,
+  },
+  messageTime: {
+    fontSize: 12,
+    fontFamily: fonts.regular,
+    color: colors.gray[200],
+  },
+  aiMessageRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    paddingHorizontal: layout.screenPaddingHorizontal,
+    marginVertical: 10,
+    gap: 8,
+  },
+  aiMessageContent: {
+    flex: 1,
+    gap: 4,
+  },
+  aiBubbleAndWithTimeRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: 6,
+  },
+  aiBubble: {
+    backgroundColor: colors.gray[100],
+    borderRadius: 24,
+    borderBottomLeftRadius: 5,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    maxWidth: '75%',
+    alignSelf: 'flex-start',
+    shadowColor: colors.gray[300],
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 4,
+  },
+  aiText: {
+    fontSize: 14,
+    fontFamily: fonts.medium,
+    color: colors.text.primary,
+    lineHeight: 20,
+  },
+  messageTimeAi: {
+    fontSize: 12,
+    fontFamily: fonts.regular,
+    color: colors.gray[200],
+  },
+  dotsContainer: {
+    flexDirection: 'row',
+    gap: 6,
+    paddingVertical: 4,
+    alignItems: 'center',
+  },
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: colors.gray[300],
+  },
+  inputWrapper: {
+    backgroundColor: 'transparent',
+    paddingHorizontal: layout.screenPaddingHorizontal,
+    paddingTop: 8,
+    paddingBottom: 24,
+  },
+  inputInner: {
+    backgroundColor: colors.text.white,
+    borderRadius: 27,
+    minHeight: 54,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    gap: 8,
+    elevation: 2,
+    borderWidth: 1.5,
+    borderColor: colors.gray[100],
+  },
+  textInput: {
+    flex: 1,
+    fontSize: 14,
+    fontFamily: fonts.medium,
+    color: colors.text.primary,
+    maxHeight: 80,
+    paddingVertical: 0,
+  },
+  sendButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingRight: 2,
+    paddingTop: 2,
+  },
+  sendButtonActive: {
+    backgroundColor: colors.secondary[500],
+  },
+  sendButtonInactive: {
+    backgroundColor: colors.gray[200],
+  },
+});
+
+export default styles;

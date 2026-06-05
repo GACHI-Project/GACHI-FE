@@ -1,10 +1,18 @@
-import { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
+import { useEffect, useState, useCallback } from 'react';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  ScrollView,
+  ActivityIndicator,
+  BackHandler,
+} from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import Header from '../../src/components/common/Header';
+import ConfirmModal from '../../src/components/common/ConfirmModal';
 import ScanHelpModal from '../../src/components/scan/ScanHelpModal';
 import FullDocTab from '../../src/components/scan/result/FullDocTab';
 import ChecklistTab from '../../src/components/scan/result/ChecklistTab';
@@ -43,6 +51,19 @@ const ScanResultScreen = () => {
 
   const [detail, setDetail] = useState<NewsletterDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(!!newsletterIdParam);
+  const [unsavedVisible, setUnsavedVisible] = useState(false);
+
+  const handleBack = useCallback(() => {
+    setUnsavedVisible(true);
+  }, []);
+
+  useEffect(() => {
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      setUnsavedVisible(true);
+      return true;
+    });
+    return () => sub.remove();
+  }, []);
 
   useEffect(() => {
     if (!newsletterId) {
@@ -76,7 +97,11 @@ const ScanResultScreen = () => {
 
   return (
     <View style={styles.screen}>
-      <Header title={t('scan.result.title')} onHelp={() => setHelpVisible(true)} />
+      <Header
+        title={t('scan.result.title')}
+        onBack={handleBack}
+        onHelp={() => setHelpVisible(true)}
+      />
 
       <View style={styles.docInfo}>
         {detailLoading ? (
@@ -157,6 +182,17 @@ const ScanResultScreen = () => {
       </View>
 
       <ScanHelpModal visible={helpVisible} onClose={() => setHelpVisible(false)} />
+      <ConfirmModal
+        visible={unsavedVisible}
+        onClose={() => setUnsavedVisible(false)}
+        icon={<Ionicons name="save" size={30} color={colors.primary[600]} />}
+        title={t('scan.result.unsavedAlert.title')}
+        description={t('scan.result.unsavedAlert.message')}
+        cancelText={t('scan.result.unsavedAlert.cancel')}
+        onCancel={() => setUnsavedVisible(false)}
+        confirmText={t('scan.result.unsavedAlert.confirm')}
+        onConfirm={() => router.replace('/(tabs)')}
+      />
       <SaveBottomSheet
         visible={saveVisible}
         onClose={() => setSaveVisible(false)}

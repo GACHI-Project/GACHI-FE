@@ -406,6 +406,13 @@
     },
     "result": {
       "title": "스캔 결과",
+      "unsavedAlert": {
+        "title": "정말 나가시겠어요?",
+        "message": "저장하지 않으면 체크리스트 확인과\n캘린더 일정 등록을 이용할 수 없어요.",
+        "warning": "저장하지 않으면 스캔 결과가 사라지며 복구할 수 없어요.",
+        "confirm": "나가기",
+        "cancel": "계속 보기"
+      },
       "tabs": {
         "full": "전체 문서",
         "checklist": "체크리스트",
@@ -435,9 +442,9 @@
       },
       "aiSummary": {
         "summarySection": "AI 요약",
-        "todayTodo": "해야 할 일",
         "culturalContext": "문화 맥락 안내",
-        "emptyTodo": "등록된 할 일이 없어요.",
+        "conversationTitle": "오늘의 대화 주제",
+        "conversationEmpty": "대화 주제가 없어요.",
         "error": {
           "notFound": "가정통신문 정보를 찾을 수 없어요.",
           "analyzing": "아직 분석 중인 가정통신문이에요.",
@@ -445,7 +452,7 @@
           "newsletterNotFound": "가정통신문을 찾을 수 없어요.",
           "noAccess": "접근 권한이 없어요.",
           "summaryFailed": "요약을 불러오는 데 실패했어요.",
-          "todoFailed": "할 일 목록을 불러오는 데 실패했어요."
+          "conversationFailed": "대화 주제를 불러오는 데 실패했어요."
         },
         "qna": [
           {

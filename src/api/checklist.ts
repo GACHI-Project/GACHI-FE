@@ -64,3 +64,12 @@ export const toggleChecklistItem = async (
     throw wrapError(error);
   }
 };
+
+export const deleteChecklistItem = async (checklistId: number): Promise<void> => {
+  try {
+    const headers = await getAuthHeader();
+    await apiClient.delete(`/api/v1/checklists/${checklistId}`, { headers });
+  } catch (error) {
+    throw wrapError(error);
+  }
+};

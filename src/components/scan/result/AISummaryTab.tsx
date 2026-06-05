@@ -4,10 +4,10 @@ import { useTranslation } from 'react-i18next';
 import SummaryCard from './SummaryCard';
 import {
   getNewsletterSummary,
-  getNewsletterChecklist,
+  getConversationTopics,
   NewsletterApiError,
 } from '../../../api/newsletter';
-import type { NewsletterSummaryResult, ChecklistItem } from '../../../api/newsletter';
+import type { NewsletterSummaryResult, ConversationTopic } from '../../../api/newsletter';
 import colors from '../../../constants/colors';
 import fonts from '../../../constants/fonts';
 
@@ -31,23 +31,23 @@ const AISummaryTab = ({ newsletterId }: Props) => {
   const [summaryLoading, setSummaryLoading] = useState(true);
   const [summaryError, setSummaryError] = useState<string | null>(null);
 
-  const [todos, setTodos] = useState<ChecklistItem[]>([]);
-  const [todoLoading, setTodoLoading] = useState(true);
-  const [todoError, setTodoError] = useState<string | null>(null);
+  const [topics, setTopics] = useState<ConversationTopic[]>([]);
+  const [topicsLoading, setTopicsLoading] = useState(true);
+  const [topicsError, setTopicsError] = useState<string | null>(null);
 
   useEffect(() => {
     setSummary(null);
     setSummaryLoading(true);
     setSummaryError(null);
-    setTodos([]);
-    setTodoLoading(true);
-    setTodoError(null);
+    setTopics([]);
+    setTopicsLoading(true);
+    setTopicsError(null);
 
     if (!newsletterId) {
       setSummaryError('scan.result.aiSummary.error.notFound');
       setSummaryLoading(false);
-      setTodoError('scan.result.aiSummary.error.notFound');
-      setTodoLoading(false);
+      setTopicsError('scan.result.aiSummary.error.notFound');
+      setTopicsLoading(false);
       return () => {};
     }
 
@@ -60,30 +60,30 @@ const AISummaryTab = ({ newsletterId }: Props) => {
           setSummaryError(null);
         }
       })
-      .catch((e) => {
+      .catch((e: unknown) => {
         if (!cancelled) setSummaryError(mapSummaryErrorKey(e));
       })
       .finally(() => {
         if (!cancelled) setSummaryLoading(false);
       });
 
-    getNewsletterChecklist(newsletterId, 'TODO')
+    getConversationTopics(newsletterId)
       .then((data) => {
         if (!cancelled) {
-          setTodos(data);
-          setTodoError(null);
+          setTopics(data);
+          setTopicsError(null);
         }
       })
-      .catch((e) => {
+      .catch((e: unknown) => {
         if (cancelled) return;
         if (e instanceof NewsletterApiError && e.code === 'NL4041') {
-          setTodoError('scan.result.aiSummary.error.newsletterNotFound');
+          setTopicsError('scan.result.aiSummary.error.newsletterNotFound');
         } else {
-          setTodoError('scan.result.aiSummary.error.todoFailed');
+          setTopicsError('scan.result.aiSummary.error.conversationFailed');
         }
       })
       .finally(() => {
-        if (!cancelled) setTodoLoading(false);
+        if (!cancelled) setTopicsLoading(false);
       });
 
     return () => {
@@ -111,21 +111,16 @@ const AISummaryTab = ({ newsletterId }: Props) => {
     return null;
   };
 
-  const renderTodos = () => {
-    if (todoLoading) return <ActivityIndicator size="small" color={colors.primary[400]} />;
-    if (todoError) return <Text style={styles.errorText}>{t(todoError)}</Text>;
-    if (todos.length === 0)
-      return <Text style={styles.errorText}>{t('scan.result.aiSummary.emptyTodo')}</Text>;
+  const renderTopics = () => {
+    if (topicsLoading) return <ActivityIndicator size="small" color={colors.primary[400]} />;
+    if (topicsError) return <Text style={styles.errorText}>{t(topicsError)}</Text>;
+    if (topics.length === 0)
+      return <Text style={styles.errorText}>{t('scan.result.aiSummary.conversationEmpty')}</Text>;
     return (
-      <View style={styles.todoList}>
-        {todos.map((item) => (
-          <View key={item.checklistId} style={styles.todoItem}>
-            <View style={styles.bullet} />
-            <Text style={styles.todoText}>
-              {item.targetDateLabel && <Text style={styles.todoWhen}>{item.targetDateLabel}</Text>}
-              {item.targetDateLabel ? ' — ' : ''}
-              {item.content}
-            </Text>
+      <View style={styles.topicList}>
+        {topics.map((item) => (
+          <View key={item.topicId} style={styles.topicBubble}>
+            <Text style={styles.topicText}>{item.topic}</Text>
           </View>
         ))}
       </View>
@@ -143,11 +138,11 @@ const AISummaryTab = ({ newsletterId }: Props) => {
       </SummaryCard>
 
       <SummaryCard
-        icon="alarm-outline"
-        iconBg={colors.secondary[600]}
-        title={t('scan.result.aiSummary.todayTodo')}
+        icon="chatbubbles-outline"
+        iconBg={colors.secondary[500]}
+        title={t('scan.result.aiSummary.conversationTitle')}
       >
-        {renderTodos()}
+        {renderTopics()}
       </SummaryCard>
 
       <SummaryCard
@@ -200,36 +195,22 @@ const styles = StyleSheet.create({
     fontFamily: fonts.medium,
     color: colors.text.secondary,
   },
-  todoList: {
+  topicList: {
     gap: 10,
   },
-  todoItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    borderColor: colors.secondary[200],
+  topicBubble: {
+    backgroundColor: colors.secondary[200],
     borderWidth: 1,
-    backgroundColor: colors.secondary[100],
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
+    borderColor: colors.secondary[500],
+    borderRadius: 16,
+    borderBottomLeftRadius: 0,
+    padding: 12,
   },
-  bullet: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: colors.secondary[600],
-  },
-  todoText: {
-    flex: 1,
+  topicText: {
     fontSize: 14,
     fontFamily: fonts.regular,
     color: colors.text.primary,
     lineHeight: 22,
-  },
-  todoWhen: {
-    fontFamily: fonts.bold,
-    color: colors.text.primary,
   },
   qnaList: {
     gap: 16,

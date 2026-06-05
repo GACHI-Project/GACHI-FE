@@ -1,18 +1,10 @@
 import { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  Image,
-  ScrollView,
-  TouchableOpacity,
-  Modal,
-  TouchableWithoutFeedback,
-  Alert,
-} from 'react-native';
+import { View, Text, Image, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { Ionicons, FontAwesome5 } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import Header from '../../src/components/common/Header';
+import ConfirmModal from '../../src/components/common/ConfirmModal';
 import { fetchMyInfo, UserInfo } from '../../src/api/user';
 import colors from '../../src/constants/colors';
 import styles from '../../src/styles/profile/profileEdit';
@@ -21,18 +13,15 @@ const ProfileEditScreen = () => {
   const { t } = useTranslation();
   const [withdrawModalVisible, setWithdrawModalVisible] = useState(false);
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
-  const [loadError, setLoadError] = useState(false);
 
   useEffect(() => {
     fetchMyInfo()
-      .then((info) => {
-        setUserInfo(info);
-        setLoadError(false);
-      })
+      .then(setUserInfo)
       .catch(() => {
-        setLoadError(true);
         Alert.alert(t('common.error'), t('common.networkError'));
       });
+    // t is used only in the error callback — re-fetching on language change is undesirable
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -83,48 +72,19 @@ const ProfileEditScreen = () => {
         </TouchableOpacity>
       </ScrollView>
 
-      <Modal
+      <ConfirmModal
         visible={withdrawModalVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setWithdrawModalVisible(false)}
-      >
-        <TouchableWithoutFeedback onPress={() => setWithdrawModalVisible(false)}>
-          <View style={styles.modalOverlay}>
-            <TouchableWithoutFeedback onPress={() => {}}>
-              <View style={styles.modalCard}>
-                <View style={styles.iconBox}>
-                  <FontAwesome5 name="user-slash" size={26} color={colors.primary[500]} />
-                </View>
-                <Text style={styles.modalTitle}>{t('profile.editProfile.withdrawTitle')}</Text>
-                <Text style={styles.modalDesc}>{t('profile.editProfile.withdrawDesc')}</Text>
-                <View style={styles.warningBanner}>
-                  <Ionicons name="warning" size={15} color={colors.text.primary} />
-                  <Text style={styles.warningText}>{t('profile.editProfile.withdrawWarning')}</Text>
-                </View>
-                <View style={styles.btnRow}>
-                  <TouchableOpacity
-                    style={styles.cancelBtn}
-                    onPress={() => setWithdrawModalVisible(false)}
-                    activeOpacity={0.8}
-                  >
-                    <Text style={styles.cancelBtnText}>{t('profile.editProfile.cancel')}</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.withdrawModalBtn, styles.withdrawModalBtnDisabled]}
-                    disabled
-                    activeOpacity={1}
-                  >
-                    <Text style={styles.withdrawModalBtnText}>
-                      {t('profile.editProfile.withdraw')}
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </TouchableWithoutFeedback>
-          </View>
-        </TouchableWithoutFeedback>
-      </Modal>
+        onClose={() => setWithdrawModalVisible(false)}
+        icon={<FontAwesome5 name="user-slash" size={26} color={colors.primary[500]} />}
+        title={t('profile.editProfile.withdrawTitle')}
+        description={t('profile.editProfile.withdrawDesc')}
+        warning={t('profile.editProfile.withdrawWarning')}
+        cancelText={t('profile.editProfile.cancel')}
+        onCancel={() => setWithdrawModalVisible(false)}
+        confirmText={t('profile.editProfile.withdraw')}
+        onConfirm={() => {}}
+        confirmDisabled
+      />
     </View>
   );
 };

@@ -702,5 +702,16 @@
       "multicultural": { "tabs": ["전체"], "items": [] },
       "enrollment": { "tabs": ["전체"], "items": [] }
     }
+  },
+  "chat": {
+    "title": "까치",
+    "subtitle": "언제든지 물어보세요",
+    "welcomeTitle": "까치",
+    "welcomeSubtitle": "좋은 소식을 전하는 까치처럼, 곁에서 도와드릴게요",
+    "welcomeMessage": "안녕하세요! 저는 까치예요 🐦\n학교에서 오는 가정통신문과 공지, 헷갈리는 학교 문화까지 쉽게 이해할 수 있도록 도와드릴게요.",
+    "placeholder": "궁금한 점을 입력해주세요",
+    "typing": "까치가 답변을 입력 중입니다...",
+    "today": "오늘",
+    "errorMessage": "죄송해요, 오류가 발생했어요. 다시 시도해주세요. 🐦"
   }
 }

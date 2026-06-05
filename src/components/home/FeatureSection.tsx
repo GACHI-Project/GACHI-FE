@@ -61,7 +61,10 @@ const FeatureSection = () => {
               <TouchableOpacity
                 style={[styles.cardButton, { backgroundColor: card.buttonColor }]}
                 activeOpacity={0.8}
-                onPress={() => (card.id === 'guide' ? router.push('/guide') : undefined)}
+                onPress={() => {
+                  if (card.id === 'ai') router.push('/chat');
+                  else if (card.id === 'guide') router.push('/guide');
+                }}
               >
                 <Ionicons
                   name={card.id === 'ai' ? 'chatbubble-outline' : 'albums-outline'}

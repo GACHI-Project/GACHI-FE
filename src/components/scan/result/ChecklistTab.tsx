@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { getNewsletterChecklist, NewsletterApiError } from '../../../api/newsletter';
 import type { ChecklistItem } from '../../../api/newsletter';
+import { toggleChecklistItem, deleteChecklistItem } from '../../../api/checklist';
 import colors from '../../../constants/colors';
 import fonts from '../../../constants/fonts';
 
@@ -52,15 +53,21 @@ const ChecklistTab = ({ newsletterId }: Props) => {
   }, [newsletterId]);
 
   const toggle = (id: number) => {
-    setItems((prev) =>
-      prev.map((item) =>
-        item.checklistId === id ? { ...item, isCompleted: !item.isCompleted } : item
-      )
+    const prev = items;
+    const next = items.map((item) =>
+      item.checklistId === id ? { ...item, isCompleted: !item.isCompleted } : item
     );
+    setItems(next);
+    const target = next.find((item) => item.checklistId === id);
+    if (target) {
+      toggleChecklistItem(id, target.isCompleted).catch(() => setItems(prev));
+    }
   };
 
   const remove = (id: number) => {
-    setItems((prev) => prev.filter((item) => item.checklistId !== id));
+    const prev = items;
+    setItems((list) => list.filter((item) => item.checklistId !== id));
+    deleteChecklistItem(id).catch(() => setItems(prev));
   };
 
   if (loading) {

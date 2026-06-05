@@ -406,6 +406,13 @@
     },
     "result": {
       "title": "Scan Result",
+      "unsavedAlert": {
+        "title": "Are you sure you want to leave?",
+        "message": "Without saving, you won't be able to use\nthe checklist or register calendar events.",
+        "warning": "If you leave without saving, the scan result will be lost and cannot be recovered.",
+        "confirm": "Leave",
+        "cancel": "Keep Viewing"
+      },
       "tabs": {
         "full": "Full Document",
         "checklist": "Checklist",
@@ -435,9 +442,9 @@
       },
       "aiSummary": {
         "summarySection": "AI Summary",
-        "todayTodo": "Todo",
         "culturalContext": "Cultural Context",
-        "emptyTodo": "No tasks yet.",
+        "conversationTitle": "Today's Conversation Topics",
+        "conversationEmpty": "No conversation topics available.",
         "error": {
           "notFound": "School notice info not found.",
           "analyzing": "This school notice is still being analyzed.",
@@ -445,7 +452,7 @@
           "newsletterNotFound": "School notice not found.",
           "noAccess": "No access permission.",
           "summaryFailed": "Failed to load summary.",
-          "todoFailed": "Failed to load task list."
+          "conversationFailed": "Failed to load conversation topics."
         },
         "qna": [
           {

@@ -406,6 +406,13 @@
     },
     "result": {
       "title": "Kết quả quét",
+      "unsavedAlert": {
+        "title": "Bạn có chắc muốn thoát không?",
+        "message": "Nếu không lưu, bạn sẽ không thể dùng\ndanh sách việc cần làm hoặc đăng ký lịch.",
+        "warning": "Nếu thoát mà không lưu, kết quả quét sẽ biến mất và không thể khôi phục.",
+        "confirm": "Thoát",
+        "cancel": "Tiếp tục xem"
+      },
       "tabs": {
         "full": "Toàn bộ tài liệu",
         "checklist": "Danh sách việc cần làm",
@@ -435,9 +442,9 @@
       },
       "aiSummary": {
         "summarySection": "Tóm tắt AI",
-        "todayTodo": "Việc cần làm",
         "culturalContext": "Hướng dẫn bối cảnh văn hóa",
-        "emptyTodo": "Không có việc cần làm nào được đăng ký.",
+        "conversationTitle": "Chủ đề trò chuyện hôm nay",
+        "conversationEmpty": "Không có chủ đề trò chuyện.",
         "error": {
           "notFound": "Không tìm thấy thông tin thông báo.",
           "analyzing": "Thông báo này đang được phân tích.",
@@ -445,7 +452,7 @@
           "newsletterNotFound": "Không tìm thấy thông báo.",
           "noAccess": "Bạn không có quyền truy cập.",
           "summaryFailed": "Tải tóm tắt thất bại.",
-          "todoFailed": "Tải danh sách việc cần làm thất bại."
+          "conversationFailed": "Tải chủ đề trò chuyện thất bại."
         },
         "qna": [
           {

@@ -45,7 +45,7 @@ const TypingBubble = () => {
   const dot3 = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    const animate = () => {
+    const animation = Animated.loop(
       Animated.sequence([
         Animated.timing(dot1, { toValue: 1, duration: 300, useNativeDriver: true }),
         Animated.timing(dot2, { toValue: 1, duration: 300, useNativeDriver: true }),
@@ -56,9 +56,10 @@ const TypingBubble = () => {
           Animated.timing(dot2, { toValue: 0, duration: 100, useNativeDriver: true }),
           Animated.timing(dot3, { toValue: 0, duration: 100, useNativeDriver: true }),
         ]),
-      ]).start(() => animate());
-    };
-    animate();
+      ])
+    );
+    animation.start();
+    return () => animation.stop();
   }, [dot1, dot2, dot3]);
 
   return (
@@ -138,7 +139,7 @@ const ChatScreen = () => {
       const errorMessage: ChatMessage = {
         id: String(Date.now() + 1),
         role: 'assistant',
-        content: '죄송해요, 오류가 발생했어요. 다시 시도해주세요. 🐦',
+        content: t('chat.errorMessage'),
         timestamp: getTimeStr(),
       };
       setMessages((prev) => [...prev, errorMessage]);

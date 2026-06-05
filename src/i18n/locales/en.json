@@ -786,6 +786,7 @@
     "welcomeMessage": "Hello! I'm Kachi 🐦\nI'll help you easily understand school newsletters, announcements, and unfamiliar school culture.",
     "placeholder": "Type your question here",
     "typing": "Kachi is typing...",
-    "today": "Today"
+    "today": "Today",
+    "errorMessage": "Sorry, an error occurred. Please try again. 🐦"
   }
 }

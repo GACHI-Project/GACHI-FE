@@ -798,8 +798,9 @@
     "welcomeTitle": "까치 (Kachi)",
     "welcomeSubtitle": "Giống như loài chim khách mang lại tin vui, tôi sẽ luôn ở bên để hỗ trợ bạn",
     "welcomeMessage": "Xin chào! Tôi là Kachi 🐦\nTôi sẽ giúp bạn dễ dàng thấu hiểu các thông báo của nhà trường, tin tức và cả những nét văn hóa học đường còn bỡ ngỡ.",
-    "placeholder": "Nhập câu hỏi의 bạn tại đây",
+    "placeholder": "Nhập câu hỏi của bạn tại đây",
     "typing": "Kachi đang nhập câu trả lời...",
-    "today": "Hôm nay"
+    "today": "Hôm nay",
+    "errorMessage": "Xin lỗi, đã xảy ra lỗi. Vui lòng thử lại. 🐦"
   }
 }

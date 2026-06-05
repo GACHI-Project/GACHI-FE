@@ -1,133 +1,153 @@
-import { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, FlatList } from 'react-native';
+import { useEffect, useState } from 'react';
+import { View, Text, TouchableOpacity, FlatList, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import Header from '../../src/components/common/Header';
 import colors from '../../src/constants/colors';
 import styles from '../../src/styles/guide/categoryScreen';
-
-interface QAItem {
-  id: string;
-  question: string;
-  answer: string;
-  tag: string;
-}
-
-interface CategoryData {
-  tabs: string[];
-  items: QAItem[];
-}
+import {
+  getSchoolGuideFaqs,
+  getSchoolGuideFaqDetail,
+  type SchoolGuideFaqItem,
+} from '../../src/api/schoolGuide';
 
 const CategoryScreen = () => {
-  const { category, categoryKey, emoji } = useLocalSearchParams<{
+  const { category, categoryEnum, emoji } = useLocalSearchParams<{
     category: string;
-    categoryKey: string;
+    categoryEnum: string;
     emoji: string;
   }>();
   const { t } = useTranslation();
-  const [selectedTab, setSelectedTab] = useState('');
-  const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  const raw = t(`guide.qa.${categoryKey ?? ''}`, { returnObjects: true });
-  const data: CategoryData =
-    raw && typeof raw === 'object' && 'tabs' in raw
-      ? (raw as CategoryData)
-      : { tabs: [t('common.all')], items: [] };
+  const [faqs, setFaqs] = useState<SchoolGuideFaqItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [answerCache, setAnswerCache] = useState<Record<number, string>>({});
+  const [loadingDetailId, setLoadingDetailId] = useState<number | null>(null);
 
-  const allTab = data.tabs[0] ?? t('common.all');
-  const activeTab = selectedTab || allTab;
+  useEffect(() => {
+    if (!categoryEnum) {
+      setLoading(false);
+      setError(true);
+      return;
+    }
+    setLoading(true);
+    setError(false);
+    getSchoolGuideFaqs({ category: categoryEnum })
+      .then(setFaqs)
+      .catch(() => setError(true))
+      .finally(() => setLoading(false));
+  }, [categoryEnum]);
 
-  const filteredItems =
-    activeTab === allTab ? data.items : data.items.filter((q) => q.tag === activeTab);
+  const handleExpand = (faqId: number) => {
+    if (expandedId === faqId) {
+      setExpandedId(null);
+      return;
+    }
+    setExpandedId(faqId);
+    if (answerCache[faqId] !== undefined) return;
+
+    setLoadingDetailId(faqId);
+    getSchoolGuideFaqDetail(faqId)
+      .then((detail) => setAnswerCache((prev) => ({ ...prev, [faqId]: detail.answer })))
+      .catch(() => setAnswerCache((prev) => ({ ...prev, [faqId]: '' })))
+      .finally(() => setLoadingDetailId(null));
+  };
+
+  const renderContent = () => {
+    if (loading) {
+      return (
+        <View style={styles.centered}>
+          <ActivityIndicator size="large" color={colors.primary[400]} />
+        </View>
+      );
+    }
+    if (error) {
+      return (
+        <View style={styles.centered}>
+          <Text style={styles.errorText}>{t('guide.loadFailed')}</Text>
+        </View>
+      );
+    }
+    return (
+      <>
+        <View style={styles.countRow}>
+          <Text style={styles.countText}>
+            {(() => {
+              const parts = t('guide.totalCount', { count: faqs.length }).split(
+                String(faqs.length)
+              );
+              return (
+                <>
+                  <Text key="prefix">{parts[0]}</Text>
+                  <Text key="count">
+                    <Text style={styles.countBold}>{faqs.length}</Text>
+                    {parts[1]}
+                  </Text>
+                </>
+              );
+            })()}
+          </Text>
+        </View>
+
+        <FlatList
+          style={styles.list}
+          contentContainerStyle={styles.listContent}
+          data={faqs}
+          keyExtractor={(item) => String(item.faqId)}
+          extraData={{ expandedId, answerCache, loadingDetailId }}
+          showsVerticalScrollIndicator={false}
+          renderItem={({ item }) => {
+            const expanded = expandedId === item.faqId;
+            const answer = answerCache[item.faqId];
+            const detailLoading = loadingDetailId === item.faqId;
+            return (
+              <TouchableOpacity
+                style={[styles.qaCard, expanded && styles.qaCardExpanded]}
+                activeOpacity={0.85}
+                onPress={() => handleExpand(item.faqId)}
+              >
+                <View style={styles.qaHeader}>
+                  <Text style={styles.qaLabel}>Q.</Text>
+                  <Text style={[styles.qaQuestion, expanded && styles.qaQuestionExpanded]}>
+                    {item.question}
+                  </Text>
+                  <Ionicons
+                    name={expanded ? 'chevron-up' : 'chevron-down'}
+                    size={18}
+                    color={expanded ? colors.primary[400] : colors.gray[300]}
+                  />
+                </View>
+                {expanded && (
+                  <>
+                    <View style={styles.divider} />
+                    {detailLoading ? (
+                      <ActivityIndicator color={colors.primary[400]} style={styles.detailSpinner} />
+                    ) : (
+                      <Text style={styles.qaAnswer}>{answer}</Text>
+                    )}
+                  </>
+                )}
+              </TouchableOpacity>
+            );
+          }}
+        />
+      </>
+    );
+  };
 
   return (
     <View style={styles.container}>
       <View style={styles.topSection}>
         <Header title="" />
-
         <View style={styles.titleRow}>
           <Text style={styles.titleEmoji}>{emoji ?? '📄'}</Text>
           <Text style={styles.title}>{category}</Text>
         </View>
-
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.tabBar}
-          contentContainerStyle={styles.tabContent}
-        >
-          {data.tabs.map((tab) => {
-            const isSelected = tab === activeTab;
-            return (
-              <TouchableOpacity
-                key={tab}
-                style={[styles.tab, isSelected && styles.tabSelected]}
-                onPress={() => setSelectedTab(tab)}
-                activeOpacity={0.7}
-              >
-                <Text style={[styles.tabText, isSelected && styles.tabTextSelected]}>{tab}</Text>
-              </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
       </View>
-
-      <View style={styles.countRow}>
-        <Text style={styles.countText}>
-          {(() => {
-            const parts = t('guide.totalCount', { count: filteredItems.length }).split(
-              String(filteredItems.length)
-            );
-            return (
-              <>
-                <Text key="prefix">{parts[0]}</Text>
-                <Text key="count">
-                  <Text style={styles.countBold}>{filteredItems.length}</Text>
-                  {parts[1]}
-                </Text>
-              </>
-            );
-          })()}
-        </Text>
-      </View>
-
-      <FlatList
-        style={styles.list}
-        contentContainerStyle={styles.listContent}
-        data={filteredItems}
-        keyExtractor={(item) => item.id}
-        extraData={expandedId}
-        showsVerticalScrollIndicator={false}
-        renderItem={({ item }) => {
-          const expanded = expandedId === item.id;
-          return (
-            <TouchableOpacity
-              style={[styles.qaCard, expanded && styles.qaCardExpanded]}
-              activeOpacity={0.85}
-              onPress={() => setExpandedId(expanded ? null : item.id)}
-            >
-              <View style={styles.qaHeader}>
-                <Text style={styles.qaLabel}>Q.</Text>
-                <Text style={[styles.qaQuestion, expanded && styles.qaQuestionExpanded]}>
-                  {item.question}
-                </Text>
-                <Ionicons
-                  name={expanded ? 'chevron-up' : 'chevron-down'}
-                  size={18}
-                  color={expanded ? colors.primary[400] : colors.gray[300]}
-                />
-              </View>
-              {expanded && (
-                <>
-                  <View style={styles.divider} />
-                  <Text style={styles.qaAnswer}>{item.answer}</Text>
-                </>
-              )}
-            </TouchableOpacity>
-          );
-        }}
-      />
+      {renderContent()}
     </View>
   );
 };

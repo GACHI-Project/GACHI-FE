@@ -20,7 +20,9 @@ const ProfileEditScreen = () => {
       .catch(() => {
         Alert.alert(t('common.error'), t('common.networkError'));
       });
-  }, [t]);
+    // t is used only in the error callback — re-fetching on language change is undesirable
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <View style={styles.container}>

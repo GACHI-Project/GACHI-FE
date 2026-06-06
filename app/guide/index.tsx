@@ -78,11 +78,12 @@ const GuideScreen = () => {
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastSearchReqId = useRef(0);
 
-  useEffect(() => {
-    return () => {
+  useEffect(
+    () => () => {
       if (debounceTimer.current) clearTimeout(debounceTimer.current);
-    };
-  }, []);
+    },
+    []
+  );
 
   useEffect(() => {
     Promise.all([getSchoolGuideCategories(), getPopularFaqs()])
@@ -123,7 +124,8 @@ const GuideScreen = () => {
 
     setSearchLoading(true);
     debounceTimer.current = setTimeout(() => {
-      const reqId = ++lastSearchReqId.current;
+      lastSearchReqId.current += 1;
+      const reqId = lastSearchReqId.current;
       getSchoolGuideFaqs({ search: text.trim() })
         .then((items) => {
           if (reqId !== lastSearchReqId.current) return;
@@ -175,6 +177,22 @@ const GuideScreen = () => {
           const expanded = expandedId === item.faqId;
           const answer = answerCache[item.faqId];
           const detailLoading = loadingDetailId === item.faqId;
+
+          let answerContent = null;
+          if (expanded) {
+            if (detailLoading) {
+              answerContent = (
+                <ActivityIndicator color={colors.primary[400]} style={styles.detailSpinner} />
+              );
+            } else if (answer !== undefined) {
+              answerContent = <Text style={styles.searchResultAnswer}>{answer}</Text>;
+            } else {
+              answerContent = (
+                <Text style={styles.searchResultAnswer}>{t('guide.answerFailed')}</Text>
+              );
+            }
+          }
+
           return (
             <TouchableOpacity
               style={[styles.searchResultCard, expanded && styles.searchResultCardExpanded]}
@@ -200,11 +218,7 @@ const GuideScreen = () => {
               {expanded && (
                 <>
                   <View style={styles.searchResultDivider} />
-                  {detailLoading ? (
-                    <ActivityIndicator color={colors.primary[400]} style={styles.detailSpinner} />
-                  ) : (
-                    <Text style={styles.searchResultAnswer}>{answer}</Text>
-                  )}
+                  {answerContent}
                 </>
               )}
             </TouchableOpacity>
@@ -267,9 +281,7 @@ const GuideScreen = () => {
             </TouchableOpacity>
           </View>
 
-          {loadError && (
-            <Text style={styles.searchEmptyText}>{t('guide.loadFailed')}</Text>
-          )}
+          {loadError && <Text style={styles.searchEmptyText}>{t('guide.loadFailed')}</Text>}
 
           <View style={styles.section}>
             <Text style={styles.sectionLabel}>{t('guide.popularTitle')}</Text>

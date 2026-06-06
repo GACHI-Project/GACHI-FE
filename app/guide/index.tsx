@@ -64,6 +64,7 @@ const GuideScreen = () => {
   const [categories, setCategories] = useState<SchoolGuideCategory[]>([]);
   const [popularFaqs, setPopularFaqs] = useState<PopularFaq[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
 
   const [isSearching, setIsSearching] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -75,6 +76,13 @@ const GuideScreen = () => {
 
   const searchInputRef = useRef<TextInput>(null);
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastSearchReqId = useRef(0);
+
+  useEffect(() => {
+    return () => {
+      if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    };
+  }, []);
 
   useEffect(() => {
     Promise.all([getSchoolGuideCategories(), getPopularFaqs()])
@@ -82,7 +90,7 @@ const GuideScreen = () => {
         setCategories(cats);
         setPopularFaqs(faqs);
       })
-      .catch(() => {})
+      .catch(() => setLoadError(true))
       .finally(() => setLoading(false));
   }, []);
 
@@ -115,10 +123,19 @@ const GuideScreen = () => {
 
     setSearchLoading(true);
     debounceTimer.current = setTimeout(() => {
+      const reqId = ++lastSearchReqId.current;
       getSchoolGuideFaqs({ search: text.trim() })
-        .then(setSearchResults)
-        .catch(() => setSearchResults([]))
-        .finally(() => setSearchLoading(false));
+        .then((items) => {
+          if (reqId !== lastSearchReqId.current) return;
+          setSearchResults(items);
+        })
+        .catch(() => {
+          if (reqId !== lastSearchReqId.current) return;
+          setSearchResults([]);
+        })
+        .finally(() => {
+          if (reqId === lastSearchReqId.current) setSearchLoading(false);
+        });
     }, 300);
   };
 
@@ -133,7 +150,7 @@ const GuideScreen = () => {
     setLoadingDetailId(faqId);
     getSchoolGuideFaqDetail(faqId)
       .then((detail) => setAnswerCache((prev) => ({ ...prev, [faqId]: detail.answer })))
-      .catch(() => setAnswerCache((prev) => ({ ...prev, [faqId]: '' })))
+      .catch(() => {})
       .finally(() => setLoadingDetailId(null));
   };
 
@@ -249,6 +266,10 @@ const GuideScreen = () => {
               <Text style={styles.searchPlaceholder}>{t('guide.searchPlaceholder')}</Text>
             </TouchableOpacity>
           </View>
+
+          {loadError && (
+            <Text style={styles.searchEmptyText}>{t('guide.loadFailed')}</Text>
+          )}
 
           <View style={styles.section}>
             <Text style={styles.sectionLabel}>{t('guide.popularTitle')}</Text>

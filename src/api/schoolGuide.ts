@@ -72,7 +72,7 @@ export const getSchoolGuideCategories = async (): Promise<SchoolGuideCategory[]>
       '/api/v1/school-guide/categories',
       { headers }
     );
-    return response.data.result.categories ?? [];
+    return response.data.result?.categories ?? [];
   } catch (error) {
     throw wrapError(error);
   }
@@ -85,23 +85,32 @@ export const getPopularFaqs = async (): Promise<PopularFaq[]> => {
       '/api/v1/school-guide/faqs/popular',
       { headers }
     );
-    return response.data.result.items ?? [];
+    return response.data.result?.items ?? [];
   } catch (error) {
     throw wrapError(error);
   }
 };
 
-export const getSchoolGuideFaqs = async (params: {
-  category?: string;
-  search?: string;
-}): Promise<SchoolGuideFaqItem[]> => {
+type SchoolGuideFaqQuery =
+  | { category: SchoolGuideCategoryEnum; search?: never }
+  | { search: string; category?: never };
+
+export const getSchoolGuideFaqs = async (
+  params: SchoolGuideFaqQuery
+): Promise<SchoolGuideFaqItem[]> => {
   try {
+    if (params.category && params.search) {
+      throw new SchoolGuideApiError(
+        'INVALID_PARAMS',
+        'category와 search는 동시에 전달할 수 없습니다.'
+      );
+    }
     const headers = await getAuthHeader();
     const response = await apiClient.get<{ result: { items: SchoolGuideFaqItem[] } }>(
       '/api/v1/school-guide/faqs',
       { headers, params }
     );
-    return response.data.result.items ?? [];
+    return response.data.result?.items ?? [];
   } catch (error) {
     throw wrapError(error);
   }

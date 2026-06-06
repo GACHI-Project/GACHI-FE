@@ -9,6 +9,7 @@ import styles from '../../src/styles/guide/categoryScreen';
 import {
   getSchoolGuideFaqs,
   getSchoolGuideFaqDetail,
+  type SchoolGuideCategoryEnum,
   type SchoolGuideFaqItem,
 } from '../../src/api/schoolGuide';
 
@@ -35,7 +36,7 @@ const CategoryScreen = () => {
     }
     setLoading(true);
     setError(false);
-    getSchoolGuideFaqs({ category: categoryEnum })
+    getSchoolGuideFaqs({ category: categoryEnum as SchoolGuideCategoryEnum })
       .then(setFaqs)
       .catch(() => setError(true))
       .finally(() => setLoading(false));
@@ -52,8 +53,8 @@ const CategoryScreen = () => {
     setLoadingDetailId(faqId);
     getSchoolGuideFaqDetail(faqId)
       .then((detail) => setAnswerCache((prev) => ({ ...prev, [faqId]: detail.answer })))
-      .catch(() => setAnswerCache((prev) => ({ ...prev, [faqId]: '' })))
-      .finally(() => setLoadingDetailId(null));
+      .catch(() => {})
+      .finally(() => setLoadingDetailId((current) => (current === faqId ? null : current)));
   };
 
   const renderContent = () => {

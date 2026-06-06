@@ -547,7 +547,10 @@
     },
     "childEdit": {
       "save": "Save",
-      "delete": "Delete This Child"
+      "delete": "Delete This Child",
+      "deleteTitle": "Are you sure you want to delete?",
+      "deleteDesc": "All data related to this child\nwill be deleted.",
+      "deleteWarning": "All saved newsletters and calendar events will be deleted and cannot be recovered."
     },
     "childInfo": "Children",
     "addChild": "+ Add Child",

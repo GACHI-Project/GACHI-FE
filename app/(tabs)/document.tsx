@@ -15,7 +15,7 @@ import colors from '../../src/constants/colors';
 import fonts from '../../src/constants/fonts';
 import layout from '../../src/constants/layout';
 import { DocumentItem } from '../../src/mock/documents';
-import { fetchChildren, ChildItem } from '../../src/api/child';
+import { useChildrenStore } from '../../src/store/childrenStore';
 import { fetchNewsletters, NewsletterItem } from '../../src/api/newsletter';
 import DocumentCard from '../../src/components/document/DocumentCard';
 import Header from '../../src/components/common/Header';
@@ -38,11 +38,11 @@ const toDocumentItem = (doc: NewsletterItem): DocumentItem => ({
 const DocumentScreen = () => {
   const router = useRouter();
   const { t } = useTranslation();
-  const [children, setChildren] = useState<ChildItem[]>([]);
+  const { children } = useChildrenStore();
   const [newsletters, setNewsletters] = useState<NewsletterItem[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [page, setPage] = useState(0);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [selectedChildName, setSelectedChildName] = useState<string | undefined>(undefined);
   const [searchQuery, setSearchQuery] = useState('');
@@ -59,12 +59,6 @@ const DocumentScreen = () => {
   useEffect(() => {
     searchQueryRef.current = searchQuery;
   }, [searchQuery]);
-
-  useEffect(() => {
-    fetchChildren()
-      .then(setChildren)
-      .catch(() => {});
-  }, []);
 
   const loadNewsletters = async (childName?: string, search?: string) => {
     setIsLoading(true);

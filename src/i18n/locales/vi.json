@@ -555,7 +555,10 @@
     },
     "childEdit": {
       "save": "Lưu",
-      "delete": "Xóa con này"
+      "delete": "Xóa đứa con này",
+      "deleteTitle": "Bạn có chắc muốn xóa không?",
+      "deleteDesc": "Tất cả dữ liệu liên quan đến con\nsẽ bị xóa.",
+      "deleteWarning": "TTất cả thông báo và lịch đã lưu sẽ bị xóa vĩnh viễn và không thể khôi phục."
     },
     "childInfo": "Thông tin con",
     "addChild": "+ Thêm con",

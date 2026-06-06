@@ -115,7 +115,7 @@ const ProfileScreen = () => {
                         schoolName: child.schoolName,
                         englishSchoolName: '',
                         schoolKind: '',
-                        officeCode: '',
+                        officeCode: child.officeCode,
                         officeName: '',
                         locationName: '',
                         roadAddress: '',
@@ -219,8 +219,8 @@ const ProfileScreen = () => {
               setChildren(result);
             } catch (e) {
               Alert.alert(
-                '오류',
-                e instanceof Error ? e.message : '자녀 추가에 실패했어요. 다시 시도해주세요.'
+                t('common.error'),
+                e instanceof Error ? e.message : t('profile.childEdit.addFailed')
               );
               return;
             }
@@ -230,13 +230,14 @@ const ProfileScreen = () => {
                 name: updated.name,
                 schoolName: updated.selectedSchool?.schoolName ?? updated.schoolQuery,
                 schoolCode: updated.selectedSchool?.schoolCode ?? '',
+                officeCode: updated.selectedSchool?.officeCode ?? '',
                 grade: updated.grade ?? 1,
                 colorCode: updated.calendarColor ?? '#2BAEE0',
               });
               const result = await fetchChildren();
               setChildren(result);
             } catch {
-              Alert.alert('오류', '자녀 수정에 실패했어요. 다시 시도해주세요.');
+              Alert.alert(t('common.error'), t('profile.childEdit.updateFailed'));
               return;
             }
           }
@@ -248,7 +249,7 @@ const ProfileScreen = () => {
             const result = await fetchChildren();
             setChildren(result);
           } catch {
-            Alert.alert('오류', '자녀 삭제에 실패했어요. 다시 시도해주세요.');
+            Alert.alert(t('common.error'), t('profile.childEdit.deleteFailed'));
           }
           setSheetVisible(false);
         }}

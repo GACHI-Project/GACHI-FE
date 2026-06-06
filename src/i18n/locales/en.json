@@ -548,6 +548,9 @@
     "childEdit": {
       "save": "Save",
       "delete": "Delete This Child",
+      "addFailed": "Failed to add child. Please try again.",
+      "updateFailed": "Failed to update child. Please try again.",
+      "deleteFailed": "Failed to delete child. Please try again.",
       "deleteTitle": "Are you sure you want to delete?",
       "deleteDesc": "All data related to this child\nwill be deleted.",
       "deleteWarning": "All saved newsletters and calendar events will be deleted and cannot be recovered."

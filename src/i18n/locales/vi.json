@@ -906,7 +906,8 @@
     },
     "loadFailed": "Không thể tải câu hỏi.",
     "searchHint": "Nhập từ khóa tìm kiếm.",
-    "searchEmpty": "Không tìm thấy kết quả."
+    "searchEmpty": "Không tìm thấy kết quả.",
+    "answerFailed": "Không thể tải câu trả lời. Vui lòng thử lại."
   },
   "chat": {
     "title": "까치 (Kachi)",

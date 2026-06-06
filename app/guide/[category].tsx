@@ -104,6 +104,20 @@ const CategoryScreen = () => {
             const expanded = expandedId === item.faqId;
             const answer = answerCache[item.faqId];
             const detailLoading = loadingDetailId === item.faqId;
+
+            let answerContent = null;
+            if (expanded) {
+              if (detailLoading) {
+                answerContent = (
+                  <ActivityIndicator color={colors.primary[400]} style={styles.detailSpinner} />
+                );
+              } else if (answer !== undefined) {
+                answerContent = <Text style={styles.qaAnswer}>{answer}</Text>;
+              } else {
+                answerContent = <Text style={styles.qaAnswer}>{t('guide.answerFailed')}</Text>;
+              }
+            }
+
             return (
               <TouchableOpacity
                 style={[styles.qaCard, expanded && styles.qaCardExpanded]}
@@ -124,11 +138,7 @@ const CategoryScreen = () => {
                 {expanded && (
                   <>
                     <View style={styles.divider} />
-                    {detailLoading ? (
-                      <ActivityIndicator color={colors.primary[400]} style={styles.detailSpinner} />
-                    ) : (
-                      <Text style={styles.qaAnswer}>{answer}</Text>
-                    )}
+                    {answerContent}
                   </>
                 )}
               </TouchableOpacity>

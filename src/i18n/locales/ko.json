@@ -906,7 +906,8 @@
     },
     "loadFailed": "질문을 불러오지 못했어요.",
     "searchHint": "검색어를 입력해 주세요.",
-    "searchEmpty": "검색 결과가 없어요."
+    "searchEmpty": "검색 결과가 없어요.",
+    "answerFailed": "답변을 불러오지 못했어요. 다시 시도해 주세요."
   },
   "chat": {
     "title": "까치",

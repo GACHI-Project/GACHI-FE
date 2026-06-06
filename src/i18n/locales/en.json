@@ -906,7 +906,8 @@
     },
     "loadFailed": "Failed to load questions.",
     "searchHint": "Type to search.",
-    "searchEmpty": "No results found."
+    "searchEmpty": "No results found.",
+    "answerFailed": "Failed to load answer. Please try again."
   },
   "chat": {
     "title": "까치 (Kachi)",

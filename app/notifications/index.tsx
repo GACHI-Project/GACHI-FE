@@ -23,7 +23,7 @@ type FeatherName = React.ComponentProps<typeof Feather>['name'];
 const ICON_CONFIG: Record<NotificationType, { bg: string; icon: FeatherName; color: string }> = {
   NEWSLETTER_ANALYSIS: { bg: colors.primary[100], icon: 'file-text', color: colors.primary[300] },
   CALENDAR_EVENT: { bg: colors.pink[100], icon: 'calendar', color: colors.pink[300] },
-  DEADLINE_REMINDER: { bg: colors.pink[100], icon: 'clock', color: colors.text.red },
+  DEADLINE_REMINDER: { bg: colors.pink[100], icon: 'calendar', color: colors.pink[300] },
   CHECKLIST_DUE: { bg: colors.secondary[100], icon: 'check-square', color: colors.secondary[500] },
   WEEKLY_SUMMARY: { bg: colors.secondary[100], icon: 'mail', color: colors.secondary[500] },
   SYSTEM: { bg: colors.primary[100], icon: 'info', color: colors.primary[400] },

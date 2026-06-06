@@ -14,13 +14,12 @@ import {
   fetchMonthlyMarkers,
   fetchDailyEvents,
   fetchWeeklyEvents,
-  fetchChildren,
   completeChecklist,
   type CalendarEvent,
   type WeeklyResult,
-  type ChildInfo,
   type MonthlyMarker,
 } from '../../src/api/calendar';
+import { useChildrenStore } from '../../src/store/childrenStore';
 
 const todayDate = new Date();
 const today = `${todayDate.getFullYear()}-${String(todayDate.getMonth() + 1).padStart(2, '0')}-${String(todayDate.getDate()).padStart(2, '0')}`;
@@ -43,7 +42,7 @@ const formatWeekDateHeader = (dateStr: string, locale: string) => {
 
 const CalendarScreen = () => {
   const { t, i18n } = useTranslation();
-  const [children, setChildren] = useState<ChildInfo[]>([]);
+  const { children } = useChildrenStore();
   const [selectedChildName, setSelectedChildName] = useState<string | undefined>(undefined);
   const [selectedDate, setSelectedDate] = useState<string>(today);
   const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
@@ -107,13 +106,6 @@ const CalendarScreen = () => {
       return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
     });
   }, [weekOffset]);
-
-  // 자녀 목록
-  useEffect(() => {
-    fetchChildren()
-      .then(setChildren)
-      .catch(() => {});
-  }, []);
 
   // 주간 이벤트
   useEffect(() => {

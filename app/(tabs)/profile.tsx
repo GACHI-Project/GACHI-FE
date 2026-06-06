@@ -12,7 +12,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { ChildInfo } from '../../src/types/child';
-import { fetchChildren, registerChild, ChildItem } from '../../src/api/child';
+import { fetchChildren, registerChild, updateChild, deleteChild } from '../../src/api/child';
+import { useChildrenStore } from '../../src/store/childrenStore';
 import { fetchMyInfo, UserInfo } from '../../src/api/user';
 import { CALENDAR_COLORS } from '../../src/constants/child';
 import colors from '../../src/constants/colors';
@@ -38,7 +39,7 @@ const ProfileScreen = () => {
   const { t, i18n } = useTranslation();
   const currentLanguageName = LANGUAGE_NAMES[i18n.language] ?? i18n.language;
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
-  const [children, setChildren] = useState<ChildItem[]>([]);
+  const { children, setChildren } = useChildrenStore();
   const [isLoading, setIsLoading] = useState(false);
   const [editingChild, setEditingChild] = useState<ChildInfo | null>(null);
   const [sheetVisible, setSheetVisible] = useState(false);
@@ -57,7 +58,7 @@ const ProfileScreen = () => {
       }
     };
     load();
-  }, []);
+  }, [setChildren]);
 
   useFocusEffect(
     useCallback(() => {
@@ -114,7 +115,7 @@ const ProfileScreen = () => {
                         schoolName: child.schoolName,
                         englishSchoolName: '',
                         schoolKind: '',
-                        officeCode: '',
+                        officeCode: child.officeCode,
                         officeName: '',
                         locationName: '',
                         roadAddress: '',
@@ -218,18 +219,38 @@ const ProfileScreen = () => {
               setChildren(result);
             } catch (e) {
               Alert.alert(
-                '오류',
-                e instanceof Error ? e.message : '자녀 추가에 실패했어요. 다시 시도해주세요.'
+                t('common.error'),
+                e instanceof Error ? e.message : t('profile.childEdit.addFailed')
               );
               return;
             }
           } else {
-            Alert.alert('준비 중', '자녀 수정 기능은 현재 준비 중이에요.');
+            try {
+              await updateChild(Number(updated.id), {
+                name: updated.name,
+                schoolName: updated.selectedSchool?.schoolName ?? updated.schoolQuery,
+                schoolCode: updated.selectedSchool?.schoolCode ?? '',
+                officeCode: updated.selectedSchool?.officeCode ?? '',
+                grade: updated.grade ?? 1,
+                colorCode: updated.calendarColor ?? '#2BAEE0',
+              });
+              const result = await fetchChildren();
+              setChildren(result);
+            } catch {
+              Alert.alert(t('common.error'), t('profile.childEdit.updateFailed'));
+              return;
+            }
           }
           setSheetVisible(false);
         }}
-        onDelete={() => {
-          Alert.alert('준비 중', '자녀 삭제 기능은 현재 준비 중이에요.');
+        onDelete={async (id) => {
+          try {
+            await deleteChild(Number(id));
+            const result = await fetchChildren();
+            setChildren(result);
+          } catch {
+            Alert.alert(t('common.error'), t('profile.childEdit.deleteFailed'));
+          }
           setSheetVisible(false);
         }}
       />

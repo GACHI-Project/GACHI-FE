@@ -555,7 +555,13 @@
     },
     "childEdit": {
       "save": "Lưu",
-      "delete": "Xóa con này"
+      "delete": "Xóa đứa con này",
+      "addFailed": "Thêm con thất bại. Vui lòng thử lại.",
+      "updateFailed": "Cập nhật thông tin con thất bại. Vui lòng thử lại.",
+      "deleteFailed": "Xóa con thất bại. Vui lòng thử lại.",
+      "deleteTitle": "Bạn có chắc muốn xóa không?",
+      "deleteDesc": "Tất cả dữ liệu liên quan đến con\nsẽ bị xóa.",
+      "deleteWarning": "Tất cả thông báo và lịch đã lưu sẽ bị xóa vĩnh viễn và không thể khôi phục."
     },
     "childInfo": "Thông tin con",
     "addChild": "+ Thêm con",

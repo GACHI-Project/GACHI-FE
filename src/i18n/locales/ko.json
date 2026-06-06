@@ -547,7 +547,13 @@
     },
     "childEdit": {
       "save": "저장",
-      "delete": "이 자녀 삭제"
+      "delete": "이 자녀 삭제",
+      "addFailed": "자녀 추가에 실패했어요. 다시 시도해주세요.",
+      "updateFailed": "자녀 수정에 실패했어요. 다시 시도해주세요.",
+      "deleteFailed": "자녀 삭제에 실패했어요. 다시 시도해주세요.",
+      "deleteTitle": "정말 삭제하시겠어요?",
+      "deleteDesc": "자녀 정보와 관련된 모든 데이터가\n삭제돼요.",
+      "deleteWarning": "저장된 가정통신문, 캘린더 일정이 모두 삭제되며 복구할 수 없어요."
     },
     "childInfo": "자녀 정보",
     "addChild": "+ 자녀 추가",

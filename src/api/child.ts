@@ -89,3 +89,30 @@ export const getMyChildren = async (): Promise<ChildResult[]> => {
 export type ChildItem = ChildResult;
 
 export const fetchChildren = async (): Promise<ChildItem[]> => getMyChildren();
+
+export interface UpdateChildParams {
+  name: string;
+  schoolName: string;
+  schoolCode: string;
+  officeCode?: string;
+  grade: number;
+  colorCode: string;
+}
+
+export const updateChild = async (childId: number, params: UpdateChildParams): Promise<void> => {
+  try {
+    const headers = await getAuthHeader();
+    await apiClient.patch(`/api/v1/children/${childId}`, params, { headers });
+  } catch (error) {
+    throw wrapError(error);
+  }
+};
+
+export const deleteChild = async (childId: number): Promise<void> => {
+  try {
+    const headers = await getAuthHeader();
+    await apiClient.delete(`/api/v1/children/${childId}`, { headers });
+  } catch (error) {
+    throw wrapError(error);
+  }
+};

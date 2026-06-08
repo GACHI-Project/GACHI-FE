@@ -164,24 +164,30 @@ const FindIdScreen = () => {
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity
-        style={styles.backButton}
-        onPress={() => router.back()}
-        accessibilityRole="button"
-        accessibilityLabel={t('common.back')}
-      >
-        <Ionicons name="chevron-back" size={18} color={colors.gray[300]} />
-      </TouchableOpacity>
+      {step !== 'found' && (
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => router.back()}
+          accessibilityRole="button"
+          accessibilityLabel={t('common.back')}
+        >
+          <Ionicons name="chevron-back" size={18} color={colors.gray[300]} />
+        </TouchableOpacity>
+      )}
 
       <ScrollView
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={
+          step === 'found' ? styles.scrollContentCentered : styles.scrollContent
+        }
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        <View style={styles.titleSection}>
-          <Text style={styles.title}>{t('auth.findId.title')}</Text>
-          <Text style={styles.subtitle}>{t('auth.findId.subtitle')}</Text>
-        </View>
+        {step !== 'found' && (
+          <View style={styles.titleSection}>
+            <Text style={styles.title}>{t('auth.findId.title')}</Text>
+            <Text style={styles.subtitle}>{t('auth.findId.subtitle')}</Text>
+          </View>
+        )}
 
         {step === 'found' ? (
           <View style={styles.form}>
@@ -301,6 +307,13 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: layout.screenPaddingHorizontal,
     paddingTop: layout.screenPaddingTop,
+    paddingBottom: layout.screenPaddingBottom,
+    gap: 30,
+  },
+  scrollContentCentered: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    paddingHorizontal: layout.screenPaddingHorizontal,
     paddingBottom: layout.screenPaddingBottom,
     gap: 30,
   },

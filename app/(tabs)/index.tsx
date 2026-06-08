@@ -12,6 +12,7 @@ import { useNotificationStore } from '../../src/store/notificationStore';
 import TaskCard from '../../src/components/home/TaskCard';
 import ScanBanner from '../../src/components/home/ScanBanner';
 import FeatureSection from '../../src/components/home/FeatureSection';
+import MealTimetableWidget from '../../src/components/home/MealTimetableWidget';
 import GuideCards from '../../src/components/home/GuideCards';
 import RecentDocs from '../../src/components/home/RecentDocs';
 import colors from '../../src/constants/colors';
@@ -81,6 +82,7 @@ const HomeScreen = () => {
           <TaskCard />
           <ScanBanner />
           <FeatureSection />
+          <MealTimetableWidget />
           <GuideCards />
           <RecentDocs />
         </ScrollView>

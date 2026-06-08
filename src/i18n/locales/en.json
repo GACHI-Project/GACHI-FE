@@ -591,6 +591,8 @@
     "privacy": "Privacy Policy",
     "appVersion": "App Version",
     "logout": "Log Out",
+    "logoutTitle": "Log Out",
+    "logoutConfirm": "Are you sure you want to log out?",
     "backAccessibility": "Go back",
     "helpAccessibility": "Help",
     "editProfile": {

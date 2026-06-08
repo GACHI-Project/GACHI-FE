@@ -591,6 +591,8 @@
     "privacy": "Chính sách quyền riêng tư",
     "appVersion": "Phiên bản ứng dụng",
     "logout": "Đăng xuất",
+    "logoutTitle": "Đăng xuất",
+    "logoutConfirm": "Bạn có chắc chắn muốn đăng xuất không?",
     "backAccessibility": "Quay lại",
     "helpAccessibility": "Trợ giúp",
     "editProfile": {

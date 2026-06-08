@@ -591,6 +591,8 @@
     "privacy": "개인정보 처리방침",
     "appVersion": "앱 버전",
     "logout": "로그아웃",
+    "logoutTitle": "로그아웃",
+    "logoutConfirm": "정말 로그아웃 하시겠어요?",
     "backAccessibility": "뒤로가기",
     "helpAccessibility": "도움말",
     "editProfile": {

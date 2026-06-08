@@ -15,6 +15,7 @@ import { ChildInfo } from '../../src/types/child';
 import { fetchChildren, registerChild, updateChild, deleteChild } from '../../src/api/child';
 import { useChildrenStore } from '../../src/store/childrenStore';
 import { fetchMyInfo, UserInfo } from '../../src/api/user';
+import { logout } from '../../src/api/auth';
 import { CALENDAR_COLORS } from '../../src/constants/child';
 import colors from '../../src/constants/colors';
 import styles from '../../src/styles/profile/profile';
@@ -67,6 +68,13 @@ const ProfileScreen = () => {
         .catch(() => {});
     }, [])
   );
+
+  const handleLogout = () => {
+    Alert.alert(t('profile.logoutTitle'), t('profile.logoutConfirm'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      { text: t('profile.logout'), style: 'destructive', onPress: () => logout() },
+    ]);
+  };
 
   return (
     <View style={styles.container}>
@@ -195,7 +203,7 @@ const ProfileScreen = () => {
           </View>
         </View>
 
-        <TouchableOpacity style={styles.logoutBtn} onPress={() => {}}>
+        <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
           <Text style={styles.logoutText}>{t('profile.logout')}</Text>
         </TouchableOpacity>
       </ScrollView>

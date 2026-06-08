@@ -90,6 +90,26 @@ apiClient.interceptors.response.use(
   }
 );
 
+export const logout = async (): Promise<void> => {
+  try {
+    const accessToken = await SecureStore.getItemAsync('accessToken');
+    const refreshToken = await SecureStore.getItemAsync('refreshToken');
+    if (accessToken) {
+      await apiClient.post(
+        '/api/v1/auth/logout',
+        { refreshToken },
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+    }
+  } catch {
+    // API 실패해도 로컬 토큰 삭제 후 로그인으로 이동
+  } finally {
+    await SecureStore.deleteItemAsync('accessToken');
+    await SecureStore.deleteItemAsync('refreshToken');
+    router.replace('/(auth)/login');
+  }
+};
+
 export const checkLoginId = async (loginId: string): Promise<{ available: boolean }> => {
   try {
     const response = await apiClient.post('/api/v1/auth/check-login-id', { loginId });

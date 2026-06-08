@@ -177,12 +177,12 @@
       "forgotPassword": "Forgot your password?",
       "goFindPassword": "Forgot Password",
       "error": {
-        "emailNotFound": "No account found for this email.",
+        "emailNotFound": "Email address not found.",
         "generic": "An error occurred. Please try again."
       }
     },
     "findPassword": {
-      "title": "Forgot Password",
+      "title": "Reset Password",
       "subtitle": "Reset your password by verifying your ID and email.",
       "id": "ID",
       "email": "Email",

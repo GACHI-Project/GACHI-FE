@@ -15,7 +15,7 @@ export const SUPPORTED_LANGUAGES: LanguageType[] = ['ko', 'en', 'vi', 'zh'];
 const getInitialLanguage = async (): Promise<SupportedLanguage> => {
   const saved = await AsyncStorage.getItem(LANGUAGE_KEY);
   if (saved && (SUPPORTED_LANGUAGES as string[]).includes(saved)) return saved as SupportedLanguage;
-  return 'en';
+  return 'ko';
 };
 
 export const saveLanguage = async (lang: SupportedLanguage) => {

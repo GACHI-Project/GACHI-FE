@@ -177,12 +177,12 @@
       "forgotPassword": "비밀번호가 기억나지 않나요?",
       "goFindPassword": "비밀번호 찾기",
       "error": {
-        "emailNotFound": "해당 이메일로 가입된 계정이 없어요.",
+        "emailNotFound": "가입되지 않은 이메일이에요.",
         "generic": "오류가 발생했어요. 다시 시도해주세요."
       }
     },
     "findPassword": {
-      "title": "비밀번호 찾기",
+      "title": "비밀번호 재설정",
       "subtitle": "아이디와 이메일 인증으로 비밀번호를 재설정할 수 있어요.",
       "id": "아이디",
       "email": "이메일",

@@ -1,16 +1,11 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 import FormField from '../../src/components/auth/FormField';
 import { PrimaryButton } from '../../src/components/common/Button';
-import {
-  sendEmailVerificationCode,
-  verifyEmailCode,
-  findLoginId,
-  AuthApiError,
-} from '../../src/api/auth';
+import { sendFindLoginIdCode, findLoginId, AuthApiError } from '../../src/api/auth';
 import colors from '../../src/constants/colors';
 import fonts from '../../src/constants/fonts';
 import layout from '../../src/constants/layout';
@@ -29,33 +24,84 @@ const FindIdScreen = () => {
   const [emailVerified, setEmailVerified] = useState(false);
   const [sending, setSending] = useState(false);
   const [verifying, setVerifying] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [countdown, setCountdown] = useState(0);
+  const [codeExpired, setCodeExpired] = useState(false);
+  const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const [emailMsg, setEmailMsg] = useState<ValidationMsg | null>(null);
   const [codeMsg, setCodeMsg] = useState<ValidationMsg | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
+  useEffect(
+    () => () => {
+      if (countdownRef.current) clearInterval(countdownRef.current);
+    },
+    []
+  );
+
+  const formatCountdown = (seconds: number): string => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  };
+
+  const startCountdown = (seconds: number) => {
+    setCodeExpired(false);
+    setCountdown(seconds);
+    if (countdownRef.current) clearInterval(countdownRef.current);
+    let remaining = seconds;
+    countdownRef.current = setInterval(() => {
+      remaining -= 1;
+      setCountdown(remaining);
+      if (remaining <= 0) {
+        clearInterval(countdownRef.current!);
+        countdownRef.current = null;
+        setCodeExpired(true);
+      }
+    }, 1000);
+  };
+
+  const stopCountdown = () => {
+    if (countdownRef.current) {
+      clearInterval(countdownRef.current);
+      countdownRef.current = null;
+    }
+    setCountdown(0);
+  };
+
   const handleSendCode = async () => {
-    if (!email || sending) return;
+    if (!email || sending || countdown > 0) return;
     setSending(true);
     setEmailMsg(null);
     setCodeMsg(null);
+    setErrorMsg(null);
     setCode('');
     setCodeSent(false);
     setEmailVerified(false);
+    setCodeExpired(false);
+    setCountdown(0);
+    if (countdownRef.current) {
+      clearInterval(countdownRef.current);
+      countdownRef.current = null;
+    }
     try {
-      await sendEmailVerificationCode(email.trim().toLowerCase());
+      const { codeTtlSeconds } = await sendFindLoginIdCode(email.trim().toLowerCase());
       setCodeSent(true);
       setEmailMsg({ text: t('auth.register.basic.error.codeSent'), state: 'success' });
-    } catch {
-      setEmailMsg({ text: t('auth.register.basic.error.sendError'), state: 'error' });
+      startCountdown(codeTtlSeconds);
+    } catch (e) {
+      if (e instanceof AuthApiError && e.code === 'AUTH4041') {
+        setEmailMsg({ text: t('auth.findId.error.emailNotFound'), state: 'error' });
+      } else {
+        setEmailMsg({ text: t('auth.register.basic.error.sendError'), state: 'error' });
+      }
     } finally {
       setSending(false);
     }
   };
 
   const handleVerifyCode = async () => {
-    if (!code || verifying || emailVerified) return;
+    if (!code || verifying || emailVerified || codeExpired) return;
     if (code.length !== 6 || !/^\d+$/.test(code)) {
       setCodeMsg({ text: t('auth.register.basic.error.codeFormat'), state: 'error' });
       return;
@@ -63,8 +109,10 @@ const FindIdScreen = () => {
     setVerifying(true);
     setCodeMsg(null);
     try {
-      await verifyEmailCode(email, code);
+      const result = await findLoginId(email, code);
+      setFoundId(result.loginId);
       setEmailVerified(true);
+      stopCountdown();
       setCodeMsg({ text: t('auth.register.basic.error.emailVerified'), state: 'success' });
     } catch (e) {
       if (e instanceof AuthApiError) {
@@ -83,41 +131,63 @@ const FindIdScreen = () => {
     }
   };
 
-  const handleFindId = async () => {
-    if (!emailVerified || loading) return;
-    setLoading(true);
+  const handleFindId = () => {
+    if (!emailVerified || !foundId) return;
+    setStep('found');
+  };
+
+  const resetFieldState = () => {
+    setEmailMsg(null);
+    setCodeMsg(null);
     setErrorMsg(null);
-    try {
-      const result = await findLoginId(email);
-      setFoundId(result.loginId);
-      setStep('found');
-    } catch {
-      setErrorMsg(t('auth.findId.error.generic'));
-    } finally {
-      setLoading(false);
+    setCode('');
+    setCodeSent(false);
+    setEmailVerified(false);
+    setCountdown(0);
+    setCodeExpired(false);
+    if (countdownRef.current) {
+      clearInterval(countdownRef.current);
+      countdownRef.current = null;
     }
   };
 
+  let sendButtonLabel = t('auth.findId.send');
+  if (sending) sendButtonLabel = t('auth.findId.sending');
+  else if (countdown > 0) sendButtonLabel = formatCountdown(countdown);
+
+  const codeValidationMsg = codeExpired
+    ? t('auth.register.basic.error.codeExpired')
+    : codeMsg?.text;
+  const codeValidationState: 'success' | 'error' | undefined = codeExpired
+    ? 'error'
+    : codeMsg?.state;
+
   return (
     <View style={styles.container}>
-      <TouchableOpacity
-        style={styles.backButton}
-        onPress={() => router.back()}
-        accessibilityRole="button"
-        accessibilityLabel={t('common.back')}
-      >
-        <Ionicons name="chevron-back" size={18} color={colors.gray[300]} />
-      </TouchableOpacity>
+      {step !== 'found' && (
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => router.back()}
+          accessibilityRole="button"
+          accessibilityLabel={t('common.back')}
+        >
+          <Ionicons name="chevron-back" size={18} color={colors.gray[300]} />
+        </TouchableOpacity>
+      )}
 
       <ScrollView
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={
+          step === 'found' ? styles.scrollContentCentered : styles.scrollContent
+        }
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        <View style={styles.titleSection}>
-          <Text style={styles.title}>{t('auth.findId.title')}</Text>
-          <Text style={styles.subtitle}>{t('auth.findId.subtitle')}</Text>
-        </View>
+        {step !== 'found' && (
+          <View style={styles.titleSection}>
+            <Text style={styles.title}>{t('auth.findId.title')}</Text>
+            <Text style={styles.subtitle}>{t('auth.findId.subtitle')}</Text>
+          </View>
+        )}
 
         {step === 'found' ? (
           <View style={styles.form}>
@@ -158,16 +228,13 @@ const FindIdScreen = () => {
               value={email}
               onChangeText={(v) => {
                 setEmail(v);
-                setEmailMsg(null);
-                setErrorMsg(null);
-                setCodeSent(false);
-                setEmailVerified(false);
+                resetFieldState();
               }}
               keyboardType="email-address"
               rightButton={{
-                label: sending ? t('auth.findId.sending') : t('auth.findId.send'),
+                label: sendButtonLabel,
                 onPress: handleSendCode,
-                disabled: !email || sending,
+                disabled: !email || sending || countdown > 0,
               }}
               validationMessage={emailMsg?.text}
               validationState={emailMsg?.state}
@@ -185,19 +252,19 @@ const FindIdScreen = () => {
                 rightButton={{
                   label: verifying ? t('auth.findId.verifying') : t('auth.findId.confirm'),
                   onPress: handleVerifyCode,
-                  disabled: !code || verifying || emailVerified,
+                  disabled: !code || verifying || emailVerified || codeExpired,
                 }}
-                validationMessage={codeMsg?.text}
-                validationState={codeMsg?.state}
+                validationMessage={codeValidationMsg}
+                validationState={codeValidationState}
               />
             )}
 
             {errorMsg && <Text style={styles.errorText}>{errorMsg}</Text>}
 
             <PrimaryButton
-              label={loading ? t('auth.findId.loading') : t('auth.findId.submit')}
+              label={t('auth.findId.submit')}
               onPress={handleFindId}
-              disabled={!emailVerified || loading}
+              disabled={!emailVerified}
             />
 
             <TouchableOpacity
@@ -240,6 +307,13 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: layout.screenPaddingHorizontal,
     paddingTop: layout.screenPaddingTop,
+    paddingBottom: layout.screenPaddingBottom,
+    gap: 30,
+  },
+  scrollContentCentered: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    paddingHorizontal: layout.screenPaddingHorizontal,
     paddingBottom: layout.screenPaddingBottom,
     gap: 30,
   },

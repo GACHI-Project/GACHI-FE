@@ -177,12 +177,12 @@
       "forgotPassword": "Bạn không nhớ mật khẩu?",
       "goFindPassword": "Tìm mật khẩu",
       "error": {
-        "emailNotFound": "Không có tài khoản nào được đăng ký với email này.",
+        "emailNotFound": "Email không tồn tại.",
         "generic": "Đã xảy ra lỗi. Vui lòng thử lại."
       }
     },
     "findPassword": {
-      "title": "Tìm mật khẩu",
+      "title": "Đặt lại mật khẩu",
       "subtitle": "Bạn có thể đặt lại mật khẩu bằng cách xác minh tên đăng nhập và email.",
       "id": "Tên đăng nhập",
       "email": "Email",
@@ -591,6 +591,8 @@
     "privacy": "Chính sách quyền riêng tư",
     "appVersion": "Phiên bản ứng dụng",
     "logout": "Đăng xuất",
+    "logoutTitle": "Đăng xuất",
+    "logoutConfirm": "Bạn có chắc chắn muốn đăng xuất không?",
     "backAccessibility": "Quay lại",
     "helpAccessibility": "Trợ giúp",
     "editProfile": {

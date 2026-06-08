@@ -90,6 +90,26 @@ apiClient.interceptors.response.use(
   }
 );
 
+export const logout = async (): Promise<void> => {
+  try {
+    const accessToken = await SecureStore.getItemAsync('accessToken');
+    const refreshToken = await SecureStore.getItemAsync('refreshToken');
+    if (accessToken) {
+      await apiClient.post(
+        '/api/v1/auth/logout',
+        { refreshToken },
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+    }
+  } catch {
+    // API 실패해도 로컬 토큰 삭제 후 로그인으로 이동
+  } finally {
+    await SecureStore.deleteItemAsync('accessToken');
+    await SecureStore.deleteItemAsync('refreshToken');
+    router.replace('/(auth)/login');
+  }
+};
+
 export const checkLoginId = async (loginId: string): Promise<{ available: boolean }> => {
   try {
     const response = await apiClient.post('/api/v1/auth/check-login-id', { loginId });
@@ -196,28 +216,74 @@ export const signup = async (payload: {
   }
 };
 
-// TODO: 백엔드 API 연결 전 임시 mock — 실제 엔드포인트 확정 후 교체 필요
-export const findLoginId = async (_email: string): Promise<{ loginId: string }> => {
-  await new Promise<void>((resolve) => {
-    setTimeout(resolve, 600);
-  });
-  return { loginId: 'gachi-gayo22' };
+export const sendFindLoginIdCode = async (
+  email: string
+): Promise<{ codeTtlSeconds: number; resendCooldownSeconds: number }> => {
+  try {
+    const response = await apiClient.post('/api/v1/auth/find-login-id/email/send', { email });
+    return response.data.result;
+  } catch (error) {
+    throw wrapError(error);
+  }
 };
 
-// TODO: 백엔드 API 연결 전 임시 mock — 실제 엔드포인트 확정 후 교체 필요
-export const sendFindPasswordCode = async (_loginId: string, _email: string): Promise<void> => {
-  await new Promise<void>((resolve) => {
-    setTimeout(resolve, 600);
-  });
+export const findLoginId = async (email: string, code: string): Promise<{ loginId: string }> => {
+  try {
+    const response = await apiClient.post('/api/v1/auth/find-login-id/email/verify', {
+      email: email.trim().toLowerCase(),
+      code,
+    });
+    return response.data.result;
+  } catch (error) {
+    throw wrapError(error);
+  }
 };
 
-// TODO: 백엔드 API 연결 전 임시 mock — 실제 엔드포인트 확정 후 교체 필요
-export const resetPassword = async (
-  _loginId: string,
-  _newPassword: string,
-  _newPasswordConfirm: string
+export const sendFindPasswordCode = async (
+  loginId: string,
+  email: string
+): Promise<{ codeTtlSeconds: number; resendCooldownSeconds: number }> => {
+  try {
+    const response = await apiClient.post('/api/v1/auth/password-reset/email/send', {
+      loginId,
+      email: email.trim().toLowerCase(),
+    });
+    return response.data.result;
+  } catch (error) {
+    throw wrapError(error);
+  }
+};
+
+export const verifyPasswordResetCode = async (
+  loginId: string,
+  email: string,
+  code: string
 ): Promise<void> => {
-  await new Promise<void>((resolve) => {
-    setTimeout(resolve, 600);
-  });
+  try {
+    await apiClient.post('/api/v1/auth/password-reset/email/verify', {
+      loginId,
+      email: email.trim().toLowerCase(),
+      code,
+    });
+  } catch (error) {
+    throw wrapError(error);
+  }
+};
+
+export const resetPassword = async (
+  loginId: string,
+  email: string,
+  password: string,
+  passwordConfirm: string
+): Promise<void> => {
+  try {
+    await apiClient.post('/api/v1/auth/password-reset', {
+      loginId,
+      email: email.trim().toLowerCase(),
+      password,
+      passwordConfirm,
+    });
+  } catch (error) {
+    throw wrapError(error);
+  }
 };

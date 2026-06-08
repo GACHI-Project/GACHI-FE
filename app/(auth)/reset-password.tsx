@@ -13,7 +13,10 @@ import layout from '../../src/constants/layout';
 
 const ResetPasswordScreen = () => {
   const { t } = useTranslation();
-  const { loginId } = useLocalSearchParams<{ loginId: string }>();
+  const { loginId, email } = useLocalSearchParams<{
+    loginId: string;
+    email: string;
+  }>();
 
   const [step, setStep] = useState<'form' | 'success'>('form');
   const [newPassword, setNewPassword] = useState('');
@@ -32,9 +35,9 @@ const ResetPasswordScreen = () => {
       : { text: t('auth.resetPassword.error.passwordMismatch'), state: 'error' as const };
   }
 
-  const canSubmit = strength > 1 && passwordsMatch && !!loginId;
+  const canSubmit = strength > 1 && passwordsMatch && !!loginId && !!email;
 
-  if (!loginId) {
+  if (!loginId || !email) {
     return (
       <View style={styles.container}>
         <TouchableOpacity
@@ -64,7 +67,7 @@ const ResetPasswordScreen = () => {
     setLoading(true);
     setErrorMsg(null);
     try {
-      await resetPassword(loginId, newPassword, confirmPassword);
+      await resetPassword(loginId, email, newPassword, confirmPassword);
       setStep('success');
     } catch {
       setErrorMsg(t('auth.resetPassword.error.generic'));
@@ -75,24 +78,30 @@ const ResetPasswordScreen = () => {
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity
-        style={styles.backButton}
-        onPress={() => router.back()}
-        accessibilityRole="button"
-        accessibilityLabel={t('common.back')}
-      >
-        <Ionicons name="chevron-back" size={18} color={colors.gray[300]} />
-      </TouchableOpacity>
+      {step === 'form' && (
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => router.back()}
+          accessibilityRole="button"
+          accessibilityLabel={t('common.back')}
+        >
+          <Ionicons name="chevron-back" size={18} color={colors.gray[300]} />
+        </TouchableOpacity>
+      )}
 
       <ScrollView
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={
+          step === 'success' ? styles.scrollContentCentered : styles.scrollContent
+        }
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        <View style={styles.titleSection}>
-          <Text style={styles.title}>{t('auth.resetPassword.title')}</Text>
-          <Text style={styles.subtitle}>{t('auth.resetPassword.subtitle')}</Text>
-        </View>
+        {step === 'form' && (
+          <View style={styles.titleSection}>
+            <Text style={styles.title}>{t('auth.resetPassword.title')}</Text>
+            <Text style={styles.subtitle}>{t('auth.resetPassword.subtitle')}</Text>
+          </View>
+        )}
 
         {step === 'success' ? (
           <View style={styles.form}>
@@ -168,6 +177,13 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: layout.screenPaddingHorizontal,
     paddingTop: layout.screenPaddingTop,
+    paddingBottom: layout.screenPaddingBottom,
+    gap: 24,
+  },
+  scrollContentCentered: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    paddingHorizontal: layout.screenPaddingHorizontal,
     paddingBottom: layout.screenPaddingBottom,
     gap: 24,
   },

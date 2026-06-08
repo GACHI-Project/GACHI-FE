@@ -11,10 +11,12 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import ConfirmModal from '../../src/components/common/ConfirmModal';
 import { ChildInfo } from '../../src/types/child';
 import { fetchChildren, registerChild, updateChild, deleteChild } from '../../src/api/child';
 import { useChildrenStore } from '../../src/store/childrenStore';
 import { fetchMyInfo, UserInfo } from '../../src/api/user';
+import { logout } from '../../src/api/auth';
 import { CALENDAR_COLORS } from '../../src/constants/child';
 import colors from '../../src/constants/colors';
 import styles from '../../src/styles/profile/profile';
@@ -44,6 +46,7 @@ const ProfileScreen = () => {
   const [editingChild, setEditingChild] = useState<ChildInfo | null>(null);
   const [sheetVisible, setSheetVisible] = useState(false);
   const [isNewChild, setIsNewChild] = useState(false);
+  const [logoutModalVisible, setLogoutModalVisible] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -67,6 +70,10 @@ const ProfileScreen = () => {
         .catch(() => {});
     }, [])
   );
+
+  const handleLogout = () => {
+    setLogoutModalVisible(true);
+  };
 
   return (
     <View style={styles.container}>
@@ -195,10 +202,24 @@ const ProfileScreen = () => {
           </View>
         </View>
 
-        <TouchableOpacity style={styles.logoutBtn} onPress={() => {}}>
+        <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
           <Text style={styles.logoutText}>{t('profile.logout')}</Text>
         </TouchableOpacity>
       </ScrollView>
+      <ConfirmModal
+        visible={logoutModalVisible}
+        onClose={() => setLogoutModalVisible(false)}
+        icon={<Ionicons name="log-out-outline" size={28} color={colors.primary[400]} />}
+        title={t('profile.logoutTitle')}
+        description={t('profile.logoutConfirm')}
+        cancelText={t('common.cancel')}
+        onCancel={() => setLogoutModalVisible(false)}
+        confirmText={t('profile.logout')}
+        onConfirm={() => {
+          setLogoutModalVisible(false);
+          logout();
+        }}
+      />
       <ChildEditSheet
         visible={sheetVisible}
         child={editingChild}

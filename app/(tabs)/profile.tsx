@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
+import ConfirmModal from '../../src/components/common/ConfirmModal';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -45,6 +46,7 @@ const ProfileScreen = () => {
   const [editingChild, setEditingChild] = useState<ChildInfo | null>(null);
   const [sheetVisible, setSheetVisible] = useState(false);
   const [isNewChild, setIsNewChild] = useState(false);
+  const [logoutModalVisible, setLogoutModalVisible] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -70,10 +72,7 @@ const ProfileScreen = () => {
   );
 
   const handleLogout = () => {
-    Alert.alert(t('profile.logoutTitle'), t('profile.logoutConfirm'), [
-      { text: t('common.cancel'), style: 'cancel' },
-      { text: t('profile.logout'), style: 'destructive', onPress: () => logout() },
-    ]);
+    setLogoutModalVisible(true);
   };
 
   return (
@@ -207,6 +206,20 @@ const ProfileScreen = () => {
           <Text style={styles.logoutText}>{t('profile.logout')}</Text>
         </TouchableOpacity>
       </ScrollView>
+      <ConfirmModal
+        visible={logoutModalVisible}
+        onClose={() => setLogoutModalVisible(false)}
+        icon={<Ionicons name="log-out-outline" size={28} color={colors.primary[400]} />}
+        title={t('profile.logoutTitle')}
+        description={t('profile.logoutConfirm')}
+        cancelText={t('common.cancel')}
+        onCancel={() => setLogoutModalVisible(false)}
+        confirmText={t('profile.logout')}
+        onConfirm={() => {
+          setLogoutModalVisible(false);
+          logout();
+        }}
+      />
       <ChildEditSheet
         visible={sheetVisible}
         child={editingChild}

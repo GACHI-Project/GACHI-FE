@@ -77,6 +77,14 @@ const MealTimetablePage = () => {
   const [schoolMeals, setSchoolMeals] = useState<SchoolMealGroup[]>([]);
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    if (!childItems.length) {
+      setSelectedChildIdx(0);
+      return;
+    }
+    setSelectedChildIdx((prev) => Math.min(prev, childItems.length - 1));
+  }, [childItems]);
+
   const weekDays = useMemo(() => getDisplayWeekDays(), []);
   const mealDays = useMemo(() => getNextWeekdays(5), []);
   const dayColW = (screenWidth - layout.screenPaddingHorizontal * 2 - PERIOD_COL_W) / 5;
@@ -228,7 +236,7 @@ const MealTimetablePage = () => {
               <View style={styles.mealCard}>
                 {day.menus.length > 0 ? (
                   day.menus.map((menu) => (
-                    <View key={menu.name} style={styles.mealItem}>
+                    <View key={`${fmt(day.date)}-${menu.name}`} style={styles.mealItem}>
                       <View style={styles.mealBullet} />
                       <Text style={styles.mealName}>
                         {menu.name}

@@ -1,5 +1,5 @@
 /* eslint-disable react/jsx-props-no-spreading */
-import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -70,6 +70,16 @@ const MealCard = ({ cardWidth, items, meals, loading }: MealCardProps) => {
   slideToRef.current = slideTo;
   const itemsLengthRef = useRef(items.length);
   itemsLengthRef.current = items.length;
+
+  useEffect(() => {
+    if (!items.length) return;
+    const clamped = Math.min(activeIdxRef.current, items.length - 1);
+    if (clamped !== activeIdxRef.current) {
+      activeIdxRef.current = clamped;
+      setActiveIdx(clamped);
+    }
+    translateX.setValue(-clamped * cardWidth);
+  }, [items.length, cardWidth, translateX]);
 
   useEffect(() => {
     if (items.length <= 1) return undefined;
@@ -227,6 +237,16 @@ const TimetableCard = ({ cardWidth, items, timetables, loading }: TimetableCardP
   itemsLengthRef.current = items.length;
 
   useEffect(() => {
+    if (!items.length) return;
+    const clamped = Math.min(activeIdxRef.current, items.length - 1);
+    if (clamped !== activeIdxRef.current) {
+      activeIdxRef.current = clamped;
+      setActiveIdx(clamped);
+    }
+    translateX.setValue(-clamped * cardWidth);
+  }, [items.length, cardWidth, translateX]);
+
+  useEffect(() => {
     if (items.length <= 1) return undefined;
     const interval = setInterval(() => {
       if (!isPausedRef.current) {
@@ -349,7 +369,18 @@ const MealTimetableWidget = () => {
   const childItems = useChildrenStore((s) => s.children);
   const { width: screenWidth } = useWindowDimensions();
   const cardWidth = (screenWidth - HORIZONTAL_PADDING - CARD_GAP) / 2;
-  const today = useMemo(getTodayStr, []);
+  const [today, setToday] = useState(getTodayStr);
+
+  useEffect(() => {
+    const now = new Date();
+    const nextMidnight = new Date(now);
+    nextMidnight.setHours(24, 0, 0, 0);
+    const timeout = setTimeout(
+      () => setToday(getTodayStr()),
+      nextMidnight.getTime() - now.getTime()
+    );
+    return () => clearTimeout(timeout);
+  }, [today]);
 
   const [meals, setMeals] = useState<MealMenu[][]>([]);
   const [timetables, setTimetables] = useState<TimetablePeriod[][]>([]);

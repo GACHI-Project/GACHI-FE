@@ -88,7 +88,10 @@ export const getMealsForChild = (
 ): MealMenu[] => {
   const group = schoolMeals.find((g) => g.officeCode === officeCode && g.schoolCode === schoolCode);
   if (!group) return [];
-  const entry = group.meals.find((m) => m.date === date);
+  const entry =
+    group.meals.find(
+      (m) => m.date === date && (m.mealCode === '2' || m.mealName.includes('중식'))
+    ) ?? group.meals.find((m) => m.date === date);
   if (!entry?.dishName) return [];
   return parseDishName(entry.dishName);
 };

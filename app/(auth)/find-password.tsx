@@ -1,11 +1,11 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 import FormField from '../../src/components/auth/FormField';
 import { PrimaryButton } from '../../src/components/common/Button';
-import { sendFindPasswordCode, verifyEmailCode, AuthApiError } from '../../src/api/auth';
+import { sendFindPasswordCode, verifyPasswordResetCode, AuthApiError } from '../../src/api/auth';
 import colors from '../../src/constants/colors';
 import fonts from '../../src/constants/fonts';
 import layout from '../../src/constants/layout';
@@ -23,27 +23,66 @@ const FindPasswordScreen = () => {
   const [emailVerified, setEmailVerified] = useState(false);
   const [sending, setSending] = useState(false);
   const [verifying, setVerifying] = useState(false);
+  const [countdown, setCountdown] = useState(0);
+  const [codeExpired, setCodeExpired] = useState(false);
+  const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const [idMsg, setIdMsg] = useState<ValidationMsg | null>(null);
   const [emailMsg, setEmailMsg] = useState<ValidationMsg | null>(null);
   const [codeMsg, setCodeMsg] = useState<ValidationMsg | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
+  useEffect(
+    () => () => {
+      if (countdownRef.current) clearInterval(countdownRef.current);
+    },
+    []
+  );
+
+  const formatCountdown = (seconds: number): string => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  };
+
+  const startCountdown = (seconds: number) => {
+    setCodeExpired(false);
+    setCountdown(seconds);
+    if (countdownRef.current) clearInterval(countdownRef.current);
+    let remaining = seconds;
+    countdownRef.current = setInterval(() => {
+      remaining -= 1;
+      setCountdown(remaining);
+      if (remaining <= 0) {
+        clearInterval(countdownRef.current!);
+        countdownRef.current = null;
+        setCodeExpired(true);
+      }
+    }, 1000);
+  };
+
   const handleSendCode = async () => {
-    if (!loginId || !email || sending) return;
+    if (!loginId || !email || sending || countdown > 0) return;
     setSending(true);
     setIdMsg(null);
     setEmailMsg(null);
     setCodeMsg(null);
+    setErrorMsg(null);
     setCode('');
     setCodeSent(false);
     setEmailVerified(false);
-    setErrorMsg(null);
+    setCodeExpired(false);
+    setCountdown(0);
+    if (countdownRef.current) {
+      clearInterval(countdownRef.current);
+      countdownRef.current = null;
+    }
     try {
-      await sendFindPasswordCode(loginId, email);
+      const { codeTtlSeconds } = await sendFindPasswordCode(loginId, email);
       setCodeSent(true);
       setIdMsg({ text: t('auth.findPassword.idFound'), state: 'success' });
       setEmailMsg({ text: t('auth.register.basic.error.codeSent'), state: 'success' });
+      startCountdown(codeTtlSeconds);
     } catch (e) {
       if (e instanceof AuthApiError) {
         setErrorMsg(t('auth.findPassword.error.generic'));
@@ -56,7 +95,7 @@ const FindPasswordScreen = () => {
   };
 
   const handleVerifyCode = async () => {
-    if (!code || verifying || emailVerified) return;
+    if (!code || verifying || emailVerified || codeExpired) return;
     if (code.length !== 6 || !/^\d+$/.test(code)) {
       setCodeMsg({ text: t('auth.register.basic.error.codeFormat'), state: 'error' });
       return;
@@ -64,8 +103,13 @@ const FindPasswordScreen = () => {
     setVerifying(true);
     setCodeMsg(null);
     try {
-      await verifyEmailCode(email, code);
+      await verifyPasswordResetCode(loginId, email, code);
       setEmailVerified(true);
+      if (countdownRef.current) {
+        clearInterval(countdownRef.current);
+        countdownRef.current = null;
+      }
+      setCountdown(0);
       setCodeMsg({ text: t('auth.register.basic.error.emailVerified'), state: 'success' });
     } catch (e) {
       if (e instanceof AuthApiError) {
@@ -86,8 +130,38 @@ const FindPasswordScreen = () => {
 
   const handleSubmit = () => {
     if (!emailVerified) return;
-    router.push({ pathname: '/(auth)/reset-password', params: { loginId } });
+    router.push({
+      pathname: '/(auth)/reset-password',
+      params: { loginId, email: email.trim().toLowerCase() },
+    });
   };
+
+  const resetFieldState = () => {
+    setIdMsg(null);
+    setEmailMsg(null);
+    setCodeMsg(null);
+    setErrorMsg(null);
+    setCode('');
+    setCodeSent(false);
+    setEmailVerified(false);
+    setCountdown(0);
+    setCodeExpired(false);
+    if (countdownRef.current) {
+      clearInterval(countdownRef.current);
+      countdownRef.current = null;
+    }
+  };
+
+  let sendButtonLabel = t('auth.findPassword.send');
+  if (sending) sendButtonLabel = t('auth.findPassword.sending');
+  else if (countdown > 0) sendButtonLabel = formatCountdown(countdown);
+
+  const codeValidationMsg = codeExpired
+    ? t('auth.register.basic.error.codeExpired')
+    : codeMsg?.text;
+  const codeValidationState: 'success' | 'error' | undefined = codeExpired
+    ? 'error'
+    : codeMsg?.state;
 
   return (
     <View style={styles.container}>
@@ -116,10 +190,7 @@ const FindPasswordScreen = () => {
             value={loginId}
             onChangeText={(v) => {
               setLoginId(v);
-              setIdMsg(null);
-              setErrorMsg(null);
-              setCodeSent(false);
-              setEmailVerified(false);
+              resetFieldState();
             }}
             validationMessage={idMsg?.text}
             validationState={idMsg?.state}
@@ -130,16 +201,13 @@ const FindPasswordScreen = () => {
             value={email}
             onChangeText={(v) => {
               setEmail(v);
-              setEmailMsg(null);
-              setErrorMsg(null);
-              setCodeSent(false);
-              setEmailVerified(false);
+              resetFieldState();
             }}
             keyboardType="email-address"
             rightButton={{
-              label: sending ? t('auth.findPassword.sending') : t('auth.findPassword.send'),
+              label: sendButtonLabel,
               onPress: handleSendCode,
-              disabled: !loginId || !email || sending,
+              disabled: !loginId || !email || sending || countdown > 0,
             }}
             validationMessage={emailMsg?.text}
             validationState={emailMsg?.state}
@@ -159,10 +227,10 @@ const FindPasswordScreen = () => {
                   ? t('auth.findPassword.verifying')
                   : t('auth.findPassword.confirm'),
                 onPress: handleVerifyCode,
-                disabled: !code || verifying || emailVerified,
+                disabled: !code || verifying || emailVerified || codeExpired,
               }}
-              validationMessage={codeMsg?.text}
-              validationState={codeMsg?.state}
+              validationMessage={codeValidationMsg}
+              validationState={codeValidationState}
             />
           )}
 

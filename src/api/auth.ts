@@ -246,7 +246,7 @@ export const sendFindPasswordCode = async (
   try {
     const response = await apiClient.post('/api/v1/auth/password-reset/email/send', {
       loginId,
-      email,
+      email: email.trim().toLowerCase(),
     });
     return response.data.result;
   } catch (error) {

@@ -8,10 +8,10 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
-import ConfirmModal from '../../src/components/common/ConfirmModal';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import ConfirmModal from '../../src/components/common/ConfirmModal';
 import { ChildInfo } from '../../src/types/child';
 import { fetchChildren, registerChild, updateChild, deleteChild } from '../../src/api/child';
 import { useChildrenStore } from '../../src/store/childrenStore';

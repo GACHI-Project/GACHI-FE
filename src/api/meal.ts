@@ -149,8 +149,7 @@ export const getPeriodsForChild = (
   if (!group) return [];
   return group.timetables
     .filter(
-      (t) =>
-        t.date === date && t.grade === grade && (className == null || t.className === className)
+      (t) => t.date === date && t.grade === grade && (!className || t.className === className)
     )
     .sort((a, b) => a.period - b.period)
     .map((t) => ({ period: t.period, subject: t.content }));

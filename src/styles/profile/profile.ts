@@ -24,6 +24,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 14,
+    position: 'relative',
   },
   avatar: {
     width: 50,
@@ -33,6 +34,7 @@ const styles = StyleSheet.create({
   profileInfo: {
     flex: 1,
     gap: 4,
+    marginRight: 60,
   },
   profileName: {
     fontSize: 17,
@@ -66,8 +68,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.secondary[500],
     borderRadius: 999,
-    width: 52,
-    height: 30,
+    minWidth: 52,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
     alignItems: 'center',
     justifyContent: 'center',
   },

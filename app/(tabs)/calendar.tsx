@@ -14,11 +14,20 @@ import {
   fetchMonthlyMarkers,
   fetchDailyEvents,
   fetchWeeklyEvents,
+  fetchSchoolSchedules,
   completeChecklist,
   type CalendarEvent,
   type WeeklyResult,
   type MonthlyMarker,
+  type HolidayItem,
+  type SchoolGroup,
 } from '../../src/api/calendar';
+import {
+  getHolidaysForDate,
+  getAcademicSchedulesForDate,
+  getSchoolDotsForDate,
+} from '../../src/utils/schoolSchedule';
+import SchoolScheduleRow from '../../src/components/calendar/SchoolScheduleRow';
 import { useChildrenStore } from '../../src/store/childrenStore';
 
 const todayDate = new Date();
@@ -52,6 +61,8 @@ const CalendarScreen = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isDailyLoading, setIsDailyLoading] = useState(false);
   const [isWeekMode, setIsWeekMode] = useState<boolean>(true);
+  const [schoolGroups, setSchoolGroups] = useState<SchoolGroup[]>([]);
+  const [commonHolidays, setCommonHolidays] = useState<HolidayItem[]>([]);
   const [weekOffset, setWeekOffset] = useState<number>(0);
   const [calendarMonth, setCalendarMonth] = useState({
     year: todayDate.getFullYear(),
@@ -79,6 +90,11 @@ const CalendarScreen = () => {
       }
       setFocusKey((k) => k + 1);
     }, [])
+  );
+
+  const selectedChildId = useMemo(
+    () => children.find((c) => c.name === selectedChildName)?.id,
+    [children, selectedChildName]
   );
 
   const weekScrollRef = useRef<ScrollView>(null);
@@ -155,6 +171,41 @@ const CalendarScreen = () => {
       });
   }, [isWeekMode, selectedDate, selectedChildName, focusKey]);
 
+  // 학사일정
+  const schoolFromDate = useMemo(() => {
+    const [y, m] = isWeekMode
+      ? weekDates[0].split('-').map(Number)
+      : [calendarMonth.year, calendarMonth.month + 1];
+    return `${y}-${String(m).padStart(2, '0')}-01`;
+  }, [isWeekMode, weekDates, calendarMonth.year, calendarMonth.month]);
+
+  const schoolToDate = useMemo(() => {
+    const [y, m] = isWeekMode
+      ? weekDates[0].split('-').map(Number)
+      : [calendarMonth.year, calendarMonth.month + 1];
+    const lastDay = new Date(y, m, 0).getDate();
+    return `${y}-${String(m).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+  }, [isWeekMode, weekDates, calendarMonth.year, calendarMonth.month]);
+
+  useEffect(() => {
+    fetchSchoolSchedules(schoolFromDate, schoolToDate)
+      .then((data) => {
+        setCommonHolidays(data.commonHolidays);
+        setSchoolGroups(data.schoolSchedules);
+      })
+      .catch((e) => {
+        // eslint-disable-next-line no-console
+        console.error('fetchSchoolSchedules failed:', e);
+      });
+  }, [schoolFromDate, schoolToDate, focusKey]);
+
+  type SchoolDisplayEntry = {
+    type: 'holiday' | 'academic';
+    item: HolidayItem;
+    schoolGroupKey?: string;
+    childNames?: string[];
+  };
+
   const markedDatesMap = useMemo(() => {
     const map: Record<string, { dots: { key: string; color: string }[] }> = {};
     monthlyMarkers.forEach(({ date, childName, childColor }) => {
@@ -163,26 +214,89 @@ const CalendarScreen = () => {
         map[date].dots.push({ key: childName, color: childColor });
       }
     });
+    // 학교 도트 병합
+    const allSchoolDates = new Set<string>();
+    commonHolidays.forEach((h) => allSchoolDates.add(h.date));
+    schoolGroups.forEach((g) => g.schedules.forEach((s) => allSchoolDates.add(s.date)));
+    allSchoolDates.forEach((date) => {
+      const schoolDots = getSchoolDotsForDate(commonHolidays, schoolGroups, date);
+      schoolDots.forEach((dot) => {
+        if (!map[date]) map[date] = { dots: [] };
+        if (!map[date].dots.find((d) => d.key === dot.key)) map[date].dots.push(dot);
+      });
+    });
     return map;
-  }, [monthlyMarkers]);
+  }, [monthlyMarkers, commonHolidays, schoolGroups]);
 
   const weekMarkedDates = useMemo(() => {
     if (!weeklyData) return {};
     const record: Record<string, { dots: { key: string; color: string }[] }> = {};
     weeklyData.days.forEach((day) => {
       if (day.events.length > 0) {
-        record[day.date] = {
-          dots: day.events.map((e) => ({ key: String(e.eventId), color: e.calendarColor })),
-        };
+        const dots: { key: string; color: string }[] = [];
+        day.events.forEach((e) => {
+          const key = e.childName ?? e.calendarColor;
+          if (!dots.find((d) => d.key === key)) {
+            dots.push({ key, color: e.calendarColor });
+          }
+        });
+        record[day.date] = { dots };
       }
     });
+    // 학교 도트 병합
+    weekDates.forEach((date) => {
+      const schoolDots = getSchoolDotsForDate(commonHolidays, schoolGroups, date);
+      schoolDots.forEach((dot) => {
+        if (!record[date]) record[date] = { dots: [] };
+        if (!record[date].dots.find((d) => d.key === dot.key)) record[date].dots.push(dot);
+      });
+    });
     return record;
-  }, [weeklyData]);
+  }, [weeklyData, weekDates, commonHolidays, schoolGroups]);
 
-  const weekEventGroups = useMemo(() => {
-    if (!weeklyData) return [];
-    return weeklyData.days.filter((d) => d.events.length > 0);
-  }, [weeklyData]);
+  const daySchoolSchedules = useMemo(
+    (): SchoolDisplayEntry[] => [
+      ...getHolidaysForDate(commonHolidays, selectedDate).map((item) => ({
+        type: 'holiday' as const,
+        item,
+      })),
+      ...getAcademicSchedulesForDate(schoolGroups, selectedDate, selectedChildId).map((e) => ({
+        type: 'academic' as const,
+        ...e,
+      })),
+    ],
+    [commonHolidays, schoolGroups, selectedDate, selectedChildId]
+  );
+
+  const weekDisplayGroups = useMemo(() => {
+    const eventsMap: Record<string, CalendarEvent[]> = {};
+    (weeklyData?.days ?? []).forEach((d) => {
+      eventsMap[d.date] = d.events;
+    });
+    const schoolMap: Record<string, SchoolDisplayEntry[]> = {};
+    weekDates.forEach((date) => {
+      const holidays = getHolidaysForDate(commonHolidays, date).map((item) => ({
+        type: 'holiday' as const,
+        item,
+      }));
+      const academic = getAcademicSchedulesForDate(schoolGroups, date, selectedChildId).map(
+        (e) => ({ type: 'academic' as const, ...e })
+      );
+      const all = [...holidays, ...academic];
+      if (all.length > 0) schoolMap[date] = all;
+    });
+    const activeDates = new Set([
+      ...(weeklyData?.days.filter((d) => d.events.length > 0).map((d) => d.date) ?? []),
+      ...Object.keys(schoolMap),
+    ]);
+    return weekDates
+      .filter((d) => activeDates.has(d))
+      .map((d) => ({
+        date: d,
+        events: eventsMap[d] ?? [],
+        schoolSchedules: schoolMap[d] ?? [],
+      }));
+  }, [weeklyData, weekDates, commonHolidays, schoolGroups, selectedChildId]);
 
   const toggleExpand = (id: number) => {
     setExpandedIds((prev) => {
@@ -334,10 +448,10 @@ const CalendarScreen = () => {
               }}
             >
               <View style={styles.weekListContent}>
-                {weekEventGroups.length === 0 ? (
+                {weekDisplayGroups.length === 0 ? (
                   <Text style={styles.emptyText}>{t('calendar.emptyWeek')}</Text>
                 ) : (
-                  weekEventGroups.map((group) => (
+                  weekDisplayGroups.map((group) => (
                     <View
                       key={group.date}
                       onLayout={(e) => {
@@ -350,6 +464,14 @@ const CalendarScreen = () => {
                         {formatWeekDateHeader(group.date, i18n.language)}
                       </Text>
                       <View style={styles.cardGroup}>
+                        {group.schoolSchedules.map((entry) => (
+                          <SchoolScheduleRow
+                            key={`${entry.item.date}-${entry.item.eventName}-${entry.schoolGroupKey ?? entry.type}`}
+                            item={entry.item}
+                            type={entry.type}
+                            childNames={entry.childNames}
+                          />
+                        ))}
                         {group.events.map((event) => (
                           <EventCard
                             key={event.eventId}
@@ -392,9 +514,18 @@ const CalendarScreen = () => {
               <Text style={styles.dayLabel}>{formatDayLabel(selectedDate, i18n.language)}</Text>
               <View style={styles.listContent}>
                 {isDailyLoading && <ActivityIndicator size="small" color={colors.primary[400]} />}
-                {!isDailyLoading && dayEvents.length === 0 && (
+                {!isDailyLoading && daySchoolSchedules.length === 0 && dayEvents.length === 0 && (
                   <Text style={styles.emptyText}>{t('calendar.emptyDay')}</Text>
                 )}
+                {!isDailyLoading &&
+                  daySchoolSchedules.map((entry) => (
+                    <SchoolScheduleRow
+                      key={`${entry.item.date}-${entry.item.eventName}-${entry.schoolGroupKey ?? entry.type}`}
+                      item={entry.item}
+                      type={entry.type}
+                      childNames={entry.childNames}
+                    />
+                  ))}
                 {!isDailyLoading &&
                   dayEvents.map((event) => (
                     <EventCard

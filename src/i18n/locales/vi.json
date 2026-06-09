@@ -550,6 +550,9 @@
     "checklist": {
       "collapse": "Thu gọn danh sách",
       "expand": "Mở rộng danh sách"
+    },
+    "schoolSchedule": {
+      "holiday": "Ngày nghỉ"
     }
   },
   "document": {

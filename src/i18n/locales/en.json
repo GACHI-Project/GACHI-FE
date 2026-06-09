@@ -550,6 +550,9 @@
     "checklist": {
       "collapse": "Collapse checklist",
       "expand": "Expand checklist"
+    },
+    "schoolSchedule": {
+      "holiday": "Holiday"
     }
   },
   "document": {

@@ -2,6 +2,7 @@ import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 import { apiClient } from './auth';
 
+
 export class CalendarApiError extends Error {
   constructor(
     public readonly code: string,
@@ -228,6 +229,65 @@ export const injectCalendarPreviewDummy = async (
     throw wrapError(error);
   }
 };
+
+// ─── 학사일정 (NEIS) ────────────────────────────────────────────────────────
+
+export interface GradeEventYn {
+  grade1: 'Y' | 'N';
+  grade2: 'Y' | 'N';
+  grade3: 'Y' | 'N';
+  grade4: 'Y' | 'N';
+  grade5: 'Y' | 'N';
+  grade6: 'Y' | 'N';
+}
+
+export interface HolidayItem {
+  date: string;
+  academicYear: string;
+  eventName: string;
+  eventContent: string;
+  gradeEventYn: GradeEventYn;
+}
+
+export interface SchoolGroupChild {
+  childId: number;
+  childName: string;
+  grade: number;
+  colorCode: string;
+}
+
+export interface SchoolGroup {
+  schoolGroupKey: string;
+  officeCode: string;
+  schoolCode: string;
+  schoolName: string;
+  childIds: number[];
+  children: SchoolGroupChild[];
+  schedules: HolidayItem[];
+}
+
+export interface SchoolScheduleResult {
+  commonHolidays: HolidayItem[];
+  schoolSchedules: SchoolGroup[];
+}
+
+export const fetchSchoolSchedules = async (
+  fromDate: string,
+  toDate: string
+): Promise<SchoolScheduleResult> => {
+  try {
+    const headers = await getAuthHeader();
+    const response = await apiClient.get<{ result: SchoolScheduleResult }>(
+      '/api/v1/calendars/school-schedules',
+      { headers, params: { fromDate, toDate } }
+    );
+    return response.data.result;
+  } catch (error) {
+    throw wrapError(error);
+  }
+};
+
+// ────────────────────────────────────────────────────────────────────────────
 
 export const completeChecklist = async (
   checklistId: number,

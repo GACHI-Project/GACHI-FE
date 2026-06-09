@@ -28,11 +28,18 @@ const ProfilePasswordScreen = () => {
   const [userInfoFetchFailed, setUserInfoFetchFailed] = useState(false);
   const isSubmitting = useRef(false);
 
-  const loadUserInfo = useCallback(() => {
+  const loadUserInfo = useCallback(async () => {
     setUserInfoFetchFailed(false);
-    fetchMyInfo()
-      .then(setUserInfo)
-      .catch(() => setUserInfoFetchFailed(true));
+    try {
+      const info = await fetchMyInfo();
+      setUserInfo(info);
+    } catch (error) {
+      if (error instanceof UserApiError && error.code === 'UNAUTHORIZED') {
+        router.replace('/(auth)/login');
+        return;
+      }
+      setUserInfoFetchFailed(true);
+    }
   }, []);
 
   useEffect(() => {

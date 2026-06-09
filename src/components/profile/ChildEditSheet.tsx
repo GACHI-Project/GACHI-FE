@@ -60,8 +60,10 @@ const ChildEditSheet = ({
         }),
       ]).start();
     } else {
-      overlayOpacity.setValue(0);
-      sheetTranslateY.setValue(300);
+      Animated.parallel([
+        Animated.timing(overlayOpacity, { toValue: 0, duration: 200, useNativeDriver: true }),
+        Animated.timing(sheetTranslateY, { toValue: 300, duration: 250, useNativeDriver: true }),
+      ]).start();
     }
   }, [visible, overlayOpacity, sheetTranslateY]);
 

@@ -65,6 +65,54 @@ export const updateLanguage = async (languageCode: string): Promise<void> => {
 
 export type NotificationPreference = 'ALL' | 'IMPORTANT' | 'URGENT_ONLY' | 'OFF';
 
+export const sendEmailChangeCode = async (
+  email: string,
+  currentPassword: string
+): Promise<{ codeTtlSeconds: number; resendCooldownSeconds: number }> => {
+  try {
+    const headers = await getAuthHeader();
+    const { data } = await apiClient.post(
+      '/api/v1/users/me/email/send',
+      { email, currentPassword },
+      { headers }
+    );
+    return data.result;
+  } catch (error) {
+    throw wrapError(error);
+  }
+};
+
+export const verifyEmailChangeCode = async (email: string, code: string): Promise<void> => {
+  try {
+    const headers = await getAuthHeader();
+    await apiClient.post('/api/v1/users/me/email/verify', { email, code }, { headers });
+  } catch (error) {
+    throw wrapError(error);
+  }
+};
+
+export const changeEmail = async (email: string): Promise<void> => {
+  try {
+    const headers = await getAuthHeader();
+    await apiClient.patch('/api/v1/users/me/email', { email }, { headers });
+  } catch (error) {
+    throw wrapError(error);
+  }
+};
+
+export const updateProfile = async (params: {
+  name?: string;
+  phoneNumber?: string;
+  email?: string;
+}): Promise<void> => {
+  try {
+    const headers = await getAuthHeader();
+    await apiClient.patch('/api/v1/users/me/profile', params, { headers });
+  } catch (error) {
+    throw wrapError(error);
+  }
+};
+
 export const updateNotificationPreference = async (
   notificationPreference: NotificationPreference
 ): Promise<void> => {

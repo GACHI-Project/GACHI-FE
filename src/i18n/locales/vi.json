@@ -601,6 +601,11 @@
       "phone": "Số điện thoại",
       "email": "Email",
       "securitySection": "Bảo mật",
+      "sheetTitle": "Chỉnh sửa hồ sơ",
+      "namePlaceholder": "Nhập họ và tên",
+      "nameRequired": "Vui lòng nhập họ và tên.",
+      "phoneInvalid": "Vui lòng nhập số điện thoại hợp lệ.",
+      "saveFailed": "Lưu thất bại. Vui lòng thử lại.",
       "changePassword": {
         "title": "Thay đổi mật khẩu",
         "currentPassword": "Mật khẩu hiện tại",
@@ -614,6 +619,14 @@
       "withdrawDesc": "Khi hủy tài khoản, tài khoản và toàn bộ dữ liệu\nsẽ bị xóa vĩnh viễn.",
       "withdrawWarning": "Tất cả tài liệu đã lưu, thông tin về con và lịch sẽ bị xóa và không thể khôi phục.",
       "cancel": "Hủy"
+    },
+    "editEmail": {
+      "title": "Thay đổi email",
+      "newEmail": "Email mới",
+      "submit": "Thay đổi email",
+      "currentPasswordPlaceholder": "Nhập mật khẩu hiện tại",
+      "codeInvalid": "Mã xác nhận không đúng.",
+      "saveFailed": "Thay đổi email thất bại. Vui lòng thử lại."
     },
     "notificationSetting": {
       "title": "Cài đặt thông báo",

@@ -601,6 +601,11 @@
       "phone": "Phone",
       "email": "Email",
       "securitySection": "Security",
+      "sheetTitle": "Edit Profile",
+      "namePlaceholder": "Enter your name",
+      "nameRequired": "Please enter your name.",
+      "phoneInvalid": "Please enter a valid phone number.",
+      "saveFailed": "Failed to save. Please try again.",
       "changePassword": {
         "title": "Change Password",
         "currentPassword": "Current Password",
@@ -614,6 +619,16 @@
       "withdrawDesc": "Your account and all data will be\npermanently deleted.",
       "withdrawWarning": "All saved documents, child info, and calendar events will be deleted and cannot be recovered.",
       "cancel": "Cancel"
+    },
+    "editEmail": {
+      "title": "Change Email",
+      "newEmail": "New Email",
+      "submit": "Change Email",
+      "currentPasswordPlaceholder": "Enter your current password",
+      "emailAlreadyUsed": "This email is already in use.",
+      "wrongPassword": "Current password is incorrect.",
+      "codeInvalid": "Incorrect verification code.",
+      "saveFailed": "Failed to change email. Please try again."
     },
     "notificationSetting": {
       "title": "Notification Settings",

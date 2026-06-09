@@ -42,6 +42,7 @@ const styles = StyleSheet.create({
   profileSubRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    flexWrap: 'wrap',
     gap: 6,
   },
   idBadge: {
@@ -66,8 +67,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.secondary[500],
     borderRadius: 999,
-    width: 52,
-    height: 30,
+    minWidth: 52,
+    flexShrink: 0,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
     alignItems: 'center',
     justifyContent: 'center',
   },

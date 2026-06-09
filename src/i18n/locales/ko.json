@@ -528,6 +528,9 @@
     "checklist": {
       "collapse": "체크리스트 접기",
       "expand": "체크리스트 펼치기"
+    },
+    "schoolSchedule": {
+      "holiday": "공휴일"
     }
   },
   "document": {

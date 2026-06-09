@@ -35,6 +35,7 @@ export interface ChildPayload {
   officeCode: string;
   grade: number;
   colorCode: string;
+  className: string;
 }
 
 export interface ChildResult {
@@ -45,6 +46,7 @@ export interface ChildResult {
   officeCode: string;
   grade: number;
   colorCode: string;
+  className: string | null;
   createdAt: string;
 }
 
@@ -97,6 +99,7 @@ export interface UpdateChildParams {
   officeCode?: string;
   grade: number;
   colorCode: string;
+  className: string;
 }
 
 export const updateChild = async (childId: number, params: UpdateChildParams): Promise<void> => {

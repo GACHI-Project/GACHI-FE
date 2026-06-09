@@ -102,15 +102,9 @@
         "childNamePlaceholder": "Enter name",
         "colorHint": "Each child's color is used to quickly identify whose schedule it is on the calendar.",
         "addChild": "Add Child",
-        "order": [
-          "1st",
-          "2nd",
-          "3rd",
-          "4th",
-          "5th",
-          "6th",
-          "7th"
-        ]
+        "className": "Class",
+        "classNamePlaceholder": "e.g. 1",
+        "order": ["1st", "2nd", "3rd", "4th", "5th", "6th", "7th"]
       },
       "notification": {
         "title": "Choose your notification settings",
@@ -269,18 +263,12 @@
     "features": {
       "sectionTitle": "Key Features",
       "ai": {
-        "title": [
-          "Ask",
-          "AI"
-        ],
+        "title": ["Ask", "AI"],
         "desc": "Ask questions about anything unclear. AI will explain the full context.",
         "button": "Start Chat"
       },
       "guide": {
-        "title": [
-          "Korean School",
-          "Life Guide"
-        ],
+        "title": ["Korean School", "Life Guide"],
         "desc": "Find quick answers to common questions about school life.",
         "button": "Open Guide"
       }
@@ -494,15 +482,7 @@
         "month": "M",
         "day": "D",
         "fullDay": "All Day",
-        "weekdays": [
-          "Sun",
-          "Mon",
-          "Tue",
-          "Wed",
-          "Thu",
-          "Fri",
-          "Sat"
-        ],
+        "weekdays": ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
         "isEditing": "✏️ Editing",
         "edit": "✏️ Edit",
         "no": "No",
@@ -584,6 +564,7 @@
     "childInfo": "Children",
     "addChild": "+ Add Child",
     "grade": "Grade {{grade}}",
+    "className": "Class {{className}}",
     "appSettings": "App Settings",
     "appLanguage": "App Language",
     "notification": "Notifications",
@@ -766,13 +747,7 @@
     ],
     "qa": {
       "documents": {
-        "tabs": [
-          "All",
-          "School Notices",
-          "Field Trips",
-          "School Banking",
-          "Attendance"
-        ],
+        "tabs": ["All", "School Notices", "Field Trips", "School Banking", "Attendance"],
         "items": [
           {
             "id": "1",
@@ -867,69 +842,47 @@
         ]
       },
       "attendance": {
-        "tabs": [
-          "All"
-        ],
+        "tabs": ["All"],
         "items": []
       },
       "events": {
-        "tabs": [
-          "All"
-        ],
+        "tabs": ["All"],
         "items": []
       },
       "meals": {
-        "tabs": [
-          "All"
-        ],
+        "tabs": ["All"],
         "items": []
       },
       "afterschool": {
-        "tabs": [
-          "All"
-        ],
+        "tabs": ["All"],
         "items": []
       },
       "subjects": {
-        "tabs": [
-          "All"
-        ],
+        "tabs": ["All"],
         "items": []
       },
       "grades": {
-        "tabs": [
-          "All"
-        ],
+        "tabs": ["All"],
         "items": []
       },
       "teacher": {
-        "tabs": [
-          "All"
-        ],
+        "tabs": ["All"],
         "items": []
       },
       "health": {
-        "tabs": [
-          "All"
-        ],
+        "tabs": ["All"],
         "items": []
       },
       "rules": {
-        "tabs": [
-          "All"
-        ],
+        "tabs": ["All"],
         "items": []
       },
       "multicultural": {
-        "tabs": [
-          "All"
-        ],
+        "tabs": ["All"],
         "items": []
       },
       "enrollment": {
-        "tabs": [
-          "All"
-        ],
+        "tabs": ["All"],
         "items": []
       }
     },

@@ -102,6 +102,8 @@
         "childNamePlaceholder": "Vui lòng nhập tên",
         "colorHint": "Màu sắc của từng con sẽ giúp phân biệt lịch của ai ngay trong lịch.",
         "addChild": "Thêm con",
+        "className": "Lớp",
+        "classNamePlaceholder": "VD: 1",
         "order": [
           "Con thứ nhất",
           "Con thứ hai",
@@ -269,18 +271,12 @@
     "features": {
       "sectionTitle": "Tính năng chính",
       "ai": {
-        "title": [
-          "Hỏi",
-          "AI"
-        ],
+        "title": ["Hỏi", "AI"],
         "desc": "Đặt câu hỏi ngay về nội dung khó hiểu. AI sẽ giải thích cả ngữ cảnh cho bạn.",
         "button": "Bắt đầu trò chuyện"
       },
       "guide": {
-        "title": [
-          "Hướng dẫn cuộc sống",
-          "học đường tại Hàn Quốc"
-        ],
+        "title": ["Hướng dẫn cuộc sống", "học đường tại Hàn Quốc"],
         "desc": "Tra cứu dễ dàng những điều hay nhầm lẫn trong cuộc sống học đường qua hỏi đáp.",
         "button": "Xem hướng dẫn"
       }
@@ -494,15 +490,7 @@
         "month": "Tháng",
         "day": "Ngày",
         "fullDay": "Cả ngày",
-        "weekdays": [
-          "Chủ nhật",
-          "Thứ hai",
-          "Thứ ba",
-          "Thứ tư",
-          "Thứ năm",
-          "Thứ sáu",
-          "Thứ bảy"
-        ],
+        "weekdays": ["Chủ nhật", "Thứ hai", "Thứ ba", "Thứ tư", "Thứ năm", "Thứ sáu", "Thứ bảy"],
         "isEditing": "✏️ Đang chỉnh sửa",
         "edit": "✏️ Chỉnh sửa",
         "no": "Không",
@@ -584,6 +572,7 @@
     "childInfo": "Thông tin con",
     "addChild": "+ Thêm con",
     "grade": "Lớp {{grade}} tiểu học",
+    "className": "Lớp {{className}}",
     "appSettings": "Cài đặt ứng dụng",
     "appLanguage": "Ngôn ngữ ứng dụng",
     "notification": "Cài đặt thông báo",
@@ -867,69 +856,47 @@
         ]
       },
       "attendance": {
-        "tabs": [
-          "Tất cả"
-        ],
+        "tabs": ["Tất cả"],
         "items": []
       },
       "events": {
-        "tabs": [
-          "Tất cả"
-        ],
+        "tabs": ["Tất cả"],
         "items": []
       },
       "meals": {
-        "tabs": [
-          "Tất cả"
-        ],
+        "tabs": ["Tất cả"],
         "items": []
       },
       "afterschool": {
-        "tabs": [
-          "Tất cả"
-        ],
+        "tabs": ["Tất cả"],
         "items": []
       },
       "subjects": {
-        "tabs": [
-          "Tất cả"
-        ],
+        "tabs": ["Tất cả"],
         "items": []
       },
       "grades": {
-        "tabs": [
-          "Tất cả"
-        ],
+        "tabs": ["Tất cả"],
         "items": []
       },
       "teacher": {
-        "tabs": [
-          "Tất cả"
-        ],
+        "tabs": ["Tất cả"],
         "items": []
       },
       "health": {
-        "tabs": [
-          "Tất cả"
-        ],
+        "tabs": ["Tất cả"],
         "items": []
       },
       "rules": {
-        "tabs": [
-          "Tất cả"
-        ],
+        "tabs": ["Tất cả"],
         "items": []
       },
       "multicultural": {
-        "tabs": [
-          "Tất cả"
-        ],
+        "tabs": ["Tất cả"],
         "items": []
       },
       "enrollment": {
-        "tabs": [
-          "Tất cả"
-        ],
+        "tabs": ["Tất cả"],
         "items": []
       }
     },

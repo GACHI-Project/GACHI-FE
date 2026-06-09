@@ -29,7 +29,6 @@ export const isChildComplete = (child: ChildInfo): boolean =>
   (child.selectedSchool !== null || child.schoolQuery.trim().length > 0) &&
   child.grade !== null &&
   child.calendarColor !== null &&
-  child.className !== null &&
   child.className.trim().length > 0;
 
 export const createChild = (id: string): ChildInfo => ({
@@ -39,7 +38,7 @@ export const createChild = (id: string): ChildInfo => ({
   schoolQuery: '',
   grade: null,
   calendarColor: CALENDAR_COLORS[0],
-  className: null,
+  className: '',
 });
 
 const formatSchoolMeta = (school: SchoolResult): string =>
@@ -296,20 +295,20 @@ export const ChildCard = ({
         onUpdate={onUpdate}
       />
 
+      <GradePicker grade={child.grade} onUpdate={onUpdate} />
+
       <View style={cardStyles.section}>
         <Text style={cardStyles.sectionLabel}>{t('auth.register.child.className')}</Text>
         <TextInput
           style={cardStyles.nameInput}
           placeholder={t('auth.register.child.classNamePlaceholder')}
           placeholderTextColor={colors.gray[200]}
-          value={child.className ?? ''}
+          value={child.className}
           onChangeText={(text) => onUpdate({ className: text })}
           returnKeyType="done"
         />
         <View style={cardStyles.nameDivider} />
       </View>
-
-      <GradePicker grade={child.grade} onUpdate={onUpdate} />
 
       <ColorPicker calendarColor={child.calendarColor} onUpdate={onUpdate} />
     </View>

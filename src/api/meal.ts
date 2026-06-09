@@ -140,6 +140,7 @@ export const getPeriodsForChild = (
   officeCode: string,
   schoolCode: string,
   grade: number,
+  className: string | null,
   date: string
 ): TimetablePeriod[] => {
   const group = schoolTimetables.find(
@@ -147,7 +148,10 @@ export const getPeriodsForChild = (
   );
   if (!group) return [];
   return group.timetables
-    .filter((t) => t.date === date && t.grade === grade && t.className === '1')
+    .filter(
+      (t) =>
+        t.date === date && t.grade === grade && (className == null || t.className === className)
+    )
     .sort((a, b) => a.period - b.period)
     .map((t) => ({ period: t.period, subject: t.content }));
 };

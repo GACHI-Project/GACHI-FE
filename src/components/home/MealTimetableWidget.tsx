@@ -398,7 +398,14 @@ const MealTimetableWidget = () => {
       fetchSchoolTimetables(today, today)
         .then((schoolTimetables) =>
           childItems.map((c) =>
-            getPeriodsForChild(schoolTimetables, c.officeCode, c.schoolCode, c.grade, today)
+            getPeriodsForChild(
+              schoolTimetables,
+              c.officeCode,
+              c.schoolCode,
+              c.grade,
+              c.className ?? null,
+              today
+            )
           )
         )
         .catch(() => childItems.map(() => [])),

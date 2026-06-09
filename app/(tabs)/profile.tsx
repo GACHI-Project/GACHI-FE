@@ -130,7 +130,7 @@ const ProfileScreen = () => {
                       schoolQuery: child.schoolName,
                       grade: child.grade,
                       calendarColor: child.colorCode,
-                      className: child.className ?? null,
+                      className: child.className ?? '',
                     });
                     setSheetVisible(true);
                   }}
@@ -162,7 +162,7 @@ const ProfileScreen = () => {
               schoolQuery: '',
               grade: null,
               calendarColor: CALENDAR_COLORS[0],
-              className: null,
+              className: '',
             });
             setSheetVisible(true);
           }}

@@ -615,7 +615,10 @@
         "newPassword": "Mật khẩu mới",
         "confirmPassword": "Xác nhận mật khẩu mới",
         "submit": "Thay đổi mật khẩu",
-        "preparingMessage": "Tính năng thay đổi mật khẩu hiện đang được chuẩn bị."
+        "preparingMessage": "Tính năng thay đổi mật khẩu hiện đang được chuẩn bị.",
+        "errorCurrentPassword": "Mật khẩu hiện tại không chính xác.",
+        "errorGeneral": "Thay đổi mật khẩu thất bại. Vui lòng thử lại.",
+        "userInfoFetchError": "Không thể tải thông tin người dùng."
       },
       "withdraw": "Hủy tài khoản",
       "withdrawTitle": "Bạn có chắc muốn hủy tài khoản không?",

@@ -593,7 +593,10 @@
         "newPassword": "새 비밀번호",
         "confirmPassword": "새 비밀번호 확인",
         "submit": "비밀번호 변경",
-        "preparingMessage": "비밀번호 변경 기능은 현재 준비 중이에요."
+        "preparingMessage": "비밀번호 변경 기능은 현재 준비 중이에요.",
+        "errorCurrentPassword": "현재 비밀번호가 올바르지 않습니다.",
+        "errorGeneral": "비밀번호 변경에 실패했습니다. 다시 시도해주세요.",
+        "userInfoFetchError": "사용자 정보를 불러오지 못했습니다."
       },
       "withdraw": "탈퇴하기",
       "withdrawTitle": "정말 탈퇴하시겠어요?",

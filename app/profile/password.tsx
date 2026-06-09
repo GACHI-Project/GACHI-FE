@@ -26,7 +26,9 @@ const ProfilePasswordScreen = () => {
   useEffect(() => {
     fetchMyInfo()
       .then(setUserInfo)
-      .catch(() => {});
+      .catch((e) => {
+        console.error('fetchMyInfo failed in password screen:', e);
+      });
   }, []);
 
   const newPasswordError = (() => {

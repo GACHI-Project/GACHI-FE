@@ -103,7 +103,6 @@ export const changeEmail = async (email: string): Promise<void> => {
 export const updateProfile = async (params: {
   name?: string;
   phoneNumber?: string;
-  email?: string;
 }): Promise<void> => {
   try {
     const headers = await getAuthHeader();

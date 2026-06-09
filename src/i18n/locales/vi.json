@@ -625,6 +625,8 @@
       "newEmail": "Email mới",
       "submit": "Thay đổi email",
       "currentPasswordPlaceholder": "Nhập mật khẩu hiện tại",
+      "emailAlreadyUsed": "Email này đã được sử dụng.",
+      "wrongPassword": "Mật khẩu hiện tại không chính xác.",
       "codeInvalid": "Mã xác nhận không đúng.",
       "saveFailed": "Thay đổi email thất bại. Vui lòng thử lại."
     },

@@ -18,6 +18,7 @@ interface FormFieldProps {
   autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
   secureTextEntry?: boolean;
   editable?: boolean;
+  autoFocus?: boolean;
   rightButton?: RightButton;
   rightIcon?: 'eye-outline' | 'eye-off-outline';
   onRightIconPress?: () => void;
@@ -35,6 +36,7 @@ const FormField = ({
   autoCapitalize = 'none',
   secureTextEntry = false,
   editable = true,
+  autoFocus = false,
   rightButton,
   rightIcon,
   onRightIconPress,
@@ -56,6 +58,7 @@ const FormField = ({
           autoCapitalize={autoCapitalize}
           secureTextEntry={secureTextEntry}
           editable={editable}
+          autoFocus={autoFocus}
         />
         {rightIcon && (
           <TouchableOpacity onPress={onRightIconPress} hitSlop={8}>

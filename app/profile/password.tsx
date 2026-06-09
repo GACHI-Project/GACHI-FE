@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { View, ScrollView, StyleSheet, Alert } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -7,6 +7,7 @@ import FormField from '../../src/components/auth/FormField';
 import PasswordStrengthBar, { getStrength } from '../../src/components/auth/PasswordStrengthBar';
 import { PrimaryButton } from '../../src/components/common/Button';
 import { validatePassword } from '../../src/validation/auth';
+import { fetchMyInfo, UserInfo } from '../../src/api/user';
 import colors from '../../src/constants/colors';
 import layout from '../../src/constants/layout';
 
@@ -14,6 +15,7 @@ const MIN_PASSWORD_STRENGTH = 2;
 
 const ProfilePasswordScreen = () => {
   const { t } = useTranslation();
+  const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -21,9 +23,21 @@ const ProfilePasswordScreen = () => {
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
+  useEffect(() => {
+    fetchMyInfo()
+      .then(setUserInfo)
+      .catch((e) => {
+        console.error('fetchMyInfo failed in password screen:', e);
+      });
+  }, []);
+
   const newPasswordError = (() => {
     if (!newPassword) return undefined;
-    const err = validatePassword(newPassword, {});
+    const err = validatePassword(newPassword, {
+      loginId: userInfo?.loginId,
+      email: userInfo?.email,
+      phoneNumber: userInfo?.phoneNumber,
+    });
     if (err) return err;
     if (getStrength(newPassword) < MIN_PASSWORD_STRENGTH)
       return t('auth.register.basic.error.passwordWeak');

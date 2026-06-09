@@ -1,20 +1,186 @@
-import { useState, useEffect } from 'react';
-import { View, Text, Image, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import {
+  View,
+  Text,
+  Image,
+  ScrollView,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  Modal,
+  Animated,
+  Platform,
+  KeyboardAvoidingView,
+  Alert,
+} from 'react-native';
 import { Ionicons, FontAwesome5 } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import Header from '../../src/components/common/Header';
 import ConfirmModal from '../../src/components/common/ConfirmModal';
-import { fetchMyInfo, UserInfo } from '../../src/api/user';
+import FormField from '../../src/components/auth/FormField';
+import { fetchMyInfo, updateProfile, UserInfo, UserApiError } from '../../src/api/user';
+import { phoneNumberSchema } from '../../src/validation/auth';
 import colors from '../../src/constants/colors';
 import styles from '../../src/styles/profile/profileEdit';
+
+const formatPhoneNumber = (digits: string): string => {
+  if (digits.length <= 3) return digits;
+  if (digits.length <= 6) return `${digits.slice(0, 3)}-${digits.slice(3)}`;
+  if (digits.length <= 10) return `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6)}`;
+  return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7, 11)}`;
+};
+
+interface ProfileEditSheetProps {
+  visible: boolean;
+  initialFocus: 'name' | 'phone';
+  initialName: string;
+  initialPhone: string;
+  onClose: () => void;
+  onSaved: () => void;
+}
+
+const ProfileEditSheet = ({
+  visible,
+  initialFocus,
+  initialName,
+  initialPhone,
+  onClose,
+  onSaved,
+}: ProfileEditSheetProps) => {
+  const { t } = useTranslation();
+  const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [nameError, setNameError] = useState<string | undefined>();
+  const [phoneError, setPhoneError] = useState<string | undefined>();
+  const [saveError, setSaveError] = useState<string | undefined>();
+  const [saving, setSaving] = useState(false);
+
+  const overlayOpacity = useRef(new Animated.Value(0)).current;
+  const translateY = useRef(new Animated.Value(300)).current;
+
+  useEffect(() => {
+    if (visible) {
+      setName(initialName);
+      setPhone(formatPhoneNumber(initialPhone.replace(/-/g, '')));
+      setNameError(undefined);
+      setPhoneError(undefined);
+      setSaveError(undefined);
+    }
+  }, [visible, initialName, initialPhone]);
+
+  useEffect(() => {
+    if (visible) {
+      Animated.parallel([
+        Animated.timing(overlayOpacity, { toValue: 1, duration: 200, useNativeDriver: true }),
+        Animated.timing(translateY, { toValue: 0, duration: 300, useNativeDriver: true }),
+      ]).start();
+    } else {
+      Animated.parallel([
+        Animated.timing(overlayOpacity, { toValue: 0, duration: 200, useNativeDriver: true }),
+        Animated.timing(translateY, { toValue: 300, duration: 250, useNativeDriver: true }),
+      ]).start();
+    }
+  }, [visible, overlayOpacity, translateY]);
+
+  const phoneDigits = phone.replace(/-/g, '');
+  const isPhoneValid = phoneNumberSchema.safeParse(phoneDigits).success;
+  const isNameValid = name.trim().length > 0;
+  const canSave = isNameValid && isPhoneValid;
+
+  const handlePhoneChange = (text: string) => {
+    const digits = text.replace(/\D/g, '').slice(0, 11);
+    setPhone(formatPhoneNumber(digits));
+    if (digits.length > 0 && !phoneNumberSchema.safeParse(digits).success) {
+      setPhoneError(t('profile.editProfile.phoneInvalid'));
+    } else {
+      setPhoneError(undefined);
+    }
+  };
+
+  const handleSave = async () => {
+    if (!canSave || saving) return;
+
+    setSaving(true);
+    setSaveError(undefined);
+    try {
+      await updateProfile({ name: name.trim(), phoneNumber: phoneDigits });
+      onSaved();
+      onClose();
+    } catch (e) {
+      if (e instanceof UserApiError && e.code === 'AUTH4093') {
+        setPhoneError(t('auth.register.basic.error.phoneTaken'));
+      } else {
+        setSaveError(
+          e instanceof Error && e.message ? e.message : t('profile.editProfile.saveFailed')
+        );
+      }
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Modal visible={visible} transparent animationType="none" onRequestClose={onClose}>
+      <TouchableWithoutFeedback onPress={onClose}>
+        <Animated.View style={[styles.sheetOverlay, { opacity: overlayOpacity }]}>
+          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+            <TouchableWithoutFeedback onPress={() => {}}>
+              <Animated.View style={[styles.sheet, { transform: [{ translateY }] }]}>
+                <View style={styles.sheetHandle} />
+                <Text style={styles.sheetTitle}>{t('profile.editProfile.sheetTitle')}</Text>
+                <View style={styles.sheetFields}>
+                  <FormField
+                    label={t('profile.editProfile.name')}
+                    value={name}
+                    onChangeText={(v) => {
+                      setName(v);
+                      setNameError(
+                        v.trim().length === 0 ? t('profile.editProfile.nameRequired') : undefined
+                      );
+                    }}
+                    placeholder={t('profile.editProfile.namePlaceholder')}
+                    autoFocus={initialFocus === 'name'}
+                    validationMessage={nameError}
+                    validationState={nameError ? 'error' : undefined}
+                  />
+                  <FormField
+                    label={t('profile.editProfile.phone')}
+                    value={phone}
+                    onChangeText={handlePhoneChange}
+                    placeholder="010-0000-0000"
+                    keyboardType="phone-pad"
+                    autoFocus={initialFocus === 'phone'}
+                    validationMessage={phoneError ?? saveError}
+                    validationState={phoneError || saveError ? 'error' : undefined}
+                  />
+                </View>
+                <TouchableOpacity
+                  style={[styles.sheetSaveBtn, !canSave && styles.sheetSaveBtnDisabled]}
+                  onPress={handleSave}
+                  disabled={!canSave || saving}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.sheetSaveBtnText}>
+                    {saving ? t('common.saving') : t('common.change')}
+                  </Text>
+                </TouchableOpacity>
+              </Animated.View>
+            </TouchableWithoutFeedback>
+          </KeyboardAvoidingView>
+        </Animated.View>
+      </TouchableWithoutFeedback>
+    </Modal>
+  );
+};
 
 const ProfileEditScreen = () => {
   const { t } = useTranslation();
   const [withdrawModalVisible, setWithdrawModalVisible] = useState(false);
+  const [editSheetVisible, setEditSheetVisible] = useState(false);
+  const [editSheetFocus, setEditSheetFocus] = useState<'name' | 'phone'>('name');
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
 
-  useEffect(() => {
+  const loadUserInfo = useCallback(() => {
     fetchMyInfo()
       .then(setUserInfo)
       .catch(() => {
@@ -23,6 +189,13 @@ const ProfileEditScreen = () => {
     // t is used only in the error callback — re-fetching on language change is undesirable
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useFocusEffect(loadUserInfo);
+
+  const openSheet = (focus: 'name' | 'phone') => {
+    setEditSheetFocus(focus);
+    setEditSheetVisible(true);
+  };
 
   return (
     <View style={styles.container}>
@@ -35,20 +208,39 @@ const ProfileEditScreen = () => {
 
         <Text style={styles.sectionLabel}>{t('profile.editProfile.accountSection')}</Text>
         <View style={styles.card}>
-          <View style={styles.row}>
+          <TouchableOpacity
+            style={styles.row}
+            onPress={() => openSheet('name')}
+            activeOpacity={0.7}
+          >
             <Text style={styles.rowLabel}>{t('profile.editProfile.name')}</Text>
             <Text style={styles.rowValue}>{userInfo?.name ?? ''}</Text>
-          </View>
+            <Ionicons name="chevron-forward" size={16} color={colors.text.secondary} />
+          </TouchableOpacity>
           <View style={styles.divider} />
-          <View style={styles.row}>
+          <TouchableOpacity
+            style={styles.row}
+            onPress={() => openSheet('phone')}
+            activeOpacity={0.7}
+          >
             <Text style={styles.rowLabel}>{t('profile.editProfile.phone')}</Text>
-            <Text style={styles.rowValue}>{userInfo?.phoneNumber ?? ''}</Text>
-          </View>
+            <Text style={styles.rowValue}>
+              {userInfo?.phoneNumber
+                ? formatPhoneNumber(userInfo.phoneNumber.replace(/-/g, ''))
+                : ''}
+            </Text>
+            <Ionicons name="chevron-forward" size={16} color={colors.text.secondary} />
+          </TouchableOpacity>
           <View style={styles.divider} />
-          <View style={styles.row}>
+          <TouchableOpacity
+            style={styles.row}
+            onPress={() => router.push('/profile/email')}
+            activeOpacity={0.7}
+          >
             <Text style={styles.rowLabel}>{t('profile.editProfile.email')}</Text>
             <Text style={styles.rowValue}>{userInfo?.email ?? ''}</Text>
-          </View>
+            <Ionicons name="chevron-forward" size={16} color={colors.text.secondary} />
+          </TouchableOpacity>
         </View>
 
         <Text style={styles.sectionLabel}>{t('profile.editProfile.securitySection')}</Text>
@@ -71,6 +263,15 @@ const ProfileEditScreen = () => {
           <Text style={styles.withdrawText}>{t('profile.editProfile.withdraw')}</Text>
         </TouchableOpacity>
       </ScrollView>
+
+      <ProfileEditSheet
+        visible={editSheetVisible}
+        initialFocus={editSheetFocus}
+        initialName={userInfo?.name ?? ''}
+        initialPhone={userInfo?.phoneNumber ?? ''}
+        onClose={() => setEditSheetVisible(false)}
+        onSaved={loadUserInfo}
+      />
 
       <ConfirmModal
         visible={withdrawModalVisible}

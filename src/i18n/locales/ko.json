@@ -102,15 +102,7 @@
         "childNamePlaceholder": "이름을 입력해 주세요",
         "colorHint": "각 자녀의 색상은 캘린더에서 누구의 일정인지 바로 구분하는 데 사용돼요.",
         "addChild": "자녀 추가하기",
-        "order": [
-          "첫째",
-          "둘째",
-          "셋째",
-          "넷째",
-          "다섯째",
-          "여섯째",
-          "일곱째"
-        ]
+        "order": ["첫째", "둘째", "셋째", "넷째", "다섯째", "여섯째", "일곱째"]
       },
       "notification": {
         "title": "원하는 알림 방식을 설정해주세요",
@@ -269,18 +261,12 @@
     "features": {
       "sectionTitle": "주요 기능",
       "ai": {
-        "title": [
-          "AI에게",
-          "물어보기"
-        ],
+        "title": ["AI에게", "물어보기"],
         "desc": "이해 안 되는 내용을 바로 질문하세요. AI가 맥락까지 설명해드려요.",
         "button": "대화 시작"
       },
       "guide": {
-        "title": [
-          "한국 학교",
-          "생활 안내서"
-        ],
+        "title": ["한국 학교", "생활 안내서"],
         "desc": "학교생활에서 자주 헷갈리는 내용을 질문과 답변으로 쉽게 확인해보세요.",
         "button": "안내서 둘러보기"
       }
@@ -494,15 +480,7 @@
         "month": "월",
         "day": "일",
         "fullDay": "종일",
-        "weekdays": [
-          "일요일",
-          "월요일",
-          "화요일",
-          "수요일",
-          "목요일",
-          "금요일",
-          "토요일"
-        ],
+        "weekdays": ["일요일", "월요일", "화요일", "수요일", "목요일", "금요일", "토요일"],
         "isEditing": "✏️ 수정 중",
         "edit": "✏️ 수정",
         "no": "아니요",
@@ -601,6 +579,11 @@
       "phone": "전화번호",
       "email": "이메일",
       "securitySection": "보안",
+      "sheetTitle": "프로필 편집",
+      "namePlaceholder": "이름을 입력해주세요",
+      "nameRequired": "이름을 입력해주세요.",
+      "phoneInvalid": "올바른 전화번호를 입력해주세요.",
+      "saveFailed": "저장에 실패했어요. 다시 시도해주세요.",
       "changePassword": {
         "title": "비밀번호 변경",
         "currentPassword": "현재 비밀번호",
@@ -614,6 +597,16 @@
       "withdrawDesc": "탈퇴하면 계정과 모든 데이터가\n영구적으로 삭제돼요.",
       "withdrawWarning": "저장된 문서, 자녀 정보, 캘린더 일정이 모두 삭제되며 복구할 수 없어요.",
       "cancel": "취소"
+    },
+    "editEmail": {
+      "title": "이메일 변경",
+      "newEmail": "새 이메일",
+      "submit": "이메일 변경",
+      "currentPasswordPlaceholder": "현재 비밀번호를 입력해주세요",
+      "emailAlreadyUsed": "이미 사용 중인 이메일이에요.",
+      "wrongPassword": "현재 비밀번호가 올바르지 않아요.",
+      "codeInvalid": "인증 코드가 올바르지 않아요.",
+      "saveFailed": "이메일 변경에 실패했어요. 다시 시도해주세요."
     },
     "notificationSetting": {
       "title": "알림 설정",
@@ -745,13 +738,7 @@
     ],
     "qa": {
       "documents": {
-        "tabs": [
-          "전체",
-          "가정통신문",
-          "체험학습",
-          "스쿨뱅킹",
-          "출결/증명"
-        ],
+        "tabs": ["전체", "가정통신문", "체험학습", "스쿨뱅킹", "출결/증명"],
         "items": [
           {
             "id": "1",
@@ -846,69 +833,47 @@
         ]
       },
       "attendance": {
-        "tabs": [
-          "전체"
-        ],
+        "tabs": ["전체"],
         "items": []
       },
       "events": {
-        "tabs": [
-          "전체"
-        ],
+        "tabs": ["전체"],
         "items": []
       },
       "meals": {
-        "tabs": [
-          "전체"
-        ],
+        "tabs": ["전체"],
         "items": []
       },
       "afterschool": {
-        "tabs": [
-          "전체"
-        ],
+        "tabs": ["전체"],
         "items": []
       },
       "subjects": {
-        "tabs": [
-          "전체"
-        ],
+        "tabs": ["전체"],
         "items": []
       },
       "grades": {
-        "tabs": [
-          "전체"
-        ],
+        "tabs": ["전체"],
         "items": []
       },
       "teacher": {
-        "tabs": [
-          "전체"
-        ],
+        "tabs": ["전체"],
         "items": []
       },
       "health": {
-        "tabs": [
-          "전체"
-        ],
+        "tabs": ["전체"],
         "items": []
       },
       "rules": {
-        "tabs": [
-          "전체"
-        ],
+        "tabs": ["전체"],
         "items": []
       },
       "multicultural": {
-        "tabs": [
-          "전체"
-        ],
+        "tabs": ["전체"],
         "items": []
       },
       "enrollment": {
-        "tabs": [
-          "전체"
-        ],
+        "tabs": ["전체"],
         "items": []
       }
     },

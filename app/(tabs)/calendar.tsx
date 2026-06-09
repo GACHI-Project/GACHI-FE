@@ -105,6 +105,7 @@ const CalendarScreen = () => {
   const weeklyReqIdRef = useRef(0);
   const monthlyReqIdRef = useRef(0);
   const dailyReqIdRef = useRef(0);
+  const schoolReqIdRef = useRef(0);
 
   useEffect(() => {
     shouldAutoScrollRef.current = weekOffset === 0;
@@ -173,27 +174,27 @@ const CalendarScreen = () => {
 
   // 학사일정
   const schoolFromDate = useMemo(() => {
-    const [y, m] = isWeekMode
-      ? weekDates[0].split('-').map(Number)
-      : [calendarMonth.year, calendarMonth.month + 1];
-    return `${y}-${String(m).padStart(2, '0')}-01`;
+    if (isWeekMode) return weekDates[0];
+    return `${calendarMonth.year}-${String(calendarMonth.month + 1).padStart(2, '0')}-01`;
   }, [isWeekMode, weekDates, calendarMonth.year, calendarMonth.month]);
 
   const schoolToDate = useMemo(() => {
-    const [y, m] = isWeekMode
-      ? weekDates[0].split('-').map(Number)
-      : [calendarMonth.year, calendarMonth.month + 1];
-    const lastDay = new Date(y, m, 0).getDate();
-    return `${y}-${String(m).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+    if (isWeekMode) return weekDates[6];
+    const lastDay = new Date(calendarMonth.year, calendarMonth.month + 1, 0).getDate();
+    return `${calendarMonth.year}-${String(calendarMonth.month + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
   }, [isWeekMode, weekDates, calendarMonth.year, calendarMonth.month]);
 
   useEffect(() => {
+    schoolReqIdRef.current += 1;
+    const reqId = schoolReqIdRef.current;
     fetchSchoolSchedules(schoolFromDate, schoolToDate)
       .then((data) => {
+        if (reqId !== schoolReqIdRef.current) return;
         setCommonHolidays(data.commonHolidays);
         setSchoolGroups(data.schoolSchedules);
       })
       .catch((e) => {
+        if (reqId !== schoolReqIdRef.current) return;
         // eslint-disable-next-line no-console
         console.error('fetchSchoolSchedules failed:', e);
       });

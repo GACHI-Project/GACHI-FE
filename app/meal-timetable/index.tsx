@@ -118,6 +118,7 @@ const MealTimetablePage = () => {
         selectedChild.officeCode,
         selectedChild.schoolCode,
         selectedChild.grade,
+        selectedChild.className ?? null,
         fmt(d)
       ),
     }));

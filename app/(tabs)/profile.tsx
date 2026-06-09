@@ -130,6 +130,7 @@ const ProfileScreen = () => {
                       schoolQuery: child.schoolName,
                       grade: child.grade,
                       calendarColor: child.colorCode,
+                      className: child.className ?? '',
                     });
                     setSheetVisible(true);
                   }}
@@ -139,6 +140,9 @@ const ProfileScreen = () => {
                     <Text style={styles.childName}>{child.name}</Text>
                     <Text style={styles.childGrade}>
                       {t('profile.grade', { grade: child.grade })}
+                      {child.className
+                        ? ` ${t('profile.className', { className: child.className })}`
+                        : ''}
                     </Text>
                   </View>
                   <Ionicons name="chevron-forward" size={16} color={colors.text.secondary} />
@@ -158,6 +162,7 @@ const ProfileScreen = () => {
               schoolQuery: '',
               grade: null,
               calendarColor: CALENDAR_COLORS[0],
+              className: '',
             });
             setSheetVisible(true);
           }}
@@ -235,6 +240,7 @@ const ProfileScreen = () => {
                 officeCode: updated.selectedSchool?.officeCode ?? '',
                 grade: updated.grade ?? 1,
                 colorCode: updated.calendarColor ?? '#2BAEE0',
+                className: updated.className ?? '',
               });
               const result = await fetchChildren();
               setChildren(result);
@@ -254,6 +260,7 @@ const ProfileScreen = () => {
                 officeCode: updated.selectedSchool?.officeCode ?? '',
                 grade: updated.grade ?? 1,
                 colorCode: updated.calendarColor ?? '#2BAEE0',
+                className: updated.className ?? '',
               });
               const result = await fetchChildren();
               setChildren(result);

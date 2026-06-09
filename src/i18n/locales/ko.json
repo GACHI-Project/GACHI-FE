@@ -102,6 +102,8 @@
         "childNamePlaceholder": "이름을 입력해 주세요",
         "colorHint": "각 자녀의 색상은 캘린더에서 누구의 일정인지 바로 구분하는 데 사용돼요.",
         "addChild": "자녀 추가하기",
+        "className": "반",
+        "classNamePlaceholder": "예: 1",
         "order": ["첫째", "둘째", "셋째", "넷째", "다섯째", "여섯째", "일곱째"]
       },
       "notification": {
@@ -562,6 +564,7 @@
     "childInfo": "자녀 정보",
     "addChild": "+ 자녀 추가",
     "grade": "초등학교 {{grade}}학년",
+    "className": "{{className}}반",
     "appSettings": "앱 설정",
     "appLanguage": "앱 언어",
     "notification": "알림 설정",

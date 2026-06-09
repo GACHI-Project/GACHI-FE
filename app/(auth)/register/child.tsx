@@ -28,7 +28,8 @@ export const isChildComplete = (child: ChildInfo): boolean =>
   child.name.trim().length > 0 &&
   (child.selectedSchool !== null || child.schoolQuery.trim().length > 0) &&
   child.grade !== null &&
-  child.calendarColor !== null;
+  child.calendarColor !== null &&
+  child.className.trim().length > 0;
 
 export const createChild = (id: string): ChildInfo => ({
   id,
@@ -37,6 +38,7 @@ export const createChild = (id: string): ChildInfo => ({
   schoolQuery: '',
   grade: null,
   calendarColor: CALENDAR_COLORS[0],
+  className: '',
 });
 
 const formatSchoolMeta = (school: SchoolResult): string =>
@@ -295,6 +297,19 @@ export const ChildCard = ({
 
       <GradePicker grade={child.grade} onUpdate={onUpdate} />
 
+      <View style={cardStyles.section}>
+        <Text style={cardStyles.sectionLabel}>{t('auth.register.child.className')}</Text>
+        <TextInput
+          style={cardStyles.nameInput}
+          placeholder={t('auth.register.child.classNamePlaceholder')}
+          placeholderTextColor={colors.gray[200]}
+          value={child.className}
+          onChangeText={(text) => onUpdate({ className: text })}
+          returnKeyType="done"
+        />
+        <View style={cardStyles.nameDivider} />
+      </View>
+
       <ColorPicker calendarColor={child.calendarColor} onUpdate={onUpdate} />
     </View>
   );
@@ -381,6 +396,7 @@ const RegisterChildScreen = () => {
               officeCode: child.selectedSchool?.officeCode ?? '',
               grade: child.grade ?? 1,
               colorCode: child.calendarColor ?? '#2BAEE0',
+              className: child.className ?? '',
             }));
             setStoreChildren(payloads);
             router.push('/(auth)/register/notification');

@@ -615,7 +615,10 @@
         "newPassword": "New Password",
         "confirmPassword": "Confirm New Password",
         "submit": "Change Password",
-        "preparingMessage": "Password change feature is coming soon."
+        "preparingMessage": "Password change feature is coming soon.",
+        "errorCurrentPassword": "Current password is incorrect.",
+        "errorGeneral": "Failed to change password. Please try again.",
+        "userInfoFetchError": "Failed to load user information."
       },
       "withdraw": "Withdraw",
       "withdrawTitle": "Are you sure you want to leave?",

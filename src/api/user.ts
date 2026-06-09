@@ -122,3 +122,23 @@ export const updateNotificationPreference = async (
     throw wrapError(error);
   }
 };
+
+export interface ChangePasswordPayload {
+  currentPassword: string;
+  newPassword: string;
+  newPasswordConfirm: string;
+}
+
+export const changePassword = async (payload: ChangePasswordPayload): Promise<void> => {
+  let responseData: { success?: boolean; code?: string; message?: string } | undefined;
+  try {
+    const headers = await getAuthHeader();
+    const { data } = await apiClient.patch('/api/v1/users/me/password', payload, { headers });
+    responseData = data;
+  } catch (error) {
+    throw wrapError(error);
+  }
+  if (responseData?.success === false) {
+    throw new UserApiError(responseData.code ?? 'UNKNOWN', responseData.message ?? '알 수 없는 오류');
+  }
+};

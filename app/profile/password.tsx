@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { View, ScrollView, StyleSheet, Alert } from 'react-native';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import Header from '../../src/components/common/Header';
@@ -7,8 +7,9 @@ import FormField from '../../src/components/auth/FormField';
 import PasswordStrengthBar, { getStrength } from '../../src/components/auth/PasswordStrengthBar';
 import { PrimaryButton } from '../../src/components/common/Button';
 import { validatePassword } from '../../src/validation/auth';
-import { fetchMyInfo, UserInfo } from '../../src/api/user';
+import { fetchMyInfo, UserInfo, changePassword, UserApiError } from '../../src/api/user';
 import colors from '../../src/constants/colors';
+import fonts from '../../src/constants/fonts';
 import layout from '../../src/constants/layout';
 
 const MIN_PASSWORD_STRENGTH = 2;
@@ -22,14 +23,28 @@ const ProfilePasswordScreen = () => {
   const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [currentPasswordError, setCurrentPasswordError] = useState<string | undefined>(undefined);
+  const [userInfoFetchFailed, setUserInfoFetchFailed] = useState(false);
+  const isSubmitting = useRef(false);
+
+  const loadUserInfo = useCallback(async () => {
+    setUserInfoFetchFailed(false);
+    try {
+      const info = await fetchMyInfo();
+      setUserInfo(info);
+    } catch (error) {
+      if (error instanceof UserApiError && error.code === 'UNAUTHORIZED') {
+        router.replace('/(auth)/login');
+        return;
+      }
+      setUserInfoFetchFailed(true);
+    }
+  }, []);
 
   useEffect(() => {
-    fetchMyInfo()
-      .then(setUserInfo)
-      .catch((e) => {
-        console.error('fetchMyInfo failed in password screen:', e);
-      });
-  }, []);
+    loadUserInfo();
+  }, [loadUserInfo]);
 
   const newPasswordError = (() => {
     if (!newPassword) return undefined;
@@ -45,6 +60,7 @@ const ProfilePasswordScreen = () => {
   })();
 
   const canSubmit =
+    userInfo !== null &&
     currentPassword.length > 0 &&
     newPassword.length > 0 &&
     newPasswordError === undefined &&
@@ -62,13 +78,27 @@ const ProfilePasswordScreen = () => {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
+        {userInfoFetchFailed && (
+          <TouchableOpacity style={styles.fetchErrorRow} onPress={loadUserInfo}>
+            <Text style={styles.fetchErrorText}>
+              {t('profile.editProfile.changePassword.userInfoFetchError')}
+            </Text>
+            <Text style={styles.retryText}>{t('common.retry')}</Text>
+          </TouchableOpacity>
+        )}
+
         <FormField
           label={t('profile.editProfile.changePassword.currentPassword')}
           value={currentPassword}
-          onChangeText={setCurrentPassword}
+          onChangeText={(text) => {
+            setCurrentPassword(text);
+            setCurrentPasswordError(undefined);
+          }}
           secureTextEntry={!showCurrent}
           rightIcon={showCurrent ? 'eye-outline' : 'eye-off-outline'}
           onRightIconPress={() => setShowCurrent((prev) => !prev)}
+          validationState={currentPasswordError ? 'error' : undefined}
+          validationMessage={currentPasswordError}
         />
 
         <FormField
@@ -108,13 +138,33 @@ const ProfilePasswordScreen = () => {
 
         <PrimaryButton
           label={t('profile.editProfile.changePassword.submit')}
-          onPress={() =>
-            Alert.alert(
-              t('common.preparing'),
-              t('profile.editProfile.changePassword.preparingMessage')
-            )
-          }
-          disabled={!canSubmit}
+          onPress={async () => {
+            if (isSubmitting.current) return;
+            isSubmitting.current = true;
+            setIsLoading(true);
+            try {
+              await changePassword({
+                currentPassword,
+                newPassword,
+                newPasswordConfirm: confirmPassword,
+              });
+              router.back();
+            } catch (error) {
+              if (error instanceof UserApiError && error.code === 'AUTH4011') {
+                setCurrentPasswordError(
+                  t('profile.editProfile.changePassword.errorCurrentPassword')
+                );
+              } else if (error instanceof UserApiError && error.code === 'UNAUTHORIZED') {
+                router.replace('/(auth)/login');
+              } else {
+                Alert.alert('', t('profile.editProfile.changePassword.errorGeneral'));
+              }
+            } finally {
+              setIsLoading(false);
+              isSubmitting.current = false;
+            }
+          }}
+          disabled={!canSubmit || isLoading}
         />
       </ScrollView>
     </View>
@@ -134,5 +184,26 @@ const styles = StyleSheet.create({
     paddingTop: 24,
     paddingBottom: 20,
     gap: 24,
+  },
+  fetchErrorRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    backgroundColor: colors.gray[100],
+    borderRadius: 8,
+  },
+  fetchErrorText: {
+    flex: 1,
+    fontSize: 13,
+    fontFamily: fonts.regular,
+    color: colors.text.red,
+  },
+  retryText: {
+    fontSize: 13,
+    fontFamily: fonts.semiBold,
+    color: colors.primary[400],
+    marginLeft: 8,
   },
 });

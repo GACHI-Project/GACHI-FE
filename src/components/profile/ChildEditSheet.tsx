@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import ConfirmModal from '../common/ConfirmModal';
 import { ChildInfo } from '../../types/child';
 import { ChildCard, isChildComplete } from '../../../app/(auth)/register/child';
@@ -37,6 +38,7 @@ const ChildEditSheet = ({
   onDelete,
 }: ChildEditSheetProps) => {
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   const [editingChild, setEditingChild] = useState<ChildInfo | null>(null);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const overlayOpacity = useRef(new Animated.Value(0)).current;
@@ -96,7 +98,10 @@ const ChildEditSheet = ({
                   </View>
                   <ScrollView
                     showsVerticalScrollIndicator={false}
-                    contentContainerStyle={styles.scrollContent}
+                    contentContainerStyle={[
+                      styles.scrollContent,
+                      { paddingBottom: insets.bottom + layout.screenPaddingBottom },
+                    ]}
                     keyboardShouldPersistTaps="handled"
                   >
                     <ChildCard
@@ -107,26 +112,26 @@ const ChildEditSheet = ({
                       onUpdate={updateField}
                       onDelete={() => {}}
                     />
-                  </ScrollView>
-                  <View style={styles.footer}>
-                    <TouchableOpacity
-                      style={[styles.saveBtn, !canSave && styles.saveBtnDisabled]}
-                      onPress={() => onSave(editingChild)}
-                      disabled={!canSave}
-                      activeOpacity={0.8}
-                    >
-                      <Text style={styles.saveBtnText}>{t('profile.childEdit.save')}</Text>
-                    </TouchableOpacity>
-                    {!isNew && (
+                    <View style={styles.footer}>
                       <TouchableOpacity
-                        style={styles.deleteBtn}
-                        onPress={handleDelete}
-                        activeOpacity={0.7}
+                        style={[styles.saveBtn, !canSave && styles.saveBtnDisabled]}
+                        onPress={() => onSave(editingChild)}
+                        disabled={!canSave}
+                        activeOpacity={0.8}
                       >
-                        <Text style={styles.deleteBtnText}>{t('profile.childEdit.delete')}</Text>
+                        <Text style={styles.saveBtnText}>{t('profile.childEdit.save')}</Text>
                       </TouchableOpacity>
-                    )}
-                  </View>
+                      {!isNew && (
+                        <TouchableOpacity
+                          style={styles.deleteBtn}
+                          onPress={handleDelete}
+                          activeOpacity={0.7}
+                        >
+                          <Text style={styles.deleteBtnText}>{t('profile.childEdit.delete')}</Text>
+                        </TouchableOpacity>
+                      )}
+                    </View>
+                  </ScrollView>
                 </Animated.View>
               </TouchableWithoutFeedback>
             </Animated.View>

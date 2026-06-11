@@ -25,7 +25,7 @@ const EventCard = ({ event, expanded, isPast, onToggleExpand, onToggleCheck }: E
             {event.title}
           </Text>
           <View style={calStyles.cardTags}>
-            <View style={calStyles.tag}>
+            <View style={[calStyles.tag, calStyles.tagFixed]}>
               <Text style={calStyles.tagText}>{event.childName}</Text>
             </View>
             <View style={calStyles.tag}>

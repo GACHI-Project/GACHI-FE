@@ -15,6 +15,7 @@ import { router } from 'expo-router';
 import { useState, useRef, useEffect } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import colors from '../../src/constants/colors';
+import layout from '../../src/constants/layout';
 import styles from '../../src/styles/chat/chatScreen';
 import { sendChatMessage } from '../../src/api/chat';
 
@@ -236,7 +237,12 @@ const ChatScreen = () => {
       />
 
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-        <View style={[styles.inputWrapper, { paddingBottom: insets.bottom + 8 }]}>
+        <View
+          style={[
+            styles.inputWrapper,
+            { paddingBottom: insets.bottom + layout.screenPaddingBottom },
+          ]}
+        >
           <View style={styles.inputInner}>
             <TextInput
               style={styles.textInput}

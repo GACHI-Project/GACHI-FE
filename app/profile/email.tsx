@@ -161,7 +161,10 @@ const EditEmailScreen = () => {
       <Header title={t('profile.editEmail.title')} onBack={() => router.back()} onHelp={() => {}} />
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 24 }]}
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingBottom: insets.bottom + layout.screenPaddingBottom },
+        ]}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >

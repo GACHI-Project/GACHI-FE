@@ -259,11 +259,13 @@ const NotificationsScreen = () => {
         onEndReachedThreshold={0.3}
         ListEmptyComponent={<Text style={styles.emptyText}>{t('notifications.empty')}</Text>}
         ListFooterComponent={
-          isFetchingMore ? (
-            <ActivityIndicator size="small" color={colors.primary[400]} style={styles.loader} />
-          ) : null
+          <>
+            {isFetchingMore && (
+              <ActivityIndicator size="small" color={colors.primary[400]} style={styles.loader} />
+            )}
+            <View style={{ height: insets.bottom }} />
+          </>
         }
-        contentContainerStyle={{ paddingBottom: insets.bottom }}
         showsVerticalScrollIndicator={false}
       />
     );

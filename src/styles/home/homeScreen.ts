@@ -19,7 +19,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   headerTexts: {
+    flex: 1,
     gap: 5,
+    paddingRight: 12,
   },
   greeting: {
     fontSize: 16,

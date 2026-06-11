@@ -14,7 +14,7 @@ import StepHeader from '../../../src/components/common/StepHeader';
 import { PrimaryButton } from '../../../src/components/common/Button';
 import colors from '../../../src/constants/colors';
 import { GRADES, CALENDAR_COLORS } from '../../../src/constants/child';
-import { searchSchools } from '../../../src/api/school';
+import { searchSchools, fetchClasses, ClassItem } from '../../../src/api/school';
 import { SchoolResult } from '../../../src/types/school';
 import { ChildInfo } from '../../../src/types/child';
 import cardStyles from '../../../src/styles/register/childCard';
@@ -29,7 +29,7 @@ export const isChildComplete = (child: ChildInfo): boolean =>
   (child.selectedSchool !== null || child.schoolQuery.trim().length > 0) &&
   child.grade !== null &&
   child.calendarColor !== null &&
-  child.className.trim().length > 0;
+  (child.className?.trim().length ?? 0) > 0;
 
 export const createChild = (id: string): ChildInfo => ({
   id,
@@ -38,7 +38,7 @@ export const createChild = (id: string): ChildInfo => ({
   schoolQuery: '',
   grade: null,
   calendarColor: CALENDAR_COLORS[0],
-  className: '',
+  className: null,
 });
 
 const formatSchoolMeta = (school: SchoolResult): string =>
@@ -99,7 +99,7 @@ export const SchoolPicker = ({ selectedSchool, schoolQuery, onUpdate }: SchoolPi
             </View>
           </View>
           <TouchableOpacity
-            onPress={() => onUpdate({ selectedSchool: null, schoolQuery: '' })}
+            onPress={() => onUpdate({ selectedSchool: null, schoolQuery: '', className: null })}
             activeOpacity={0.7}
           >
             <Text style={cardStyles.changeButtonText}>{t('common.change')}</Text>
@@ -143,7 +143,9 @@ export const SchoolPicker = ({ selectedSchool, schoolQuery, onUpdate }: SchoolPi
                     cardStyles.searchResultItem,
                     idx < results.length - 1 && cardStyles.searchResultDivider,
                   ]}
-                  onPress={() => onUpdate({ selectedSchool: school, schoolQuery: '' })}
+                  onPress={() =>
+                    onUpdate({ selectedSchool: school, schoolQuery: '', className: null })
+                  }
                   activeOpacity={0.7}
                 >
                   <View style={cardStyles.searchResultInner}>
@@ -189,7 +191,7 @@ export const GradePicker = ({ grade, onUpdate }: GradePickerProps) => {
             <TouchableOpacity
               key={g}
               style={[cardStyles.gradeButton, selected && cardStyles.gradeButtonSelected]}
-              onPress={() => onUpdate({ grade: selected ? null : g })}
+              onPress={() => onUpdate({ grade: selected ? null : g, className: null })}
               activeOpacity={0.75}
             >
               <Text style={[cardStyles.gradeText, selected && cardStyles.gradeTextSelected]}>
@@ -199,6 +201,117 @@ export const GradePicker = ({ grade, onUpdate }: GradePickerProps) => {
           );
         })}
       </ScrollView>
+    </View>
+  );
+};
+
+// ─── ClassPicker ─────────────────────────────────────────────────────────────
+
+interface ClassPickerProps {
+  selectedSchool: SchoolResult | null;
+  grade: number | null;
+  className: string | null;
+  onUpdate: (updates: Partial<ChildInfo>) => void;
+}
+
+export const ClassPicker = ({ selectedSchool, grade, className, onUpdate }: ClassPickerProps) => {
+  const { t } = useTranslation();
+  const [classes, setClasses] = useState<ClassItem[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [fallback, setFallback] = useState(false);
+
+  useEffect(() => {
+    if (!selectedSchool || grade === null) {
+      setClasses([]);
+      setFallback(false);
+      setIsLoading(false);
+      return () => {};
+    }
+
+    setIsLoading(true);
+    setFallback(false);
+    setClasses([]);
+    let cancelled = false;
+    fetchClasses(selectedSchool.officeCode, selectedSchool.schoolCode, grade)
+      .then((result) => {
+        if (cancelled) return;
+        if (result.length === 0) {
+          setFallback(true);
+        } else {
+          setClasses(result);
+          if (className && !result.some((c) => c.className === className)) {
+            onUpdate({ className: null });
+          }
+        }
+        setIsLoading(false);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setFallback(true);
+        setIsLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedSchool?.schoolCode, selectedSchool?.officeCode, grade]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const showButtons = !isLoading && !fallback && classes.length > 0;
+  const showInput =
+    !isLoading && !!selectedSchool && grade !== null && (fallback || classes.length === 0);
+
+  return (
+    <View style={cardStyles.section}>
+      <Text style={cardStyles.sectionLabel}>{t('auth.register.child.className')}</Text>
+      {!isLoading && (!selectedSchool || grade === null) && (
+        <View style={cardStyles.classPickerPlaceholder} />
+      )}
+      {isLoading && (
+        <ActivityIndicator
+          size="small"
+          color={colors.primary[400]}
+          style={cardStyles.searchLoader}
+        />
+      )}
+      {showButtons && (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={cardStyles.gradeList}
+        >
+          {classes.map((item) => {
+            const selected = className === item.className;
+            return (
+              <TouchableOpacity
+                key={`${item.academicYear}-${item.className}`}
+                style={[
+                  cardStyles.gradeButton,
+                  cardStyles.classButton,
+                  selected && cardStyles.gradeButtonSelected,
+                ]}
+                onPress={() => onUpdate({ className: item.className })}
+                activeOpacity={0.75}
+              >
+                <Text style={[cardStyles.gradeText, selected && cardStyles.gradeTextSelected]}>
+                  {item.className}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+      )}
+      {showInput && (
+        <View>
+          <TextInput
+            style={cardStyles.nameInput}
+            placeholder={t('auth.register.child.classNamePlaceholder')}
+            placeholderTextColor={colors.gray[200]}
+            value={className ?? ''}
+            onChangeText={(text) => onUpdate({ className: text })}
+            returnKeyType="done"
+          />
+          <View style={cardStyles.nameDivider} />
+        </View>
+      )}
     </View>
   );
 };
@@ -297,18 +410,12 @@ export const ChildCard = ({
 
       <GradePicker grade={child.grade} onUpdate={onUpdate} />
 
-      <View style={cardStyles.section}>
-        <Text style={cardStyles.sectionLabel}>{t('auth.register.child.className')}</Text>
-        <TextInput
-          style={cardStyles.nameInput}
-          placeholder={t('auth.register.child.classNamePlaceholder')}
-          placeholderTextColor={colors.gray[200]}
-          value={child.className}
-          onChangeText={(text) => onUpdate({ className: text })}
-          returnKeyType="done"
-        />
-        <View style={cardStyles.nameDivider} />
-      </View>
+      <ClassPicker
+        selectedSchool={child.selectedSchool}
+        grade={child.grade}
+        className={child.className}
+        onUpdate={onUpdate}
+      />
 
       <ColorPicker calendarColor={child.calendarColor} onUpdate={onUpdate} />
     </View>

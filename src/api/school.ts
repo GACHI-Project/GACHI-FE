@@ -15,6 +15,27 @@ export interface SchoolSearchResult {
   schools: SchoolResult[];
 }
 
+export interface ClassItem {
+  academicYear: string;
+  grade: number;
+  className: string;
+}
+
+export const fetchClasses = async (
+  officeCode: string,
+  schoolCode: string,
+  grade: number
+): Promise<ClassItem[]> => {
+  try {
+    const response = await apiClient.get('/api/v1/schools/classes', {
+      params: { officeCode, schoolCode, grade },
+    });
+    return response.data.result?.classes ?? [];
+  } catch (error) {
+    throw wrapError(error);
+  }
+};
+
 export const searchSchools = async (
   keyword: string,
   size: number = 10

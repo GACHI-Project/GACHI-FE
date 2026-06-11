@@ -19,6 +19,7 @@ import {
   uploadNewsletter,
   getNewsletterStatus,
   NewsletterApiError,
+  NewsletterStatus,
 } from '../../src/api/newsletter';
 import { SCAN_FRAME_H } from '../../src/constants/scan';
 import colors from '../../src/constants/colors';
@@ -49,7 +50,7 @@ const ScanLoadingScreen = () => {
   const completionAnimation = useRef<Animated.CompositeAnimation | null>(null);
   const { t } = useTranslation();
   const [displayPercent, setDisplayPercent] = useState(0);
-  const [analysisStatus, setAnalysisStatus] = useState<string>('PENDING');
+  const [analysisStatus, setAnalysisStatus] = useState<NewsletterStatus>('PENDING');
   const [isComplete, setIsComplete] = useState(false);
   const [helpVisible, setHelpVisible] = useState(false);
   const [newsletterId, setNewsletterId] = useState<number | null>(null);

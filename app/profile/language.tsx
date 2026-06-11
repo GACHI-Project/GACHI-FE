@@ -27,7 +27,11 @@ const ProfileLanguageScreen = () => {
   return (
     <View style={styles.container}>
       <Header title={t('profile.languageChange.title')} onBack={() => router.back()} />
-      <ScrollView style={styles.scroll} contentContainerStyle={{ paddingBottom: insets.bottom + layout.screenPaddingBottom }} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={{ paddingBottom: insets.bottom + layout.screenPaddingBottom }}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.banner}>
           <Ionicons name="information-circle" size={18} color={colors.text.primary} />
           <Text style={styles.bannerText}>{t('profile.languageChange.warning')}</Text>

@@ -98,7 +98,10 @@ const CategoryScreen = () => {
 
         <FlatList
           style={styles.list}
-          contentContainerStyle={[styles.listContent, { paddingBottom: insets.bottom + layout.screenPaddingBottom }]}
+          contentContainerStyle={[
+            styles.listContent,
+            { paddingBottom: insets.bottom + layout.screenPaddingBottom },
+          ]}
           data={faqs}
           keyExtractor={(item) => String(item.faqId)}
           extraData={{ expandedId, answerCache, loadingDetailId }}

@@ -175,7 +175,10 @@ const GuideScreen = () => {
         keyExtractor={(item) => String(item.faqId)}
         extraData={{ expandedId, answerCache, loadingDetailId }}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={[styles.searchResultsList, { paddingBottom: insets.bottom + layout.screenPaddingBottom }]}
+        contentContainerStyle={[
+          styles.searchResultsList,
+          { paddingBottom: insets.bottom + layout.screenPaddingBottom },
+        ]}
         renderItem={({ item }) => {
           const expanded = expandedId === item.faqId;
           const answer = answerCache[item.faqId];
@@ -267,7 +270,10 @@ const GuideScreen = () => {
       ) : (
         <ScrollView
           style={styles.scroll}
-          contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + layout.screenPaddingBottom }]}
+          contentContainerStyle={[
+            styles.scrollContent,
+            { paddingBottom: insets.bottom + layout.screenPaddingBottom },
+          ]}
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.topSection}>

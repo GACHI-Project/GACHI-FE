@@ -98,10 +98,7 @@ const ChildEditSheet = ({
                   </View>
                   <ScrollView
                     showsVerticalScrollIndicator={false}
-                    contentContainerStyle={[
-                      styles.scrollContent,
-                      { paddingBottom: insets.bottom + layout.screenPaddingBottom },
-                    ]}
+                    contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom }]}
                     keyboardShouldPersistTaps="handled"
                   >
                     <ChildCard

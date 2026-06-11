@@ -8,7 +8,7 @@ import {
   TouchableWithoutFeedback,
   Animated,
   StyleSheet,
-  KeyboardAvoidingView,
+  Keyboard,
 } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
@@ -43,9 +43,8 @@ const ChildEditSheet = ({
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const overlayOpacity = useRef(new Animated.Value(0)).current;
   const sheetTranslateY = useRef(new Animated.Value(300)).current;
-
   useEffect(() => {
-    if (child) setEditingChild({ ...child });
+    if (visible && child) setEditingChild({ ...child });
   }, [child, visible]);
 
   useEffect(() => {
@@ -63,6 +62,7 @@ const ChildEditSheet = ({
         }),
       ]).start();
     } else {
+      Keyboard.dismiss();
       Animated.parallel([
         Animated.timing(overlayOpacity, { toValue: 0, duration: 200, useNativeDriver: true }),
         Animated.timing(sheetTranslateY, { toValue: 300, duration: 250, useNativeDriver: true }),
@@ -85,9 +85,20 @@ const ChildEditSheet = ({
 
   return (
     <>
-      <Modal transparent visible={visible} animationType="none" onRequestClose={onClose}>
-        <KeyboardAvoidingView style={styles.keyboardAvoidingView} behavior="padding">
-          <TouchableWithoutFeedback onPress={onClose}>
+      <Modal
+        transparent
+        visible={visible}
+        animationType="none"
+        statusBarTranslucent
+        onRequestClose={onClose}
+      >
+        <View style={styles.container}>
+          <TouchableWithoutFeedback
+            onPress={() => {
+              Keyboard.dismiss();
+              onClose();
+            }}
+          >
             <Animated.View style={[styles.overlay, { opacity: overlayOpacity }]}>
               <TouchableWithoutFeedback onPress={() => {}}>
                 <Animated.View
@@ -133,7 +144,7 @@ const ChildEditSheet = ({
               </TouchableWithoutFeedback>
             </Animated.View>
           </TouchableWithoutFeedback>
-        </KeyboardAvoidingView>
+        </View>
       </Modal>
       <ConfirmModal
         visible={deleteModalVisible}
@@ -157,7 +168,7 @@ const ChildEditSheet = ({
 export default ChildEditSheet;
 
 const styles = StyleSheet.create({
-  keyboardAvoidingView: {
+  container: {
     flex: 1,
   },
   overlay: {
@@ -169,7 +180,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.text.white,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    maxHeight: '85%',
+    maxHeight: '90%',
   },
   handleWrap: {
     alignItems: 'center',

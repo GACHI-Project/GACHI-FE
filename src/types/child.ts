@@ -7,5 +7,5 @@ export interface ChildInfo {
   schoolQuery: string;
   grade: number | null;
   calendarColor: string | null;
-  className: string;
+  className: string | null;
 }

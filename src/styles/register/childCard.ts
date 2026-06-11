@@ -192,6 +192,12 @@ const cardStyles = StyleSheet.create({
     borderColor: colors.gray[200],
     backgroundColor: colors.text.white,
   },
+  classButton: {
+    paddingHorizontal: 16,
+  },
+  classPickerPlaceholder: {
+    height: 20,
+  },
   gradeButtonSelected: {
     backgroundColor: colors.primary[400],
     borderColor: colors.primary[400],

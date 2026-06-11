@@ -127,15 +127,6 @@ const ProfileNotificationScreen = () => {
     }
   };
 
-  const handleItemToggle = (key: ItemKey) => {
-    const newItems = { ...items, [key]: !items[key] };
-    setItems(newItems);
-    const matched = Object.entries(LEVEL_PRESETS).find(([, preset]) =>
-      Object.keys(preset).every((k) => preset[k as ItemKey] === newItems[k as ItemKey])
-    );
-    if (matched) setLevel(matched[0] as NotificationLevel);
-  };
-
   const handleLevelChange = async (newLevel: NotificationLevel) => {
     setLevel(newLevel);
     setItems(LEVEL_PRESETS[newLevel]);
@@ -150,7 +141,11 @@ const ProfileNotificationScreen = () => {
         onHelp={() => {}}
       />
 
-      <ScrollView style={styles.scroll} contentContainerStyle={{ paddingBottom: insets.bottom + layout.screenPaddingBottom }} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={{ paddingBottom: insets.bottom + layout.screenPaddingBottom }}
+        showsVerticalScrollIndicator={false}
+      >
         {/* 전체 알림 */}
         <Text style={styles.sectionLabel}>{t('profile.notificationSetting.masterSection')}</Text>
         <View style={styles.masterCard}>
@@ -229,11 +224,7 @@ const ProfileNotificationScreen = () => {
                         {t(`profile.notificationSetting.items.${config.key}.desc`)}
                       </Text>
                     </View>
-                    <Toggle
-                      value={on}
-                      onValueChange={() => handleItemToggle(config.key)}
-                      disabled={!masterOn}
-                    />
+                    <Toggle value={on} onValueChange={() => {}} disabled={!masterOn} />
                   </View>
                   {!isLast && <View style={styles.divider} />}
                 </View>

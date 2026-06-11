@@ -467,16 +467,22 @@
         },
         "qna": [
           {
-            "q": "Tại sao phải nộp đơn đồng ý trực tiếp?",
-            "a": "Các trường tiểu học ở Hàn Quốc yêu cầu ",
-            "aHighlight": "chữ ký gốc của phụ huynh",
-            "aTail": " theo quy định pháp lý cho các hoạt động ngoài trường. Không thể thay thế bằng tin nhắn KakaoTalk hay ứng dụng."
+            "q": "Tại sao phải ghi tên vào tất cả mọi thứ — kể cả đồ bơi, khăn tắm và đồ lót?",
+            "a": "Tại các trường tiểu học Hàn Quốc, nhiều học sinh dùng đồ vật giống nhau, vì vậy việc ",
+            "aHighlight": "ghi tên lên đồ dùng cá nhân là thông lệ phổ biến",
+            "aTail": ". Trong giờ học bơi hay dã ngoại, điều này hầu như là bắt buộc để tránh thất lạc đồ đạc."
           },
           {
-            "q": "Nộp trễ thì sao?",
-            "a": "Nếu quá hạn, ",
-            "aHighlight": "con có thể không được tham gia dã ngoại",
-            "aTail": ". Nếu trễ, hãy liên hệ trực tiếp với giáo viên chủ nhiệm ngay."
+            "q": "Học sinh không biết bơi có bắt buộc phải tham gia không?",
+            "a": "Giáo dục bơi lội tại các trường tiểu học Hàn Quốc hướng đến ",
+            "aHighlight": "giáo dục an toàn khi chơi dưới nước",
+            "aTail": " hơn là kỹ năng bơi. Trừ trường hợp có lý do đặc biệt, hầu hết học sinh đều tham gia."
+          },
+          {
+            "q": "Mức độ hướng dẫn tại nhà cần thực hiện đến đâu?",
+            "a": "Để buổi học nhóm diễn ra thuận lợi, khuyến khích phụ huynh cho trẻ tập trước ở nhà cách ",
+            "aHighlight": "tự thay đồ bơi, lau người và chuẩn bị đồ đạc",
+            "aTail": "."
           }
         ]
       },
@@ -915,5 +921,25 @@
     "typing": "Kachi đang nhập câu trả lời...",
     "today": "Hôm nay",
     "errorMessage": "Xin lỗi, đã xảy ra lỗi. Vui lòng thử lại. 🐦"
+  },
+  "mealTimetable": {
+    "sectionTitle": "Bữa ăn & Thời khóa biểu",
+    "viewAll": "Xem tất cả",
+    "pageTitle": "Bữa ăn & Thời khóa biểu",
+    "tabMeal": "Bữa ăn",
+    "tabTimetable": "Thời khóa biểu",
+    "dayLabels": ["CN", "T2", "T3", "T4", "T5", "T6", "T7"],
+    "lunch": "Bữa trưa",
+    "meal": {
+      "cardLabel": "Bữa trưa hôm nay",
+      "cardTitle": "Thực đơn bữa trưa",
+      "empty": "Không có thông tin bữa ăn"
+    },
+    "timetable": {
+      "cardLabel": "Thời khóa biểu hôm nay",
+      "cardTitle": "Lịch học",
+      "empty": "Không có thông tin thời khóa biểu",
+      "period": "Tiết {{period}}"
+    }
   }
 }

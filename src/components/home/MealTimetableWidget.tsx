@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { useChildrenStore } from '../../store/childrenStore';
 import {
   fetchSchoolMeals,
@@ -46,6 +47,7 @@ interface MealCardProps {
 }
 
 const MealCard = ({ cardWidth, items, meals, loading }: MealCardProps) => {
+  const { t } = useTranslation();
   const [activeIdx, setActiveIdx] = useState(0);
   const activeIdxRef = useRef(0);
   const isPausedRef = useRef(false);
@@ -111,7 +113,7 @@ const MealCard = ({ cardWidth, items, meals, loading }: MealCardProps) => {
       return <ActivityIndicator color={colors.primary[400]} style={styles.loadingIndicator} />;
     }
     if (!menus.length) {
-      return <Text style={styles.emptyText}>급식 정보가 없어요</Text>;
+      return <Text style={styles.emptyText}>{t('mealTimetable.meal.empty')}</Text>;
     }
     return (
       <View style={styles.menuList}>
@@ -149,8 +151,10 @@ const MealCard = ({ cardWidth, items, meals, loading }: MealCardProps) => {
             <Ionicons name="restaurant-outline" size={22} color={colors.primary[500]} />
           </View>
           <View style={styles.headerTexts}>
-            <Text style={[styles.cardLabel, { color: colors.primary[500] }]}>오늘의 급식</Text>
-            <Text style={styles.cardTitle}>점심 메뉴</Text>
+            <Text style={[styles.cardLabel, { color: colors.primary[500] }]}>
+              {t('mealTimetable.meal.cardLabel')}
+            </Text>
+            <Text style={styles.cardTitle}>{t('mealTimetable.meal.cardTitle')}</Text>
           </View>
         </View>
         <View style={styles.childRow}>
@@ -211,6 +215,7 @@ interface TimetableCardProps {
 }
 
 const TimetableCard = ({ cardWidth, items, timetables, loading }: TimetableCardProps) => {
+  const { t } = useTranslation();
   const [activeIdx, setActiveIdx] = useState(0);
   const activeIdxRef = useRef(0);
   const isPausedRef = useRef(false);
@@ -276,14 +281,16 @@ const TimetableCard = ({ cardWidth, items, timetables, loading }: TimetableCardP
       return <ActivityIndicator color={colors.secondary[500]} style={styles.loadingIndicator} />;
     }
     if (!periods.length) {
-      return <Text style={styles.emptyText}>시간표 정보가 없어요</Text>;
+      return <Text style={styles.emptyText}>{t('mealTimetable.timetable.empty')}</Text>;
     }
     return (
       <View style={styles.periodList}>
         {periods.map((p) => (
           <View key={p.period} style={styles.periodItem}>
             <View style={styles.periodBadge}>
-              <Text style={styles.periodBadgeText}>{p.period}교시</Text>
+              <Text style={styles.periodBadgeText}>
+                {t('mealTimetable.timetable.period', { period: p.period })}
+              </Text>
             </View>
             <Text style={styles.periodSubject}>{p.subject}</Text>
           </View>
@@ -311,8 +318,10 @@ const TimetableCard = ({ cardWidth, items, timetables, loading }: TimetableCardP
             <Ionicons name="alarm-outline" size={22} color={colors.secondary[600]} />
           </View>
           <View style={styles.headerTexts}>
-            <Text style={[styles.cardLabel, { color: colors.secondary[600] }]}>오늘의 시간표</Text>
-            <Text style={styles.cardTitle}>수업 일정</Text>
+            <Text style={[styles.cardLabel, { color: colors.secondary[600] }]}>
+              {t('mealTimetable.timetable.cardLabel')}
+            </Text>
+            <Text style={styles.cardTitle}>{t('mealTimetable.timetable.cardTitle')}</Text>
           </View>
         </View>
         <View style={styles.childRow}>
@@ -366,6 +375,7 @@ const TimetableCard = ({ cardWidth, items, timetables, loading }: TimetableCardP
 };
 
 const MealTimetableWidget = () => {
+  const { t } = useTranslation();
   const childItems = useChildrenStore((s) => s.children);
   const { width: screenWidth } = useWindowDimensions();
   const cardWidth = (screenWidth - HORIZONTAL_PADDING - CARD_GAP) / 2;
@@ -410,9 +420,9 @@ const MealTimetableWidget = () => {
         )
         .catch(() => childItems.map(() => [])),
     ])
-      .then(([m, t]) => {
-        setMeals(m);
-        setTimetables(t);
+      .then(([fetchedMeals, fetchedTimetables]) => {
+        setMeals(fetchedMeals);
+        setTimetables(fetchedTimetables);
       })
       .finally(() => setLoading(false));
   }, [childItems, today]);
@@ -422,10 +432,10 @@ const MealTimetableWidget = () => {
   return (
     <View style={styles.section}>
       <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>급식·시간표</Text>
+        <Text style={styles.sectionTitle}>{t('mealTimetable.sectionTitle')}</Text>
         <TouchableOpacity onPress={() => router.push('/meal-timetable')} activeOpacity={0.7}>
           <View style={styles.viewAllRow}>
-            <Text style={styles.viewAllText}>전체보기</Text>
+            <Text style={styles.viewAllText}>{t('mealTimetable.viewAll')}</Text>
             <Ionicons name="chevron-forward" size={14} color={colors.text.secondary} />
           </View>
         </TouchableOpacity>

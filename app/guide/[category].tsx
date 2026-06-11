@@ -3,8 +3,10 @@ import { View, Text, TouchableOpacity, FlatList, ActivityIndicator } from 'react
 import { useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Header from '../../src/components/common/Header';
 import colors from '../../src/constants/colors';
+import layout from '../../src/constants/layout';
 import styles from '../../src/styles/guide/categoryScreen';
 import {
   getSchoolGuideFaqs,
@@ -20,6 +22,7 @@ const CategoryScreen = () => {
     emoji: string;
   }>();
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
 
   const [faqs, setFaqs] = useState<SchoolGuideFaqItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -95,7 +98,10 @@ const CategoryScreen = () => {
 
         <FlatList
           style={styles.list}
-          contentContainerStyle={styles.listContent}
+          contentContainerStyle={[
+            styles.listContent,
+            { paddingBottom: insets.bottom + layout.screenPaddingBottom },
+          ]}
           data={faqs}
           keyExtractor={(item) => String(item.faqId)}
           extraData={{ expandedId, answerCache, loadingDetailId }}

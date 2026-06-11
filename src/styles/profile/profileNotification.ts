@@ -57,12 +57,11 @@ export default StyleSheet.create({
     backgroundColor: colors.gray[100],
     borderRadius: 10,
     padding: 3,
-    height: 36,
     marginHorizontal: layout.screenPaddingHorizontal,
   },
   segmentTab: {
     flex: 1,
-    height: 30,
+    paddingVertical: 6,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 8,
@@ -76,6 +75,7 @@ export default StyleSheet.create({
     fontSize: 14,
     fontFamily: fonts.regular,
     color: colors.text.secondary,
+    textAlign: 'center',
   },
   segmentTextSelected: {
     fontFamily: fonts.medium,

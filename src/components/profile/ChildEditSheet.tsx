@@ -8,9 +8,11 @@ import {
   TouchableWithoutFeedback,
   Animated,
   StyleSheet,
+  KeyboardAvoidingView,
 } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import ConfirmModal from '../common/ConfirmModal';
 import { ChildInfo } from '../../types/child';
 import { ChildCard, isChildComplete } from '../../../app/(auth)/register/child';
@@ -36,6 +38,7 @@ const ChildEditSheet = ({
   onDelete,
 }: ChildEditSheetProps) => {
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   const [editingChild, setEditingChild] = useState<ChildInfo | null>(null);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const overlayOpacity = useRef(new Animated.Value(0)).current;
@@ -83,52 +86,54 @@ const ChildEditSheet = ({
   return (
     <>
       <Modal transparent visible={visible} animationType="none" onRequestClose={onClose}>
-        <TouchableWithoutFeedback onPress={onClose}>
-          <Animated.View style={[styles.overlay, { opacity: overlayOpacity }]}>
-            <TouchableWithoutFeedback onPress={() => {}}>
-              <Animated.View
-                style={[styles.sheet, { transform: [{ translateY: sheetTranslateY }] }]}
-              >
-                <View style={styles.handleWrap}>
-                  <View style={styles.handle} />
-                </View>
-                <ScrollView
-                  showsVerticalScrollIndicator={false}
-                  contentContainerStyle={styles.scrollContent}
-                  keyboardShouldPersistTaps="handled"
+        <KeyboardAvoidingView style={styles.keyboardAvoidingView} behavior="padding">
+          <TouchableWithoutFeedback onPress={onClose}>
+            <Animated.View style={[styles.overlay, { opacity: overlayOpacity }]}>
+              <TouchableWithoutFeedback onPress={() => {}}>
+                <Animated.View
+                  style={[styles.sheet, { transform: [{ translateY: sheetTranslateY }] }]}
                 >
-                  <ChildCard
-                    child={editingChild}
-                    order={editingChild.name}
-                    isDeletable={false}
-                    variant="edit"
-                    onUpdate={updateField}
-                    onDelete={() => {}}
-                  />
-                </ScrollView>
-                <View style={styles.footer}>
-                  <TouchableOpacity
-                    style={[styles.saveBtn, !canSave && styles.saveBtnDisabled]}
-                    onPress={() => onSave(editingChild)}
-                    disabled={!canSave}
-                    activeOpacity={0.8}
+                  <View style={styles.handleWrap}>
+                    <View style={styles.handle} />
+                  </View>
+                  <ScrollView
+                    showsVerticalScrollIndicator={false}
+                    contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom }]}
+                    keyboardShouldPersistTaps="handled"
                   >
-                    <Text style={styles.saveBtnText}>{t('profile.childEdit.save')}</Text>
-                  </TouchableOpacity>
-                  {!isNew && (
-                    <TouchableOpacity
-                      style={styles.deleteBtn}
-                      onPress={handleDelete}
-                      activeOpacity={0.7}
-                    >
-                      <Text style={styles.deleteBtnText}>{t('profile.childEdit.delete')}</Text>
-                    </TouchableOpacity>
-                  )}
-                </View>
-              </Animated.View>
-            </TouchableWithoutFeedback>
-          </Animated.View>
-        </TouchableWithoutFeedback>
+                    <ChildCard
+                      child={editingChild}
+                      order={editingChild.name}
+                      isDeletable={false}
+                      variant="edit"
+                      onUpdate={updateField}
+                      onDelete={() => {}}
+                    />
+                    <View style={styles.footer}>
+                      <TouchableOpacity
+                        style={[styles.saveBtn, !canSave && styles.saveBtnDisabled]}
+                        onPress={() => onSave(editingChild)}
+                        disabled={!canSave}
+                        activeOpacity={0.8}
+                      >
+                        <Text style={styles.saveBtnText}>{t('profile.childEdit.save')}</Text>
+                      </TouchableOpacity>
+                      {!isNew && (
+                        <TouchableOpacity
+                          style={styles.deleteBtn}
+                          onPress={handleDelete}
+                          activeOpacity={0.7}
+                        >
+                          <Text style={styles.deleteBtnText}>{t('profile.childEdit.delete')}</Text>
+                        </TouchableOpacity>
+                      )}
+                    </View>
+                  </ScrollView>
+                </Animated.View>
+              </TouchableWithoutFeedback>
+            </Animated.View>
+          </TouchableWithoutFeedback>
+        </KeyboardAvoidingView>
       </Modal>
       <ConfirmModal
         visible={deleteModalVisible}
@@ -152,6 +157,9 @@ const ChildEditSheet = ({
 export default ChildEditSheet;
 
 const styles = StyleSheet.create({
+  keyboardAvoidingView: {
+    flex: 1,
+  },
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.2)',

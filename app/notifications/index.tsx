@@ -3,6 +3,7 @@ import { View, Text, FlatList, ActivityIndicator, TouchableOpacity } from 'react
 import { Feather } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Header from '../../src/components/common/Header';
 import HeaderMenuButton from '../../src/components/common/HeaderMenuButton';
 import ChildFilterBar from '../../src/components/common/ChildFilterBar';
@@ -37,6 +38,7 @@ type ListRow = { kind: 'header'; date: string } | { kind: 'item'; data: Notifica
 
 const NotificationsScreen = () => {
   const { t, i18n: i18nInstance } = useTranslation();
+  const insets = useSafeAreaInsets();
   const now = new Date();
   const todayStr = formatDateStr(now);
   const yesterdayDate = new Date(now);
@@ -126,8 +128,8 @@ const NotificationsScreen = () => {
         case 'NEWSLETTER_ANALYSIS':
           if (item.payload.newsletterId) {
             router.push({
-              pathname: '/scan/result',
-              params: { newsletterId: item.payload.newsletterId },
+              pathname: '/newsletter/[id]',
+              params: { id: item.payload.newsletterId },
             });
           }
           break;
@@ -257,9 +259,12 @@ const NotificationsScreen = () => {
         onEndReachedThreshold={0.3}
         ListEmptyComponent={<Text style={styles.emptyText}>{t('notifications.empty')}</Text>}
         ListFooterComponent={
-          isFetchingMore ? (
-            <ActivityIndicator size="small" color={colors.primary[400]} style={styles.loader} />
-          ) : null
+          <>
+            {isFetchingMore && (
+              <ActivityIndicator size="small" color={colors.primary[400]} style={styles.loader} />
+            )}
+            <View style={{ height: insets.bottom }} />
+          </>
         }
         showsVerticalScrollIndicator={false}
       />

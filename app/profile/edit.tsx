@@ -8,19 +8,20 @@ import {
   TouchableWithoutFeedback,
   Modal,
   Animated,
-  Platform,
   KeyboardAvoidingView,
   Alert,
 } from 'react-native';
 import { Ionicons, FontAwesome5 } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Header from '../../src/components/common/Header';
 import ConfirmModal from '../../src/components/common/ConfirmModal';
 import FormField from '../../src/components/auth/FormField';
 import { fetchMyInfo, updateProfile, UserInfo, UserApiError } from '../../src/api/user';
 import { phoneNumberSchema } from '../../src/validation/auth';
 import colors from '../../src/constants/colors';
+import layout from '../../src/constants/layout';
 import styles from '../../src/styles/profile/profileEdit';
 
 const formatPhoneNumber = (digits: string): string => {
@@ -48,6 +49,7 @@ const ProfileEditSheet = ({
   onSaved,
 }: ProfileEditSheetProps) => {
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [nameError, setNameError] = useState<string | undefined>();
@@ -121,11 +123,19 @@ const ProfileEditSheet = ({
 
   return (
     <Modal visible={visible} transparent animationType="none" onRequestClose={onClose}>
-      <TouchableWithoutFeedback onPress={onClose}>
-        <Animated.View style={[styles.sheetOverlay, { opacity: overlayOpacity }]}>
-          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <KeyboardAvoidingView style={styles.keyboardAvoidingView} behavior="padding">
+        <TouchableWithoutFeedback onPress={onClose}>
+          <Animated.View style={[styles.sheetOverlay, { opacity: overlayOpacity }]}>
             <TouchableWithoutFeedback onPress={() => {}}>
-              <Animated.View style={[styles.sheet, { transform: [{ translateY }] }]}>
+              <Animated.View
+                style={[
+                  styles.sheet,
+                  {
+                    transform: [{ translateY }],
+                    paddingBottom: insets.bottom + layout.screenPaddingBottom,
+                  },
+                ]}
+              >
                 <View style={styles.sheetHandle} />
                 <Text style={styles.sheetTitle}>{t('profile.editProfile.sheetTitle')}</Text>
                 <View style={styles.sheetFields}>
@@ -166,15 +176,16 @@ const ProfileEditSheet = ({
                 </TouchableOpacity>
               </Animated.View>
             </TouchableWithoutFeedback>
-          </KeyboardAvoidingView>
-        </Animated.View>
-      </TouchableWithoutFeedback>
+          </Animated.View>
+        </TouchableWithoutFeedback>
+      </KeyboardAvoidingView>
     </Modal>
   );
 };
 
 const ProfileEditScreen = () => {
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   const [withdrawModalVisible, setWithdrawModalVisible] = useState(false);
   const [editSheetVisible, setEditSheetVisible] = useState(false);
   const [editSheetFocus, setEditSheetFocus] = useState<'name' | 'phone'>('name');
@@ -200,7 +211,11 @@ const ProfileEditScreen = () => {
   return (
     <View style={styles.container}>
       <Header title={t('profile.edit')} onBack={() => router.back()} onHelp={() => {}} />
-      <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={{ paddingBottom: insets.bottom + layout.screenPaddingBottom }}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.profileCard}>
           <Image source={require('../../assets/icon.png')} style={styles.avatar} />
           <Text style={styles.loginId}>{userInfo?.loginId ?? ''}</Text>

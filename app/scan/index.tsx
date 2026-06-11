@@ -14,6 +14,7 @@ import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
 import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
 import { useTranslation } from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PrimaryButton } from '../../src/components/common/Button';
 import Header from '../../src/components/common/Header';
 import SelectionCard from '../../src/components/common/SelectionCard';
@@ -26,6 +27,7 @@ import layout from '../../src/constants/layout';
 
 const ScanChildSelectScreen = () => {
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   const [children, setChildren] = useState<ChildResult[]>([]);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [helpVisible, setHelpVisible] = useState(false);
@@ -113,7 +115,10 @@ const ScanChildSelectScreen = () => {
       <ScanStepIndicator currentStep={1} />
 
       <ScrollView
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingBottom: insets.bottom + layout.screenPaddingBottom },
+        ]}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >

@@ -3,6 +3,7 @@ import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Header from '../../src/components/common/Header';
 import Toggle from '../../src/components/common/Toggle';
 import {
@@ -11,6 +12,7 @@ import {
   type NotificationPreference,
 } from '../../src/api/user';
 import colors from '../../src/constants/colors';
+import layout from '../../src/constants/layout';
 import styles from '../../src/styles/profile/profileNotification';
 
 type NotificationLevel = 'all' | 'important' | 'urgent';
@@ -90,6 +92,7 @@ const levelToPref = (lv: NotificationLevel): NotificationPreference => {
 
 const ProfileNotificationScreen = () => {
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   const [masterOn, setMasterOn] = useState(true);
   const [level, setLevel] = useState<NotificationLevel>('important');
   const [items, setItems] = useState<Record<ItemKey, boolean>>({
@@ -124,15 +127,6 @@ const ProfileNotificationScreen = () => {
     }
   };
 
-  const handleItemToggle = (key: ItemKey) => {
-    const newItems = { ...items, [key]: !items[key] };
-    setItems(newItems);
-    const matched = Object.entries(LEVEL_PRESETS).find(([, preset]) =>
-      Object.keys(preset).every((k) => preset[k as ItemKey] === newItems[k as ItemKey])
-    );
-    if (matched) setLevel(matched[0] as NotificationLevel);
-  };
-
   const handleLevelChange = async (newLevel: NotificationLevel) => {
     setLevel(newLevel);
     setItems(LEVEL_PRESETS[newLevel]);
@@ -147,7 +141,11 @@ const ProfileNotificationScreen = () => {
         onHelp={() => {}}
       />
 
-      <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={{ paddingBottom: insets.bottom + layout.screenPaddingBottom }}
+        showsVerticalScrollIndicator={false}
+      >
         {/* 전체 알림 */}
         <Text style={styles.sectionLabel}>{t('profile.notificationSetting.masterSection')}</Text>
         <View style={styles.masterCard}>
@@ -226,11 +224,7 @@ const ProfileNotificationScreen = () => {
                         {t(`profile.notificationSetting.items.${config.key}.desc`)}
                       </Text>
                     </View>
-                    <Toggle
-                      value={on}
-                      onValueChange={() => handleItemToggle(config.key)}
-                      disabled={!masterOn}
-                    />
+                    <Toggle value={on} onValueChange={() => {}} disabled={!masterOn} />
                   </View>
                   {!isLast && <View style={styles.divider} />}
                 </View>

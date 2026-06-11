@@ -11,8 +11,10 @@ import {
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Header from '../../src/components/common/Header';
 import colors from '../../src/constants/colors';
+import layout from '../../src/constants/layout';
 import styles from '../../src/styles/guide/guideScreen';
 import {
   getSchoolGuideCategories,
@@ -57,6 +59,7 @@ interface Section {
 
 const GuideScreen = () => {
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
 
   const rawSections = t('guide.sections', { returnObjects: true });
   const sections = Array.isArray(rawSections) ? (rawSections as Section[]) : [];
@@ -172,7 +175,10 @@ const GuideScreen = () => {
         keyExtractor={(item) => String(item.faqId)}
         extraData={{ expandedId, answerCache, loadingDetailId }}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.searchResultsList}
+        contentContainerStyle={[
+          styles.searchResultsList,
+          { paddingBottom: insets.bottom + layout.screenPaddingBottom },
+        ]}
         renderItem={({ item }) => {
           const expanded = expandedId === item.faqId;
           const answer = answerCache[item.faqId];
@@ -264,7 +270,10 @@ const GuideScreen = () => {
       ) : (
         <ScrollView
           style={styles.scroll}
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[
+            styles.scrollContent,
+            { paddingBottom: insets.bottom + layout.screenPaddingBottom },
+          ]}
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.topSection}>

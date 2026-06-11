@@ -3,12 +3,14 @@ import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator } from 'rea
 import { useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Header from '../../src/components/common/Header';
 import FullDocTab from '../../src/components/scan/result/FullDocTab';
 import ChecklistTab from '../../src/components/scan/result/ChecklistTab';
 import AISummaryTab from '../../src/components/scan/result/AISummaryTab';
 import { getNewsletterDetail, type NewsletterDetail } from '../../src/api/newsletter';
 import colors from '../../src/constants/colors';
+import layout from '../../src/constants/layout';
 import styles from '../../src/styles/scan/result';
 
 const TABS_ALL = ['full', 'checklist', 'aiSummary'] as const;
@@ -25,6 +27,7 @@ const NewsletterDetailScreen = () => {
   const newsletterId = id ? Number(id) : undefined;
 
   const { t, i18n } = useTranslation();
+  const insets = useSafeAreaInsets();
   const [activeTab, setActiveTab] = useState<Tab>('full');
   const [detail, setDetail] = useState<NewsletterDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(!!id);
@@ -108,7 +111,7 @@ const NewsletterDetailScreen = () => {
 
       <ScrollView
         style={[styles.scrollView, styles.scrollViewTinted]}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 24 }]}
         showsVerticalScrollIndicator
       >
         {activeTab === 'full' && <FullDocTab newsletterId={newsletterId} />}

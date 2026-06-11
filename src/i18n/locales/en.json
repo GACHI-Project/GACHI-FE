@@ -459,16 +459,22 @@
         },
         "qna": [
           {
-            "q": "Why do I need to submit the consent form in person?",
-            "a": "Korean elementary schools require ",
-            "aHighlight": "an original guardian signature",
-            "aTail": " for off-campus activities by law. KakaoTalk or app messages are not accepted."
+            "q": "Why do we need to label everything — including the swimsuit, towel, and underwear?",
+            "a": "In Korean elementary schools, many students use similar items, so ",
+            "aHighlight": "labeling personal belongings is standard practice",
+            "aTail": ". During swim class or field trips, it is often required to help prevent lost items."
           },
           {
-            "q": "What happens if I submit it late?",
-            "a": "After the deadline, ",
-            "aHighlight": "participation in the field trip may not be possible",
-            "aTail": ". If late, contact the homeroom teacher directly right away."
+            "q": "Do students have to participate even if they can't swim?",
+            "a": "Swimming education in Korean elementary schools focuses more on ",
+            "aHighlight": "water safety education",
+            "aTail": " than swimming ability. Unless there's a specific reason, most students are expected to participate."
+          },
+          {
+            "q": "What level of home preparation is expected before the swim class?",
+            "a": "To help group lessons run smoothly, it's recommended that children practice ",
+            "aHighlight": "changing into a swimsuit, drying off, and packing their own belongings ",
+            "aTail": "at home beforehand."
           }
         ]
       },
@@ -901,5 +907,25 @@
     "typing": "Kachi is typing...",
     "today": "Today",
     "errorMessage": "Sorry, an error occurred. Please try again. 🐦"
+  },
+  "mealTimetable": {
+    "sectionTitle": "Meals & Timetable",
+    "viewAll": "View All",
+    "pageTitle": "Meals & Timetable",
+    "tabMeal": "Meals",
+    "tabTimetable": "Timetable",
+    "dayLabels": ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+    "lunch": "Lunch",
+    "meal": {
+      "cardLabel": "Today's Menu",
+      "cardTitle": "Lunch Menu",
+      "empty": "No meal information available"
+    },
+    "timetable": {
+      "cardLabel": "Today's Timetable",
+      "cardTitle": "Class Schedule",
+      "empty": "No timetable information available",
+      "period": "Period {{period}}"
+    }
   }
 }

@@ -113,6 +113,10 @@ export default StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 3,
     maxWidth: 220,
+    flexShrink: 1,
+  },
+  tagFixed: {
+    flexShrink: 0,
   },
   tagText: {
     fontSize: 12,

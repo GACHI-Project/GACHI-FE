@@ -85,6 +85,9 @@ const styles = StyleSheet.create({
     fontFamily: fonts.semiBold,
     color: colors.text.red,
   },
+  keyboardAvoidingView: {
+    flex: 1,
+  },
   sheetOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.2)',

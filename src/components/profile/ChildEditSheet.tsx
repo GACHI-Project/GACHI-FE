@@ -8,6 +8,7 @@ import {
   TouchableWithoutFeedback,
   Animated,
   StyleSheet,
+  KeyboardAvoidingView,
 } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
@@ -83,52 +84,54 @@ const ChildEditSheet = ({
   return (
     <>
       <Modal transparent visible={visible} animationType="none" onRequestClose={onClose}>
-        <TouchableWithoutFeedback onPress={onClose}>
-          <Animated.View style={[styles.overlay, { opacity: overlayOpacity }]}>
-            <TouchableWithoutFeedback onPress={() => {}}>
-              <Animated.View
-                style={[styles.sheet, { transform: [{ translateY: sheetTranslateY }] }]}
-              >
-                <View style={styles.handleWrap}>
-                  <View style={styles.handle} />
-                </View>
-                <ScrollView
-                  showsVerticalScrollIndicator={false}
-                  contentContainerStyle={styles.scrollContent}
-                  keyboardShouldPersistTaps="handled"
+        <KeyboardAvoidingView style={styles.keyboardAvoidingView} behavior="padding">
+          <TouchableWithoutFeedback onPress={onClose}>
+            <Animated.View style={[styles.overlay, { opacity: overlayOpacity }]}>
+              <TouchableWithoutFeedback onPress={() => {}}>
+                <Animated.View
+                  style={[styles.sheet, { transform: [{ translateY: sheetTranslateY }] }]}
                 >
-                  <ChildCard
-                    child={editingChild}
-                    order={editingChild.name}
-                    isDeletable={false}
-                    variant="edit"
-                    onUpdate={updateField}
-                    onDelete={() => {}}
-                  />
-                </ScrollView>
-                <View style={styles.footer}>
-                  <TouchableOpacity
-                    style={[styles.saveBtn, !canSave && styles.saveBtnDisabled]}
-                    onPress={() => onSave(editingChild)}
-                    disabled={!canSave}
-                    activeOpacity={0.8}
+                  <View style={styles.handleWrap}>
+                    <View style={styles.handle} />
+                  </View>
+                  <ScrollView
+                    showsVerticalScrollIndicator={false}
+                    contentContainerStyle={styles.scrollContent}
+                    keyboardShouldPersistTaps="handled"
                   >
-                    <Text style={styles.saveBtnText}>{t('profile.childEdit.save')}</Text>
-                  </TouchableOpacity>
-                  {!isNew && (
+                    <ChildCard
+                      child={editingChild}
+                      order={editingChild.name}
+                      isDeletable={false}
+                      variant="edit"
+                      onUpdate={updateField}
+                      onDelete={() => {}}
+                    />
+                  </ScrollView>
+                  <View style={styles.footer}>
                     <TouchableOpacity
-                      style={styles.deleteBtn}
-                      onPress={handleDelete}
-                      activeOpacity={0.7}
+                      style={[styles.saveBtn, !canSave && styles.saveBtnDisabled]}
+                      onPress={() => onSave(editingChild)}
+                      disabled={!canSave}
+                      activeOpacity={0.8}
                     >
-                      <Text style={styles.deleteBtnText}>{t('profile.childEdit.delete')}</Text>
+                      <Text style={styles.saveBtnText}>{t('profile.childEdit.save')}</Text>
                     </TouchableOpacity>
-                  )}
-                </View>
-              </Animated.View>
-            </TouchableWithoutFeedback>
-          </Animated.View>
-        </TouchableWithoutFeedback>
+                    {!isNew && (
+                      <TouchableOpacity
+                        style={styles.deleteBtn}
+                        onPress={handleDelete}
+                        activeOpacity={0.7}
+                      >
+                        <Text style={styles.deleteBtnText}>{t('profile.childEdit.delete')}</Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                </Animated.View>
+              </TouchableWithoutFeedback>
+            </Animated.View>
+          </TouchableWithoutFeedback>
+        </KeyboardAvoidingView>
       </Modal>
       <ConfirmModal
         visible={deleteModalVisible}
@@ -152,6 +155,9 @@ const ChildEditSheet = ({
 export default ChildEditSheet;
 
 const styles = StyleSheet.create({
+  keyboardAvoidingView: {
+    flex: 1,
+  },
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.2)',

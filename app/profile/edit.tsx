@@ -8,7 +8,6 @@ import {
   TouchableWithoutFeedback,
   Modal,
   Animated,
-  Platform,
   KeyboardAvoidingView,
   Alert,
 } from 'react-native';
@@ -121,9 +120,9 @@ const ProfileEditSheet = ({
 
   return (
     <Modal visible={visible} transparent animationType="none" onRequestClose={onClose}>
-      <TouchableWithoutFeedback onPress={onClose}>
-        <Animated.View style={[styles.sheetOverlay, { opacity: overlayOpacity }]}>
-          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <KeyboardAvoidingView style={styles.keyboardAvoidingView} behavior="padding">
+        <TouchableWithoutFeedback onPress={onClose}>
+          <Animated.View style={[styles.sheetOverlay, { opacity: overlayOpacity }]}>
             <TouchableWithoutFeedback onPress={() => {}}>
               <Animated.View style={[styles.sheet, { transform: [{ translateY }] }]}>
                 <View style={styles.sheetHandle} />
@@ -166,9 +165,9 @@ const ProfileEditSheet = ({
                 </TouchableOpacity>
               </Animated.View>
             </TouchableWithoutFeedback>
-          </KeyboardAvoidingView>
-        </Animated.View>
-      </TouchableWithoutFeedback>
+          </Animated.View>
+        </TouchableWithoutFeedback>
+      </KeyboardAvoidingView>
     </Modal>
   );
 };

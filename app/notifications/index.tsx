@@ -126,8 +126,8 @@ const NotificationsScreen = () => {
         case 'NEWSLETTER_ANALYSIS':
           if (item.payload.newsletterId) {
             router.push({
-              pathname: '/scan/result',
-              params: { newsletterId: item.payload.newsletterId },
+              pathname: '/newsletter/[id]',
+              params: { id: item.payload.newsletterId },
             });
           }
           break;

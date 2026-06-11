@@ -65,6 +65,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: fonts.semiBold,
     color: colors.gray[300],
+    textAlign: 'center',
   },
   tabLabelActive: {
     fontFamily: fonts.semiBold,

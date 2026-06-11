@@ -104,6 +104,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontFamily: fonts.bold,
     color: colors.text.primary,
+    textAlign: 'center',
   },
   description: {
     fontSize: 16,

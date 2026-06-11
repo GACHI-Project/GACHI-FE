@@ -317,7 +317,10 @@ const MealTimetablePage = () => {
       <View style={styles.contentArea}>
         <ScrollView
           style={styles.content}
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[
+            styles.scrollContent,
+            { paddingBottom: insets.bottom + layout.screenPaddingBottom },
+          ]}
           showsVerticalScrollIndicator={false}
         >
           {activeTab === 'timetable' ? renderTimetable() : renderMeals()}

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Alert } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Header from '../../src/components/common/Header';
 import FormField from '../../src/components/auth/FormField';
 import { emailSchema } from '../../src/validation/auth';
@@ -25,6 +26,7 @@ const formatTimer = (seconds: number) => {
 
 const EditEmailScreen = () => {
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
 
   const [currentPassword, setCurrentPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -159,7 +161,7 @@ const EditEmailScreen = () => {
       <Header title={t('profile.editEmail.title')} onBack={() => router.back()} onHelp={() => {}} />
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 24 }]}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
@@ -225,7 +227,7 @@ const EditEmailScreen = () => {
         )}
       </ScrollView>
 
-      <View style={styles.footer}>
+      <View style={[styles.footer, { paddingBottom: insets.bottom + layout.screenPaddingBottom }]}>
         <TouchableOpacity
           style={[styles.submitBtn, !codeVerified && styles.submitBtnDisabled]}
           onPress={handleSubmit}

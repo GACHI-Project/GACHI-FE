@@ -3,6 +3,7 @@ import { View, Text, FlatList, ActivityIndicator, TouchableOpacity } from 'react
 import { Feather } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Header from '../../src/components/common/Header';
 import HeaderMenuButton from '../../src/components/common/HeaderMenuButton';
 import ChildFilterBar from '../../src/components/common/ChildFilterBar';
@@ -37,6 +38,7 @@ type ListRow = { kind: 'header'; date: string } | { kind: 'item'; data: Notifica
 
 const NotificationsScreen = () => {
   const { t, i18n: i18nInstance } = useTranslation();
+  const insets = useSafeAreaInsets();
   const now = new Date();
   const todayStr = formatDateStr(now);
   const yesterdayDate = new Date(now);
@@ -261,6 +263,7 @@ const NotificationsScreen = () => {
             <ActivityIndicator size="small" color={colors.primary[400]} style={styles.loader} />
           ) : null
         }
+        contentContainerStyle={{ paddingBottom: insets.bottom }}
         showsVerticalScrollIndicator={false}
       />
     );

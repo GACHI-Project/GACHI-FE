@@ -3,6 +3,7 @@ import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Header from '../../src/components/common/Header';
 import Toggle from '../../src/components/common/Toggle';
 import {
@@ -11,6 +12,7 @@ import {
   type NotificationPreference,
 } from '../../src/api/user';
 import colors from '../../src/constants/colors';
+import layout from '../../src/constants/layout';
 import styles from '../../src/styles/profile/profileNotification';
 
 type NotificationLevel = 'all' | 'important' | 'urgent';
@@ -90,6 +92,7 @@ const levelToPref = (lv: NotificationLevel): NotificationPreference => {
 
 const ProfileNotificationScreen = () => {
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   const [masterOn, setMasterOn] = useState(true);
   const [level, setLevel] = useState<NotificationLevel>('important');
   const [items, setItems] = useState<Record<ItemKey, boolean>>({
@@ -147,7 +150,7 @@ const ProfileNotificationScreen = () => {
         onHelp={() => {}}
       />
 
-      <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.scroll} contentContainerStyle={{ paddingBottom: insets.bottom + layout.screenPaddingBottom }} showsVerticalScrollIndicator={false}>
         {/* 전체 알림 */}
         <Text style={styles.sectionLabel}>{t('profile.notificationSetting.masterSection')}</Text>
         <View style={styles.masterCard}>

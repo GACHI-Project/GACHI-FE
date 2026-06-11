@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Header from '../../src/components/common/Header';
 import FormField from '../../src/components/auth/FormField';
 import PasswordStrengthBar, { getStrength } from '../../src/components/auth/PasswordStrengthBar';
@@ -16,6 +17,7 @@ const MIN_PASSWORD_STRENGTH = 2;
 
 const ProfilePasswordScreen = () => {
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -74,7 +76,7 @@ const ProfilePasswordScreen = () => {
         onHelp={() => {}}
       />
       <ScrollView
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 20 }]}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >

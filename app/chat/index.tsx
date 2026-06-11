@@ -13,6 +13,7 @@ import { Ionicons, Feather } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { router } from 'expo-router';
 import { useState, useRef, useEffect } from 'react';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import colors from '../../src/constants/colors';
 import styles from '../../src/styles/chat/chatScreen';
 import { sendChatMessage } from '../../src/api/chat';
@@ -78,6 +79,7 @@ const TypingBubble = () => {
 
 const ChatScreen = () => {
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   const flatListRef = useRef<FlatList<ChatMessage>>(null);
 
   const [messages, setMessages] = useState<ChatMessage[]>([
@@ -234,7 +236,7 @@ const ChatScreen = () => {
       />
 
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-        <View style={styles.inputWrapper}>
+        <View style={[styles.inputWrapper, { paddingBottom: insets.bottom + 8 }]}>
           <View style={styles.inputInner}>
             <TextInput
               style={styles.textInput}

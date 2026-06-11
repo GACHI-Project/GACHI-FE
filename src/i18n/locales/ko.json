@@ -901,5 +901,25 @@
     "typing": "까치가 답변을 입력 중입니다...",
     "today": "오늘",
     "errorMessage": "죄송해요, 오류가 발생했어요. 다시 시도해주세요. 🐦"
+  },
+  "mealTimetable": {
+    "sectionTitle": "급식·시간표",
+    "viewAll": "전체보기",
+    "pageTitle": "급식·시간표",
+    "tabMeal": "급식",
+    "tabTimetable": "시간표",
+    "dayLabels": ["일", "월", "화", "수", "목", "금", "토"],
+    "lunch": "중식",
+    "meal": {
+      "cardLabel": "오늘의 급식",
+      "cardTitle": "점심 메뉴",
+      "empty": "급식 정보가 없어요"
+    },
+    "timetable": {
+      "cardLabel": "오늘의 시간표",
+      "cardTitle": "수업 일정",
+      "empty": "시간표 정보가 없어요",
+      "period": "{{period}}교시"
+    }
   }
 }

@@ -901,5 +901,25 @@
     "typing": "Kachi is typing...",
     "today": "Today",
     "errorMessage": "Sorry, an error occurred. Please try again. 🐦"
+  },
+  "mealTimetable": {
+    "sectionTitle": "Meals & Timetable",
+    "viewAll": "View All",
+    "pageTitle": "Meals & Timetable",
+    "tabMeal": "Meals",
+    "tabTimetable": "Timetable",
+    "dayLabels": ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+    "lunch": "Lunch",
+    "meal": {
+      "cardLabel": "Today's Menu",
+      "cardTitle": "Lunch Menu",
+      "empty": "No meal information available"
+    },
+    "timetable": {
+      "cardLabel": "Today's Timetable",
+      "cardTitle": "Class Schedule",
+      "empty": "No timetable information available",
+      "period": "Period {{period}}"
+    }
   }
 }

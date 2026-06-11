@@ -8,6 +8,7 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import { useChildrenStore } from '../../src/store/childrenStore';
 import {
   fetchSchoolMeals,
@@ -22,7 +23,6 @@ import colors from '../../src/constants/colors';
 import layout from '../../src/constants/layout';
 import styles from '../../src/styles/meal-timetable';
 
-const DAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
 const PERIOD_COL_W = 40;
 
 const fmt = (d: Date): string => {
@@ -67,9 +67,11 @@ const getNextWeekdays = (count: number): Date[] => {
 };
 
 const MealTimetablePage = () => {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { width: screenWidth } = useWindowDimensions();
   const childItems = useChildrenStore((s) => s.children);
+  const dayLabels = t('mealTimetable.dayLabels', { returnObjects: true }) as string[];
 
   const [selectedChildIdx, setSelectedChildIdx] = useState(0);
   const [activeTab, setActiveTab] = useState<'timetable' | 'meal'>('timetable');
@@ -167,7 +169,7 @@ const MealTimetablePage = () => {
                 {day.date.getMonth() + 1}/{day.date.getDate()}
               </Text>
               <Text style={[styles.tableDayName, isToday(day.date) && styles.todayText]}>
-                {DAY_LABELS[day.date.getDay()]}
+                {dayLabels[day.date.getDay()]}
               </Text>
             </View>
           ))}
@@ -225,12 +227,12 @@ const MealTimetablePage = () => {
                     isToday(day.date) && styles.timelineDateTextToday,
                   ]}
                 >
-                  {day.date.getMonth() + 1}.{day.date.getDate()}.{DAY_LABELS[day.date.getDay()]},
-                  중식
+                  {day.date.getMonth() + 1}.{day.date.getDate()}.{dayLabels[day.date.getDay()]},{' '}
+                  {t('mealTimetable.lunch')}
                 </Text>
                 {isToday(day.date) && (
                   <View style={styles.todayBadge}>
-                    <Text style={styles.todayBadgeText}>오늘</Text>
+                    <Text style={styles.todayBadgeText}>{t('common.today')}</Text>
                   </View>
                 )}
               </View>
@@ -251,7 +253,7 @@ const MealTimetablePage = () => {
                     </View>
                   ))
                 ) : (
-                  <Text style={styles.noMealText}>급식 정보가 없어요</Text>
+                  <Text style={styles.noMealText}>{t('mealTimetable.meal.empty')}</Text>
                 )}
               </View>
             </View>
@@ -263,7 +265,7 @@ const MealTimetablePage = () => {
 
   return (
     <View style={[styles.screen, { paddingTop: insets.top }]}>
-      <Header title="급식·시간표" />
+      <Header title={t('mealTimetable.pageTitle')} />
 
       {childItems.length > 1 && (
         <View style={styles.childTabsWrap}>
@@ -298,7 +300,7 @@ const MealTimetablePage = () => {
           activeOpacity={0.8}
         >
           <Text style={[styles.tabText, activeTab === 'timetable' && styles.tabTextActive]}>
-            시간표
+            {t('mealTimetable.tabTimetable')}
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -306,7 +308,9 @@ const MealTimetablePage = () => {
           onPress={() => setActiveTab('meal')}
           activeOpacity={0.8}
         >
-          <Text style={[styles.tabText, activeTab === 'meal' && styles.tabTextActive]}>급식</Text>
+          <Text style={[styles.tabText, activeTab === 'meal' && styles.tabTextActive]}>
+            {t('mealTimetable.tabMeal')}
+          </Text>
         </TouchableOpacity>
       </View>
 

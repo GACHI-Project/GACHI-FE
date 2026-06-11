@@ -915,5 +915,25 @@
     "typing": "Kachi đang nhập câu trả lời...",
     "today": "Hôm nay",
     "errorMessage": "Xin lỗi, đã xảy ra lỗi. Vui lòng thử lại. 🐦"
+  },
+  "mealTimetable": {
+    "sectionTitle": "Bữa ăn & Thời khóa biểu",
+    "viewAll": "Xem tất cả",
+    "pageTitle": "Bữa ăn & Thời khóa biểu",
+    "tabMeal": "Bữa ăn",
+    "tabTimetable": "Thời khóa biểu",
+    "dayLabels": ["CN", "T2", "T3", "T4", "T5", "T6", "T7"],
+    "lunch": "Bữa trưa",
+    "meal": {
+      "cardLabel": "Bữa trưa hôm nay",
+      "cardTitle": "Thực đơn bữa trưa",
+      "empty": "Không có thông tin bữa ăn"
+    },
+    "timetable": {
+      "cardLabel": "Thời khóa biểu hôm nay",
+      "cardTitle": "Lịch học",
+      "empty": "Không có thông tin thời khóa biểu",
+      "period": "Tiết {{period}}"
+    }
   }
 }

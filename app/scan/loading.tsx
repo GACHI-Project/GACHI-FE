@@ -49,7 +49,7 @@ const ScanLoadingScreen = () => {
   const completionAnimation = useRef<Animated.CompositeAnimation | null>(null);
   const { t } = useTranslation();
   const [displayPercent, setDisplayPercent] = useState(0);
-  const [progressMessage, setProgressMessage] = useState('');
+  const [analysisStatus, setAnalysisStatus] = useState<string>('PENDING');
   const [isComplete, setIsComplete] = useState(false);
   const [helpVisible, setHelpVisible] = useState(false);
   const [newsletterId, setNewsletterId] = useState<number | null>(null);
@@ -85,7 +85,7 @@ const ScanLoadingScreen = () => {
           if (cancelled) return;
 
           setDisplayPercent(result.progressPercent);
-          setProgressMessage(result.progressMessage);
+          setAnalysisStatus(result.status);
           Animated.timing(progress, {
             toValue: result.progressPercent / 100,
             duration: 400,
@@ -218,6 +218,10 @@ const ScanLoadingScreen = () => {
     outputRange: [0, SCAN_FRAME_H],
   });
 
+  const statusTitle = isComplete
+    ? t('scan.loading.complete')
+    : t(`scan.loading.${analysisStatus === 'PROCESSING' ? 'analyzing' : 'preparing'}`);
+
   return (
     <View style={styles.screen}>
       <Header title={t('scan.title')} onHelp={() => setHelpVisible(true)} />
@@ -260,11 +264,7 @@ const ScanLoadingScreen = () => {
             <ActivityIndicator size="large" color={colors.primary[400]} />
           )}
           <View style={styles.statusTexts}>
-            <Text style={styles.statusTitle}>
-              {isComplete
-                ? t('scan.loading.complete')
-                : progressMessage || t('scan.loading.preparing')}
-            </Text>
+            <Text style={styles.statusTitle}>{statusTitle}</Text>
             {!isComplete && (
               <Text style={styles.statusSubtitle}>{t('scan.loading.analyzing')}</Text>
             )}

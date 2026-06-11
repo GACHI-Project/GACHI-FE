@@ -110,8 +110,7 @@ const RecentDocs = () => {
     <View style={styles.section}>
       <View style={styles.header}>
         <Text style={styles.sectionTitle}>{t('home.recentDocs.sectionTitle')}</Text>
-        {/* TODO: 전체 문서 목록 화면으로 이동 예정 */}
-        <TouchableOpacity onPress={() => {}} activeOpacity={0.7}>
+        <TouchableOpacity onPress={() => router.push('/(tabs)/document')} activeOpacity={0.7}>
           <Text style={styles.moreText}>{t('home.recentDocs.more')}</Text>
         </TouchableOpacity>
       </View>

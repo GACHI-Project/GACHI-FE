@@ -79,6 +79,12 @@ const ChildEditSheet = ({
     setDeleteModalVisible(true);
   };
 
+  const handleCloseSheet = () => {
+    Keyboard.dismiss();
+    setDeleteModalVisible(false);
+    onClose();
+  };
+
   if (!editingChild) return null;
 
   const canSave = isChildComplete(editingChild);
@@ -90,15 +96,10 @@ const ChildEditSheet = ({
         visible={visible}
         animationType="none"
         statusBarTranslucent
-        onRequestClose={onClose}
+        onRequestClose={handleCloseSheet}
       >
         <View style={styles.container}>
-          <TouchableWithoutFeedback
-            onPress={() => {
-              Keyboard.dismiss();
-              onClose();
-            }}
-          >
+          <TouchableWithoutFeedback onPress={handleCloseSheet}>
             <Animated.View style={[styles.overlay, { opacity: overlayOpacity }]}>
               <TouchableWithoutFeedback onPress={() => {}}>
                 <Animated.View

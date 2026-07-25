@@ -32,11 +32,12 @@ const MonthCalendar = ({
 }: MonthCalendarProps) => {
   const { t, i18n } = useTranslation();
 
-  const dayNames = Array.from({ length: 7 }, (_, i) =>
-    new Intl.DateTimeFormat(i18n.language, { weekday: 'short' }).format(
+  const dayNames = Array.from({ length: 7 }, (_, i) => ({
+    key: i,
+    label: new Intl.DateTimeFormat(i18n.language, { weekday: 'narrow' }).format(
       new Date(REF_SUNDAY.getFullYear(), REF_SUNDAY.getMonth(), REF_SUNDAY.getDate() + i)
-    )
-  );
+    ),
+  }));
 
   const monthLabel = new Intl.DateTimeFormat(i18n.language, {
     year: 'numeric',
@@ -98,9 +99,11 @@ const MonthCalendar = ({
       </View>
 
       <View style={styles.weekRow}>
-        {dayNames.map((name) => (
-          <View key={name} style={styles.dayCell}>
-            <Text style={styles.dayName}>{name}</Text>
+        {dayNames.map((day) => (
+          <View key={day.key} style={styles.dayCell}>
+            <Text style={styles.dayName} numberOfLines={1} maxFontSizeMultiplier={1.2}>
+              {day.label}
+            </Text>
           </View>
         ))}
       </View>
@@ -132,6 +135,8 @@ const MonthCalendar = ({
                       !inMonth && styles.outsideText,
                       isToday && styles.todayText,
                     ]}
+                    numberOfLines={1}
+                    maxFontSizeMultiplier={1.2}
                   >
                     {day}
                   </Text>
@@ -167,6 +172,8 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
   },
   headerText: {
+    flex: 1,
+    textAlign: 'center',
     fontSize: 14,
     fontFamily: fonts.medium,
     color: '#1A1A1A',

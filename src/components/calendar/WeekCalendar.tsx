@@ -18,7 +18,7 @@ const WeekCalendar = ({ weekDates, today, markedDates, onPrev, onNext }: WeekCal
   const { t, i18n } = useTranslation();
 
   const dayNames = Array.from({ length: 7 }, (_, i) =>
-    new Intl.DateTimeFormat(i18n.language, { weekday: 'short' }).format(
+    new Intl.DateTimeFormat(i18n.language, { weekday: 'narrow' }).format(
       new Date(REF_SUNDAY.getFullYear(), REF_SUNDAY.getMonth(), REF_SUNDAY.getDate() + i)
     )
   );
@@ -62,9 +62,17 @@ const WeekCalendar = ({ weekDates, today, markedDates, onPrev, onNext }: WeekCal
 
           return (
             <View key={dateStr} style={styles.dayCell}>
-              <Text style={styles.dayName}>{dayNames[index]}</Text>
+              <Text style={styles.dayName} numberOfLines={1} maxFontSizeMultiplier={1.2}>
+                {dayNames[index]}
+              </Text>
               <View style={[styles.dateCircle, isToday && styles.todayCircle]}>
-                <Text style={[styles.dateText, isToday && styles.todayText]}>{day}</Text>
+                <Text
+                  style={[styles.dateText, isToday && styles.todayText]}
+                  numberOfLines={1}
+                  maxFontSizeMultiplier={1.2}
+                >
+                  {day}
+                </Text>
               </View>
               <View style={styles.dotsRow}>
                 {dots.slice(0, 4).map((dot) => (
@@ -96,6 +104,8 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
   },
   rangeText: {
+    flex: 1,
+    textAlign: 'center',
     fontSize: 14,
     fontFamily: fonts.medium,
     color: '#1A1A1A',

@@ -48,8 +48,9 @@ const styles = StyleSheet.create({
     marginHorizontal: layout.screenPaddingHorizontal,
   },
   row: {
-    height: 52,
+    minHeight: 52,
     paddingHorizontal: 16,
+    paddingVertical: 14,
     flexDirection: 'row',
     alignItems: 'center',
   },

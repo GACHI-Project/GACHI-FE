@@ -1,13 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  ScrollView,
-  TouchableOpacity,
-  StyleSheet,
-  ActivityIndicator,
-} from 'react-native';
+import { View, Text, TextInput, ScrollView, StyleSheet, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -19,6 +11,7 @@ import { useChildrenStore } from '../../src/store/childrenStore';
 import { fetchNewsletters, NewsletterItem } from '../../src/api/newsletter';
 import DocumentCard from '../../src/components/document/DocumentCard';
 import Header from '../../src/components/common/Header';
+import ChildFilterBar from '../../src/components/common/ChildFilterBar';
 
 const formatDate = (dateStr: string): string => {
   const d = new Date(dateStr);
@@ -152,44 +145,11 @@ const DocumentScreen = () => {
         />
       </View>
 
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={styles.filterScroll}
-        contentContainerStyle={styles.filterContent}
-      >
-        <TouchableOpacity
-          style={[styles.filterBtn, selectedChildName === undefined && styles.filterBtnSelected]}
-          onPress={() => handleChildFilter(undefined)}
-          activeOpacity={0.7}
-        >
-          <Text
-            style={[
-              styles.filterText,
-              selectedChildName === undefined && styles.filterTextSelected,
-            ]}
-          >
-            {t('common.all')}
-          </Text>
-        </TouchableOpacity>
-
-        {children.map((child) => {
-          const selected = selectedChildName === child.name;
-          return (
-            <TouchableOpacity
-              key={child.id}
-              style={[styles.filterBtn, selected && styles.filterBtnSelected]}
-              onPress={() => handleChildFilter(child.name)}
-              activeOpacity={0.7}
-            >
-              <View style={[styles.childDot, { backgroundColor: child.colorCode }]} />
-              <Text style={[styles.filterText, selected && styles.filterTextSelected]}>
-                {child.name}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </ScrollView>
+      <ChildFilterBar
+        items={children}
+        selectedChildName={selectedChildName}
+        onSelect={handleChildFilter}
+      />
 
       <ScrollView
         style={styles.list}
@@ -249,46 +209,8 @@ const styles = StyleSheet.create({
     color: colors.text.primary,
     padding: 0,
   },
-  filterScroll: {
-    flexGrow: 0,
-    flexShrink: 0,
-  },
   list: {
     flex: 1,
-  },
-  filterContent: {
-    gap: 8,
-    alignItems: 'center',
-    paddingHorizontal: layout.screenPaddingHorizontal,
-    paddingVertical: 16,
-  },
-  filterBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.gray[200],
-    borderRadius: 20,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    backgroundColor: colors.text.white,
-    gap: 6,
-  },
-  filterBtnSelected: {
-    backgroundColor: colors.primary[500],
-    borderColor: colors.primary[500],
-  },
-  filterText: {
-    fontSize: 14,
-    fontFamily: fonts.semiBold,
-    color: colors.text.secondary,
-  },
-  filterTextSelected: {
-    color: colors.text.white,
-  },
-  childDot: {
-    width: 5,
-    height: 5,
-    borderRadius: 99,
   },
   emptyText: {
     textAlign: 'center',

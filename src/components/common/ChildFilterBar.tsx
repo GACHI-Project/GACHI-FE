@@ -36,6 +36,7 @@ const ChildFilterBar = ({ items, selectedChildName, onSelect }: ChildFilterBarPr
               styles.filterText,
               selectedChildName === undefined && styles.filterTextSelected,
             ]}
+            numberOfLines={1}
           >
             {t('common.all')}
           </Text>
@@ -50,7 +51,10 @@ const ChildFilterBar = ({ items, selectedChildName, onSelect }: ChildFilterBarPr
               activeOpacity={0.7}
             >
               <View style={[styles.filterDot, { backgroundColor: child.colorCode }]} />
-              <Text style={[styles.filterText, selected && styles.filterTextSelected]}>
+              <Text
+                style={[styles.filterText, selected && styles.filterTextSelected]}
+                numberOfLines={1}
+              >
                 {child.name}
               </Text>
             </TouchableOpacity>
@@ -65,7 +69,8 @@ export default ChildFilterBar;
 
 const styles = StyleSheet.create({
   filterBar: {
-    height: 53,
+    minHeight: 53,
+    paddingVertical: 11,
     backgroundColor: colors.text.white,
     justifyContent: 'center',
   },
@@ -77,8 +82,9 @@ const styles = StyleSheet.create({
   filterBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    height: 31,
-    borderRadius: 15,
+    minHeight: 31,
+    paddingVertical: 6,
+    borderRadius: 999,
     borderWidth: 1,
     borderColor: colors.gray[200],
     paddingHorizontal: 14,

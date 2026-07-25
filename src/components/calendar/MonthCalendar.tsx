@@ -32,12 +32,15 @@ const MonthCalendar = ({
 }: MonthCalendarProps) => {
   const { t, i18n } = useTranslation();
 
-  const dayNames = Array.from({ length: 7 }, (_, i) => ({
-    key: i,
-    label: new Intl.DateTimeFormat(i18n.language, { weekday: 'narrow' }).format(
-      new Date(REF_SUNDAY.getFullYear(), REF_SUNDAY.getMonth(), REF_SUNDAY.getDate() + i)
-    ),
-  }));
+  const weekdayFormatter = new Intl.DateTimeFormat(i18n.language, { weekday: 'narrow' });
+  const dayNames = Array.from({ length: 7 }, (_, i) => {
+    const date = new Date(
+      REF_SUNDAY.getFullYear(),
+      REF_SUNDAY.getMonth(),
+      REF_SUNDAY.getDate() + i
+    );
+    return { key: date.getTime(), label: weekdayFormatter.format(date) };
+  });
 
   const monthLabel = new Intl.DateTimeFormat(i18n.language, {
     year: 'numeric',

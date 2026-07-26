@@ -1,6 +1,13 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { FontAwesome5 } from '@expo/vector-icons';
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  ActivityIndicator,
+  useWindowDimensions,
+} from 'react-native';
+import { FontAwesome5, Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import colors from '../../src/constants/colors';
@@ -22,6 +29,7 @@ import {
   type HolidayItem,
   type SchoolGroup,
 } from '../../src/api/calendar';
+import { fetchChildren as fetchChildrenApi } from '../../src/api/child';
 import {
   getHolidaysForDate,
   getAcademicSchedulesForDate,
@@ -51,10 +59,12 @@ const formatWeekDateHeader = (dateStr: string, locale: string) => {
 
 const CalendarScreen = () => {
   const { t, i18n } = useTranslation();
-  const { children } = useChildrenStore();
+  const { height: windowHeight } = useWindowDimensions();
+  const { children, setChildren: setStoreChildren } = useChildrenStore();
   const [selectedChildName, setSelectedChildName] = useState<string | undefined>(undefined);
   const [selectedDate, setSelectedDate] = useState<string>(today);
   const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
+  const [showScrollTop, setShowScrollTop] = useState(false);
   const [monthlyMarkers, setMonthlyMarkers] = useState<MonthlyMarker[]>([]);
   const [dayEvents, setDayEvents] = useState<CalendarEvent[]>([]);
   const [weeklyData, setWeeklyData] = useState<WeeklyResult | null>(null);
@@ -86,10 +96,16 @@ const CalendarScreen = () => {
     useCallback(() => {
       if (!hasFocusedOnceRef.current) {
         hasFocusedOnceRef.current = true;
+        fetchChildrenApi()
+          .then(setStoreChildren)
+          .catch(() => {});
         return;
       }
+      fetchChildrenApi()
+        .then(setStoreChildren)
+        .catch(() => {});
       setFocusKey((k) => k + 1);
-    }, [])
+    }, [setStoreChildren])
   );
 
   const selectedChildId = useMemo(
@@ -97,11 +113,12 @@ const CalendarScreen = () => {
     [children, selectedChildName]
   );
 
-  const weekScrollRef = useRef<ScrollView>(null);
+  const scrollRef = useRef<ScrollView>(null);
   const weekOffsetRef = useRef(weekOffset);
   const shouldAutoScrollRef = useRef(weekOffset === 0);
   weekOffsetRef.current = weekOffset;
   const todayGroupY = useRef<number | undefined>(undefined);
+  const isFirstChildRenderRef = useRef(true);
   const weeklyReqIdRef = useRef(0);
   const monthlyReqIdRef = useRef(0);
   const dailyReqIdRef = useRef(0);
@@ -110,6 +127,15 @@ const CalendarScreen = () => {
   useEffect(() => {
     shouldAutoScrollRef.current = weekOffset === 0;
   }, [weekOffset]);
+
+  useEffect(() => {
+    if (isFirstChildRenderRef.current) {
+      isFirstChildRenderRef.current = false;
+      return;
+    }
+    scrollRef.current?.scrollTo({ y: 0, animated: true });
+    setShowScrollTop(false);
+  }, [selectedChildName]);
 
   const weekDates = useMemo(() => {
     const d = new Date();
@@ -357,6 +383,11 @@ const CalendarScreen = () => {
   const handleToggleMode = () => {
     setIsWeekMode((prev) => !prev);
     setExpandedIds(new Set());
+    setShowScrollTop(false);
+  };
+
+  const handleScroll = ({ nativeEvent }: { nativeEvent: { contentOffset: { y: number } } }) => {
+    setShowScrollTop(nativeEvent.contentOffset.y > windowHeight * 1.0);
   };
 
   const syncSelectedDateToMonth = (year: number, month: number) => {
@@ -411,7 +442,7 @@ const CalendarScreen = () => {
         />
       </View>
 
-      {/* 자녀 필터바 */}
+      {/* 자녀 필터바 - 고정 */}
       <ChildFilterBar
         items={children}
         selectedChildName={selectedChildName}
@@ -419,7 +450,21 @@ const CalendarScreen = () => {
       />
 
       {isWeekMode ? (
-        <>
+        <ScrollView
+          ref={scrollRef}
+          style={styles.scrollArea}
+          showsVerticalScrollIndicator={false}
+          onScroll={handleScroll}
+          scrollEventThrottle={100}
+          onContentSizeChange={() => {
+            if (weekOffsetRef.current !== 0 || !shouldAutoScrollRef.current) return;
+            requestAnimationFrame(() => {
+              if (weekOffsetRef.current !== 0 || todayGroupY.current === undefined) return;
+              scrollRef.current?.scrollTo({ y: todayGroupY.current, animated: false });
+              shouldAutoScrollRef.current = false;
+            });
+          }}
+        >
           {/* 주간 날짜 바 */}
           <WeekCalendar
             weekDates={weekDates}
@@ -431,68 +476,60 @@ const CalendarScreen = () => {
 
           {/* 주간 일정 목록 */}
           {isLoading ? (
-            <View style={styles.loadingContainer}>
+            <View style={styles.loadingContainerInline}>
               <ActivityIndicator size="large" color={colors.primary[400]} />
             </View>
           ) : (
-            <ScrollView
-              ref={weekScrollRef}
-              style={styles.list}
-              showsVerticalScrollIndicator={false}
-              onContentSizeChange={() => {
-                if (weekOffsetRef.current !== 0 || !shouldAutoScrollRef.current) return;
-                requestAnimationFrame(() => {
-                  if (weekOffsetRef.current !== 0 || todayGroupY.current === undefined) return;
-                  weekScrollRef.current?.scrollTo({ y: todayGroupY.current, animated: false });
-                  shouldAutoScrollRef.current = false;
-                });
-              }}
-            >
-              <View style={styles.weekListContent}>
-                {weekDisplayGroups.length === 0 ? (
-                  <Text style={styles.emptyText}>{t('calendar.emptyWeek')}</Text>
-                ) : (
-                  weekDisplayGroups.map((group) => (
-                    <View
-                      key={group.date}
-                      onLayout={(e) => {
-                        if (group.date === today) {
-                          todayGroupY.current = e.nativeEvent.layout.y;
-                        }
-                      }}
-                    >
-                      <Text style={styles.weekDateHeader}>
-                        {formatWeekDateHeader(group.date, i18n.language)}
-                      </Text>
-                      <View style={styles.cardGroup}>
-                        {group.schoolSchedules.map((entry) => (
-                          <SchoolScheduleRow
-                            key={`${entry.item.date}-${entry.item.eventName}-${entry.schoolGroupKey ?? entry.type}`}
-                            item={entry.item}
-                            type={entry.type}
-                            childNames={entry.childNames}
-                          />
-                        ))}
-                        {group.events.map((event) => (
-                          <EventCard
-                            key={event.eventId}
-                            event={event}
-                            expanded={expandedIds.has(event.eventId)}
-                            isPast={group.date < today}
-                            onToggleExpand={() => toggleExpand(event.eventId)}
-                            onToggleCheck={(checklistId) => toggleCheck(event.eventId, checklistId)}
-                          />
-                        ))}
-                      </View>
+            <View style={styles.weekListContent}>
+              {weekDisplayGroups.length === 0 ? (
+                <Text style={styles.emptyText}>{t('calendar.emptyWeek')}</Text>
+              ) : (
+                weekDisplayGroups.map((group) => (
+                  <View
+                    key={group.date}
+                    onLayout={(e) => {
+                      if (group.date === today) {
+                        todayGroupY.current = e.nativeEvent.layout.y;
+                      }
+                    }}
+                  >
+                    <Text style={styles.weekDateHeader}>
+                      {formatWeekDateHeader(group.date, i18n.language)}
+                    </Text>
+                    <View style={styles.cardGroup}>
+                      {group.schoolSchedules.map((entry) => (
+                        <SchoolScheduleRow
+                          key={`${entry.item.date}-${entry.item.eventName}-${entry.schoolGroupKey ?? entry.type}`}
+                          item={entry.item}
+                          type={entry.type}
+                          childNames={entry.childNames}
+                        />
+                      ))}
+                      {group.events.map((event) => (
+                        <EventCard
+                          key={event.eventId}
+                          event={event}
+                          expanded={expandedIds.has(event.eventId)}
+                          isPast={group.date < today}
+                          onToggleExpand={() => toggleExpand(event.eventId)}
+                          onToggleCheck={(checklistId) => toggleCheck(event.eventId, checklistId)}
+                        />
+                      ))}
                     </View>
-                  ))
-                )}
-              </View>
-            </ScrollView>
+                  </View>
+                ))
+              )}
+            </View>
           )}
-        </>
+        </ScrollView>
       ) : (
-        <>
+        <ScrollView
+          ref={scrollRef}
+          style={styles.scrollArea}
+          showsVerticalScrollIndicator={false}
+          onScroll={handleScroll}
+          scrollEventThrottle={100}
+        >
           {/* 월간 캘린더 */}
           <MonthCalendar
             year={calendarMonth.year}
@@ -506,42 +543,56 @@ const CalendarScreen = () => {
           />
 
           {/* 선택 날짜 + 일정 목록 */}
+          <Text style={styles.dayLabel}>{formatDayLabel(selectedDate, i18n.language)}</Text>
           {isLoading ? (
-            <View style={styles.loadingContainer}>
+            <View style={styles.loadingContainerInline}>
               <ActivityIndicator size="large" color={colors.primary[400]} />
             </View>
           ) : (
-            <ScrollView style={styles.list} showsVerticalScrollIndicator={false}>
-              <Text style={styles.dayLabel}>{formatDayLabel(selectedDate, i18n.language)}</Text>
-              <View style={styles.listContent}>
-                {isDailyLoading && <ActivityIndicator size="small" color={colors.primary[400]} />}
-                {!isDailyLoading && daySchoolSchedules.length === 0 && dayEvents.length === 0 && (
-                  <Text style={styles.emptyText}>{t('calendar.emptyDay')}</Text>
-                )}
-                {!isDailyLoading &&
-                  daySchoolSchedules.map((entry) => (
-                    <SchoolScheduleRow
-                      key={`${entry.item.date}-${entry.item.eventName}-${entry.schoolGroupKey ?? entry.type}`}
-                      item={entry.item}
-                      type={entry.type}
-                      childNames={entry.childNames}
-                    />
-                  ))}
-                {!isDailyLoading &&
-                  dayEvents.map((event) => (
-                    <EventCard
-                      key={event.eventId}
-                      event={event}
-                      expanded={expandedIds.has(event.eventId)}
-                      isPast={selectedDate < today}
-                      onToggleExpand={() => toggleExpand(event.eventId)}
-                      onToggleCheck={(checklistId) => toggleCheck(event.eventId, checklistId)}
-                    />
-                  ))}
-              </View>
-            </ScrollView>
+            <View style={styles.listContent}>
+              {isDailyLoading && <ActivityIndicator size="small" color={colors.primary[400]} />}
+              {!isDailyLoading && daySchoolSchedules.length === 0 && dayEvents.length === 0 && (
+                <Text style={styles.emptyText}>{t('calendar.emptyDay')}</Text>
+              )}
+              {!isDailyLoading &&
+                daySchoolSchedules.map((entry) => (
+                  <SchoolScheduleRow
+                    key={`${entry.item.date}-${entry.item.eventName}-${entry.schoolGroupKey ?? entry.type}`}
+                    item={entry.item}
+                    type={entry.type}
+                    childNames={entry.childNames}
+                  />
+                ))}
+              {!isDailyLoading &&
+                dayEvents.map((event) => (
+                  <EventCard
+                    key={event.eventId}
+                    event={event}
+                    expanded={expandedIds.has(event.eventId)}
+                    isPast={selectedDate < today}
+                    onToggleExpand={() => toggleExpand(event.eventId)}
+                    onToggleCheck={(checklistId) => toggleCheck(event.eventId, checklistId)}
+                  />
+                ))}
+            </View>
           )}
-        </>
+        </ScrollView>
+      )}
+
+      {/* 플로팅 버튼 */}
+      {showScrollTop && (
+        <TouchableOpacity
+          style={styles.scrollTopButton}
+          onPress={() => {
+            scrollRef.current?.scrollTo({ y: 0, animated: true });
+            setShowScrollTop(false);
+          }}
+          activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityLabel={t('calendar.scrollToTop')}
+        >
+          <Ionicons name="arrow-up" size={20} color={colors.text.white} />
+        </TouchableOpacity>
       )}
     </View>
   );

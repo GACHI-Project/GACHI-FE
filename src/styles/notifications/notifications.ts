@@ -11,9 +11,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.text.white,
     paddingTop: 60,
   },
-
   dateLabelRow: {
-    height: 30,
+    minHeight: 30,
+    paddingVertical: 6,
     paddingHorizontal: 16,
     justifyContent: 'center',
   },
@@ -22,7 +22,6 @@ const styles = StyleSheet.create({
     fontFamily: fonts.medium,
     color: colors.text.secondary,
   },
-
   notifRowRead: {
     backgroundColor: colors.text.white,
     borderBottomWidth: 1,
@@ -43,7 +42,6 @@ const styles = StyleSheet.create({
     gap: 12,
     alignItems: 'flex-start',
   },
-
   iconBox: {
     width: 40,
     height: 40,
@@ -51,18 +49,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-
   textArea: {
     flex: 1,
   },
   notifTitleRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    gap: 8,
+    rowGap: 2,
+    columnGap: 8,
   },
   notifTitle: {
     flex: 1,
+    minWidth: 0,
     fontSize: 14,
     fontFamily: fonts.medium,
     color: colors.text.primary,
@@ -71,6 +71,7 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontFamily: fonts.medium,
     color: colors.gray[200],
+    flexShrink: 0,
   },
   notifBody: {
     fontSize: 12,
@@ -79,7 +80,6 @@ const styles = StyleSheet.create({
     lineHeight: 16,
     marginTop: 2,
   },
-
   tagRow: {
     flexDirection: 'row',
     marginTop: 6,
@@ -88,8 +88,10 @@ const styles = StyleSheet.create({
     backgroundColor: colors.gray[100],
     borderRadius: 999,
     paddingHorizontal: 8,
-    height: 20,
+    minHeight: 20,
+    paddingVertical: 3,
     justifyContent: 'center',
+    alignItems: 'center',
   },
   childTagText: {
     fontSize: 11,

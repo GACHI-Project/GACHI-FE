@@ -48,8 +48,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.gray[200],
     borderRadius: 15,
-    height: 90,
+    minHeight: 90,
     paddingHorizontal: 20,
+    paddingVertical: 16,
     gap: 14,
     marginBottom: 10,
     overflow: 'hidden',
@@ -88,12 +89,15 @@ const styles = StyleSheet.create({
   // 카드 콘텐츠
   cardContent: {
     flex: 1,
+    minWidth: 0,
     gap: 4,
   },
   cardTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    flexWrap: 'wrap',
+    rowGap: 4,
+    columnGap: 6,
   },
   cardTitle: {
     fontSize: 16,
@@ -105,6 +109,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     paddingHorizontal: 8,
     paddingVertical: 2,
+    flexShrink: 0,
   },
   badgeText: {
     fontSize: 12,
@@ -128,6 +133,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.gray[200],
     backgroundColor: colors.text.white,
+    flexShrink: 0,
   },
   radioSelected: {
     backgroundColor: colors.primary[0],

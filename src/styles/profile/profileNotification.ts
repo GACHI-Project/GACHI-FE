@@ -33,7 +33,8 @@ export default StyleSheet.create({
     borderColor: colors.gray[200],
     marginHorizontal: layout.screenPaddingHorizontal,
     paddingHorizontal: 16,
-    height: 66,
+    minHeight: 66,
+    paddingVertical: 14,
     flexDirection: 'row',
     alignItems: 'center',
   },
@@ -128,14 +129,15 @@ export default StyleSheet.create({
   itemTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    flexWrap: 'wrap',
+    rowGap: 4,
+    columnGap: 6,
     flex: 1,
   },
   itemTitle: {
     fontSize: 14,
     fontFamily: fonts.semiBold,
     color: colors.text.primary,
-    flexShrink: 1,
   },
   itemDesc: {
     fontSize: 11,
@@ -149,10 +151,13 @@ export default StyleSheet.create({
   },
   // 뱃지
   badge: {
-    height: 21,
+    minHeight: 21,
+    paddingVertical: 4,
     borderRadius: 999,
     paddingHorizontal: 8,
     justifyContent: 'center',
+    alignItems: 'center',
+    flexShrink: 0,
   },
   badge_urgent: {
     backgroundColor: 'rgba(225,0,0,0.1)',

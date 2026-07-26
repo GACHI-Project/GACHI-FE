@@ -32,6 +32,7 @@ const styles = StyleSheet.create({
   },
   profileInfo: {
     flex: 1,
+    minWidth: 0,
     gap: 4,
   },
   profileName: {
@@ -49,7 +50,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.gray[100],
     borderRadius: 999,
     paddingHorizontal: 7,
-    height: 21,
+    minHeight: 21,
+    paddingVertical: 3,
     justifyContent: 'center',
   },
   idBadgeText: {
@@ -68,6 +70,7 @@ const styles = StyleSheet.create({
     borderColor: colors.secondary[500],
     borderRadius: 999,
     minWidth: 52,
+    maxWidth: 90,
     flexShrink: 0,
     paddingHorizontal: 12,
     paddingVertical: 6,
@@ -78,6 +81,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontFamily: fonts.medium,
     color: colors.text.primary,
+    textAlign: 'center',
   },
   sectionLabel: {
     fontSize: 14,
@@ -95,16 +99,18 @@ const styles = StyleSheet.create({
     marginHorizontal: layout.screenPaddingHorizontal,
   },
   row: {
-    height: 52,
+    minHeight: 52,
     paddingHorizontal: 16,
+    paddingVertical: 14,
     flexDirection: 'row',
     alignItems: 'center',
     borderBottomWidth: 1,
     borderBottomColor: '#EEEEEE',
   },
   rowLast: {
-    height: 52,
+    minHeight: 52,
     paddingHorizontal: 16,
+    paddingVertical: 14,
     flexDirection: 'row',
     alignItems: 'center',
   },
@@ -121,8 +127,9 @@ const styles = StyleSheet.create({
     marginRight: 4,
   },
   childRow: {
-    height: 64,
+    minHeight: 64,
     paddingHorizontal: 16,
+    paddingVertical: 12,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
@@ -130,8 +137,9 @@ const styles = StyleSheet.create({
     borderBottomColor: '#EEEEEE',
   },
   childRowLast: {
-    height: 64,
+    minHeight: 64,
     paddingHorizontal: 16,
+    paddingVertical: 12,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,

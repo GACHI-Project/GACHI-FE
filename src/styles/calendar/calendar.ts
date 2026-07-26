@@ -27,15 +27,28 @@ export default StyleSheet.create({
     borderColor: colors.primary[400],
   },
 
-  // 로딩
-  loadingContainer: {
-    flex: 1,
+  loadingContainerInline: {
+    paddingVertical: 60,
     alignItems: 'center',
     justifyContent: 'center',
   },
-
-  // 일정 목록
-  list: {
+  scrollTopButton: {
+    position: 'absolute',
+    right: 20,
+    bottom: 24,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.primary[400],
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 4,
+    shadowColor: colors.text.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+  },
+  scrollArea: {
     flex: 1,
   },
   dayLabel: {
@@ -85,23 +98,28 @@ export default StyleSheet.create({
   },
   cardHeader: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
+    alignItems: 'flex-start',
+    flexWrap: 'wrap',
+    rowGap: 6,
+    columnGap: 10,
     padding: 15,
   },
   cardLeft: {
     flex: 1,
+    minWidth: 100,
     gap: 6,
   },
   cardRight: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    flexShrink: 0,
   },
   cardTitle: {
     fontSize: 14,
     fontFamily: fonts.medium,
-    color: '#000000',
+    color: colors.text.primary,
+    lineHeight: 20,
   },
   cardTags: {
     flexDirection: 'row',
@@ -161,6 +179,7 @@ export default StyleSheet.create({
     justifyContent: 'center',
   },
   checkText: {
+    flex: 1,
     fontSize: 13,
     fontFamily: fonts.medium,
     color: '#000000',

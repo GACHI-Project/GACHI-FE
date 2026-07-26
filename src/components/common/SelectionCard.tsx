@@ -35,7 +35,7 @@ const SelectionCard = ({
     <TouchableOpacity
       style={[
         styles.card,
-        { height: s.height, paddingHorizontal: s.paddingH },
+        { minHeight: s.height, paddingHorizontal: s.paddingH },
         selected && styles.cardSelected,
       ]}
       onPress={onPress}
@@ -67,6 +67,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.gray[200],
     borderRadius: 15,
+    paddingVertical: 14,
     gap: 14,
     overflow: 'hidden',
   },
@@ -91,6 +92,7 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+    minHeight: 0,
     gap: 2,
   },
   name: {
@@ -105,6 +107,7 @@ const styles = StyleSheet.create({
     width: 26,
     height: 26,
     borderRadius: 13,
+    flexShrink: 0,
     borderWidth: 1,
     borderColor: colors.gray[200],
     backgroundColor: colors.text.white,
@@ -118,5 +121,6 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
+    flexShrink: 0,
   },
 });

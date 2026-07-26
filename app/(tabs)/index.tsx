@@ -10,10 +10,10 @@ import { useUserStore } from '../../src/store/userStore';
 import { fetchUnreadCount } from '../../src/api/notifications';
 import { useNotificationStore } from '../../src/store/notificationStore';
 import TaskCard from '../../src/components/home/TaskCard';
-import ScanBanner from '../../src/components/home/ScanBanner';
+// import ScanBanner from '../../src/components/home/ScanBanner';
 import FeatureSection from '../../src/components/home/FeatureSection';
 import MealTimetableWidget from '../../src/components/home/MealTimetableWidget';
-import GuideCards from '../../src/components/home/GuideCards';
+// import GuideCards from '../../src/components/home/GuideCards';
 import RecentDocs from '../../src/components/home/RecentDocs';
 import colors from '../../src/constants/colors';
 import styles from '../../src/styles/home/homeScreen';
@@ -56,37 +56,38 @@ const HomeScreen = () => {
 
   return (
     <View style={styles.screen}>
-      <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
-        <View style={styles.headerInner}>
-          <View style={styles.headerTexts}>
-            <Text style={styles.greeting}>{greetingText}</Text>
-            <Text style={styles.username}>{t('home.usernameFormat', { name })}</Text>
+      <ScrollView showsVerticalScrollIndicator={false}>
+        <View>
+          <LinearGradient
+            colors={[colors.primary[200], colors.text.white]}
+            style={styles.gradient}
+          />
+          <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
+            <View style={styles.headerInner}>
+              <View style={styles.headerTexts}>
+                <Text style={styles.greeting}>{greetingText}</Text>
+                <Text style={styles.username}>{t('home.usernameFormat', { name })}</Text>
+              </View>
+              <TouchableOpacity
+                style={styles.bellButton}
+                activeOpacity={0.7}
+                onPress={() => router.push('/notifications')}
+              >
+                <Ionicons name="notifications-outline" size={22} color={colors.primary[600]} />
+                {unreadCount > 0 && <View style={styles.badge} />}
+              </TouchableOpacity>
+            </View>
           </View>
-          <TouchableOpacity
-            style={styles.bellButton}
-            activeOpacity={0.7}
-            onPress={() => router.push('/notifications')}
-          >
-            <Ionicons name="notifications-outline" size={22} color={colors.primary[600]} />
-            {unreadCount > 0 && <View style={styles.badge} />}
-          </TouchableOpacity>
+          <View style={styles.scrollContent}>
+            <TaskCard />
+            {/* <ScanBanner /> */}
+            <FeatureSection />
+            <MealTimetableWidget />
+            {/* <GuideCards /> */}
+            <RecentDocs />
+          </View>
         </View>
-      </View>
-
-      <View style={styles.contentWrapper}>
-        <LinearGradient colors={[colors.primary[200], colors.text.white]} style={styles.gradient} />
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.scrollContent}
-        >
-          <TaskCard />
-          <ScanBanner />
-          <FeatureSection />
-          <MealTimetableWidget />
-          <GuideCards />
-          <RecentDocs />
-        </ScrollView>
-      </View>
+      </ScrollView>
     </View>
   );
 };

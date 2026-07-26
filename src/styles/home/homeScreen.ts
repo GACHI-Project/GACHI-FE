@@ -9,7 +9,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.text.white,
   },
   header: {
-    backgroundColor: colors.primary[200],
     paddingHorizontal: layout.screenPaddingHorizontal,
     paddingBottom: 20,
   },
@@ -56,15 +55,12 @@ const styles = StyleSheet.create({
     borderRadius: 2,
     backgroundColor: colors.text.red,
   },
-  contentWrapper: {
-    flex: 1,
-  },
   gradient: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
-    height: 350,
+    height: 500,
   },
   scrollContent: {
     paddingHorizontal: layout.screenPaddingHorizontal,

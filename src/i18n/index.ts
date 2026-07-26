@@ -4,6 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import ko from './locales/ko.json';
 import en from './locales/en.json';
 import vi from './locales/vi.json';
+import zh from './locales/zh.json';
 import { LanguageType } from '../types/language';
 
 export type SupportedLanguage = LanguageType;
@@ -32,6 +33,7 @@ export const initI18n = async () => {
       ko: { translation: ko },
       en: { translation: en },
       vi: { translation: vi },
+      zh: { translation: zh },
     },
     interpolation: { escapeValue: false },
     compatibilityJSON: 'v4',

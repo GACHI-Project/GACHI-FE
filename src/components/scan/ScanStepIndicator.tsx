@@ -29,7 +29,9 @@ const ScanStepIndicator = ({ currentStep, totalSteps = 4 }: ScanStepIndicatorPro
               {isCompleted ? (
                 <Ionicons name="checkmark" size={13} color={colors.text.white} />
               ) : (
-                <Text style={styles.number}>{step}</Text>
+                <Text style={styles.number} allowFontScaling={false}>
+                  {step}
+                </Text>
               )}
             </View>
           </View>

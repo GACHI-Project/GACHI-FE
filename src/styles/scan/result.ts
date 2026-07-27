@@ -9,6 +9,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.text.white,
     paddingTop: 60,
   },
+  content: {
+    flex: 1,
+  },
   docInfo: {
     paddingHorizontal: layout.screenPaddingHorizontal,
     paddingBottom: 16,
@@ -24,14 +27,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    flexWrap: 'wrap',
   },
   metaItem: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+    flexShrink: 1,
   },
   metaText: {
+    flexShrink: 1,
     fontSize: 13,
     fontFamily: fonts.medium,
     color: colors.text.secondary,
@@ -127,7 +131,11 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
   },
+  btnIcon: {
+    fontSize: 18,
+  },
   chatBtnText: {
+    flexShrink: 1,
     fontSize: 15,
     fontFamily: fonts.semiBold,
     color: colors.text.primary,
@@ -148,6 +156,7 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   saveBtnText: {
+    flexShrink: 1,
     fontSize: 15,
     fontFamily: fonts.bold,
     color: colors.text.white,

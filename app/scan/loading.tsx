@@ -224,7 +224,7 @@ const ScanLoadingScreen = () => {
     : t(`scan.loading.${analysisStatus === 'PROCESSING' ? 'analyzing' : 'preparing'}`);
 
   return (
-    <View style={styles.screen}>
+    <View style={[styles.screen, { paddingBottom: insets.bottom }]}>
       <Header title={t('scan.title')} onHelp={() => setHelpVisible(true)} />
       <ScanStepIndicator currentStep={isComplete ? 4 : 3} />
 
@@ -265,12 +265,18 @@ const ScanLoadingScreen = () => {
             <ActivityIndicator size="large" color={colors.primary[400]} />
           )}
           <View style={styles.statusTexts}>
-            <Text style={styles.statusTitle}>{statusTitle}</Text>
+            <Text style={styles.statusTitle} numberOfLines={1}>
+              {statusTitle}
+            </Text>
             {!isComplete && (
-              <Text style={styles.statusSubtitle}>{t('scan.loading.analyzing')}</Text>
+              <Text style={styles.statusSubtitle} numberOfLines={2}>
+                {t('scan.loading.analyzing')}
+              </Text>
             )}
           </View>
-          <Text style={styles.percentText}>{displayPercent}%</Text>
+          <Text style={styles.percentText} allowFontScaling={false}>
+            {displayPercent}%
+          </Text>
         </View>
 
         <View style={styles.progressTrack}>
@@ -285,7 +291,6 @@ const ScanLoadingScreen = () => {
             {
               opacity: nextBtnOpacity,
               transform: [{ translateY: nextBtnSlide }],
-              marginBottom: insets.bottom + 16,
             },
           ]}
         >

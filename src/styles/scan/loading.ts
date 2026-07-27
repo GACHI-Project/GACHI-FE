@@ -11,19 +11,20 @@ const styles = StyleSheet.create({
     paddingTop: 60,
   },
   imageWrapper: {
+    flex: 1,
+    maxHeight: SCAN_FRAME_H,
     width: SCAN_FRAME_W,
-    height: SCAN_FRAME_H,
     alignSelf: 'center',
     borderRadius: 16,
     overflow: 'hidden',
   },
   image: {
     width: SCAN_FRAME_W,
-    height: SCAN_FRAME_H,
+    height: '100%',
   },
   imagePlaceholder: {
     width: SCAN_FRAME_W,
-    height: SCAN_FRAME_H,
+    height: '100%',
     backgroundColor: colors.gray[100],
   },
   scanLine: {
@@ -41,8 +42,9 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   completionFrame: {
+    flex: 1,
+    maxHeight: SCAN_FRAME_H,
     width: SCAN_FRAME_W,
-    height: SCAN_FRAME_H,
     alignSelf: 'center',
     borderRadius: 16,
     backgroundColor: '#111111',
@@ -85,7 +87,7 @@ const styles = StyleSheet.create({
   },
   statusRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: 12,
   },
   statusTexts: {
@@ -129,6 +131,7 @@ const styles = StyleSheet.create({
   nextBtnWrapper: {
     marginHorizontal: layout.screenPaddingHorizontal,
     marginTop: 16,
+    marginBottom: 16,
   },
   nextBtn: {
     paddingVertical: 18,

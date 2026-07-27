@@ -183,18 +183,18 @@ const styles = StyleSheet.create({
     paddingTop: 60,
   },
   cameraWrapper: {
+    flex: 1,
+    maxHeight: SCAN_FRAME_H,
     width: SCAN_FRAME_W,
-    height: SCAN_FRAME_H,
     alignSelf: 'center',
     borderRadius: 16,
     overflow: 'hidden',
   },
   camera: {
     width: SCAN_FRAME_W,
-    height: SCAN_FRAME_H,
+    height: '100%',
   },
   bottomControls: {
-    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',

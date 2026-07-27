@@ -70,12 +70,12 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingHorizontal: 16,
     paddingVertical: 10,
-    height: 60,
+    minHeight: 60,
     gap: 16,
   },
   divider: {
     width: 1,
-    height: 43,
+    alignSelf: 'stretch',
     backgroundColor: colors.primary[300],
   },
   inputWrapper: {

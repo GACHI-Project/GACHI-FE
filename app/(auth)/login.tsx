@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
@@ -69,7 +69,12 @@ const LoginScreen = () => {
   };
 
   return (
-    <View style={styles.screen}>
+    <ScrollView
+      style={styles.screen}
+      contentContainerStyle={styles.contentContainer}
+      showsVerticalScrollIndicator={false}
+      keyboardShouldPersistTaps="handled"
+    >
       <LinearGradient colors={[colors.primary[300], colors.primary[100]]} style={styles.gradient} />
       <View style={styles.container}>
         <Text style={styles.title}>{t('auth.login.title')}</Text>
@@ -96,7 +101,11 @@ const LoginScreen = () => {
             style={[styles.checkbox, stayLoggedIn && styles.checkboxChecked]}
             onPress={() => setStayLoggedIn((prev) => !prev)}
           >
-            {stayLoggedIn && <Text style={styles.checkboxMark}>✓</Text>}
+            {stayLoggedIn && (
+              <Text style={styles.checkboxMark} allowFontScaling={false}>
+                ✓
+              </Text>
+            )}
           </TouchableOpacity>
           <Text style={styles.stayLoggedInText}>{t('auth.login.stayLoggedIn')}</Text>
         </View>
@@ -127,7 +136,7 @@ const LoginScreen = () => {
           </Text>
         </TouchableOpacity>
       </View>
-    </View>
+    </ScrollView>
   );
 };
 
@@ -138,7 +147,12 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.primary[100],
   },
+  contentContainer: {
+    flexGrow: 1,
+    justifyContent: 'flex-end',
+  },
   gradient: {
+    minHeight: 180,
     flex: 1,
   },
   container: {
@@ -189,7 +203,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    gap: 30,
+    flexWrap: 'wrap',
+    gap: 12,
   },
   forgotText: {
     fontSize: 14,

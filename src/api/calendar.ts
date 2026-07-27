@@ -2,7 +2,6 @@ import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 import { apiClient } from './auth';
 
-
 export class CalendarApiError extends Error {
   constructor(
     public readonly code: string,

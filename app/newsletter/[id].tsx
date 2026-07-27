@@ -10,7 +10,6 @@ import ChecklistTab from '../../src/components/scan/result/ChecklistTab';
 import AISummaryTab from '../../src/components/scan/result/AISummaryTab';
 import { getNewsletterDetail, type NewsletterDetail } from '../../src/api/newsletter';
 import colors from '../../src/constants/colors';
-import layout from '../../src/constants/layout';
 import styles from '../../src/styles/scan/result';
 
 const TABS_ALL = ['full', 'checklist', 'aiSummary'] as const;

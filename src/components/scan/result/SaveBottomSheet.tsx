@@ -68,14 +68,13 @@ interface EventCardProps {
 
 const SHEET_HEIGHT = 560;
 const WINDOW_HEIGHT = Dimensions.get('window').height;
-const returnTrue = () => true;
 const STYLE_FULL_WIDTH = { width: '100%' } as const;
 const STYLE_FLEX_1 = { flex: 1 } as const;
 const STYLE_FLEX_2 = { flex: 2 } as const;
 
 const localStyles = StyleSheet.create({
-  scrollArea: { width: '100%', flexShrink: 1 },
-  scrollContent: { gap: 12 },
+  scrollArea: { width: '100%', flex: 1 },
+  scrollContent: { gap: 20, paddingBottom: 4 },
   loadingIndicator: { marginVertical: 16 },
   errorText: {
     fontSize: 13,
@@ -273,13 +272,12 @@ const SaveBottomSheet = ({
 
   const opacity = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(SHEET_HEIGHT)).current;
-  const keyboardOffset = useRef(new Animated.Value(0)).current;
-  const combinedY = useRef(Animated.add(translateY, keyboardOffset)).current;
+  const sheetWrapBottom = useRef(new Animated.Value(0)).current;
 
-  const animatedTransformStyle = useRef({ transform: [{ translateY: combinedY }] }).current;
+  const animatedTransformStyle = useRef({ transform: [{ translateY }] }).current;
 
   const sheetStyle = useMemo(
-    () => [styles.sheet, { paddingBottom: insets.bottom + 20, maxHeight: WINDOW_HEIGHT * 0.75 }],
+    () => [styles.sheet, { paddingBottom: insets.bottom + 20, height: WINDOW_HEIGHT * 0.85 }],
     [insets.bottom]
   );
 
@@ -377,7 +375,7 @@ const SaveBottomSheet = ({
       if (show) return;
       opacity.setValue(0);
       translateY.setValue(SHEET_HEIGHT);
-      keyboardOffset.setValue(0);
+      sheetWrapBottom.setValue(0);
       setShow(true);
       setStep('confirm');
       Animated.parallel([
@@ -396,25 +394,25 @@ const SaveBottomSheet = ({
         if (finished) setShow(false);
       });
     }
-  }, [visible, show, opacity, translateY, keyboardOffset]);
+  }, [visible, show, opacity, translateY, sheetWrapBottom]);
 
   useEffect(() => {
     const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
     const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
 
     const onShow = Keyboard.addListener(showEvent, (e) => {
-      Animated.timing(keyboardOffset, {
-        toValue: -e.endCoordinates.height,
+      Animated.timing(sheetWrapBottom, {
+        toValue: e.endCoordinates.height,
         duration: Platform.OS === 'ios' ? e.duration || 250 : 200,
-        useNativeDriver: true,
+        useNativeDriver: false,
       }).start();
     });
 
     const onHide = Keyboard.addListener(hideEvent, (e) => {
-      Animated.timing(keyboardOffset, {
+      Animated.timing(sheetWrapBottom, {
         toValue: 0,
         duration: Platform.OS === 'ios' ? e.duration || 250 : 200,
-        useNativeDriver: true,
+        useNativeDriver: false,
       }).start();
     });
 
@@ -422,7 +420,7 @@ const SaveBottomSheet = ({
       onShow.remove();
       onHide.remove();
     };
-  }, [keyboardOffset]);
+  }, [sheetWrapBottom]);
 
   const handleDateConfirmFor = useCallback(
     (tempEventId: string) => {
@@ -484,141 +482,150 @@ const SaveBottomSheet = ({
 
   return (
     <Modal visible={show} transparent animationType="none" onRequestClose={onClose}>
-      <Animated.View style={[styles.backdrop, { opacity }]}>
+      <View style={styles.modalRoot}>
+        <Animated.View
+          style={[StyleSheet.absoluteFill, styles.backdrop, { opacity }]}
+          pointerEvents="none"
+        />
+
         <Pressable
-          style={StyleSheet.absoluteFill}
+          style={styles.backdropTap}
           onPress={onClose}
           accessibilityRole="button"
           accessibilityLabel={t('scan.result.saveBottomSheet.accessibilityClose')}
         />
-      </Animated.View>
 
-      <View style={styles.sheetWrap}>
-        <Animated.View style={animatedTransformStyle}>
-          <View style={sheetStyle} onStartShouldSetResponder={returnTrue}>
-            <View style={styles.handle} />
+        <Animated.View style={[styles.sheetWrap, { bottom: sheetWrapBottom }]}>
+          <Animated.View style={animatedTransformStyle}>
+            <View style={sheetStyle}>
+              <View style={styles.handle} />
 
-            <View style={styles.iconWrap}>
-              <Ionicons name="calendar-outline" size={28} color={colors.primary[400]} />
-            </View>
-
-            {step === 'success' ? (
-              <>
-                <View style={styles.textBlock}>
-                  <Text style={styles.title}>{t('scan.result.saveBottomSheet.successTitle')}</Text>
-                  <Text style={styles.subtitle}>
-                    {t('scan.result.saveBottomSheet.successSubtitle')}
-                  </Text>
-                </View>
-                <ScrollView
-                  style={localStyles.scrollArea}
-                  contentContainerStyle={localStyles.scrollContent}
-                  showsVerticalScrollIndicator={false}
-                  keyboardShouldPersistTaps="handled"
-                >
-                  {previews.map((p) => {
-                    const es = eventStates[p.tempEventId];
-                    return (
-                      <View key={p.tempEventId} style={styles.eventCard}>
-                        <View style={styles.eventHeader}>
-                          <View style={styles.eventDot} />
-                          <View style={styles.successEventInfo}>
-                            <Text style={styles.eventTitle}>
-                              {p.title} · {childName}
-                            </Text>
-                            {es && (
-                              <Text style={styles.eventDate}>
-                                {getDisplayDate(es.year, es.month, es.day)}
+              {step === 'success' ? (
+                <>
+                  <ScrollView
+                    style={localStyles.scrollArea}
+                    contentContainerStyle={localStyles.scrollContent}
+                    showsVerticalScrollIndicator={false}
+                    keyboardShouldPersistTaps="handled"
+                  >
+                    <View style={styles.iconWrap}>
+                      <Ionicons name="calendar-outline" size={28} color={colors.primary[400]} />
+                    </View>
+                    <View style={styles.textBlock}>
+                      <Text style={styles.title}>
+                        {t('scan.result.saveBottomSheet.successTitle')}
+                      </Text>
+                      <Text style={styles.subtitle}>
+                        {t('scan.result.saveBottomSheet.successSubtitle')}
+                      </Text>
+                    </View>
+                    {previews.map((p) => {
+                      const es = eventStates[p.tempEventId];
+                      return (
+                        <View key={p.tempEventId} style={styles.eventCard}>
+                          <View style={styles.eventHeader}>
+                            <View style={styles.eventDot} />
+                            <View style={styles.successEventInfo}>
+                              <Text style={styles.eventTitle}>
+                                {p.title} · {childName}
                               </Text>
-                            )}
+                              {es && (
+                                <Text style={styles.eventDate}>
+                                  {getDisplayDate(es.year, es.month, es.day)}
+                                </Text>
+                              )}
+                            </View>
                           </View>
                         </View>
-                      </View>
-                    );
-                  })}
-                </ScrollView>
-                <PrimaryButton
-                  label={t('scan.result.saveBottomSheet.viewCalendar')}
-                  onPress={onConfirm}
-                  style={STYLE_FULL_WIDTH}
-                />
-                <SecondaryButton
-                  label={t('scan.result.saveBottomSheet.close')}
-                  onPress={onDismiss}
-                  style={STYLE_FULL_WIDTH}
-                />
-              </>
-            ) : (
-              <>
-                <View style={styles.textBlock}>
-                  <Text style={styles.title}>{t('scan.result.saveBottomSheet.title')}</Text>
-                  <Text style={styles.subtitle}>
-                    {hasAnyMissingDate
-                      ? t('scan.result.saveBottomSheet.subtitleManualDate')
-                      : t('scan.result.saveBottomSheet.subtitleAutoDate')}
-                  </Text>
-                </View>
-
-                {hasAnyMissingDate && (
-                  <View style={styles.warningCard}>
-                    <Ionicons name="warning" size={16} color={colors.text.primary} />
-                    <Text style={styles.warningText}>
-                      {t('scan.result.saveBottomSheet.dateNotFound')}
-                    </Text>
-                  </View>
-                )}
-
-                <ScrollView
-                  style={localStyles.scrollArea}
-                  contentContainerStyle={localStyles.scrollContent}
-                  showsVerticalScrollIndicator={false}
-                  keyboardShouldPersistTaps="handled"
-                >
-                  {previewLoading && (
-                    <ActivityIndicator
-                      size="small"
-                      color={colors.primary[400]}
-                      style={localStyles.loadingIndicator}
-                    />
-                  )}
-                  {!previewLoading && previewError && (
-                    <Text style={localStyles.errorText}>{previewError}</Text>
-                  )}
-                  {!previewLoading &&
-                    !previewError &&
-                    previews.map((p) => {
-                      const es = eventStates[p.tempEventId];
-                      if (!es) return null;
-                      return (
-                        <EventCard
-                          key={p.tempEventId}
-                          item={p}
-                          es={es}
-                          childName={childName}
-                          onUpdate={updateEventState}
-                          onDateConfirm={handleDateConfirmFor}
-                          getDisplayDate={getDisplayDate}
-                        />
                       );
                     })}
-                </ScrollView>
-
-                <View style={styles.buttons}>
-                  <SecondaryButton
-                    label={t('scan.result.saveBottomSheet.no')}
-                    onPress={onClose}
-                    style={STYLE_FLEX_1}
-                  />
+                  </ScrollView>
                   <PrimaryButton
-                    label={registering ? '...' : t('scan.result.saveBottomSheet.register')}
-                    onPress={handleRegisterConfirm}
-                    disabled={registering || !canRegister}
-                    style={STYLE_FLEX_2}
+                    label={t('scan.result.saveBottomSheet.viewCalendar')}
+                    onPress={onConfirm}
+                    style={STYLE_FULL_WIDTH}
                   />
-                </View>
-              </>
-            )}
-          </View>
+                  <SecondaryButton
+                    label={t('scan.result.saveBottomSheet.close')}
+                    onPress={onDismiss}
+                    style={STYLE_FULL_WIDTH}
+                  />
+                </>
+              ) : (
+                <>
+                  <ScrollView
+                    style={localStyles.scrollArea}
+                    contentContainerStyle={localStyles.scrollContent}
+                    showsVerticalScrollIndicator={false}
+                    keyboardShouldPersistTaps="handled"
+                  >
+                    <View style={styles.iconWrap}>
+                      <Ionicons name="calendar-outline" size={28} color={colors.primary[400]} />
+                    </View>
+                    <View style={styles.textBlock}>
+                      <Text style={styles.title}>{t('scan.result.saveBottomSheet.title')}</Text>
+                      <Text style={styles.subtitle}>
+                        {hasAnyMissingDate
+                          ? t('scan.result.saveBottomSheet.subtitleManualDate')
+                          : t('scan.result.saveBottomSheet.subtitleAutoDate')}
+                      </Text>
+                    </View>
+
+                    {hasAnyMissingDate && (
+                      <View style={styles.warningCard}>
+                        <Ionicons name="warning" size={16} color={colors.text.primary} />
+                        <Text style={styles.warningText}>
+                          {t('scan.result.saveBottomSheet.dateNotFound')}
+                        </Text>
+                      </View>
+                    )}
+
+                    {previewLoading && (
+                      <ActivityIndicator
+                        size="small"
+                        color={colors.primary[400]}
+                        style={localStyles.loadingIndicator}
+                      />
+                    )}
+                    {!previewLoading && previewError && (
+                      <Text style={localStyles.errorText}>{previewError}</Text>
+                    )}
+                    {!previewLoading &&
+                      !previewError &&
+                      previews.map((p) => {
+                        const es = eventStates[p.tempEventId];
+                        if (!es) return null;
+                        return (
+                          <EventCard
+                            key={p.tempEventId}
+                            item={p}
+                            es={es}
+                            childName={childName}
+                            onUpdate={updateEventState}
+                            onDateConfirm={handleDateConfirmFor}
+                            getDisplayDate={getDisplayDate}
+                          />
+                        );
+                      })}
+                  </ScrollView>
+
+                  <View style={styles.buttons}>
+                    <SecondaryButton
+                      label={t('scan.result.saveBottomSheet.no')}
+                      onPress={onClose}
+                      style={STYLE_FLEX_1}
+                    />
+                    <PrimaryButton
+                      label={registering ? '...' : t('scan.result.saveBottomSheet.register')}
+                      onPress={handleRegisterConfirm}
+                      disabled={registering || !canRegister}
+                      style={STYLE_FLEX_2}
+                    />
+                  </View>
+                </>
+              )}
+            </View>
+          </Animated.View>
         </Animated.View>
       </View>
     </Modal>

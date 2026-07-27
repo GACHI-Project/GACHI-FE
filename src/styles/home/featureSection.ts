@@ -61,9 +61,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    height: 28,
-    borderRadius: 14,
+    borderRadius: 100,
     paddingHorizontal: 12,
+    paddingVertical: 7,
     alignSelf: 'flex-start',
   },
   cardButtonText: {

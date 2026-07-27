@@ -52,11 +52,13 @@ const FeatureSection = () => {
             <View style={styles.cardBottom}>
               <View style={styles.cardTexts}>
                 {card.title.map((line) => (
-                  <Text key={line} style={styles.cardTitle}>
+                  <Text key={line} style={styles.cardTitle} numberOfLines={1}>
                     {line}
                   </Text>
                 ))}
-                <Text style={styles.cardDesc}>{card.desc}</Text>
+                <Text style={styles.cardDesc} numberOfLines={2}>
+                  {card.desc}
+                </Text>
               </View>
               <TouchableOpacity
                 style={[styles.cardButton, { backgroundColor: card.buttonColor }]}
@@ -71,7 +73,10 @@ const FeatureSection = () => {
                   size={12}
                   color={card.buttonTextColor}
                 />
-                <Text style={[styles.cardButtonText, { color: card.buttonTextColor }]}>
+                <Text
+                  style={[styles.cardButtonText, { color: card.buttonTextColor }]}
+                  numberOfLines={1}
+                >
                   {card.buttonLabel}
                 </Text>
               </TouchableOpacity>

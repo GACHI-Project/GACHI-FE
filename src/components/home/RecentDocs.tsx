@@ -83,8 +83,10 @@ const RecentDocs = () => {
                       />
                     </View>
                     <View style={styles.docTexts}>
-                      <Text style={styles.docTitle}>{doc.title!}</Text>
-                      <Text style={styles.docMeta}>
+                      <Text style={styles.docTitle} numberOfLines={2}>
+                        {doc.title!}
+                      </Text>
+                      <Text style={styles.docMeta} numberOfLines={1}>
                         {[
                           doc.childName,
                           doc.childGrade != null

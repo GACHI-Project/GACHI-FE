@@ -15,7 +15,7 @@ const styles = StyleSheet.create({
   },
   summaryRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     paddingHorizontal: 17,
     gap: 13,
   },
@@ -78,7 +78,7 @@ const styles = StyleSheet.create({
   },
   todoRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     paddingHorizontal: 17,
     gap: 18,
   },
@@ -117,12 +117,14 @@ const styles = StyleSheet.create({
   todoMeta: {
     flexDirection: 'row',
     alignItems: 'center',
+    flexWrap: 'wrap',
     gap: 5,
   },
   childTag: {
     paddingHorizontal: 8,
-    height: 20,
-    borderRadius: 10,
+    paddingVertical: 3,
+    minHeight: 20,
+    borderRadius: 100,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -138,12 +140,14 @@ const styles = StyleSheet.create({
     color: colors.text.secondary,
   },
   todayBadge: {
-    width: 42,
-    height: 22,
-    borderRadius: 11,
+    minWidth: 42,
+    minHeight: 22,
+    borderRadius: 100,
     backgroundColor: colors.primary[400],
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
   },
   todayText: {
     fontSize: 12,

@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import colors from '../../constants/colors';
-import styles from '../../styles/home/featureSection';
+import styles from './featureSection.styles';
 
 interface FeatureCardBase {
   id: string;

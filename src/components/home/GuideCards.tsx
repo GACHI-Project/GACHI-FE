@@ -1,7 +1,7 @@
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import styles from '../../styles/home/guideCards';
+import styles from './guideCards.styles';
 
 const GUIDE_EMOJIS = ['📋', '👩‍🏫', '🎒', '👕'];
 

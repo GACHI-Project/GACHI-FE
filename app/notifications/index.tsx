@@ -1,23 +1,17 @@
-import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { View, Text, FlatList, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import { router, useFocusEffect } from 'expo-router';
+import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Header from '../../src/components/common/Header';
 import HeaderMenuButton from '../../src/components/common/HeaderMenuButton';
 import ChildFilterBar from '../../src/components/common/ChildFilterBar';
-import {
-  fetchNotifications,
-  markNotificationRead,
-  markAllNotificationsRead,
-  type NotificationApiItem,
-  type NotificationType,
-} from '../../src/api/notifications';
-import { fetchChildren, type ChildInfo } from '../../src/api/calendar';
-import { useNotificationStore } from '../../src/store/notificationStore';
+import { type NotificationApiItem, type NotificationType } from '../../src/api/notifications';
 import colors from '../../src/constants/colors';
 import styles from '../../src/styles/notifications/notifications';
+import useNotificationList from '../../src/hooks/notifications/useNotificationList';
+import { fmt } from '../../src/utils/date';
 
 type FeatherName = React.ComponentProps<typeof Feather>['name'];
 
@@ -31,95 +25,30 @@ const ICON_CONFIG: Record<NotificationType, { bg: string; icon: FeatherName; col
   ANNOUNCEMENT: { bg: colors.primary[100], icon: 'bell', color: colors.primary[400] },
 };
 
-const formatDateStr = (d: Date) =>
-  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-
 type ListRow = { kind: 'header'; date: string } | { kind: 'item'; data: NotificationApiItem };
 
 const NotificationsScreen = () => {
   const { t, i18n: i18nInstance } = useTranslation();
   const insets = useSafeAreaInsets();
   const now = new Date();
-  const todayStr = formatDateStr(now);
+  const todayStr = fmt(now);
   const yesterdayDate = new Date(now);
   yesterdayDate.setDate(yesterdayDate.getDate() - 1);
-  const yesterdayStr = formatDateStr(yesterdayDate);
+  const yesterdayStr = fmt(yesterdayDate);
 
-  const { setUnreadCount } = useNotificationStore();
-
-  const [notifications, setNotifications] = useState<NotificationApiItem[]>([]);
-  const [children, setChildren] = useState<ChildInfo[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [loadError, setLoadError] = useState(false);
   const [selectedChildName, setSelectedChildName] = useState<string | undefined>(undefined);
-  const [cursor, setCursor] = useState<number | null>(null);
-  const [hasNext, setHasNext] = useState(false);
-  const [isFetchingMore, setIsFetchingMore] = useState(false);
 
-  const notificationsRef = useRef<NotificationApiItem[]>([]);
-  useEffect(() => {
-    notificationsRef.current = notifications;
-  }, [notifications]);
-
-  const loadInitial = useCallback(() => {
-    setIsLoading(true);
-    setLoadError(false);
-    Promise.all([fetchNotifications({ size: 20 }), fetchChildren()])
-      .then(([notifResult, childrenResult]) => {
-        setNotifications(notifResult.notifications);
-        setCursor(notifResult.nextCursor);
-        setHasNext(notifResult.hasNext);
-        setChildren(childrenResult);
-        setUnreadCount(notifResult.notifications.filter((n) => !n.read).length);
-      })
-      .catch(() => setLoadError(true))
-      .finally(() => setIsLoading(false));
-  }, [setUnreadCount]);
-
-  useFocusEffect(
-    useCallback(() => {
-      loadInitial();
-    }, [loadInitial])
-  );
-
-  const loadMore = useCallback(async () => {
-    if (!hasNext || isFetchingMore) return;
-    setIsFetchingMore(true);
-    try {
-      const result = await fetchNotifications({ cursor: cursor ?? undefined, size: 20 });
-      setNotifications((prev) => [...prev, ...result.notifications]);
-      setCursor(result.nextCursor);
-      setHasNext(result.hasNext);
-    } catch {
-      // ignore — 무한 스크롤 실패는 조용히 처리
-    } finally {
-      setIsFetchingMore(false);
-    }
-  }, [hasNext, isFetchingMore, cursor]);
-
-  const markAsRead = useCallback(
-    (id: number) => {
-      const target = notificationsRef.current.find((n) => n.id === id);
-      if (!target || target.read) return;
-      setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
-      setUnreadCount(Math.max(0, notificationsRef.current.filter((n) => !n.read).length - 1));
-      markNotificationRead(id).catch(() => {
-        setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: false } : n)));
-        setUnreadCount(notificationsRef.current.filter((n) => !n.read).length);
-      });
-    },
-    [setUnreadCount]
-  );
-
-  const handleMarkAllRead = useCallback(() => {
-    const snapshot = notificationsRef.current;
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-    setUnreadCount(0);
-    markAllNotificationsRead().catch(() => {
-      setNotifications(snapshot);
-      setUnreadCount(snapshot.filter((n) => !n.read).length);
-    });
-  }, [setUnreadCount]);
+  const {
+    notifications,
+    children,
+    isLoading,
+    loadError,
+    isFetchingMore,
+    loadInitial,
+    loadMore,
+    markAsRead,
+    handleMarkAllRead,
+  } = useNotificationList();
 
   const handlePress = useCallback(
     (item: NotificationApiItem) => {

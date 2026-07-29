@@ -45,3 +45,13 @@ export const formatDate = (iso: string, locale: string): string =>
     month: 'long',
     day: 'numeric',
   }).format(new Date(iso));
+
+export const formatShortDate = (iso: string): string => {
+  const d = new Date(iso);
+  return `${d.getFullYear()}. ${d.getMonth() + 1}. ${d.getDate()}`;
+};
+
+export const formatYearMonth = (iso: string): string => {
+  const d = new Date(iso);
+  return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}`;
+};

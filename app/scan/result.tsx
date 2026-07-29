@@ -1,12 +1,5 @@
-import { useEffect, useState, useCallback } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  ScrollView,
-  ActivityIndicator,
-  BackHandler,
-} from 'react-native';
+import { useState, useCallback, useEffect } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, BackHandler } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -18,17 +11,12 @@ import FullDocTab from '../../src/components/scan/result/FullDocTab';
 import ChecklistTab from '../../src/components/scan/result/ChecklistTab';
 import AISummaryTab from '../../src/components/scan/result/AISummaryTab';
 import SaveBottomSheet from '../../src/components/scan/result/SaveBottomSheet';
-import { getNewsletterDetail, type NewsletterDetail } from '../../src/api/newsletter';
+import ScanDocInfo from '../../src/components/scan/result/ScanDocInfo';
+import ScanTabBar, { type Tab } from '../../src/components/scan/result/ScanTabBar';
+import useNewsletterDetail from '../../src/hooks/scan/useNewsletterDetail';
+import { formatDate } from '../../src/utils/date';
 import colors from '../../src/constants/colors';
 import styles from '../../src/styles/scan/result';
-
-const TABS = ['full', 'checklist', 'aiSummary'] as const;
-type Tab = (typeof TABS)[number];
-
-const formatDate = (iso: string, locale: string) =>
-  new Intl.DateTimeFormat(locale, { year: 'numeric', month: 'long', day: 'numeric' }).format(
-    new Date(iso)
-  );
 
 const ScanResultScreen = () => {
   const {
@@ -44,14 +32,13 @@ const ScanResultScreen = () => {
 
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { t, i18n } = useTranslation();
+  const { i18n, t } = useTranslation();
   const [activeTab, setActiveTab] = useState<Tab>('full');
   const [helpVisible, setHelpVisible] = useState(false);
   const [saveVisible, setSaveVisible] = useState(false);
-
-  const [detail, setDetail] = useState<NewsletterDetail | null>(null);
-  const [detailLoading, setDetailLoading] = useState(!!newsletterIdParam);
   const [unsavedVisible, setUnsavedVisible] = useState(false);
+
+  const { detail, loading: detailLoading } = useNewsletterDetail(newsletterId);
 
   const handleBack = useCallback(() => {
     setUnsavedVisible(true);
@@ -64,32 +51,6 @@ const ScanResultScreen = () => {
     });
     return () => sub.remove();
   }, []);
-
-  useEffect(() => {
-    if (!newsletterId) {
-      setDetail(null);
-      setDetailLoading(false);
-      return () => {};
-    }
-    let cancelled = false;
-    setDetail(null);
-    setDetailLoading(true);
-
-    getNewsletterDetail(newsletterId)
-      .then((data) => {
-        if (!cancelled) setDetail(data);
-      })
-      .catch(() => {
-        if (!cancelled) setDetail(null);
-      })
-      .finally(() => {
-        if (!cancelled) setDetailLoading(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [newsletterId]);
 
   const displayTitle = detail?.title ?? '';
   const displayChildName = detail?.childName ?? childNameParam ?? '';
@@ -104,57 +65,15 @@ const ScanResultScreen = () => {
       />
 
       <View style={styles.content}>
-        <View style={styles.docInfo}>
-          {detailLoading ? (
-            <ActivityIndicator size="small" color={colors.primary[400]} />
-          ) : (
-            <>
-              <Text style={styles.docTitle} numberOfLines={2}>
-                {displayTitle}
-              </Text>
-              <View style={styles.metaRow}>
-                {displayDate ? (
-                  <View style={styles.metaItem}>
-                    <Ionicons name="calendar" size={13} color={colors.text.secondary} />
-                    <Text style={styles.metaText} numberOfLines={1}>
-                      {displayDate}
-                    </Text>
-                  </View>
-                ) : null}
-                {displayChildName || childGrade ? (
-                  <View style={styles.metaItem}>
-                    <Ionicons name="school" size={13} color={colors.text.secondary} />
-                    <Text style={styles.metaText} numberOfLines={1}>
-                      {displayChildName}
-                      {displayChildName && childGrade ? ' · ' : ''}
-                      {childGrade ?? ''}
-                    </Text>
-                  </View>
-                ) : null}
-              </View>
-            </>
-          )}
-        </View>
+        <ScanDocInfo
+          loading={detailLoading}
+          title={displayTitle}
+          date={displayDate}
+          childName={displayChildName}
+          childGrade={childGrade}
+        />
 
-        <View style={styles.tabBar}>
-          {TABS.map((tab) => (
-            <TouchableOpacity
-              key={tab}
-              style={styles.tab}
-              onPress={() => setActiveTab(tab)}
-              accessibilityRole="tab"
-              accessibilityState={{ selected: activeTab === tab }}
-            >
-              <Text
-                style={[styles.tabLabel, activeTab === tab && styles.tabLabelActive]}
-                numberOfLines={1}
-              >
-                {t(`scan.result.tabs.${tab}`)}
-              </Text>
-              {activeTab === tab && <View style={styles.tabUnderline} />}
-            </TouchableOpacity>
-          ))}
-        </View>
+        <ScanTabBar activeTab={activeTab} onTabChange={setActiveTab} />
         <View style={styles.tabDivider} />
 
         <ScrollView

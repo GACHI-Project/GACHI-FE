@@ -263,6 +263,26 @@ export const getConversationTopics = async (newsletterId: number): Promise<Conve
   }
 };
 
+export interface CulturalGuide {
+  faqId: number;
+  category: string;
+  question: string;
+  answer: string;
+}
+
+export const getCulturalGuides = async (newsletterId: number): Promise<CulturalGuide[]> => {
+  try {
+    const headers = await getAuthHeader();
+    const response = await apiClient.get<{ result: { guides: CulturalGuide[] } }>(
+      `/api/v1/newsletters/${newsletterId}/cultural-guides`,
+      { headers }
+    );
+    return response.data.result.guides ?? [];
+  } catch (error) {
+    throw wrapError(error);
+  }
+};
+
 export const fetchNewsletters = async (params: {
   childName?: string;
   search?: string;

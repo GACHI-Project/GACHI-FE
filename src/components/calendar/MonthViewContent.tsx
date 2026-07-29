@@ -16,7 +16,7 @@ const formatDayLabel = (dateStr: string, locale: string) => {
 };
 
 interface Props {
-  scrollRef: React.RefObject<ScrollView>;
+  scrollRef: React.RefObject<ScrollView | null>;
   calendarMonth: { year: number; month: number };
   today: string;
   selectedDate: string;

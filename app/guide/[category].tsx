@@ -90,7 +90,7 @@ const CategoryScreen = () => {
           keyExtractor={(item) => String(item.faqId)}
           extraData={{ expandedId, answerCache, loadingDetailId }}
           showsVerticalScrollIndicator={false}
-          renderItem={({ item }: { item: SchoolGuideFaqItem }) => {
+          renderItem={({ item }) => {
             const expanded = expandedId === item.faqId;
             const answer = answerCache[item.faqId];
             const detailLoading = loadingDetailId === item.faqId;

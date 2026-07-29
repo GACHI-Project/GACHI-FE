@@ -18,7 +18,7 @@ const formatWeekDateHeader = (dateStr: string, locale: string) => {
 };
 
 interface Props {
-  scrollRef: React.RefObject<ScrollView>;
+  scrollRef: React.RefObject<ScrollView | null>;
   weekDates: string[];
   today: string;
   weekMarkedDates: Record<string, { dots: { key: string; color: string }[] }>;

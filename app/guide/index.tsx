@@ -16,7 +16,6 @@ import Header from '../../src/components/common/Header';
 import colors from '../../src/constants/colors';
 import layout from '../../src/constants/layout';
 import styles from '../../src/styles/guide/guideScreen';
-import { type SchoolGuideFaqItem } from '../../src/api/schoolGuide';
 import useGuideData from '../../src/hooks/guide/useGuideData';
 import useGuideSearch from '../../src/hooks/guide/useGuideSearch';
 import useGuideFaqExpand from '../../src/hooks/guide/useGuideFaqExpand';
@@ -106,7 +105,7 @@ const GuideScreen = () => {
           styles.searchResultsList,
           { paddingBottom: insets.bottom + layout.screenPaddingBottom },
         ]}
-        renderItem={({ item }: { item: SchoolGuideFaqItem }) => {
+        renderItem={({ item }) => {
           const expanded = expandedId === item.faqId;
           const answer = answerCache[item.faqId];
           const detailLoading = loadingDetailId === item.faqId;

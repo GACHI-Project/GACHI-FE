@@ -9,7 +9,8 @@ import {
 } from '../../api/checklist';
 import { getMyChildren, type ChildResult } from '../../api/child';
 import colors from '../../constants/colors';
-import styles from '../../styles/home/taskCard';
+import styles from './taskCard.styles';
+import TodoItem from './TodoItem';
 
 const VISIBLE_COUNT = 2;
 
@@ -132,59 +133,15 @@ const TaskCard = () => {
     if (error) return <Text style={styles.emptyText}>{t('common.networkError')}</Text>;
     if (total === 0) return <Text style={styles.emptyText}>{t('home.taskCard.empty')}</Text>;
     return visibleItems.map((item, index) => (
-      <View key={item.checklistId}>
-        <View style={styles.todoRow}>
-          <TouchableOpacity
-            style={[styles.checkbox, checked[item.checklistId] && styles.checkboxChecked]}
-            onPress={() => toggleCheck(item.checklistId, !!checked[item.checklistId])}
-            activeOpacity={0.7}
-            disabled={!!pendingIds[item.checklistId]}
-            accessibilityRole="checkbox"
-            accessibilityState={{
-              checked: !!checked[item.checklistId],
-              busy: !!pendingIds[item.checklistId],
-            }}
-            accessibilityLabel={item.content}
-          >
-            {checked[item.checklistId] && (
-              <Text style={styles.checkMark} allowFontScaling={false}>
-                ✓
-              </Text>
-            )}
-          </TouchableOpacity>
-          <View style={styles.todoContent}>
-            <Text
-              style={[styles.todoTitle, checked[item.checklistId] && styles.todoTitleDone]}
-              numberOfLines={2}
-            >
-              {item.content}
-            </Text>
-            <View style={styles.todoMeta}>
-              <View
-                style={[
-                  styles.childTag,
-                  { backgroundColor: colorMap[item.childName] ?? colors.primary[300] },
-                ]}
-              >
-                <Text style={styles.childTagText} numberOfLines={1}>
-                  {item.childName}
-                </Text>
-              </View>
-              {item.detail ? (
-                <Text style={styles.todoDesc} numberOfLines={1}>
-                  {item.detail}
-                </Text>
-              ) : null}
-            </View>
-          </View>
-          <View style={styles.todayBadge}>
-            <Text style={styles.todayText} numberOfLines={1}>
-              {t('home.taskCard.today')}
-            </Text>
-          </View>
-        </View>
-        {index < visibleItems.length - 1 && <View style={styles.divider} />}
-      </View>
+      <TodoItem
+        key={item.checklistId}
+        item={item}
+        isChecked={!!checked[item.checklistId]}
+        isPending={!!pendingIds[item.checklistId]}
+        childColor={colorMap[item.childName] ?? colors.primary[300]}
+        showDivider={index < visibleItems.length - 1}
+        onToggle={toggleCheck}
+      />
     ));
   };
 

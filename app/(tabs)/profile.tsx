@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState } from 'react';
 import {
   ScrollView,
   View,
@@ -9,24 +9,19 @@ import {
   Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { router, useFocusEffect } from 'expo-router';
+import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import ConfirmModal from '../../src/components/common/ConfirmModal';
-import { ChildInfo } from '../../src/types/child';
-import { fetchChildren, registerChild, updateChild, deleteChild } from '../../src/api/child';
-import { useChildrenStore } from '../../src/store/childrenStore';
-import { fetchMyInfo, UserInfo } from '../../src/api/user';
+import { type ChildInfo } from '../../src/types/child';
 import { logout } from '../../src/api/auth';
 import { CALENDAR_COLORS } from '../../src/constants/child';
 import colors from '../../src/constants/colors';
 import styles from '../../src/styles/profile/profile';
 import Header from '../../src/components/common/Header';
 import ChildEditSheet from '../../src/components/profile/ChildEditSheet';
-
-const formatJoinDate = (iso: string) => {
-  const d = new Date(iso);
-  return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}`;
-};
+import useProfileData from '../../src/hooks/profile/useProfileData';
+import useChildMutations from '../../src/hooks/profile/useChildMutations';
+import { formatYearMonth } from '../../src/utils/date';
 
 const LANGUAGE_NAMES: Record<string, string> = {
   ko: '한국어',
@@ -40,40 +35,13 @@ const APP_VERSION = '1.0.0';
 const ProfileScreen = () => {
   const { t, i18n } = useTranslation();
   const currentLanguageName = LANGUAGE_NAMES[i18n.language] ?? i18n.language;
-  const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
-  const { children, setChildren } = useChildrenStore();
-  const [isLoading, setIsLoading] = useState(false);
   const [editingChild, setEditingChild] = useState<ChildInfo | null>(null);
   const [sheetVisible, setSheetVisible] = useState(false);
   const [isNewChild, setIsNewChild] = useState(false);
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
 
-  useEffect(() => {
-    const load = async () => {
-      setIsLoading(true);
-      try {
-        const result = await fetchChildren();
-        setChildren(result);
-      } catch {
-        // 조회 실패 시 빈 목록 유지
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    load();
-  }, [setChildren]);
-
-  useFocusEffect(
-    useCallback(() => {
-      fetchMyInfo()
-        .then(setUserInfo)
-        .catch(() => {});
-    }, [])
-  );
-
-  const handleLogout = () => {
-    setLogoutModalVisible(true);
-  };
+  const { userInfo, children, isLoading } = useProfileData();
+  const { saveChild, removeChild } = useChildMutations();
 
   return (
     <View style={styles.container}>
@@ -90,7 +58,7 @@ const ProfileScreen = () => {
               </View>
               <Text style={styles.joinDate}>
                 {t('profile.joinDate', {
-                  date: userInfo ? formatJoinDate(userInfo.createdAt) : '',
+                  date: userInfo ? formatYearMonth(userInfo.createdAt) : '',
                 })}
               </Text>
             </View>
@@ -207,10 +175,11 @@ const ProfileScreen = () => {
           </View>
         </View>
 
-        <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
+        <TouchableOpacity style={styles.logoutBtn} onPress={() => setLogoutModalVisible(true)}>
           <Text style={styles.logoutText}>{t('profile.logout')}</Text>
         </TouchableOpacity>
       </ScrollView>
+
       <ConfirmModal
         visible={logoutModalVisible}
         onClose={() => setLogoutModalVisible(false)}
@@ -231,51 +200,20 @@ const ProfileScreen = () => {
         isNew={isNewChild}
         onClose={() => setSheetVisible(false)}
         onSave={async (updated) => {
-          if (isNewChild) {
-            try {
-              await registerChild({
-                name: updated.name,
-                schoolName: updated.selectedSchool?.schoolName ?? updated.schoolQuery,
-                schoolCode: updated.selectedSchool?.schoolCode ?? '',
-                officeCode: updated.selectedSchool?.officeCode ?? '',
-                grade: updated.grade ?? 1,
-                colorCode: updated.calendarColor ?? '#2BAEE0',
-                className: updated.className ?? '',
-              });
-              const result = await fetchChildren();
-              setChildren(result);
-            } catch (e) {
-              Alert.alert(
-                t('common.error'),
-                e instanceof Error ? e.message : t('profile.childEdit.addFailed')
-              );
-              return;
-            }
-          } else {
-            try {
-              await updateChild(Number(updated.id), {
-                name: updated.name,
-                schoolName: updated.selectedSchool?.schoolName ?? updated.schoolQuery,
-                schoolCode: updated.selectedSchool?.schoolCode ?? '',
-                officeCode: updated.selectedSchool?.officeCode ?? '',
-                grade: updated.grade ?? 1,
-                colorCode: updated.calendarColor ?? '#2BAEE0',
-                className: updated.className ?? '',
-              });
-              const result = await fetchChildren();
-              setChildren(result);
-            } catch {
-              Alert.alert(t('common.error'), t('profile.childEdit.updateFailed'));
-              return;
-            }
+          try {
+            await saveChild(updated, isNewChild);
+            setSheetVisible(false);
+          } catch (e) {
+            const addMsg = e instanceof Error ? e.message : t('profile.childEdit.addFailed');
+            Alert.alert(
+              t('common.error'),
+              isNewChild ? addMsg : t('profile.childEdit.updateFailed')
+            );
           }
-          setSheetVisible(false);
         }}
         onDelete={async (id) => {
           try {
-            await deleteChild(Number(id));
-            const result = await fetchChildren();
-            setChildren(result);
+            await removeChild(id);
           } catch {
             Alert.alert(t('common.error'), t('profile.childEdit.deleteFailed'));
           }

@@ -28,8 +28,6 @@ interface ScanHelpModalProps {
   onClose: () => void;
 }
 
-const SHEET_HEIGHT = 600;
-
 const ScanHelpModal = ({ visible, onClose }: ScanHelpModalProps) => {
   const { t } = useTranslation();
   const { height: screenHeight } = useWindowDimensions();
@@ -40,12 +38,12 @@ const ScanHelpModal = ({ visible, onClose }: ScanHelpModalProps) => {
     desc: t(`scan.helpModal.step${i + 1}.desc`),
   }));
   const opacity = useRef(new Animated.Value(0)).current;
-  const translateY = useRef(new Animated.Value(SHEET_HEIGHT)).current;
+  const translateY = useRef(new Animated.Value(screenHeight)).current;
 
   useEffect(() => {
     if (visible) {
       opacity.setValue(0);
-      translateY.setValue(SHEET_HEIGHT);
+      translateY.setValue(screenHeight);
       setShow(true);
       Animated.parallel([
         Animated.timing(opacity, {
@@ -68,7 +66,7 @@ const ScanHelpModal = ({ visible, onClose }: ScanHelpModalProps) => {
           useNativeDriver: true,
         }),
         Animated.timing(translateY, {
-          toValue: SHEET_HEIGHT,
+          toValue: screenHeight,
           duration: 220,
           useNativeDriver: true,
         }),
@@ -76,7 +74,7 @@ const ScanHelpModal = ({ visible, onClose }: ScanHelpModalProps) => {
         if (finished) setShow(false);
       });
     }
-  }, [visible, show, opacity, translateY]);
+  }, [visible, show, opacity, translateY, screenHeight]);
 
   return (
     <Modal visible={show} transparent animationType="none" onRequestClose={onClose}>

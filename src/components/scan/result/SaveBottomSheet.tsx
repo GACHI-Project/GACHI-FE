@@ -11,7 +11,7 @@ import {
   Keyboard,
   ScrollView,
   Platform,
-  Dimensions,
+  useWindowDimensions,
   ActivityIndicator,
   Alert,
 } from 'react-native';
@@ -67,7 +67,6 @@ interface EventCardProps {
 }
 
 const SHEET_HEIGHT = 560;
-const WINDOW_HEIGHT = Dimensions.get('window').height;
 const STYLE_FULL_WIDTH = { width: '100%' } as const;
 const STYLE_FLEX_1 = { flex: 1 } as const;
 const STYLE_FLEX_2 = { flex: 2 } as const;
@@ -250,6 +249,8 @@ const SaveBottomSheet = ({
 }: Props) => {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const { height: windowHeight } = useWindowDimensions();
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
 
   const [show, setShow] = useState(false);
   const [step, setStep] = useState<'confirm' | 'success'>('confirm');
@@ -277,8 +278,11 @@ const SaveBottomSheet = ({
   const animatedTransformStyle = useRef({ transform: [{ translateY }] }).current;
 
   const sheetStyle = useMemo(
-    () => [styles.sheet, { paddingBottom: insets.bottom + 20, height: WINDOW_HEIGHT * 0.85 }],
-    [insets.bottom]
+    () => [
+      styles.sheet,
+      { paddingBottom: insets.bottom + 20, height: windowHeight * 0.85 - keyboardHeight },
+    ],
+    [insets.bottom, windowHeight, keyboardHeight]
   );
 
   const hasAnyMissingDate = previews.some((p) => !p.isDateExtracted);
@@ -376,6 +380,7 @@ const SaveBottomSheet = ({
       opacity.setValue(0);
       translateY.setValue(SHEET_HEIGHT);
       sheetWrapBottom.setValue(0);
+      setKeyboardHeight(0);
       setShow(true);
       setStep('confirm');
       Animated.parallel([
@@ -401,14 +406,17 @@ const SaveBottomSheet = ({
     const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
 
     const onShow = Keyboard.addListener(showEvent, (e) => {
+      const kbH = e.endCoordinates.height;
+      setKeyboardHeight(kbH);
       Animated.timing(sheetWrapBottom, {
-        toValue: e.endCoordinates.height,
+        toValue: kbH,
         duration: Platform.OS === 'ios' ? e.duration || 250 : 200,
         useNativeDriver: false,
       }).start();
     });
 
     const onHide = Keyboard.addListener(hideEvent, (e) => {
+      setKeyboardHeight(0);
       Animated.timing(sheetWrapBottom, {
         toValue: 0,
         duration: Platform.OS === 'ios' ? e.duration || 250 : 200,

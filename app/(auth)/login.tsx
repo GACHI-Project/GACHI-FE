@@ -118,15 +118,15 @@ const LoginScreen = () => {
           disabled={!id || !password || loading}
         />
 
-        <View style={styles.forgotRow}>
-          <TouchableOpacity onPress={() => router.push('/(auth)/find-id')}>
-            <Text style={styles.forgotText}>{t('auth.login.forgotId')}</Text>
-          </TouchableOpacity>
-          <View style={styles.forgotDivider} />
-          <TouchableOpacity onPress={() => router.push('/(auth)/find-password')}>
-            <Text style={styles.forgotText}>{t('auth.login.forgotPassword')}</Text>
-          </TouchableOpacity>
-        </View>
+        <Text style={styles.forgotRow}>
+          <Text style={styles.forgotText} onPress={() => router.push('/(auth)/find-id')}>
+            {t('auth.login.forgotId')}
+          </Text>
+          {'  |  '}
+          <Text style={styles.forgotText} onPress={() => router.push('/(auth)/find-password')}>
+            {t('auth.login.forgotPassword')}
+          </Text>
+        </Text>
 
         <TouchableOpacity onPress={() => router.push('/(auth)/register/language')}>
           <Text style={styles.signUpText}>
@@ -200,21 +200,12 @@ const styles = StyleSheet.create({
     color: colors.text.secondary,
   },
   forgotRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-    gap: 12,
+    textAlign: 'center',
   },
   forgotText: {
     fontSize: 14,
     fontFamily: fonts.regular,
     color: colors.text.primary,
-  },
-  forgotDivider: {
-    width: 1,
-    height: 14,
-    backgroundColor: colors.gray[300],
   },
   signUpText: {
     fontSize: 14,

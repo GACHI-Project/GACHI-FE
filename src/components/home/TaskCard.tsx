@@ -166,7 +166,7 @@ const TaskCard = () => {
                   { backgroundColor: colorMap[item.childName] ?? colors.primary[300] },
                 ]}
               >
-                <Text style={styles.childTagText} allowFontScaling={false}>
+                <Text style={styles.childTagText} numberOfLines={1}>
                   {item.childName}
                 </Text>
               </View>
@@ -178,7 +178,7 @@ const TaskCard = () => {
             </View>
           </View>
           <View style={styles.todayBadge}>
-            <Text style={styles.todayText} allowFontScaling={false}>
+            <Text style={styles.todayText} numberOfLines={1}>
               {t('home.taskCard.today')}
             </Text>
           </View>
@@ -192,10 +192,10 @@ const TaskCard = () => {
     <View style={styles.card}>
       <View style={styles.summaryRow}>
         <View style={styles.dateBadge}>
-          <Text style={styles.dateMonth} allowFontScaling={false}>
+          <Text style={styles.dateMonth} numberOfLines={1}>
             {todayMonth}
           </Text>
-          <Text style={styles.dateDay} allowFontScaling={false}>
+          <Text style={styles.dateDay} numberOfLines={1}>
             {todayDay}
           </Text>
         </View>

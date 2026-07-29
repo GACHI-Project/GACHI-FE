@@ -66,6 +66,9 @@ const TabBar = ({ state, navigation, insets }: BottomTabBarProps) => {
                 style={styles.scanWrapper}
                 onPress={() => router.push('/scan')}
                 activeOpacity={0.85}
+                accessibilityRole="button"
+                accessibilityLabel={t(tab.labelKey)}
+                accessibilityState={{ selected: isActive }}
               >
                 <View style={styles.scanButton}>
                   <Svg width={60} height={60} style={StyleSheet.absoluteFill}>
@@ -94,6 +97,9 @@ const TabBar = ({ state, navigation, insets }: BottomTabBarProps) => {
               style={styles.tab}
               onPress={onPress}
               activeOpacity={0.7}
+              accessibilityRole="tab"
+              accessibilityLabel={t(tab.labelKey)}
+              accessibilityState={{ selected: isActive }}
             >
               <Ionicons
                 name={isActive ? tab.activeIcon : tab.icon}

@@ -20,12 +20,14 @@ const styles = StyleSheet.create({
     gap: 13,
   },
   dateBadge: {
-    width: 50,
-    height: 50,
+    minWidth: 50,
+    minHeight: 50,
     borderRadius: 10,
     backgroundColor: colors.primary[400],
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: 6,
+    paddingVertical: 4,
     gap: 2,
   },
   dateMonth: {

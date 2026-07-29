@@ -5,10 +5,12 @@ import colors from '../../../src/constants/colors';
 import fonts from '../../../src/constants/fonts';
 import termsKo from '../../../src/i18n/legal/terms.ko';
 import termsEn from '../../../src/i18n/legal/terms.en';
+import { useRegisterStore } from '../../../src/store/registerStore';
 
 const TermsScreen = () => {
   const router = useRouter();
   const { t, i18n } = useTranslation();
+  const setAgreedToTerms = useRegisterStore((s) => s.setAgreedToTerms);
 
   const termsText = i18n.language === 'ko' ? termsKo : termsEn;
 
@@ -22,7 +24,13 @@ const TermsScreen = () => {
         <Text style={styles.text}>{termsText}</Text>
       </ScrollView>
 
-      <Pressable style={styles.button} onPress={() => router.back()}>
+      <Pressable
+        style={styles.button}
+        onPress={() => {
+          setAgreedToTerms(true);
+          router.back();
+        }}
+      >
         <Text style={styles.buttonText}>{t('auth.terms.confirm')}</Text>
       </Pressable>
     </View>

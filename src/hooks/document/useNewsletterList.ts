@@ -14,6 +14,7 @@ const useNewsletterList = (selectedChildName: string | undefined, searchQuery: s
   const isLoadingMoreRef = useRef(false);
   const selectedChildNameRef = useRef(selectedChildName);
   const searchQueryRef = useRef(searchQuery);
+  const loadReqIdRef = useRef(0);
 
   useEffect(() => {
     selectedChildNameRef.current = selectedChildName;
@@ -24,16 +25,19 @@ const useNewsletterList = (selectedChildName: string | undefined, searchQuery: s
   }, [searchQuery]);
 
   const loadNewsletters = async (childName?: string, search?: string) => {
+    loadReqIdRef.current += 1;
+    const reqId = loadReqIdRef.current;
     setIsLoading(true);
     setPage(0);
     try {
       const result = await fetchNewsletters({ childName, search, page: 0 });
+      if (reqId !== loadReqIdRef.current) return;
       setNewsletters(result.newsletters);
       setTotalCount(result.totalCount);
     } catch {
       // 목록 조회 실패 시 목록 유지
     } finally {
-      setIsLoading(false);
+      if (reqId === loadReqIdRef.current) setIsLoading(false);
     }
   };
 

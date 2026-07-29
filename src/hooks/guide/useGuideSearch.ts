@@ -9,6 +9,8 @@ const useGuideSearch = (searchQuery: string) => {
 
   useEffect(() => {
     if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    lastSearchReqId.current += 1;
+    const reqId = lastSearchReqId.current;
 
     if (!searchQuery.trim()) {
       setSearchResults([]);
@@ -18,8 +20,6 @@ const useGuideSearch = (searchQuery: string) => {
 
     setSearchLoading(true);
     debounceTimer.current = setTimeout(() => {
-      lastSearchReqId.current += 1;
-      const reqId = lastSearchReqId.current;
       getSchoolGuideFaqs({ search: searchQuery.trim() })
         .then((items) => {
           if (reqId !== lastSearchReqId.current) return;

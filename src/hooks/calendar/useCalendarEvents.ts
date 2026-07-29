@@ -179,14 +179,16 @@ const useCalendarEvents = ({
         ? { ...prev, days: prev.days.map((day) => ({ ...day, events: applyToggle(day.events) })) }
         : prev;
 
+    const daySnapshot = dayEvents;
+    const weekSnapshot = weeklyData;
     setDayEvents(applyToggle);
     setWeeklyData(applyToWeekly);
 
     try {
       await completeChecklist(checklistId, !currentIsCompleted);
     } catch {
-      setDayEvents(applyToggle);
-      setWeeklyData(applyToWeekly);
+      setDayEvents(daySnapshot);
+      setWeeklyData(weekSnapshot);
     }
   };
 

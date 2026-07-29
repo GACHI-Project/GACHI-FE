@@ -26,21 +26,29 @@ const useMealTimetable = (childItems: ChildItem[], selectedChild: ChildItem | un
   const mealDays = useMemo(() => getNextWeekdays(5), []);
 
   useEffect(() => {
-    if (!childItems.length) return;
-    setLoading(true);
-    const ttFrom = fmt(weekDays[0]);
-    const ttTo = fmt(weekDays[4]);
-    const mealFrom = fmt(mealDays[0]);
-    const mealTo = fmt(mealDays[mealDays.length - 1]);
-    Promise.all([
-      fetchSchoolTimetables(ttFrom, ttTo).catch(() => [] as SchoolTimetableGroup[]),
-      fetchSchoolMeals(mealFrom, mealTo).catch(() => [] as SchoolMealGroup[]),
-    ])
-      .then(([tt, meals]) => {
-        setSchoolTimetables(tt);
-        setSchoolMeals(meals);
-      })
-      .finally(() => setLoading(false));
+    let cancelled = false;
+    if (childItems.length) {
+      setLoading(true);
+      const ttFrom = fmt(weekDays[0]);
+      const ttTo = fmt(weekDays[4]);
+      const mealFrom = fmt(mealDays[0]);
+      const mealTo = fmt(mealDays[mealDays.length - 1]);
+      Promise.all([
+        fetchSchoolTimetables(ttFrom, ttTo).catch(() => [] as SchoolTimetableGroup[]),
+        fetchSchoolMeals(mealFrom, mealTo).catch(() => [] as SchoolMealGroup[]),
+      ])
+        .then(([tt, meals]) => {
+          if (cancelled) return;
+          setSchoolTimetables(tt);
+          setSchoolMeals(meals);
+        })
+        .finally(() => {
+          if (!cancelled) setLoading(false);
+        });
+    }
+    return () => {
+      cancelled = true;
+    };
   }, [childItems, weekDays, mealDays]);
 
   const timetableByDay = useMemo((): TimetableDay[] => {

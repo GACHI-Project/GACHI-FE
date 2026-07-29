@@ -65,11 +65,12 @@ const useNotificationList = () => {
     (id: number) => {
       const target = notificationsRef.current.find((n) => n.id === id);
       if (!target || target.read) return;
+      const originalUnreadCount = notificationsRef.current.filter((n) => !n.read).length;
       setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
-      setUnreadCount(Math.max(0, notificationsRef.current.filter((n) => !n.read).length - 1));
+      setUnreadCount(Math.max(0, originalUnreadCount - 1));
       markNotificationRead(id).catch(() => {
         setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: false } : n)));
-        setUnreadCount(notificationsRef.current.filter((n) => !n.read).length);
+        setUnreadCount(originalUnreadCount);
       });
     },
     [setUnreadCount]

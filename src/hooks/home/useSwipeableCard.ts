@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useLayoutEffect, useCallback } from 'react';
 import { Animated, Easing, PanResponder } from 'react-native';
 
 const SLIDE_DURATION = 550;
@@ -25,9 +25,11 @@ const useSwipeableCard = (itemCount: number, cardWidth: number) => {
   );
 
   const slideToRef = useRef(slideTo);
-  slideToRef.current = slideTo;
   const itemsLengthRef = useRef(itemCount);
-  itemsLengthRef.current = itemCount;
+  useLayoutEffect(() => {
+    slideToRef.current = slideTo;
+    itemsLengthRef.current = itemCount;
+  });
 
   useEffect(() => {
     if (!itemCount) return;

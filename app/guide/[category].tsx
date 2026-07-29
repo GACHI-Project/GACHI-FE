@@ -10,10 +10,10 @@ import layout from '../../src/constants/layout';
 import styles from '../../src/styles/guide/categoryScreen';
 import {
   getSchoolGuideFaqs,
-  getSchoolGuideFaqDetail,
   type SchoolGuideCategoryEnum,
   type SchoolGuideFaqItem,
 } from '../../src/api/schoolGuide';
+import useGuideFaqExpand from '../../src/hooks/guide/useGuideFaqExpand';
 
 const CategoryScreen = () => {
   const { category, categoryEnum, emoji } = useLocalSearchParams<{
@@ -27,9 +27,8 @@ const CategoryScreen = () => {
   const [faqs, setFaqs] = useState<SchoolGuideFaqItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
-  const [expandedId, setExpandedId] = useState<number | null>(null);
-  const [answerCache, setAnswerCache] = useState<Record<number, string>>({});
-  const [loadingDetailId, setLoadingDetailId] = useState<number | null>(null);
+
+  const { expandedId, answerCache, loadingDetailId, handleExpand } = useGuideFaqExpand();
 
   useEffect(() => {
     if (!categoryEnum) {
@@ -44,21 +43,6 @@ const CategoryScreen = () => {
       .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, [categoryEnum]);
-
-  const handleExpand = (faqId: number) => {
-    if (expandedId === faqId) {
-      setExpandedId(null);
-      return;
-    }
-    setExpandedId(faqId);
-    if (answerCache[faqId] !== undefined) return;
-
-    setLoadingDetailId(faqId);
-    getSchoolGuideFaqDetail(faqId)
-      .then((detail) => setAnswerCache((prev) => ({ ...prev, [faqId]: detail.answer })))
-      .catch(() => {})
-      .finally(() => setLoadingDetailId((current) => (current === faqId ? null : current)));
-  };
 
   const renderContent = () => {
     if (loading) {
@@ -106,7 +90,7 @@ const CategoryScreen = () => {
           keyExtractor={(item) => String(item.faqId)}
           extraData={{ expandedId, answerCache, loadingDetailId }}
           showsVerticalScrollIndicator={false}
-          renderItem={({ item }) => {
+          renderItem={({ item }: { item: SchoolGuideFaqItem }) => {
             const expanded = expandedId === item.faqId;
             const answer = answerCache[item.faqId];
             const detailLoading = loadingDetailId === item.faqId;

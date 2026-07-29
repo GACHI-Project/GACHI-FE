@@ -1,7 +1,7 @@
 import { StyleSheet } from 'react-native';
-import colors from '../../constants/colors';
-import fonts from '../../constants/fonts';
-import layout from '../../constants/layout';
+import colors from '../../../constants/colors';
+import fonts from '../../../constants/fonts';
+import layout from '../../../constants/layout';
 
 export const EVENT_DOT_COLOR = '#2CDA00';
 

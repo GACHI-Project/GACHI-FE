@@ -1,0 +1,928 @@
+{
+  "common": {
+    "back": "返回",
+    "help": "帮助",
+    "close": "关闭",
+    "confirm": "确认",
+    "next": "下一步 →",
+    "later": "稍后设置",
+    "retry": "重试",
+    "all": "全部",
+    "today": "今天",
+    "error": "错误",
+    "networkError": "网络出现错误，请重试。",
+    "modalClose": "关闭弹窗",
+    "saving": "保存中...",
+    "change": "更改",
+    "elementaryGrade": "小学{{grade}}年级",
+    "grade": "{{grade}}年级",
+    "preparing": "准备中",
+    "cancel": "取消"
+  },
+  "tabs": {
+    "home": "首页",
+    "document": "文件",
+    "scan": "扫描",
+    "calendar": "日历",
+    "profile": "我的"
+  },
+  "stepHeader": {
+    "step": "第{{current}}步 / 共{{total}}步"
+  },
+  "auth": {
+    "login": {
+      "title": "登录",
+      "stayLoggedIn": "保持登录状态",
+      "button": "登录",
+      "loading": "登录中...",
+      "forgotId": "找回用户名",
+      "forgotPassword": "找回密码",
+      "noAccount": "还没有账号？",
+      "signUp": "注册",
+      "error": {
+        "invalidCredentials": "用户名或密码不正确",
+        "withdrawnAccount": "该账号已注销",
+        "tooManyAttempts": "登录尝试次数过多，请稍后再试",
+        "generic": "登录时出现错误，请重试。"
+      }
+    },
+    "register": {
+      "language": {
+        "title": "请选择您要使用的语言",
+        "subtitle": "我们会用您选择的语言翻译家庭通知书并进行简单说明",
+        "settingsTip": "语言可以随时在设置中更改"
+      },
+      "basic": {
+        "title": "创建新账号",
+        "subtitle": "完成简单的资料设置后即可开始使用。",
+        "name": "姓名",
+        "id": "用户名",
+        "phone": "手机号码",
+        "email": "邮箱",
+        "verificationCode": "验证码",
+        "password": "密码",
+        "passwordConfirm": "确认密码",
+        "verify": "验证",
+        "verifying": "验证中...",
+        "hasAccount": "已经有账号了？",
+        "loginLink": "登录",
+        "passwordMatch": "两次输入的密码一致。",
+        "error": {
+          "nameRequired": "请输入姓名",
+          "phoneFormat": "手机号码格式不正确",
+          "passwordWeak": "密码安全强度为危险等级",
+          "passwordMismatch": "两次输入的密码不一致",
+          "termsRequired": "请同意相关条款",
+          "idAvailable": "该用户名可以使用",
+          "idTaken": "该用户名已被使用",
+          "phoneAvailable": "该手机号码可以使用",
+          "phoneTaken": "该手机号码已被使用",
+          "emailTaken": "该邮箱已被使用",
+          "codeSent": "验证码已发送",
+          "codeExpiredDisplay": "验证时间已过期，请重新发送。",
+          "emailVerified": "邮箱验证已完成",
+          "codeFormat": "验证码必须是6位数字",
+          "checkError": "验证时出现错误，请重试。",
+          "sendError": "验证码发送失败，请重试。",
+          "codeInvalid": "输入的内容不正确",
+          "codeWrong": "验证码不正确",
+          "codeExpired": "验证码已过期，请重新发送。",
+          "codeExceeded": "验证码输入次数已超过限制。",
+          "verifyError": "验证失败，请重试。"
+        }
+      },
+      "child": {
+        "title": "请填写孩子的信息",
+        "subtitle": "我们会根据孩子的年级，把家庭通知书讲得更容易懂",
+        "school": "学校",
+        "schoolPlaceholder": "请搜索学校名称",
+        "grade": "小学年级",
+        "calendarColor": "日历颜色",
+        "childName": "孩子姓名",
+        "childNamePlaceholder": "请输入姓名",
+        "colorHint": "每个孩子的颜色可以帮助您在日历中快速分辨这是谁的日程。",
+        "addChild": "添加孩子",
+        "className": "班级",
+        "classNamePlaceholder": "例如：1",
+        "order": ["老大", "老二", "老三", "老四", "老五", "老六", "老七"]
+      },
+      "notification": {
+        "title": "请设置您想要的通知方式",
+        "subtitle": "按您喜欢的方式设置通知吧",
+        "sectionLabel": "通知级别",
+        "settingsTip": "通知方式可以随时在设置中更改",
+        "options": {
+          "important": {
+            "title": "重要通知",
+            "desc": "接收截止日期和需要尽快确认的内容",
+            "badge": "推荐"
+          },
+          "urgent": {
+            "title": "仅紧急通知",
+            "desc": "只接收截止日期等必要通知"
+          },
+          "all": {
+            "title": "全部通知",
+            "desc": "接收所有家庭通知书、更新和提醒"
+          },
+          "none": {
+            "title": "不接收通知",
+            "desc": "不接收通知，需要时在应用内查看"
+          }
+        }
+      },
+      "complete": {
+        "title": "注册完成！",
+        "subtitle": "现在和GACHI一起，更轻松地了解孩子的学校生活",
+        "button": "前往登录 →",
+        "noInfo": "没有注册信息，请从头重新开始。",
+        "error": "出现错误，请重试。"
+      }
+    },
+    "terms": {
+      "title": "使用条款",
+      "confirm": "确认"
+    },
+    "privacy": {
+      "title": "隐私政策",
+      "confirm": "同意并继续"
+    },
+    "termsCheckbox": {
+      "main": "我同意使用条款和隐私政策。",
+      "sub": "请先确认必要条款后再勾选。",
+      "viewTerms": "查看使用条款",
+      "viewPrivacy": "查看隐私政策"
+    },
+    "findId": {
+      "title": "找回用户名",
+      "subtitle": "可以通过注册时使用的邮箱找回用户名。",
+      "email": "邮箱",
+      "code": "验证码",
+      "send": "发送验证码",
+      "sending": "发送中...",
+      "confirm": "确认",
+      "verifying": "验证中...",
+      "loading": "验证中...",
+      "submit": "确认用户名 →",
+      "foundTitle": "找到了已注册的账号",
+      "foundDesc": "您可以使用下面的用户名登录。",
+      "idLabel": "ID",
+      "goLogin": "前往登录",
+      "forgotPassword": "想不起密码了？",
+      "goFindPassword": "找回密码",
+      "error": {
+        "emailNotFound": "该邮箱尚未注册。",
+        "generic": "出现错误，请重试。"
+      }
+    },
+    "findPassword": {
+      "title": "重置密码",
+      "subtitle": "通过用户名和邮箱验证即可重置密码。",
+      "id": "用户名",
+      "email": "邮箱",
+      "code": "验证码",
+      "send": "发送验证码",
+      "sending": "发送中...",
+      "confirm": "确认",
+      "verifying": "验证中...",
+      "submit": "重置密码 →",
+      "idFound": "该用户名的账号存在。",
+      "forgotId": "想不起用户名了？",
+      "goFindId": "找回用户名",
+      "error": {
+        "idNotFound": "找不到该用户名的账号。",
+        "emailNotFound": "找不到该邮箱的账号。",
+        "generic": "出现错误，请重试。"
+      }
+    },
+    "resetPassword": {
+      "title": "重置密码",
+      "subtitle": "为了账号安全，请输入新密码。",
+      "newPassword": "新密码",
+      "newPasswordConfirm": "确认新密码",
+      "submit": "重置密码",
+      "submitting": "重置中...",
+      "successTitle": "密码修改完成",
+      "successDesc": "密码重置已成功完成。\n为了账号安全，请使用新密码重新登录。",
+      "goLogin": "前往登录 →",
+      "passwordMatch": "两次输入的密码一致。",
+      "error": {
+        "passwordWeak": "密码安全强度为危险等级",
+        "passwordMismatch": "两次输入的密码不一致",
+        "generic": "出现错误，请重试。",
+        "noLoginId": "访问方式不正确，请重新尝试找回密码。"
+      },
+      "goFindPassword": "前往找回密码"
+    }
+  },
+  "passwordStrength": {
+    "label": "安全强度：",
+    "danger": "危险",
+    "normal": "一般",
+    "safe": "安全",
+    "verySafe": "非常安全"
+  },
+  "validation": {
+    "passwordLength": "密码需为8至20个字符",
+    "passwordTypes": "需包含字母、数字、特殊符号中的至少2种",
+    "passwordSpace": "密码中不能包含空格",
+    "passwordRepeat": "同一个字符不能连续使用3次以上",
+    "passwordSequential": "不能使用4个以上连续的字母或数字",
+    "passwordContainsId": "密码中不能包含用户名",
+    "passwordContainsEmail": "密码中不能包含邮箱",
+    "passwordContainsPhone": "密码中不能包含手机号码",
+    "idMin": "用户名需为4个字符以上",
+    "idMax": "用户名需为50个字符以内",
+    "idFormat": "只能使用字母、数字、. _ -",
+    "phoneFormat": "手机号码格式不正确",
+    "emailFormat": "邮箱格式不正确"
+  },
+  "home": {
+    "usernameFormat": "{{name}} 您好",
+    "taskCard": {
+      "noTodo": "今天没有待办事项",
+      "todayCount": "今天需处理 {{count}} 项",
+      "todayCount_one": "今天需处理 {{count}} 项",
+      "todayCount_other": "今天需处理 {{count}} 项",
+      "todayEmpty": "今天没有需要处理的事项",
+      "childCount": "{{name}} {{count}} 项",
+      "childCount_one": "{{name}} {{count}} 项",
+      "childCount_other": "{{name}} {{count}} 项",
+      "remaining": "待处理",
+      "empty": "今天没有需要处理的事项 🎉",
+      "today": "今天",
+      "moreItems": "查看其他{{count}}项 →",
+      "moreItems_one": "查看其他{{count}}项 →",
+      "moreItems_other": "查看其他{{count}}项 →"
+    },
+    "scanBanner": {
+      "title": "扫描家庭通知书",
+      "desc": "只要拍一张照，翻译·摘要·待办清单一次搞定",
+      "button": "立即扫描 →"
+    },
+    "features": {
+      "sectionTitle": "主要功能",
+      "ai": {
+        "title": ["向AI", "提问"],
+        "desc": "不懂的内容随时提问，AI会连来龙去脉一起说明。",
+        "button": "开始对话"
+      },
+      "guide": {
+        "title": ["韩国学校", "生活指南"],
+        "desc": "学校生活中常让人困惑的内容，用问答的形式轻松查看。",
+        "button": "浏览指南"
+      }
+    },
+    "guideCards": {
+      "sectionTitle": "这些内容，您也好奇吗？",
+      "more": "查看更多",
+      "badge": "✓ 常见问题",
+      "questions": [
+        "同意书一定要亲自提交吗？",
+        "需要联系班主任老师吗？",
+        "需要准备哪些学习用品？",
+        "运动服需要另外购买吗？"
+      ]
+    },
+    "recentDocs": {
+      "sectionTitle": "最近的家庭通知书",
+      "more": "查看全部"
+    }
+  },
+  "greetings": {
+    "morning": [
+      "早上好 ☀️",
+      "今天也和GACHI一起 🌼",
+      "轻松查看学校消息吧 📄",
+      "新的一天，新的消息在等您 🌤",
+      "提前看看孩子的学校日程吧 🎒",
+      "今天也充满干劲地开始吧 💪"
+    ],
+    "lunch": [
+      "午休时间抽空看一下吧 🍽",
+      "别错过重要的学校消息 🌿",
+      "GACHI今天也来帮您 ✨",
+      "休息片刻，看看今天的提醒 ☕",
+      "今天说不定有要准备的用品 📋",
+      "午餐间隙，顺便看条消息 🌞"
+    ],
+    "afternoon": [
+      "下午也能轻松获取需要的信息 ☁️",
+      "看看今天的学校消息吧 🍀",
+      "一起看看用品和日程 📚",
+      "明天上学要准备什么，现在先看看 📅",
+      "孩子放学前，再看一次提醒 🏫",
+      "看看有没有漏掉的消息 🔔"
+    ],
+    "evening": [
+      "今天也辛苦了 🌇",
+      "剩下的学校日程也看一下吧？ 💛",
+      "和GACHI一起整理这一天 ✨",
+      "为明天提前做好准备 🌆",
+      "重要提醒，晚上再确认一次 📬",
+      "要不要再看看今天收到的家庭通知书？ 📝"
+    ],
+    "night": [
+      "夜深了也能随时查看 🌙",
+      "看看明天要准备的内容 ⭐",
+      "只把重要消息简单呈现给您 🌌",
+      "看看今天的最后一条提醒 🌛",
+      "明天GACHI也会陪着您 💤",
+      "好好休息前，看一眼明天的日程 🌠"
+    ]
+  },
+  "scan": {
+    "title": "扫描文件",
+    "helpModal": {
+      "title": "扫描使用方法",
+      "confirm": "我知道了",
+      "step1": {
+        "title": "请先选择孩子",
+        "desc": "我们会根据年级更准确地解读文件"
+      },
+      "step2": {
+        "title": "请拍摄或选择家庭通知书",
+        "desc": "请把纸张摊平拍摄，让文字清晰可见"
+      },
+      "step3": {
+        "title": "AI会自动分析",
+        "desc": "翻译·摘要·待办清单一次性生成"
+      }
+    },
+    "childPill": {
+      "suffix": "的家庭通知书",
+      "change": "更改",
+      "changeAccessibility": "更换孩子"
+    },
+    "select": {
+      "title": "这是谁的家庭通知书？",
+      "subtitle": "选择孩子后，我们会按其年级解读文件",
+      "unknown": "不确定是哪个孩子的",
+      "camera": "用相机拍摄",
+      "gallery": "从相册中选择",
+      "pdf": "上传PDF文件",
+      "error": {
+        "loadChildren": "无法加载孩子的信息。",
+        "pdf": "无法加载PDF。",
+        "gallery": "无法加载相册。",
+        "galleryPermission": "需要相册访问权限。",
+        "permissionTitle": "需要权限",
+        "errorTitle": "错误"
+      }
+    },
+    "camera": {
+      "permissionText": "需要相机访问权限",
+      "allowPermission": "允许权限",
+      "captureError": "拍摄失败",
+      "captureErrorMsg": "请重试。",
+      "galleryPermission": "需要相册访问权限。",
+      "galleryError": "无法加载相册。",
+      "accessibilityGallery": "从相册中选择",
+      "accessibilityCapture": "拍照",
+      "accessibilityFlip": "切换摄像头",
+      "permissionTitle": "需要权限",
+      "errorTitle": "错误"
+    },
+    "preview": {
+      "pdfLabel": "PDF文件",
+      "accessibilityPreview": "预览要扫描的文件",
+      "retake": "重新拍摄",
+      "reselect": "重新选择",
+      "use": "使用"
+    },
+    "loading": {
+      "preparing": "正在准备文件",
+      "analyzing": "正在分析文字和排版",
+      "complete": "翻译和摘要已完成！",
+      "scanComplete": "扫描完成！",
+      "next": "下一步 →",
+      "accessibilityNext": "下一步",
+      "error": {
+        "analysisFailed": "分析失败",
+        "analysisFailedMsg": "文件分析失败，请重试。",
+        "uploadFailed": "上传失败",
+        "uploadDefault": "上传失败，请重试。",
+        "duplicate": "这份家庭通知书已经上传过了。",
+        "unsupportedFormat": "不支持的文件格式。",
+        "fileTooLarge": "文件大小超过10MB。"
+      }
+    },
+    "result": {
+      "title": "扫描结果",
+      "unsavedAlert": {
+        "title": "确定要离开吗？",
+        "message": "不保存的话，将无法使用待办清单\n和日历日程登记功能。",
+        "warning": "不保存的话，扫描结果会消失且无法恢复。",
+        "confirm": "离开",
+        "cancel": "继续查看"
+      },
+      "tabs": {
+        "full": "完整文件",
+        "checklist": "待办清单",
+        "aiSummary": "AI摘要"
+      },
+      "chat": "与AI对话",
+      "save": "保存",
+      "fullDoc": {
+        "translated": "翻译后的文件",
+        "original": "原文",
+        "ocrOriginal": "OCR原文",
+        "error": {
+          "notFound": "找不到该家庭通知书的信息。",
+          "notAnalyzed": "这份家庭通知书还没有分析完成。",
+          "newsletterNotFound": "找不到该家庭通知书。",
+          "loadFailed": "文件加载失败。"
+        }
+      },
+      "checklist": {
+        "empty": "没有待办清单项目。",
+        "deleteItem": "删除项目",
+        "error": {
+          "notFound": "找不到该家庭通知书的信息。",
+          "newsletterNotFound": "找不到该家庭通知书。",
+          "loadFailed": "待办清单加载失败。"
+        }
+      },
+      "aiSummary": {
+        "summarySection": "AI摘要",
+        "culturalContext": "文化背景说明",
+        "conversationTitle": "今天的聊天话题",
+        "conversationEmpty": "没有聊天话题。",
+        "error": {
+          "notFound": "找不到该家庭通知书的信息。",
+          "analyzing": "这份家庭通知书还在分析中。",
+          "analysisFailed": "这份家庭通知书分析失败了。",
+          "newsletterNotFound": "找不到该家庭通知书。",
+          "noAccess": "没有访问权限。",
+          "summaryFailed": "摘要加载失败。",
+          "conversationFailed": "聊天话题加载失败。"
+        },
+        "qna": [
+          {
+            "q": "为什么泳衣、毛巾、内衣都要写上名字？",
+            "a": "在韩国的小学，很多学生使用同款物品，所以",
+            "aHighlight": "在个人物品上写名字是很普遍的做法",
+            "aTail": "。游泳课或校外体验学习时，为了防止丢失几乎是必须的。"
+          },
+          {
+            "q": "不会游泳也一定要参加吗？",
+            "a": "韩国小学的游泳教育，比起游泳技术，更重要的目的是",
+            "aHighlight": "戏水安全教育",
+            "aTail": "。如果没有特殊原因，大部分学生都会一起参加。"
+          },
+          {
+            "q": "说要在家里提前教，具体要教到什么程度？",
+            "a": "为了让集体课程顺利进行，建议在家里提前练习，让孩子能自己完成",
+            "aHighlight": "换泳衣、擦干身体、整理物品",
+            "aTail": "等事情。"
+          }
+        ]
+      },
+      "saveBottomSheet": {
+        "title": "要把日程添加到日历吗？",
+        "subtitleAutoDate": "系统会根据提取到的日期信息\n自动创建日程。",
+        "subtitleManualDate": "请手动输入日期。",
+        "dateNotFound": "没能从文件中找到日期。\n手动输入日期后就可以添加了。",
+        "dateEditor": "更改日期",
+        "year": "年",
+        "month": "月",
+        "day": "日",
+        "fullDay": "全天",
+        "weekdays": ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"],
+        "isEditing": "✏️ 修改中",
+        "edit": "✏️ 修改",
+        "no": "不用了",
+        "register": "✓ 好，添加日程",
+        "successTitle": "已添加到日历！",
+        "successSubtitle": "截止日期临近时我们会提醒您。",
+        "viewCalendar": "在日历中查看",
+        "close": "关闭",
+        "accessibilityEdit": "修改日程",
+        "dateConfirm": "确认",
+        "accessibilityDateConfirm": "确认日期",
+        "accessibilityClose": "关闭弹窗",
+        "yearLabel": "年份",
+        "monthLabel": "月",
+        "dayLabel": "日",
+        "error": {
+          "invalidDate": "请输入正确的日期。",
+          "loadFailed": "日程信息加载失败。",
+          "expired": "正在进行AI分析，或预览数据已过期。",
+          "registerFailed": "添加失败",
+          "registerDefault": "日程添加失败。",
+          "invalidInput": "输入的内容不正确。",
+          "newsletterNotFound": "找不到该家庭通知书。",
+          "dateFormat": "日期格式不正确。",
+          "previewExpired": "预览数据已过期，请重试。",
+          "dateSaveFailed": "日期保存失败",
+          "dateSaveDefault": "日期保存失败。",
+          "noPreviewMsg": "请先加载日程预览信息。",
+          "errorTitle": "错误"
+        }
+      }
+    }
+  },
+  "calendar": {
+    "title": "日历",
+    "emptyWeek": "本周没有日程",
+    "emptyDay": "没有已添加的日程",
+    "weekViewAccessibility": "切换为月视图",
+    "monthViewAccessibility": "切换为周视图",
+    "backAccessibility": "返回",
+    "prevWeek": "上一周",
+    "nextWeek": "下一周",
+    "prevMonth": "上个月",
+    "nextMonth": "下个月",
+    "checklist": {
+      "collapse": "收起待办清单",
+      "expand": "展开待办清单"
+    },
+    "schoolSchedule": {
+      "holiday": "法定节假日"
+    }
+  },
+  "document": {
+    "title": "文件",
+    "searchPlaceholder": "搜索文件标题",
+    "empty": "没有符合条件的文件",
+    "detail": "文件详情"
+  },
+  "profile": {
+    "title": "我的页面",
+    "edit": "编辑",
+    "joinDate": "注册日期 {{date}}",
+    "languageChange": {
+      "title": "更改语言",
+      "warning": "更改语言后，应用中的所有文字以及之后扫描文件的翻译语言都会一起改变。",
+      "save": "保存",
+      "saveError": "语言更改失败，请重试。"
+    },
+    "childEdit": {
+      "save": "保存",
+      "delete": "删除该孩子",
+      "addFailed": "添加孩子失败，请重试。",
+      "updateFailed": "修改孩子信息失败，请重试。",
+      "deleteFailed": "删除孩子失败，请重试。",
+      "deleteTitle": "确定要删除吗？",
+      "deleteDesc": "与该孩子信息相关的所有数据\n都会被删除。",
+      "deleteWarning": "已保存的家庭通知书和日历日程都会被删除，且无法恢复。"
+    },
+    "childInfo": "孩子信息",
+    "addChild": "+ 添加孩子",
+    "grade": "小学{{grade}}年级",
+    "className": "{{className}}班",
+    "appSettings": "应用设置",
+    "appLanguage": "应用语言",
+    "notification": "通知设置",
+    "notificationOn": "已开启",
+    "notificationOff": "已关闭",
+    "etc": "其他",
+    "inquiry": "联系客服",
+    "privacy": "隐私政策",
+    "appVersion": "应用版本",
+    "logout": "退出登录",
+    "logoutTitle": "退出登录",
+    "logoutConfirm": "确定要退出登录吗？",
+    "backAccessibility": "返回",
+    "helpAccessibility": "帮助",
+    "editProfile": {
+      "accountSection": "账号信息",
+      "name": "姓名",
+      "phone": "手机号码",
+      "email": "邮箱",
+      "securitySection": "安全",
+      "sheetTitle": "编辑个人资料",
+      "namePlaceholder": "请输入姓名",
+      "nameRequired": "请输入姓名。",
+      "phoneInvalid": "请输入正确的手机号码。",
+      "saveFailed": "保存失败，请重试。",
+      "changePassword": {
+        "title": "修改密码",
+        "currentPassword": "当前密码",
+        "newPassword": "新密码",
+        "confirmPassword": "确认新密码",
+        "submit": "修改密码",
+        "preparingMessage": "修改密码功能目前正在准备中。",
+        "errorCurrentPassword": "当前密码不正确。",
+        "errorGeneral": "密码修改失败，请重试。",
+        "userInfoFetchError": "未能加载用户信息。"
+      },
+      "withdraw": "注销账号",
+      "withdrawTitle": "确定要注销账号吗？",
+      "withdrawDesc": "注销后，账号和所有数据\n将被永久删除。",
+      "withdrawWarning": "已保存的文件、孩子信息和日历日程都会被删除，且无法恢复。",
+      "cancel": "取消"
+    },
+    "editEmail": {
+      "title": "更改邮箱",
+      "newEmail": "新邮箱",
+      "submit": "更改邮箱",
+      "currentPasswordPlaceholder": "请输入当前密码",
+      "emailAlreadyUsed": "该邮箱已被使用。",
+      "wrongPassword": "当前密码不正确。",
+      "codeInvalid": "验证码不正确。",
+      "saveFailed": "邮箱更改失败，请重试。"
+    },
+    "notificationSetting": {
+      "title": "通知设置",
+      "masterSection": "全部通知",
+      "masterTitle": "接收通知",
+      "masterDesc": "可以一次性开启或关闭全部通知",
+      "levelSection": "通知级别",
+      "levelAll": "全部通知",
+      "levelImportant": "重要通知",
+      "levelUrgent": "紧急通知",
+      "levelDesc": {
+        "all": "接收所有家庭通知书、更新和提醒",
+        "important": "只接收重要程度高的通知，包含截止日期·待办清单·每周摘要提醒。",
+        "urgent": "只接收截止日期等必要通知"
+      },
+      "itemSection": "分项通知",
+      "items": {
+        "deadline": {
+          "title": "截止提醒",
+          "desc": "在截止日期前一天提前提醒您",
+          "badge": "紧急"
+        },
+        "checklist": {
+          "title": "待办清单提醒",
+          "desc": "在3天前和1天前提醒您未完成的项目",
+          "badge": "重要"
+        },
+        "weekly": {
+          "title": "每周摘要",
+          "desc": "每周日提前告知您本周的日程",
+          "badge": "重要"
+        },
+        "document": {
+          "title": "新文件分析完成",
+          "desc": "家庭通知书分析完成后会通知您",
+          "badge": "普通"
+        }
+      }
+    }
+  },
+  "notifications": {
+    "title": "通知列表",
+    "today": "今天",
+    "yesterday": "昨天",
+    "empty": "没有通知",
+    "settings": "通知设置",
+    "settingsMenu": "通知设置",
+    "markAllRead": "全部标为已读",
+    "timeJustNow": "刚刚",
+    "timeMinutesAgo": "{{count}}分钟前",
+    "timeHoursAgo": "{{count}}小时前",
+    "loadError": "未能加载通知"
+  },
+  "guide": {
+    "title": "您想了解什么？",
+    "subtitle": "文件、活动、供餐等需要的内容都能快速查到。",
+    "searchPlaceholder": "搜索问题",
+    "popularTitle": "当前热门问题",
+    "popularQuestions": ["不交校外体验学习同意书会怎么样？", "家长会是必须参加的吗？"],
+    "questionCount": "{{count}}个问题",
+    "totalCount": "共{{count}}个问题",
+    "sections": [
+      {
+        "label": "每天都会遇到的学校生活",
+        "categories": [
+          {
+            "name": "文件·同意书",
+            "key": "documents"
+          },
+          {
+            "name": "考勤·校历",
+            "key": "attendance"
+          },
+          {
+            "name": "学校活动",
+            "key": "events"
+          },
+          {
+            "name": "供餐·学习用品",
+            "key": "meals"
+          }
+        ]
+      },
+      {
+        "label": "课程与课后活动",
+        "categories": [
+          {
+            "name": "课后·托管",
+            "key": "afterschool"
+          },
+          {
+            "name": "科目·课程",
+            "key": "subjects"
+          },
+          {
+            "name": "成绩·评价",
+            "key": "grades"
+          },
+          {
+            "name": "与老师沟通",
+            "key": "teacher"
+          }
+        ]
+      },
+      {
+        "label": "规章与行政制度",
+        "categories": [
+          {
+            "name": "保健·安全",
+            "key": "health"
+          },
+          {
+            "name": "校规",
+            "key": "rules"
+          },
+          {
+            "name": "多文化信息",
+            "key": "multicultural"
+          },
+          {
+            "name": "入学·转学",
+            "key": "enrollment"
+          }
+        ]
+      }
+    ],
+    "qa": {
+      "documents": {
+        "tabs": ["全部", "家庭通知书", "体验学习", "校园银行", "考勤/证明"],
+        "items": [
+          {
+            "id": "1",
+            "tag": "家庭通知书",
+            "question": "标注是否希望参加的通知单也一定要交吗？",
+            "answer": "询问是否希望参加的通知单，是学校用来掌握需求的文件，无论是否参加都必须提交。"
+          },
+          {
+            "id": "2",
+            "tag": "家庭通知书",
+            "question": "家庭通知书中写着“回执用”的文件是什么？",
+            "answer": "这是需要家长亲自勾选或签名后交回学校的文件。请沿纸质通知单下方的裁剪线剪下，让孩子带给班主任老师即可。"
+          },
+          {
+            "id": "3",
+            "tag": "家庭通知书",
+            "question": "通过手机应用（e알리미、하이클래스等）收到的同意书要怎么签名？",
+            "answer": "在应用内直接进行电子签名，或点击同意按钮即可。无需另外打印，在应用中就能处理。"
+          },
+          {
+            "id": "4",
+            "tag": "家庭通知书",
+            "question": "不提交个人信息收集·使用同意书会有什么影响？",
+            "answer": "未提交时，相关服务的使用可能会受限，参加学校活动或申请特定项目也可能会受影响。"
+          },
+          {
+            "id": "5",
+            "tag": "家庭通知书",
+            "question": "课后学校申请书等先到先得的文件要怎么提交？",
+            "answer": "先到先得的文件按学校通知的方式在线提交或直接提交。请务必确认截止时间。"
+          },
+          {
+            "id": "6",
+            "tag": "家庭通知书",
+            "question": "学期初提交的“托管教室申请书”需要哪些证明材料？",
+            "answer": "双职工家庭需要在职证明，单亲家庭需要相关证明。各学校要求不同，请查看通知单。"
+          },
+          {
+            "id": "7",
+            "tag": "家庭通知书",
+            "question": "牛奶供餐意向同意书，即使不申请也一定要提交吗？",
+            "answer": "即使不希望申请，有些学校也会要求提交以确认不申请的意向。请确认学校的通知。"
+          },
+          {
+            "id": "8",
+            "tag": "家庭通知书",
+            "question": "孩子把家庭通知书弄丢了，怎么重新拿到文件表格？",
+            "answer": "可以询问班主任老师，或从学校网站、学校应用中下载。"
+          },
+          {
+            "id": "9",
+            "tag": "家庭通知书",
+            "question": "如果孩子自己不方便交文件，家长可以直接送到教室吗？",
+            "answer": "可以。事先联系班主任老师协调好到访时间会更顺利。"
+          },
+          {
+            "id": "10",
+            "tag": "体验学习",
+            "question": "不交校外体验学习同意书会怎么样？",
+            "answer": "不提交同意书就无法参加体验学习。即使不打算参加，有时也需要提交不参加确认书。"
+          },
+          {
+            "id": "11",
+            "tag": "体验学习",
+            "question": "体验学习的费用要怎么缴纳？",
+            "answer": "大多通过校园银行或学校指定账户缴纳。请务必遵守通知单上写明的缴费期限。"
+          },
+          {
+            "id": "12",
+            "tag": "校园银行",
+            "question": "什么是校园银行（스쿨뱅킹）？",
+            "answer": "校园银行是通过自动转账缴纳学校各项费用的制度。学期初申请后，供餐费、体验学习费等就会自动扣款。"
+          },
+          {
+            "id": "13",
+            "tag": "校园银行",
+            "question": "想更换校园银行的账户，该怎么办？",
+            "answer": "前往学校行政室填写校园银行变更申请书即可。有时需要到银行办理，请先向学校咨询。"
+          },
+          {
+            "id": "14",
+            "tag": "考勤/证明",
+            "question": "缺勤确认书要怎么开具？",
+            "answer": "可以前往学校行政室，或使用学校网站的证明书开具服务。部分学校也可以在政府24（정부24）网站开具。"
+          },
+          {
+            "id": "15",
+            "tag": "考勤/证明",
+            "question": "考勤记录填错了要怎么更正？",
+            "answer": "请立即联系班主任老师申请更正。可能需要相关证明材料（诊断书、医生意见书等）。"
+          }
+        ]
+      },
+      "attendance": {
+        "tabs": ["全部"],
+        "items": []
+      },
+      "events": {
+        "tabs": ["全部"],
+        "items": []
+      },
+      "meals": {
+        "tabs": ["全部"],
+        "items": []
+      },
+      "afterschool": {
+        "tabs": ["全部"],
+        "items": []
+      },
+      "subjects": {
+        "tabs": ["全部"],
+        "items": []
+      },
+      "grades": {
+        "tabs": ["全部"],
+        "items": []
+      },
+      "teacher": {
+        "tabs": ["全部"],
+        "items": []
+      },
+      "health": {
+        "tabs": ["全部"],
+        "items": []
+      },
+      "rules": {
+        "tabs": ["全部"],
+        "items": []
+      },
+      "multicultural": {
+        "tabs": ["全部"],
+        "items": []
+      },
+      "enrollment": {
+        "tabs": ["全部"],
+        "items": []
+      }
+    },
+    "loadFailed": "未能加载问题。",
+    "searchHint": "请输入搜索词。",
+    "searchEmpty": "没有搜索结果。",
+    "answerFailed": "未能加载答案，请重试。"
+  },
+  "chat": {
+    "title": "까치 (Kachi)",
+    "subtitle": "随时都可以问我",
+    "welcomeTitle": "까치 (Kachi)",
+    "welcomeSubtitle": "就像带来好消息的喜鹊一样，我会在您身边帮忙",
+    "welcomeMessage": "您好！我是Kachi 🐦\n学校发来的家庭通知书、公告，还有让人困惑的学校文化，我都会帮您轻松理解。",
+    "placeholder": "请输入您想了解的问题",
+    "typing": "Kachi正在输入回答...",
+    "today": "今天",
+    "errorMessage": "抱歉，出现了错误，请重试。🐦"
+  },
+  "mealTimetable": {
+    "sectionTitle": "供餐·课程表",
+    "viewAll": "查看全部",
+    "pageTitle": "供餐·课程表",
+    "tabMeal": "供餐",
+    "tabTimetable": "课程表",
+    "dayLabels": ["日", "一", "二", "三", "四", "五", "六"],
+    "lunch": "午餐",
+    "meal": {
+      "cardLabel": "今天的供餐",
+      "cardTitle": "午餐菜单",
+      "empty": "没有供餐信息"
+    },
+    "timetable": {
+      "cardLabel": "今天的课程表",
+      "cardTitle": "上课日程",
+      "empty": "没有课程表信息",
+      "period": "第{{period}}节"
+    }
+  }
+}

@@ -71,7 +71,9 @@ const ScanPreviewScreen = () => {
           accessibilityLabel={retakeLabel}
           accessibilityRole="button"
         >
-          <Text style={styles.retakeBtnText}>{retakeLabel}</Text>
+          <Text style={styles.retakeBtnText} numberOfLines={1}>
+            {retakeLabel}
+          </Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.confirmBtn}
@@ -84,7 +86,9 @@ const ScanPreviewScreen = () => {
           activeOpacity={0.8}
           accessibilityRole="button"
         >
-          <Text style={styles.confirmBtnText}>{t('scan.preview.use')}</Text>
+          <Text style={styles.confirmBtnText} numberOfLines={1}>
+            {t('scan.preview.use')}
+          </Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -100,19 +104,20 @@ const styles = StyleSheet.create({
     paddingTop: 60,
   },
   frameWrapper: {
+    flex: 1,
+    maxHeight: SCAN_FRAME_H,
     width: SCAN_FRAME_W,
-    height: SCAN_FRAME_H,
     alignSelf: 'center',
     borderRadius: 16,
     overflow: 'hidden',
   },
   image: {
     width: SCAN_FRAME_W,
-    height: SCAN_FRAME_H,
+    height: '100%',
   },
   pdfPlaceholder: {
     width: SCAN_FRAME_W,
-    height: SCAN_FRAME_H,
+    height: '100%',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 12,
@@ -131,7 +136,6 @@ const styles = StyleSheet.create({
     color: colors.text.secondary,
   },
   buttons: {
-    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: layout.screenPaddingHorizontal,

@@ -227,13 +227,13 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: fonts.bold,
     color: colors.primary[500],
-    width: 18,
+    minWidth: 18,
   },
   aLabel: {
     fontSize: 14,
     fontFamily: fonts.bold,
     color: colors.text.secondary,
-    width: 18,
+    minWidth: 18,
   },
   qText: {
     flex: 1,

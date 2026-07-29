@@ -65,8 +65,12 @@ const HomeScreen = () => {
           <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
             <View style={styles.headerInner}>
               <View style={styles.headerTexts}>
-                <Text style={styles.greeting}>{greetingText}</Text>
-                <Text style={styles.username}>{t('home.usernameFormat', { name })}</Text>
+                <Text style={styles.greeting} numberOfLines={1}>
+                  {greetingText}
+                </Text>
+                <Text style={styles.username} numberOfLines={1}>
+                  {t('home.usernameFormat', { name })}
+                </Text>
               </View>
               <TouchableOpacity
                 style={styles.bellButton}

@@ -1,5 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
-import { View, Text, TouchableOpacity, Modal, Pressable, Animated, StyleSheet } from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  Modal,
+  Pressable,
+  Animated,
+  ScrollView,
+  StyleSheet,
+  useWindowDimensions,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { PrimaryButton } from '../common/Button';
@@ -18,11 +28,9 @@ interface ScanHelpModalProps {
   onClose: () => void;
 }
 
-const SHEET_HEIGHT = 420;
-const returnTrue = () => true;
-
 const ScanHelpModal = ({ visible, onClose }: ScanHelpModalProps) => {
   const { t } = useTranslation();
+  const { height: screenHeight } = useWindowDimensions();
   const [show, setShow] = useState(false);
   const helpItems = HELP_ITEM_ICONS.map((base, i) => ({
     ...base,
@@ -30,12 +38,12 @@ const ScanHelpModal = ({ visible, onClose }: ScanHelpModalProps) => {
     desc: t(`scan.helpModal.step${i + 1}.desc`),
   }));
   const opacity = useRef(new Animated.Value(0)).current;
-  const translateY = useRef(new Animated.Value(SHEET_HEIGHT)).current;
+  const translateY = useRef(new Animated.Value(screenHeight)).current;
 
   useEffect(() => {
     if (visible) {
       opacity.setValue(0);
-      translateY.setValue(SHEET_HEIGHT);
+      translateY.setValue(screenHeight);
       setShow(true);
       Animated.parallel([
         Animated.timing(opacity, {
@@ -58,7 +66,7 @@ const ScanHelpModal = ({ visible, onClose }: ScanHelpModalProps) => {
           useNativeDriver: true,
         }),
         Animated.timing(translateY, {
-          toValue: SHEET_HEIGHT,
+          toValue: screenHeight,
           duration: 220,
           useNativeDriver: true,
         }),
@@ -66,49 +74,58 @@ const ScanHelpModal = ({ visible, onClose }: ScanHelpModalProps) => {
         if (finished) setShow(false);
       });
     }
-  }, [visible, show, opacity, translateY]);
+  }, [visible, show, opacity, translateY, screenHeight]);
 
   return (
     <Modal visible={show} transparent animationType="none" onRequestClose={onClose}>
-      <Animated.View style={[styles.backdrop, { opacity }]}>
+      <View style={styles.modalRoot}>
+        <Animated.View
+          style={[StyleSheet.absoluteFill, styles.backdrop, { opacity }]}
+          pointerEvents="none"
+        />
+
         <Pressable
-          style={StyleSheet.absoluteFill}
+          style={styles.backdropTap}
           onPress={onClose}
           accessibilityLabel={t('common.modalClose')}
         />
-      </Animated.View>
 
-      <Animated.View style={[styles.sheetWrap, { transform: [{ translateY }] }]}>
-        <View style={styles.sheet} onStartShouldSetResponder={returnTrue}>
-          <View style={styles.header}>
-            <Text style={styles.title}>{t('scan.helpModal.title')}</Text>
-            <TouchableOpacity
-              onPress={onClose}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              accessibilityLabel={t('common.close')}
-              accessibilityRole="button"
+        <Animated.View style={{ transform: [{ translateY }] }}>
+          <View style={styles.sheet}>
+            <View style={styles.header}>
+              <Text style={styles.title}>{t('scan.helpModal.title')}</Text>
+              <TouchableOpacity
+                onPress={onClose}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                accessibilityLabel={t('common.close')}
+                accessibilityRole="button"
+              >
+                <Ionicons name="close" size={20} color={colors.gray[300]} />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView
+              style={[styles.list, { maxHeight: screenHeight * 0.5 }]}
+              showsVerticalScrollIndicator={false}
+              bounces={false}
             >
-              <Ionicons name="close" size={20} color={colors.gray[300]} />
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.list}>
-            {helpItems.map((item) => (
-              <View key={item.title} style={styles.item}>
-                <View style={[styles.iconWrap, { backgroundColor: item.bg }]}>
-                  <Ionicons name={item.icon} size={18} color={item.iconColor} />
+              {helpItems.map((item) => (
+                <View key={item.title} style={styles.item}>
+                  <View style={[styles.iconWrap, { backgroundColor: item.bg }]}>
+                    <Ionicons name={item.icon} size={18} color={item.iconColor} />
+                  </View>
+                  <View style={styles.itemContent}>
+                    <Text style={styles.itemTitle}>{item.title}</Text>
+                    <Text style={styles.itemDesc}>{item.desc}</Text>
+                  </View>
                 </View>
-                <View style={styles.itemContent}>
-                  <Text style={styles.itemTitle}>{item.title}</Text>
-                  <Text style={styles.itemDesc}>{item.desc}</Text>
-                </View>
-              </View>
-            ))}
-          </View>
+              ))}
+            </ScrollView>
 
-          <PrimaryButton label={t('scan.helpModal.confirm')} onPress={onClose} />
-        </View>
-      </Animated.View>
+            <PrimaryButton label={t('scan.helpModal.confirm')} onPress={onClose} />
+          </View>
+        </Animated.View>
+      </View>
     </Modal>
   );
 };
@@ -116,15 +133,15 @@ const ScanHelpModal = ({ visible, onClose }: ScanHelpModalProps) => {
 export default ScanHelpModal;
 
 const styles = StyleSheet.create({
-  backdrop: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+  modalRoot: {
+    flex: 1,
+    justifyContent: 'flex-end',
   },
-  sheetWrap: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
+  backdropTap: {
+    flex: 1,
+  },
+  backdrop: {
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
   },
   sheet: {
     backgroundColor: colors.text.white,
@@ -141,17 +158,18 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   title: {
+    flex: 1,
     fontSize: 18,
     fontFamily: fonts.bold,
     color: colors.text.primary,
+    marginRight: 8,
   },
-  list: {
-    gap: 20,
-  },
+  list: {},
   item: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: 14,
+    marginBottom: 20,
   },
   iconWrap: {
     width: 40,

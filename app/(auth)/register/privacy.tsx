@@ -5,10 +5,12 @@ import colors from '../../../src/constants/colors';
 import fonts from '../../../src/constants/fonts';
 import privacyKo from '../../../src/i18n/legal/privacy.ko';
 import privacyEn from '../../../src/i18n/legal/privacy.en';
+import { useRegisterStore } from '../../../src/store/registerStore';
 
 const PrivacyScreen = () => {
   const router = useRouter();
   const { t, i18n } = useTranslation();
+  const setAgreedToTerms = useRegisterStore((s) => s.setAgreedToTerms);
 
   const privacyText = i18n.language === 'ko' ? privacyKo : privacyEn;
 
@@ -27,7 +29,13 @@ const PrivacyScreen = () => {
       </ScrollView>
 
       <View style={styles.footer}>
-        <Pressable style={styles.button} onPress={() => router.back()}>
+        <Pressable
+          style={styles.button}
+          onPress={() => {
+            setAgreedToTerms(true);
+            router.back();
+          }}
+        >
           <Text style={styles.buttonText}>{t('auth.privacy.confirm')}</Text>
         </Pressable>
       </View>

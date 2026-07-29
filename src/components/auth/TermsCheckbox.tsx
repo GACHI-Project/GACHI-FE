@@ -22,7 +22,11 @@ const TermsCheckbox = ({ checked, onChange, onTermsPress, onPrivacyPress }: Term
       >
         <View style={styles.innerLayout}>
           <View style={[styles.checkbox, checked && styles.checkboxChecked]}>
-            {checked && <Text style={styles.checkmark}>✓</Text>}
+            {checked && (
+              <Text style={styles.checkmark} allowFontScaling={false}>
+                ✓
+              </Text>
+            )}
           </View>
 
           <View style={styles.textSection}>
@@ -106,6 +110,7 @@ const styles = StyleSheet.create({
   linkRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    flexWrap: 'wrap',
     paddingLeft: 16,
     gap: 8,
   },

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
@@ -69,7 +69,12 @@ const LoginScreen = () => {
   };
 
   return (
-    <View style={styles.screen}>
+    <ScrollView
+      style={styles.screen}
+      contentContainerStyle={styles.contentContainer}
+      showsVerticalScrollIndicator={false}
+      keyboardShouldPersistTaps="handled"
+    >
       <LinearGradient colors={[colors.primary[300], colors.primary[100]]} style={styles.gradient} />
       <View style={styles.container}>
         <Text style={styles.title}>{t('auth.login.title')}</Text>
@@ -96,7 +101,11 @@ const LoginScreen = () => {
             style={[styles.checkbox, stayLoggedIn && styles.checkboxChecked]}
             onPress={() => setStayLoggedIn((prev) => !prev)}
           >
-            {stayLoggedIn && <Text style={styles.checkboxMark}>✓</Text>}
+            {stayLoggedIn && (
+              <Text style={styles.checkboxMark} allowFontScaling={false}>
+                ✓
+              </Text>
+            )}
           </TouchableOpacity>
           <Text style={styles.stayLoggedInText}>{t('auth.login.stayLoggedIn')}</Text>
         </View>
@@ -109,15 +118,15 @@ const LoginScreen = () => {
           disabled={!id || !password || loading}
         />
 
-        <View style={styles.forgotRow}>
-          <TouchableOpacity onPress={() => router.push('/(auth)/find-id')}>
-            <Text style={styles.forgotText}>{t('auth.login.forgotId')}</Text>
-          </TouchableOpacity>
-          <View style={styles.forgotDivider} />
-          <TouchableOpacity onPress={() => router.push('/(auth)/find-password')}>
-            <Text style={styles.forgotText}>{t('auth.login.forgotPassword')}</Text>
-          </TouchableOpacity>
-        </View>
+        <Text style={styles.forgotRow}>
+          <Text style={styles.forgotText} onPress={() => router.push('/(auth)/find-id')}>
+            {t('auth.login.forgotId')}
+          </Text>
+          {'  |  '}
+          <Text style={styles.forgotText} onPress={() => router.push('/(auth)/find-password')}>
+            {t('auth.login.forgotPassword')}
+          </Text>
+        </Text>
 
         <TouchableOpacity onPress={() => router.push('/(auth)/register/language')}>
           <Text style={styles.signUpText}>
@@ -127,7 +136,7 @@ const LoginScreen = () => {
           </Text>
         </TouchableOpacity>
       </View>
-    </View>
+    </ScrollView>
   );
 };
 
@@ -138,7 +147,12 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.primary[100],
   },
+  contentContainer: {
+    flexGrow: 1,
+    justifyContent: 'flex-end',
+  },
   gradient: {
+    minHeight: 180,
     flex: 1,
   },
   container: {
@@ -186,20 +200,12 @@ const styles = StyleSheet.create({
     color: colors.text.secondary,
   },
   forgotRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 30,
+    textAlign: 'center',
   },
   forgotText: {
     fontSize: 14,
     fontFamily: fonts.regular,
     color: colors.text.primary,
-  },
-  forgotDivider: {
-    width: 1,
-    height: 14,
-    backgroundColor: colors.gray[300],
   },
   signUpText: {
     fontSize: 14,

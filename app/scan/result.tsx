@@ -103,61 +103,70 @@ const ScanResultScreen = () => {
         onHelp={() => setHelpVisible(true)}
       />
 
-      <View style={styles.docInfo}>
-        {detailLoading ? (
-          <ActivityIndicator size="small" color={colors.primary[400]} />
-        ) : (
-          <>
-            <Text style={styles.docTitle}>{displayTitle}</Text>
-            <View style={styles.metaRow}>
-              {displayDate ? (
-                <View style={styles.metaItem}>
-                  <Ionicons name="calendar" size={13} color={colors.text.secondary} />
-                  <Text style={styles.metaText}>{displayDate}</Text>
-                </View>
-              ) : null}
-              {displayChildName || childGrade ? (
-                <View style={styles.metaItem}>
-                  <Ionicons name="school" size={13} color={colors.text.secondary} />
-                  <Text style={styles.metaText}>
-                    {displayChildName}
-                    {displayChildName && childGrade ? ' · ' : ''}
-                    {childGrade ?? ''}
-                  </Text>
-                </View>
-              ) : null}
-            </View>
-          </>
-        )}
-      </View>
+      <View style={styles.content}>
+        <View style={styles.docInfo}>
+          {detailLoading ? (
+            <ActivityIndicator size="small" color={colors.primary[400]} />
+          ) : (
+            <>
+              <Text style={styles.docTitle} numberOfLines={2}>
+                {displayTitle}
+              </Text>
+              <View style={styles.metaRow}>
+                {displayDate ? (
+                  <View style={styles.metaItem}>
+                    <Ionicons name="calendar" size={13} color={colors.text.secondary} />
+                    <Text style={styles.metaText} numberOfLines={1}>
+                      {displayDate}
+                    </Text>
+                  </View>
+                ) : null}
+                {displayChildName || childGrade ? (
+                  <View style={styles.metaItem}>
+                    <Ionicons name="school" size={13} color={colors.text.secondary} />
+                    <Text style={styles.metaText} numberOfLines={1}>
+                      {displayChildName}
+                      {displayChildName && childGrade ? ' · ' : ''}
+                      {childGrade ?? ''}
+                    </Text>
+                  </View>
+                ) : null}
+              </View>
+            </>
+          )}
+        </View>
 
-      <View style={styles.tabBar}>
-        {TABS.map((tab) => (
-          <TouchableOpacity
-            key={tab}
-            style={styles.tab}
-            onPress={() => setActiveTab(tab)}
-            accessibilityRole="tab"
-            accessibilityState={{ selected: activeTab === tab }}
-          >
-            <Text style={[styles.tabLabel, activeTab === tab && styles.tabLabelActive]}>
-              {t(`scan.result.tabs.${tab}`)}
-            </Text>
-            {activeTab === tab && <View style={styles.tabUnderline} />}
-          </TouchableOpacity>
-        ))}
-      </View>
-      <View style={styles.tabDivider} />
+        <View style={styles.tabBar}>
+          {TABS.map((tab) => (
+            <TouchableOpacity
+              key={tab}
+              style={styles.tab}
+              onPress={() => setActiveTab(tab)}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: activeTab === tab }}
+            >
+              <Text
+                style={[styles.tabLabel, activeTab === tab && styles.tabLabelActive]}
+                numberOfLines={1}
+              >
+                {t(`scan.result.tabs.${tab}`)}
+              </Text>
+              {activeTab === tab && <View style={styles.tabUnderline} />}
+            </TouchableOpacity>
+          ))}
+        </View>
+        <View style={styles.tabDivider} />
 
-      <ScrollView
-        style={[styles.scrollView, styles.scrollViewTinted]}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator
-      >
-        {activeTab === 'full' && <FullDocTab newsletterId={newsletterId} />}
-        {activeTab === 'checklist' && <ChecklistTab newsletterId={newsletterId} />}
-        {activeTab === 'aiSummary' && <AISummaryTab newsletterId={newsletterId} />}
-      </ScrollView>
+        <ScrollView
+          style={[styles.scrollView, styles.scrollViewTinted]}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator
+        >
+          {activeTab === 'full' && <FullDocTab newsletterId={newsletterId} />}
+          {activeTab === 'checklist' && <ChecklistTab newsletterId={newsletterId} />}
+          {activeTab === 'aiSummary' && <AISummaryTab newsletterId={newsletterId} />}
+        </ScrollView>
+      </View>
 
       <View style={[styles.bottomBar, { paddingBottom: insets.bottom + 12 }]}>
         <TouchableOpacity
@@ -166,8 +175,12 @@ const ScanResultScreen = () => {
           accessibilityRole="button"
           accessibilityLabel={t('scan.result.chat')}
         >
-          <Text>💬</Text>
-          <Text style={styles.chatBtnText}>{t('scan.result.chat')}</Text>
+          <Text style={styles.btnIcon} allowFontScaling={false}>
+            💬
+          </Text>
+          <Text style={styles.chatBtnText} numberOfLines={1}>
+            {t('scan.result.chat')}
+          </Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.saveBtn}
@@ -176,8 +189,12 @@ const ScanResultScreen = () => {
           accessibilityLabel={t('scan.result.save')}
           onPress={() => setSaveVisible(true)}
         >
-          <Text>💾</Text>
-          <Text style={styles.saveBtnText}>{t('scan.result.save')}</Text>
+          <Text style={styles.btnIcon} allowFontScaling={false}>
+            💾
+          </Text>
+          <Text style={styles.saveBtnText} numberOfLines={1}>
+            {t('scan.result.save')}
+          </Text>
         </TouchableOpacity>
       </View>
 

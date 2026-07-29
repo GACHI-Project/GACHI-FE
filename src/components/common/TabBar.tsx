@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, useWindowDimensions } from 'react-native';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
@@ -36,6 +36,8 @@ const TABS: TabItem[] = [
 
 const TabBar = ({ state, navigation, insets }: BottomTabBarProps) => {
   const { t } = useTranslation();
+  const { fontScale } = useWindowDimensions();
+  const showLabels = fontScale < 1.5;
 
   return (
     <View style={[styles.outer, { paddingBottom: insets.bottom }]}>
@@ -64,6 +66,9 @@ const TabBar = ({ state, navigation, insets }: BottomTabBarProps) => {
                 style={styles.scanWrapper}
                 onPress={() => router.push('/scan')}
                 activeOpacity={0.85}
+                accessibilityRole="button"
+                accessibilityLabel={t(tab.labelKey)}
+                accessibilityState={{ selected: isActive }}
               >
                 <View style={styles.scanButton}>
                   <Svg width={60} height={60} style={StyleSheet.absoluteFill}>
@@ -77,9 +82,11 @@ const TabBar = ({ state, navigation, insets }: BottomTabBarProps) => {
                   </Svg>
                   <Ionicons name={tab.icon} size={26} color={colors.text.white} />
                 </View>
-                <Text style={[styles.label, isActive && styles.activeLabel]}>
-                  {t(tab.labelKey)}
-                </Text>
+                {showLabels && (
+                  <Text style={[styles.label, isActive && styles.activeLabel]}>
+                    {t(tab.labelKey)}
+                  </Text>
+                )}
               </TouchableOpacity>
             );
           }
@@ -90,13 +97,20 @@ const TabBar = ({ state, navigation, insets }: BottomTabBarProps) => {
               style={styles.tab}
               onPress={onPress}
               activeOpacity={0.7}
+              accessibilityRole="tab"
+              accessibilityLabel={t(tab.labelKey)}
+              accessibilityState={{ selected: isActive }}
             >
               <Ionicons
                 name={isActive ? tab.activeIcon : tab.icon}
                 size={26}
                 color={isActive ? colors.primary[500] : colors.gray[300]}
               />
-              <Text style={[styles.label, isActive && styles.activeLabel]}>{t(tab.labelKey)}</Text>
+              {showLabels && (
+                <Text style={[styles.label, isActive && styles.activeLabel]}>
+                  {t(tab.labelKey)}
+                </Text>
+              )}
             </TouchableOpacity>
           );
         })}

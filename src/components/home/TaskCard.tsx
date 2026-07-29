@@ -146,10 +146,17 @@ const TaskCard = () => {
             }}
             accessibilityLabel={item.content}
           >
-            {checked[item.checklistId] && <Text style={styles.checkMark}>✓</Text>}
+            {checked[item.checklistId] && (
+              <Text style={styles.checkMark} allowFontScaling={false}>
+                ✓
+              </Text>
+            )}
           </TouchableOpacity>
           <View style={styles.todoContent}>
-            <Text style={[styles.todoTitle, checked[item.checklistId] && styles.todoTitleDone]}>
+            <Text
+              style={[styles.todoTitle, checked[item.checklistId] && styles.todoTitleDone]}
+              numberOfLines={2}
+            >
               {item.content}
             </Text>
             <View style={styles.todoMeta}>
@@ -159,13 +166,21 @@ const TaskCard = () => {
                   { backgroundColor: colorMap[item.childName] ?? colors.primary[300] },
                 ]}
               >
-                <Text style={styles.childTagText}>{item.childName}</Text>
+                <Text style={styles.childTagText} numberOfLines={1}>
+                  {item.childName}
+                </Text>
               </View>
-              {item.detail ? <Text style={styles.todoDesc}>{item.detail}</Text> : null}
+              {item.detail ? (
+                <Text style={styles.todoDesc} numberOfLines={1}>
+                  {item.detail}
+                </Text>
+              ) : null}
             </View>
           </View>
           <View style={styles.todayBadge}>
-            <Text style={styles.todayText}>{t('home.taskCard.today')}</Text>
+            <Text style={styles.todayText} numberOfLines={1}>
+              {t('home.taskCard.today')}
+            </Text>
           </View>
         </View>
         {index < visibleItems.length - 1 && <View style={styles.divider} />}
@@ -177,12 +192,22 @@ const TaskCard = () => {
     <View style={styles.card}>
       <View style={styles.summaryRow}>
         <View style={styles.dateBadge}>
-          <Text style={styles.dateMonth}>{todayMonth}</Text>
-          <Text style={styles.dateDay}>{todayDay}</Text>
+          <Text style={styles.dateMonth} numberOfLines={1}>
+            {todayMonth}
+          </Text>
+          <Text style={styles.dateDay} numberOfLines={1}>
+            {todayDay}
+          </Text>
         </View>
         <View style={styles.summaryTexts}>
-          <Text style={styles.summaryTitle}>{summaryTitle}</Text>
-          {!loading && !error && <Text style={styles.summaryDesc}>{summaryDesc}</Text>}
+          <Text style={styles.summaryTitle} numberOfLines={1}>
+            {summaryTitle}
+          </Text>
+          {!loading && !error && (
+            <Text style={styles.summaryDesc} numberOfLines={2}>
+              {summaryDesc}
+            </Text>
+          )}
         </View>
         <View style={styles.childCircles}>
           {distinctChildNames.map((name, index) => (

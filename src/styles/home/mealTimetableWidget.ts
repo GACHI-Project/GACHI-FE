@@ -12,6 +12,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   sectionTitle: {
+    flex: 1,
     fontSize: 18,
     fontFamily: fonts.semiBold,
     color: colors.text.primary,
@@ -56,7 +57,7 @@ const styles = StyleSheet.create({
   },
   cardHeader: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: 10,
   },
   iconBox: {
@@ -125,12 +126,12 @@ const styles = StyleSheet.create({
   },
   periodItem: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: 8,
   },
   periodBadge: {
     backgroundColor: colors.secondary[600],
-    borderRadius: 12,
+    borderRadius: 100,
     paddingHorizontal: 8,
     paddingVertical: 3,
     minWidth: 44,

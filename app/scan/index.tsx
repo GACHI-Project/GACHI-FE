@@ -160,7 +160,10 @@ const ScanChildSelectScreen = () => {
             >
               <Ionicons name="help" size={14} color={colors.text.white} />
             </View>
-            <Text style={[styles.unknownText, selectedId === null && styles.unknownTextSelected]}>
+            <Text
+              style={[styles.unknownText, selectedId === null && styles.unknownTextSelected]}
+              numberOfLines={1}
+            >
               {t('scan.select.unknown')}
             </Text>
           </TouchableOpacity>
@@ -222,7 +225,8 @@ const styles = StyleSheet.create({
     borderStyle: 'dashed',
     borderColor: colors.primary[300],
     borderRadius: 15,
-    height: 90,
+    minHeight: 90,
+    paddingVertical: 16,
     gap: 10,
   },
   unknownCardSelected: {
@@ -241,6 +245,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary[500],
   },
   unknownText: {
+    flexShrink: 1,
     fontSize: 14,
     fontFamily: fonts.medium,
     color: colors.primary[300],

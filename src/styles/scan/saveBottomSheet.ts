@@ -7,8 +7,13 @@ export const EVENT_DOT_COLOR = '#2CDA00';
 
 const styles = StyleSheet.create({
   backdrop: {
-    ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0, 0, 0, 0.4)',
+  },
+  modalRoot: {
+    flex: 1,
+  },
+  backdropTap: {
+    flex: 1,
   },
   sheetWrap: {
     position: 'absolute',
@@ -33,6 +38,7 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   iconWrap: {
+    alignSelf: 'center',
     width: 64,
     height: 64,
     borderRadius: 18,
@@ -67,11 +73,12 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   successEventInfo: {
+    flex: 1,
     gap: 4,
   },
   eventHeader: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: 8,
   },
   eventDot: {
@@ -79,8 +86,11 @@ const styles = StyleSheet.create({
     height: 10,
     borderRadius: 5,
     backgroundColor: EVENT_DOT_COLOR,
+    flexShrink: 0,
+    marginTop: 3,
   },
   eventTitle: {
+    flex: 1,
     fontSize: 15,
     fontFamily: fonts.bold,
     color: colors.text.primary,
@@ -102,6 +112,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     paddingHorizontal: 10,
     paddingVertical: 4,
+    flexShrink: 0,
   },
   editBadgeText: {
     fontSize: 12,

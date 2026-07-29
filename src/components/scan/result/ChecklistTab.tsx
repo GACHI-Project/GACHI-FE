@@ -146,7 +146,7 @@ const styles = StyleSheet.create({
   },
   card: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: 14,
     backgroundColor: colors.text.white,
     borderRadius: 16,
@@ -168,6 +168,8 @@ const styles = StyleSheet.create({
     borderColor: colors.primary[300],
     alignItems: 'center',
     justifyContent: 'center',
+    marginTop: 2,
+    flexShrink: 0,
   },
   checkboxChecked: {
     backgroundColor: colors.primary[400],

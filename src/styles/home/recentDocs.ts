@@ -12,6 +12,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   sectionTitle: {
+    flex: 1,
     fontSize: 16,
     fontFamily: fonts.semiBold,
     color: colors.text.primary,
@@ -61,7 +62,7 @@ const styles = StyleSheet.create({
   },
   docCard: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     backgroundColor: colors.text.white,
     borderRadius: 15,
     borderWidth: 1,

@@ -86,7 +86,7 @@ const cardStyles = StyleSheet.create({
   // 학교 — 선택 완료
   schoolSelectedCard: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     backgroundColor: colors.primary[100],
     borderRadius: 12,
     borderWidth: 1,
@@ -98,7 +98,7 @@ const cardStyles = StyleSheet.create({
   schoolLeft: {
     flex: 1,
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: 10,
   },
   schoolInfo: {
@@ -187,7 +187,7 @@ const cardStyles = StyleSheet.create({
   gradeButton: {
     paddingHorizontal: 10,
     paddingVertical: 5,
-    borderRadius: 20,
+    borderRadius: 100,
     borderWidth: 1,
     borderColor: colors.gray[200],
     backgroundColor: colors.text.white,

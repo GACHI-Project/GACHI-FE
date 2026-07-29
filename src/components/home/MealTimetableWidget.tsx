@@ -44,9 +44,10 @@ interface MealCardProps {
   items: ChildItem[];
   meals: MealMenu[][];
   loading: boolean;
+  fontScale: number;
 }
 
-const MealCard = ({ cardWidth, items, meals, loading }: MealCardProps) => {
+const MealCard = ({ cardWidth, items, meals, loading, fontScale }: MealCardProps) => {
   const { t } = useTranslation();
   const [activeIdx, setActiveIdx] = useState(0);
   const activeIdxRef = useRef(0);
@@ -120,7 +121,7 @@ const MealCard = ({ cardWidth, items, meals, loading }: MealCardProps) => {
         {menus.map((menu) => (
           <View key={menu.name} style={styles.menuItem}>
             <View style={styles.menuBullet} />
-            <Text style={styles.menuName}>
+            <Text style={styles.menuName} numberOfLines={2}>
               {menu.name}
               {menu.allergyNums.length > 0 && (
                 <Text style={styles.allergyText}> ({menu.allergyNums.join('.')})</Text>
@@ -151,10 +152,14 @@ const MealCard = ({ cardWidth, items, meals, loading }: MealCardProps) => {
             <Ionicons name="restaurant-outline" size={22} color={colors.primary[500]} />
           </View>
           <View style={styles.headerTexts}>
-            <Text style={[styles.cardLabel, { color: colors.primary[500] }]}>
-              {t('mealTimetable.meal.cardLabel')}
+            {fontScale < 1.3 && (
+              <Text style={[styles.cardLabel, { color: colors.primary[500] }]}>
+                {t('mealTimetable.meal.cardLabel')}
+              </Text>
+            )}
+            <Text style={styles.cardTitle} numberOfLines={1}>
+              {t('mealTimetable.meal.cardTitle')}
             </Text>
-            <Text style={styles.cardTitle}>{t('mealTimetable.meal.cardTitle')}</Text>
           </View>
         </View>
         <View style={styles.childRow}>
@@ -212,9 +217,16 @@ interface TimetableCardProps {
   items: ChildItem[];
   timetables: TimetablePeriod[][];
   loading: boolean;
+  fontScale: number;
 }
 
-const TimetableCard = ({ cardWidth, items, timetables, loading }: TimetableCardProps) => {
+const TimetableCard = ({
+  cardWidth,
+  items,
+  timetables,
+  loading,
+  fontScale,
+}: TimetableCardProps) => {
   const { t } = useTranslation();
   const [activeIdx, setActiveIdx] = useState(0);
   const activeIdxRef = useRef(0);
@@ -292,7 +304,9 @@ const TimetableCard = ({ cardWidth, items, timetables, loading }: TimetableCardP
                 {t('mealTimetable.timetable.period', { period: p.period })}
               </Text>
             </View>
-            <Text style={styles.periodSubject}>{p.subject}</Text>
+            <Text style={styles.periodSubject} numberOfLines={1}>
+              {p.subject}
+            </Text>
           </View>
         ))}
       </View>
@@ -318,10 +332,14 @@ const TimetableCard = ({ cardWidth, items, timetables, loading }: TimetableCardP
             <Ionicons name="alarm-outline" size={22} color={colors.secondary[600]} />
           </View>
           <View style={styles.headerTexts}>
-            <Text style={[styles.cardLabel, { color: colors.secondary[600] }]}>
-              {t('mealTimetable.timetable.cardLabel')}
+            {fontScale < 1.3 && (
+              <Text style={[styles.cardLabel, { color: colors.secondary[600] }]}>
+                {t('mealTimetable.timetable.cardLabel')}
+              </Text>
+            )}
+            <Text style={styles.cardTitle} numberOfLines={1}>
+              {t('mealTimetable.timetable.cardTitle')}
             </Text>
-            <Text style={styles.cardTitle}>{t('mealTimetable.timetable.cardTitle')}</Text>
           </View>
         </View>
         <View style={styles.childRow}>
@@ -377,7 +395,7 @@ const TimetableCard = ({ cardWidth, items, timetables, loading }: TimetableCardP
 const MealTimetableWidget = () => {
   const { t } = useTranslation();
   const childItems = useChildrenStore((s) => s.children);
-  const { width: screenWidth } = useWindowDimensions();
+  const { width: screenWidth, fontScale } = useWindowDimensions();
   const cardWidth = (screenWidth - HORIZONTAL_PADDING - CARD_GAP) / 2;
   const [today, setToday] = useState(getTodayStr);
 
@@ -441,12 +459,19 @@ const MealTimetableWidget = () => {
         </TouchableOpacity>
       </View>
       <View style={styles.cardsRow}>
-        <MealCard cardWidth={cardWidth} items={childItems} meals={meals} loading={loading} />
+        <MealCard
+          cardWidth={cardWidth}
+          items={childItems}
+          meals={meals}
+          loading={loading}
+          fontScale={fontScale}
+        />
         <TimetableCard
           cardWidth={cardWidth}
           items={childItems}
           timetables={timetables}
           loading={loading}
+          fontScale={fontScale}
         />
       </View>
     </View>

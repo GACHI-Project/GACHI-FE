@@ -12,6 +12,7 @@ interface RegisterState {
   signupDone: boolean;
   loginDone: boolean;
   registeredChildrenCount: number;
+  agreedToTerms: boolean;
   setBasicInfo: (info: {
     loginId: string;
     password: string;
@@ -24,6 +25,7 @@ interface RegisterState {
   setSignupDone: (v: boolean) => void;
   setLoginDone: (v: boolean) => void;
   incrementRegisteredChildrenCount: () => void;
+  setAgreedToTerms: (v: boolean) => void;
   reset: () => void;
 }
 
@@ -38,6 +40,7 @@ const initialState = {
   signupDone: false,
   loginDone: false,
   registeredChildrenCount: 0,
+  agreedToTerms: false,
 };
 
 export const useRegisterStore = create<RegisterState>((set) => ({
@@ -61,5 +64,6 @@ export const useRegisterStore = create<RegisterState>((set) => ({
   setLoginDone: (v) => set({ loginDone: v }),
   incrementRegisteredChildrenCount: () =>
     set((state) => ({ registeredChildrenCount: state.registeredChildrenCount + 1 })),
+  setAgreedToTerms: (v) => set({ agreedToTerms: v }),
   reset: () => set(initialState),
 }));

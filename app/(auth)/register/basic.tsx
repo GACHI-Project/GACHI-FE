@@ -1,6 +1,6 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -54,6 +54,8 @@ type FormValues = {
 const RegisterBasicScreen = () => {
   const { t } = useTranslation();
   const setBasicInfo = useRegisterStore((s) => s.setBasicInfo);
+  const agreedToTerms = useRegisterStore((s) => s.agreedToTerms);
+  const setAgreedToTerms = useRegisterStore((s) => s.setAgreedToTerms);
 
   const formSchema = z
     .object({
@@ -105,6 +107,7 @@ const RegisterBasicScreen = () => {
     control,
     getValues,
     watch,
+    setValue,
     formState: { errors, isValid },
   } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -119,6 +122,15 @@ const RegisterBasicScreen = () => {
       agreed: false,
     },
   });
+
+  useFocusEffect(
+    useCallback(() => {
+      if (agreedToTerms) {
+        setValue('agreed', true, { shouldValidate: true });
+        setAgreedToTerms(false);
+      }
+    }, [agreedToTerms, setValue, setAgreedToTerms])
+  );
 
   const [showPassword, setShowPassword] = useState(false);
   const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
@@ -565,6 +577,7 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   title: {
+    flex: 1,
     fontSize: 26,
     fontFamily: fonts.bold,
     color: colors.text.primary,

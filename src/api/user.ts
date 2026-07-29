@@ -139,6 +139,9 @@ export const changePassword = async (payload: ChangePasswordPayload): Promise<vo
     throw wrapError(error);
   }
   if (responseData?.success === false) {
-    throw new UserApiError(responseData.code ?? 'UNKNOWN', responseData.message ?? '알 수 없는 오류');
+    throw new UserApiError(
+      responseData.code ?? 'UNKNOWN',
+      responseData.message ?? '알 수 없는 오류'
+    );
   }
 };

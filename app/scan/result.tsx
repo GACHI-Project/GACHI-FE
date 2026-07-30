@@ -93,6 +93,12 @@ const ScanResultScreen = () => {
           activeOpacity={0.8}
           accessibilityRole="button"
           accessibilityLabel={t('scan.result.chat')}
+          onPress={() =>
+            router.push({
+              pathname: '/chat',
+              params: { chatType: 'DOCUMENT', newsletterId: String(newsletterId) },
+            })
+          }
         >
           <Text style={styles.btnIcon} allowFontScaling={false}>
             💬

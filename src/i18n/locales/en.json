@@ -419,7 +419,8 @@
       "tabs": {
         "full": "Full Document",
         "checklist": "Checklist",
-        "aiSummary": "AI Summary"
+        "aiSummary": "AI Summary",
+        "chat": "Ask AI"
       },
       "chat": "Chat with AI",
       "save": "Save",
@@ -906,7 +907,9 @@
     "placeholder": "Type your question here",
     "typing": "Kachi is typing...",
     "today": "Today",
-    "errorMessage": "Sorry, an error occurred. Please try again. 🐦"
+    "errorMessage": "Sorry, an error occurred. Please try again. 🐦",
+    "documentWelcomeMessage": "Ask me anything about this newsletter! 🐦\nI'll answer based on the document content.",
+    "nlNotReadyError": "Document analysis is not complete yet. Please try again in a moment. 🐦"
   },
   "mealTimetable": {
     "sectionTitle": "Meals & Timetable",

@@ -34,6 +34,7 @@ export interface SendMessageParams {
   sessionId: string | null;
   message: string;
   chatType?: 'GENERAL' | 'DOCUMENT';
+  newsletterId?: number;
 }
 
 export interface ChatResponse {
@@ -51,6 +52,7 @@ export const sendChatMessage = async (params: SendMessageParams): Promise<ChatRe
         sessionId: params.sessionId,
         message: params.message,
         chatType: params.chatType ?? 'GENERAL',
+        ...(params.newsletterId !== undefined && { newsletterId: params.newsletterId }),
       },
       { headers }
     );

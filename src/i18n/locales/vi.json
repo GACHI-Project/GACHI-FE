@@ -427,7 +427,8 @@
       "tabs": {
         "full": "Toàn bộ tài liệu",
         "checklist": "Danh sách việc cần làm",
-        "aiSummary": "Tóm tắt AI"
+        "aiSummary": "Tóm tắt AI",
+        "chat": "Hỏi AI"
       },
       "chat": "Trò chuyện với AI",
       "save": "Lưu",
@@ -920,7 +921,9 @@
     "placeholder": "Nhập câu hỏi của bạn tại đây",
     "typing": "Kachi đang nhập câu trả lời...",
     "today": "Hôm nay",
-    "errorMessage": "Xin lỗi, đã xảy ra lỗi. Vui lòng thử lại. 🐦"
+    "errorMessage": "Xin lỗi, đã xảy ra lỗi. Vui lòng thử lại. 🐦",
+    "documentWelcomeMessage": "Hãy hỏi tôi bất cứ điều gì về thông báo này! 🐦\nTôi sẽ trả lời dựa trên nội dung tài liệu.",
+    "nlNotReadyError": "Tài liệu chưa được phân tích xong. Vui lòng thử lại sau giây lát. 🐦"
   },
   "mealTimetable": {
     "sectionTitle": "Bữa ăn & Thời khóa biểu",

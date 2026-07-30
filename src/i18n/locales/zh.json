@@ -419,7 +419,8 @@
       "tabs": {
         "full": "完整文件",
         "checklist": "待办清单",
-        "aiSummary": "AI摘要"
+        "aiSummary": "AI摘要",
+        "chat": "问AI"
       },
       "chat": "与AI对话",
       "save": "保存",
@@ -903,7 +904,9 @@
     "placeholder": "请输入您想了解的问题",
     "typing": "Kachi正在输入回答...",
     "today": "今天",
-    "errorMessage": "抱歉，出现了错误，请重试。🐦"
+    "errorMessage": "抱歉，出现了错误，请重试。🐦",
+    "documentWelcomeMessage": "请问我关于这份通知书的任何问题！🐦\n我将根据文档内容为您解答。",
+    "nlNotReadyError": "文件分析尚未完成，请稍后再试。🐦"
   },
   "mealTimetable": {
     "sectionTitle": "供餐·课程表",

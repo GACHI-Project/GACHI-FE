@@ -1,7 +1,7 @@
 import { View, Text } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
-import calStyles from '../../styles/calendar/calendar';
+import calStyles from './styles';
 import colors from '../../constants/colors';
 import type { HolidayItem } from '../../api/calendar';
 

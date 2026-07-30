@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -16,15 +16,9 @@ import Header from '../../src/components/common/Header';
 import colors from '../../src/constants/colors';
 import layout from '../../src/constants/layout';
 import styles from '../../src/styles/guide/guideScreen';
-import {
-  getSchoolGuideCategories,
-  getPopularFaqs,
-  getSchoolGuideFaqs,
-  getSchoolGuideFaqDetail,
-  type SchoolGuideCategory,
-  type PopularFaq,
-  type SchoolGuideFaqItem,
-} from '../../src/api/schoolGuide';
+import useGuideData from '../../src/hooks/guide/useGuideData';
+import useGuideSearch from '../../src/hooks/guide/useGuideSearch';
+import useGuideFaqExpand from '../../src/hooks/guide/useGuideFaqExpand';
 
 const CATEGORY_EMOJIS = [
   ['📄', '📅', '🏫', '🍱'],
@@ -64,39 +58,14 @@ const GuideScreen = () => {
   const rawSections = t('guide.sections', { returnObjects: true });
   const sections = Array.isArray(rawSections) ? (rawSections as Section[]) : [];
 
-  const [categories, setCategories] = useState<SchoolGuideCategory[]>([]);
-  const [popularFaqs, setPopularFaqs] = useState<PopularFaq[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState(false);
-
   const [isSearching, setIsSearching] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<SchoolGuideFaqItem[]>([]);
-  const [searchLoading, setSearchLoading] = useState(false);
-  const [expandedId, setExpandedId] = useState<number | null>(null);
-  const [answerCache, setAnswerCache] = useState<Record<number, string>>({});
-  const [loadingDetailId, setLoadingDetailId] = useState<number | null>(null);
-
   const searchInputRef = useRef<TextInput>(null);
-  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const lastSearchReqId = useRef(0);
 
-  useEffect(
-    () => () => {
-      if (debounceTimer.current) clearTimeout(debounceTimer.current);
-    },
-    []
-  );
-
-  useEffect(() => {
-    Promise.all([getSchoolGuideCategories(), getPopularFaqs()])
-      .then(([cats, faqs]) => {
-        setCategories(cats);
-        setPopularFaqs(faqs);
-      })
-      .catch(() => setLoadError(true))
-      .finally(() => setLoading(false));
-  }, []);
+  const { categories, popularFaqs, loading, loadError } = useGuideData();
+  const { searchResults, searchLoading } = useGuideSearch(searchQuery);
+  const { expandedId, answerCache, loadingDetailId, handleExpand, clearExpand } =
+    useGuideFaqExpand();
 
   const categoryMap = new Map<string, number>(categories.map((c) => [c.category, c.count]));
 
@@ -108,55 +77,12 @@ const GuideScreen = () => {
   const closeSearch = () => {
     setIsSearching(false);
     setSearchQuery('');
-    setSearchResults([]);
-    setExpandedId(null);
-    if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    clearExpand();
   };
 
   const handleSearchChange = (text: string) => {
     setSearchQuery(text);
-    setExpandedId(null);
-
-    if (debounceTimer.current) clearTimeout(debounceTimer.current);
-
-    if (!text.trim()) {
-      setSearchResults([]);
-      setSearchLoading(false);
-      return;
-    }
-
-    setSearchLoading(true);
-    debounceTimer.current = setTimeout(() => {
-      lastSearchReqId.current += 1;
-      const reqId = lastSearchReqId.current;
-      getSchoolGuideFaqs({ search: text.trim() })
-        .then((items) => {
-          if (reqId !== lastSearchReqId.current) return;
-          setSearchResults(items);
-        })
-        .catch(() => {
-          if (reqId !== lastSearchReqId.current) return;
-          setSearchResults([]);
-        })
-        .finally(() => {
-          if (reqId === lastSearchReqId.current) setSearchLoading(false);
-        });
-    }, 300);
-  };
-
-  const handleExpandFaq = (faqId: number) => {
-    if (expandedId === faqId) {
-      setExpandedId(null);
-      return;
-    }
-    setExpandedId(faqId);
-    if (answerCache[faqId] !== undefined) return;
-
-    setLoadingDetailId(faqId);
-    getSchoolGuideFaqDetail(faqId)
-      .then((detail) => setAnswerCache((prev) => ({ ...prev, [faqId]: detail.answer })))
-      .catch(() => {})
-      .finally(() => setLoadingDetailId(null));
+    clearExpand();
   };
 
   const renderSearchContent = () => {
@@ -203,7 +129,7 @@ const GuideScreen = () => {
             <TouchableOpacity
               style={[styles.searchResultCard, expanded && styles.searchResultCardExpanded]}
               activeOpacity={0.85}
-              onPress={() => handleExpandFaq(item.faqId)}
+              onPress={() => handleExpand(item.faqId)}
             >
               <View style={styles.searchResultHeader}>
                 <Text style={styles.qaLabel}>Q.</Text>
@@ -329,11 +255,7 @@ const GuideScreen = () => {
                         if (!categoryEnum) return;
                         router.push({
                           pathname: '/guide/[category]',
-                          params: {
-                            category: cat.name,
-                            categoryEnum,
-                            emoji,
-                          },
+                          params: { category: cat.name, categoryEnum, emoji },
                         });
                       }}
                     >

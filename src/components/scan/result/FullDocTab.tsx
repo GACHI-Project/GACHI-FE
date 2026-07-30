@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
-import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import {
   getNewsletterTranslation,
   NewsletterTranslationResult,
   NewsletterApiError,
 } from '../../../api/newsletter';
-import colors from '../../../constants/colors';
-import fonts from '../../../constants/fonts';
+import CenteredMessage from '../../common/CenteredMessage';
+import TextSection from './TextSection';
 
 interface Props {
   newsletterId?: number;
@@ -55,45 +55,23 @@ const FullDocTab = ({ newsletterId }: Props) => {
     };
   }, [newsletterId]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  if (loading) {
-    return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color={colors.primary[400]} />
-      </View>
-    );
-  }
-
-  if (error || !data) {
-    return (
-      <View style={styles.centered}>
-        <Text style={styles.errorText}>{error ?? t('scan.result.fullDoc.error.loadFailed')}</Text>
-      </View>
-    );
-  }
+  if (loading) return <CenteredMessage loading />;
+  if (error || !data)
+    return <CenteredMessage message={error ?? t('scan.result.fullDoc.error.loadFailed')} />;
 
   const showTranslation = !!data.translatedText;
 
   return (
     <View style={styles.container}>
       {showTranslation && (
-        <View style={styles.section}>
-          <Text style={styles.sectionLabel}>{t('scan.result.fullDoc.translated')}</Text>
-          <View style={styles.card}>
-            <Text style={styles.bodyText}>{data.translatedText}</Text>
-          </View>
-        </View>
+        <TextSection label={t('scan.result.fullDoc.translated')} text={data.translatedText!} />
       )}
-
-      <View style={styles.section}>
-        <Text style={styles.sectionLabel}>
-          {showTranslation
-            ? t('scan.result.fullDoc.ocrOriginal')
-            : t('scan.result.fullDoc.original')}
-        </Text>
-        <View style={styles.card}>
-          <Text style={styles.bodyText}>{data.originalText}</Text>
-        </View>
-      </View>
+      <TextSection
+        label={
+          showTranslation ? t('scan.result.fullDoc.ocrOriginal') : t('scan.result.fullDoc.original')
+        }
+        text={data.originalText}
+      />
     </View>
   );
 };
@@ -103,38 +81,5 @@ export default FullDocTab;
 const styles = StyleSheet.create({
   container: {
     gap: 20,
-  },
-  section: {
-    gap: 10,
-  },
-  centered: {
-    paddingVertical: 60,
-    alignItems: 'center',
-  },
-  errorText: {
-    fontSize: 14,
-    fontFamily: fonts.medium,
-    color: colors.text.secondary,
-  },
-  sectionLabel: {
-    fontSize: 13,
-    fontFamily: fonts.medium,
-    color: colors.text.secondary,
-  },
-  card: {
-    borderRadius: 16,
-    backgroundColor: colors.text.white,
-    padding: 16,
-    shadowColor: colors.gray[300],
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  bodyText: {
-    fontSize: 14,
-    fontFamily: fonts.regular,
-    color: colors.text.primary,
-    lineHeight: 22,
   },
 });

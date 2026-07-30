@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { router } from 'expo-router';
 import { getRecentNewsletters, type RecentNewsletterGroup } from '../../api/newsletter';
 import colors from '../../constants/colors';
-import styles from '../../styles/home/recentDocs';
+import styles from './recentDocs.styles';
 
 const formatGroupDate = (dateStr: string, locale: string) =>
   new Intl.DateTimeFormat(locale, { month: 'long', day: 'numeric' }).format(new Date(dateStr));

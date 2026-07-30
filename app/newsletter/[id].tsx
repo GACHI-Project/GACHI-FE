@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -8,18 +8,14 @@ import Header from '../../src/components/common/Header';
 import FullDocTab from '../../src/components/scan/result/FullDocTab';
 import ChecklistTab from '../../src/components/scan/result/ChecklistTab';
 import AISummaryTab from '../../src/components/scan/result/AISummaryTab';
-import { getNewsletterDetail, type NewsletterDetail } from '../../src/api/newsletter';
+import useNewsletterDetail from '../../src/hooks/scan/useNewsletterDetail';
+import { formatDate } from '../../src/utils/date';
 import colors from '../../src/constants/colors';
 import styles from '../../src/styles/scan/result';
 
 const TABS_ALL = ['full', 'checklist', 'aiSummary'] as const;
 const TABS_NO_CHECKLIST = ['full', 'aiSummary'] as const;
 type Tab = (typeof TABS_ALL)[number];
-
-const formatDate = (iso: string, locale: string) =>
-  new Intl.DateTimeFormat(locale, { year: 'numeric', month: 'long', day: 'numeric' }).format(
-    new Date(iso)
-  );
 
 const NewsletterDetailScreen = () => {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -28,34 +24,8 @@ const NewsletterDetailScreen = () => {
   const { t, i18n } = useTranslation();
   const insets = useSafeAreaInsets();
   const [activeTab, setActiveTab] = useState<Tab>('full');
-  const [detail, setDetail] = useState<NewsletterDetail | null>(null);
-  const [detailLoading, setDetailLoading] = useState(!!id);
 
-  useEffect(() => {
-    if (!newsletterId) {
-      setDetail(null);
-      setDetailLoading(false);
-      return () => {};
-    }
-    let cancelled = false;
-    setDetail(null);
-    setDetailLoading(true);
-
-    getNewsletterDetail(newsletterId)
-      .then((data) => {
-        if (!cancelled) setDetail(data);
-      })
-      .catch(() => {
-        if (!cancelled) setDetail(null);
-      })
-      .finally(() => {
-        if (!cancelled) setDetailLoading(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [newsletterId]);
+  const { detail, loading: detailLoading } = useNewsletterDetail(newsletterId);
 
   const tabs = detail?.isCalendarRegistered ? TABS_ALL : TABS_NO_CHECKLIST;
   const displayTitle = detail?.title ?? '';

@@ -1,22 +1,19 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState } from 'react';
 import { View, Text, TextInput, ScrollView, StyleSheet, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter, useFocusEffect } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import colors from '../../src/constants/colors';
 import fonts from '../../src/constants/fonts';
 import layout from '../../src/constants/layout';
 import { DocumentItem } from '../../src/mock/documents';
 import { useChildrenStore } from '../../src/store/childrenStore';
-import { fetchNewsletters, NewsletterItem } from '../../src/api/newsletter';
+import { type NewsletterItem } from '../../src/api/newsletter';
 import DocumentCard from '../../src/components/document/DocumentCard';
 import Header from '../../src/components/common/Header';
 import ChildFilterBar from '../../src/components/common/ChildFilterBar';
-
-const formatDate = (dateStr: string): string => {
-  const d = new Date(dateStr);
-  return `${d.getFullYear()}. ${d.getMonth() + 1}. ${d.getDate()}`;
-};
+import useNewsletterList from '../../src/hooks/document/useNewsletterList';
+import { formatShortDate } from '../../src/utils/date';
 
 const toDocumentItem = (doc: NewsletterItem): DocumentItem => ({
   id: String(doc.newsletterId),
@@ -25,92 +22,20 @@ const toDocumentItem = (doc: NewsletterItem): DocumentItem => ({
   grade: doc.childGrade,
   calendarColor: doc.childColor ?? colors.primary[400],
   title: doc.title ?? '',
-  date: formatDate(doc.createdAt),
+  date: formatShortDate(doc.createdAt),
 });
 
 const DocumentScreen = () => {
   const router = useRouter();
   const { t } = useTranslation();
   const { children } = useChildrenStore();
-  const [newsletters, setNewsletters] = useState<NewsletterItem[]>([]);
-  const [totalCount, setTotalCount] = useState(0);
-  const [page, setPage] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [selectedChildName, setSelectedChildName] = useState<string | undefined>(undefined);
   const [searchQuery, setSearchQuery] = useState('');
-  const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const isMountedRef = useRef(false);
-  const isLoadingMoreRef = useRef(false);
-  const selectedChildNameRef = useRef(selectedChildName);
-  const searchQueryRef = useRef(searchQuery);
 
-  useEffect(() => {
-    selectedChildNameRef.current = selectedChildName;
-  }, [selectedChildName]);
-
-  useEffect(() => {
-    searchQueryRef.current = searchQuery;
-  }, [searchQuery]);
-
-  const loadNewsletters = async (childName?: string, search?: string) => {
-    setIsLoading(true);
-    setPage(0);
-    try {
-      const result = await fetchNewsletters({ childName, search, page: 0 });
-      setNewsletters(result.newsletters);
-      setTotalCount(result.totalCount);
-    } catch {
-      // 목록 조회 실패 시 목록 유지
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const loadMore = async () => {
-    if (isLoadingMoreRef.current || isLoading || newsletters.length >= totalCount) return;
-    isLoadingMoreRef.current = true;
-    setIsLoadingMore(true);
-    const nextPage = page + 1;
-    try {
-      const result = await fetchNewsletters({
-        childName: selectedChildName,
-        search: searchQuery.trim() || undefined,
-        page: nextPage,
-      });
-      setNewsletters((prev) => [...prev, ...result.newsletters]);
-      setPage(nextPage);
-    } catch {
-      // 추가 목록 조회 실패
-    } finally {
-      isLoadingMoreRef.current = false;
-      setIsLoadingMore(false);
-    }
-  };
-
-  useEffect(() => {
-    if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
-    searchDebounceRef.current = setTimeout(() => {
-      loadNewsletters(selectedChildName, searchQuery.trim() || undefined);
-    }, 500);
-    return () => {
-      if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
-    };
-  }, [searchQuery, selectedChildName]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  useFocusEffect(
-    useCallback(() => {
-      if (!isMountedRef.current) {
-        isMountedRef.current = true;
-        return;
-      }
-      loadNewsletters(selectedChildNameRef.current, searchQueryRef.current.trim() || undefined);
-    }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  const { newsletters, isLoading, isLoadingMore, loadMore } = useNewsletterList(
+    selectedChildName,
+    searchQuery
   );
-
-  const handleChildFilter = (childName: string | undefined) => {
-    setSelectedChildName(childName);
-  };
 
   const renderContent = () => {
     if (isLoading) {
@@ -148,7 +73,7 @@ const DocumentScreen = () => {
       <ChildFilterBar
         items={children}
         selectedChildName={selectedChildName}
-        onSelect={handleChildFilter}
+        onSelect={setSelectedChildName}
       />
 
       <ScrollView

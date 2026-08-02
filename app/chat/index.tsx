@@ -88,7 +88,9 @@ const ChatScreen = () => {
     newsletterId?: string;
   }>();
   const chatType = chatTypeParam === 'DOCUMENT' ? 'DOCUMENT' : 'GENERAL';
-  const newsletterId = newsletterIdParam ? Number(newsletterIdParam) : undefined;
+  const parsedNewsletterId = Number(newsletterIdParam);
+  const newsletterId =
+    Number.isInteger(parsedNewsletterId) && parsedNewsletterId > 0 ? parsedNewsletterId : undefined;
 
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
@@ -149,12 +151,35 @@ const ChatScreen = () => {
       setMessages((prev) => [...prev, aiMessage]);
     } catch (error) {
       let errorContent = t('chat.errorMessage');
-      if (error instanceof ChatApiError) {
-        if (error.code === 'CHAT4003') {
-          sessionIdRef.current = null;
-        } else if (error.code === 'NL4004') {
-          errorContent = t('chat.nlNotReadyError');
+      if (error instanceof ChatApiError && error.code === 'CHAT4003') {
+        sessionIdRef.current = null;
+        try {
+          const retryResult = await sendChatMessage({
+            sessionId: null,
+            message: userMessage.content,
+            chatType,
+            newsletterId,
+          });
+          sessionIdRef.current = retryResult.sessionId;
+          const retryTimeStr = (() => {
+            const d = new Date(retryResult.sentAt);
+            return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+          })();
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: String(Date.now() + 1),
+              role: 'assistant',
+              content: retryResult.reply,
+              timestamp: retryTimeStr,
+            },
+          ]);
+          return;
+        } catch {
+          // 재시도도 실패하면 일반 오류 메시지 표시
         }
+      } else if (error instanceof ChatApiError && error.code === 'NL4004') {
+        errorContent = t('chat.nlNotReadyError');
       }
       const errorMessage: ChatMessage = {
         id: String(Date.now() + 1),

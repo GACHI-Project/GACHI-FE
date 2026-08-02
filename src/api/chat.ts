@@ -52,7 +52,9 @@ export const sendChatMessage = async (params: SendMessageParams): Promise<ChatRe
         sessionId: params.sessionId,
         message: params.message,
         chatType: params.chatType ?? 'GENERAL',
-        ...(params.newsletterId !== undefined && { newsletterId: params.newsletterId }),
+        ...(params.newsletterId !== undefined &&
+          Number.isInteger(params.newsletterId) &&
+          params.newsletterId > 0 && { newsletterId: params.newsletterId }),
       },
       { headers }
     );

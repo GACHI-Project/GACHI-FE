@@ -419,7 +419,8 @@
       "tabs": {
         "full": "전체 문서",
         "checklist": "체크리스트",
-        "aiSummary": "AI 요약"
+        "aiSummary": "AI 요약",
+        "chat": "AI와 대화"
       },
       "chat": "AI와 대화하기",
       "save": "저장하기",
@@ -906,7 +907,9 @@
     "placeholder": "궁금한 점을 입력해주세요",
     "typing": "까치가 답변을 입력 중입니다...",
     "today": "오늘",
-    "errorMessage": "죄송해요, 오류가 발생했어요. 다시 시도해주세요. 🐦"
+    "errorMessage": "죄송해요, 오류가 발생했어요. 다시 시도해주세요. 🐦",
+    "documentWelcomeMessage": "이 가정통신문에 대해 궁금한 점을 물어보세요! 🐦\n문서 내용을 바탕으로 답변해드릴게요.",
+    "nlNotReadyError": "아직 문서 분석이 완료되지 않았어요. 잠시 후 다시 시도해주세요. 🐦"
   },
   "mealTimetable": {
     "sectionTitle": "급식·시간표",

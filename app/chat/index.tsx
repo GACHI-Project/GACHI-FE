@@ -11,13 +11,13 @@ import {
 } from 'react-native';
 import { Ionicons, Feather } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useState, useRef, useEffect } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import colors from '../../src/constants/colors';
 import layout from '../../src/constants/layout';
 import styles from '../../src/styles/chat/chatScreen';
-import { sendChatMessage } from '../../src/api/chat';
+import { sendChatMessage, ChatApiError } from '../../src/api/chat';
 
 type MessageRole = 'user' | 'assistant';
 
@@ -83,11 +83,21 @@ const ChatScreen = () => {
   const insets = useSafeAreaInsets();
   const flatListRef = useRef<FlatList<ChatMessage>>(null);
 
+  const { chatType: chatTypeParam, newsletterId: newsletterIdParam } = useLocalSearchParams<{
+    chatType?: string;
+    newsletterId?: string;
+  }>();
+  const chatType = chatTypeParam === 'DOCUMENT' ? 'DOCUMENT' : 'GENERAL';
+  const parsedNewsletterId = Number(newsletterIdParam);
+  const newsletterId =
+    Number.isInteger(parsedNewsletterId) && parsedNewsletterId > 0 ? parsedNewsletterId : undefined;
+
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: 'welcome',
       role: 'assistant',
-      content: t('chat.welcomeMessage'),
+      content:
+        chatType === 'DOCUMENT' ? t('chat.documentWelcomeMessage') : t('chat.welcomeMessage'),
       timestamp: getTimeStr(),
     },
   ]);
@@ -120,7 +130,8 @@ const ChatScreen = () => {
       const result = await sendChatMessage({
         sessionId: sessionIdRef.current,
         message: userMessage.content,
-        chatType: 'GENERAL',
+        chatType,
+        newsletterId,
       });
 
       sessionIdRef.current = result.sessionId;
@@ -138,11 +149,42 @@ const ChatScreen = () => {
       };
 
       setMessages((prev) => [...prev, aiMessage]);
-    } catch {
+    } catch (error) {
+      let errorContent = t('chat.errorMessage');
+      if (error instanceof ChatApiError && error.code === 'CHAT4003') {
+        sessionIdRef.current = null;
+        try {
+          const retryResult = await sendChatMessage({
+            sessionId: null,
+            message: userMessage.content,
+            chatType,
+            newsletterId,
+          });
+          sessionIdRef.current = retryResult.sessionId;
+          const retryTimeStr = (() => {
+            const d = new Date(retryResult.sentAt);
+            return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+          })();
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: String(Date.now() + 1),
+              role: 'assistant',
+              content: retryResult.reply,
+              timestamp: retryTimeStr,
+            },
+          ]);
+          return;
+        } catch {
+          // 재시도도 실패하면 일반 오류 메시지 표시
+        }
+      } else if (error instanceof ChatApiError && error.code === 'NL4004') {
+        errorContent = t('chat.nlNotReadyError');
+      }
       const errorMessage: ChatMessage = {
         id: String(Date.now() + 1),
         role: 'assistant',
-        content: t('chat.errorMessage'),
+        content: errorContent,
         timestamp: getTimeStr(),
       };
       setMessages((prev) => [...prev, errorMessage]);

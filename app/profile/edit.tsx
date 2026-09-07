@@ -18,7 +18,14 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Header from '../../src/components/common/Header';
 import ConfirmModal from '../../src/components/common/ConfirmModal';
 import FormField from '../../src/components/auth/FormField';
-import { fetchMyInfo, updateProfile, UserInfo, UserApiError } from '../../src/api/user';
+import {
+  fetchMyInfo,
+  updateProfile,
+  withdrawUser,
+  UserInfo,
+  UserApiError,
+} from '../../src/api/user';
+import { clearSession } from '../../src/api/auth';
 import { phoneNumberSchema } from '../../src/validation/auth';
 import colors from '../../src/constants/colors';
 import layout from '../../src/constants/layout';
@@ -187,6 +194,11 @@ const ProfileEditScreen = () => {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const [withdrawModalVisible, setWithdrawModalVisible] = useState(false);
+  const [withdrawStep, setWithdrawStep] = useState<'confirm' | 'password'>('confirm');
+  const [withdrawPassword, setWithdrawPassword] = useState('');
+  const [showWithdrawPassword, setShowWithdrawPassword] = useState(false);
+  const [withdrawError, setWithdrawError] = useState<string | undefined>();
+  const [withdrawing, setWithdrawing] = useState(false);
   const [editSheetVisible, setEditSheetVisible] = useState(false);
   const [editSheetFocus, setEditSheetFocus] = useState<'name' | 'phone'>('name');
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
@@ -202,6 +214,49 @@ const ProfileEditScreen = () => {
   }, []);
 
   useFocusEffect(loadUserInfo);
+
+  const openWithdrawModal = () => {
+    setWithdrawStep('confirm');
+    setWithdrawPassword('');
+    setShowWithdrawPassword(false);
+    setWithdrawError(undefined);
+    setWithdrawModalVisible(true);
+  };
+
+  const closeWithdrawModal = () => {
+    if (withdrawing) return;
+    setWithdrawModalVisible(false);
+    setWithdrawStep('confirm');
+    setWithdrawPassword('');
+    setShowWithdrawPassword(false);
+    setWithdrawError(undefined);
+  };
+
+  const handleWithdraw = async () => {
+    if (withdrawing || withdrawPassword.length === 0) return;
+
+    setWithdrawing(true);
+    setWithdrawError(undefined);
+    try {
+      await withdrawUser(withdrawPassword);
+      setWithdrawModalVisible(false);
+      setWithdrawPassword('');
+      setShowWithdrawPassword(false);
+      await clearSession();
+    } catch (e) {
+      if (e instanceof UserApiError && e.code === 'AUTH4011') {
+        setWithdrawError(t('profile.editProfile.withdrawWrongPassword'));
+      } else if (e instanceof UserApiError && e.code === 'UNAUTHORIZED') {
+        await clearSession();
+      } else {
+        setWithdrawError(t('profile.editProfile.withdrawFailed'));
+      }
+    } finally {
+      setWithdrawing(false);
+    }
+  };
+
+  const isWithdrawPasswordStep = withdrawStep === 'password';
 
   const openSheet = (focus: 'name' | 'phone') => {
     setEditSheetFocus(focus);
@@ -272,7 +327,7 @@ const ProfileEditScreen = () => {
 
         <TouchableOpacity
           style={styles.withdrawBtn}
-          onPress={() => setWithdrawModalVisible(true)}
+          onPress={openWithdrawModal}
           activeOpacity={0.8}
         >
           <Text style={styles.withdrawText}>{t('profile.editProfile.withdraw')}</Text>
@@ -288,19 +343,51 @@ const ProfileEditScreen = () => {
         onSaved={loadUserInfo}
       />
 
-      <ConfirmModal
-        visible={withdrawModalVisible}
-        onClose={() => setWithdrawModalVisible(false)}
-        icon={<FontAwesome5 name="user-slash" size={26} color={colors.primary[500]} />}
-        title={t('profile.editProfile.withdrawTitle')}
-        description={t('profile.editProfile.withdrawDesc')}
-        warning={t('profile.editProfile.withdrawWarning')}
-        cancelText={t('profile.editProfile.cancel')}
-        onCancel={() => setWithdrawModalVisible(false)}
-        confirmText={t('profile.editProfile.withdraw')}
-        onConfirm={() => {}}
-        confirmDisabled
-      />
+      {isWithdrawPasswordStep ? (
+        <ConfirmModal
+          visible={withdrawModalVisible}
+          onClose={closeWithdrawModal}
+          icon={<Ionicons name="lock-closed" size={26} color={colors.primary[500]} />}
+          title={t('profile.editProfile.withdrawVerifyTitle')}
+          description={t('profile.editProfile.withdrawVerifyDesc')}
+          extraContent={
+            <FormField
+              label={t('profile.editProfile.changePassword.currentPassword')}
+              value={withdrawPassword}
+              onChangeText={(v) => {
+                setWithdrawPassword(v);
+                setWithdrawError(undefined);
+              }}
+              placeholder={t('profile.editProfile.withdrawPasswordPlaceholder')}
+              secureTextEntry={!showWithdrawPassword}
+              rightIcon={showWithdrawPassword ? 'eye-outline' : 'eye-off-outline'}
+              onRightIconPress={() => setShowWithdrawPassword((prev) => !prev)}
+              editable={!withdrawing}
+              autoFocus
+              validationState={withdrawError ? 'error' : undefined}
+              validationMessage={withdrawError}
+            />
+          }
+          cancelText={t('profile.editProfile.cancel')}
+          onCancel={closeWithdrawModal}
+          confirmText={t('profile.editProfile.withdraw')}
+          onConfirm={handleWithdraw}
+          confirmDisabled={withdrawPassword.length === 0 || withdrawing}
+        />
+      ) : (
+        <ConfirmModal
+          visible={withdrawModalVisible}
+          onClose={closeWithdrawModal}
+          icon={<FontAwesome5 name="user-slash" size={26} color={colors.primary[500]} />}
+          title={t('profile.editProfile.withdrawTitle')}
+          description={t('profile.editProfile.withdrawDesc')}
+          warning={t('profile.editProfile.withdrawWarning')}
+          cancelText={t('profile.editProfile.withdrawKeep')}
+          onCancel={closeWithdrawModal}
+          confirmText={t('profile.editProfile.withdrawContinue')}
+          onConfirm={() => setWithdrawStep('password')}
+        />
+      )}
     </View>
   );
 };

@@ -612,6 +612,13 @@
       "withdrawTitle": "Are you sure you want to leave?",
       "withdrawDesc": "Your account and all data will be\npermanently deleted.",
       "withdrawWarning": "All saved documents, child info, and calendar events will be deleted and cannot be recovered.",
+      "withdrawPasswordPlaceholder": "Enter your current password",
+      "withdrawFailed": "Failed to delete your account. Please try again.",
+      "withdrawWrongPassword": "Current password is incorrect.",
+      "withdrawKeep": "Keep my account",
+      "withdrawContinue": "Continue to delete",
+      "withdrawVerifyTitle": "Verify it's you",
+      "withdrawVerifyDesc": "For your account's security,\nenter your current password.",
       "cancel": "Cancel"
     },
     "editEmail": {

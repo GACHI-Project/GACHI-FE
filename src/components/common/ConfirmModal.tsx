@@ -5,6 +5,8 @@ import {
   Modal,
   TouchableOpacity,
   TouchableWithoutFeedback,
+  KeyboardAvoidingView,
+  Platform,
   StyleSheet,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -19,6 +21,7 @@ interface Props {
   title: string;
   description: string;
   warning?: string;
+  extraContent?: ReactNode;
   cancelText: string;
   onCancel: () => void;
   confirmText: string;
@@ -34,6 +37,7 @@ const ConfirmModal = ({
   title,
   description,
   warning,
+  extraContent,
   cancelText,
   onCancel,
   confirmText,
@@ -51,6 +55,7 @@ const ConfirmModal = ({
           <Text style={styles.warningText}>{warning}</Text>
         </View>
       ) : null}
+      {extraContent ? <View style={styles.extraContent}>{extraContent}</View> : null}
       <View style={styles.btnRow}>
         <TouchableOpacity style={styles.cancelBtn} onPress={onCancel} activeOpacity={0.8}>
           <Text style={styles.cancelBtnText}>{cancelText}</Text>
@@ -69,11 +74,16 @@ const ConfirmModal = ({
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <TouchableWithoutFeedback onPress={onClose}>
-        <View style={styles.overlay}>
-          <TouchableWithoutFeedback onPress={() => {}}>{cardContent}</TouchableWithoutFeedback>
-        </View>
-      </TouchableWithoutFeedback>
+      <KeyboardAvoidingView
+        style={styles.flex}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
+        <TouchableWithoutFeedback onPress={onClose}>
+          <View style={styles.overlay}>
+            <TouchableWithoutFeedback onPress={() => {}}>{cardContent}</TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </KeyboardAvoidingView>
     </Modal>
   );
 };
@@ -81,6 +91,9 @@ const ConfirmModal = ({
 export default ConfirmModal;
 
 const styles = StyleSheet.create({
+  flex: {
+    flex: 1,
+  },
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.45)',
@@ -120,6 +133,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 11,
     alignItems: 'center',
+    width: '100%',
+  },
+  extraContent: {
     width: '100%',
   },
   warningText: {

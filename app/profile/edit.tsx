@@ -361,7 +361,10 @@ const ProfileEditScreen = () => {
               placeholder={t('profile.editProfile.withdrawPasswordPlaceholder')}
               secureTextEntry={!showWithdrawPassword}
               rightIcon={showWithdrawPassword ? 'eye-outline' : 'eye-off-outline'}
-              onRightIconPress={() => setShowWithdrawPassword((prev) => !prev)}
+              onRightIconPress={() => {
+                if (withdrawing) return;
+                setShowWithdrawPassword((prev) => !prev);
+              }}
               editable={!withdrawing}
               autoFocus
               validationState={withdrawError ? 'error' : undefined}

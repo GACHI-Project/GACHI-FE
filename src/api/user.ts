@@ -123,6 +123,26 @@ export const updateNotificationPreference = async (
   }
 };
 
+export const withdrawUser = async (currentPassword: string): Promise<void> => {
+  let responseData: { success?: boolean; code?: string; message?: string } | undefined;
+  try {
+    const headers = await getAuthHeader();
+    const { data } = await apiClient.delete('/api/v1/users/me', {
+      headers,
+      data: { currentPassword },
+    });
+    responseData = data;
+  } catch (error) {
+    throw wrapError(error);
+  }
+  if (responseData?.success === false) {
+    throw new UserApiError(
+      responseData.code ?? 'UNKNOWN',
+      responseData.message ?? '알 수 없는 오류'
+    );
+  }
+};
+
 export interface ChangePasswordPayload {
   currentPassword: string;
   newPassword: string;

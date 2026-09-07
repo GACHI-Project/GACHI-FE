@@ -90,6 +90,12 @@ apiClient.interceptors.response.use(
   }
 );
 
+export const clearSession = async (): Promise<void> => {
+  await SecureStore.deleteItemAsync('accessToken');
+  await SecureStore.deleteItemAsync('refreshToken');
+  router.replace('/(auth)/login');
+};
+
 export const logout = async (): Promise<void> => {
   try {
     const accessToken = await SecureStore.getItemAsync('accessToken');
@@ -104,9 +110,7 @@ export const logout = async (): Promise<void> => {
   } catch {
     // API 실패해도 로컬 토큰 삭제 후 로그인으로 이동
   } finally {
-    await SecureStore.deleteItemAsync('accessToken');
-    await SecureStore.deleteItemAsync('refreshToken');
-    router.replace('/(auth)/login');
+    await clearSession();
   }
 };
 

@@ -60,7 +60,7 @@ export const uploadNewsletter = async (
     const mimeType = getMimeType(photoUri);
     const filePayload: RNFile = { uri: photoUri, name: filename, type: mimeType };
     const formData = new FormData();
-    formData.append('file', filePayload as unknown as Blob);
+    formData.append('files', filePayload as unknown as Blob);
 
     const params: Record<string, unknown> = { language: 'KO' };
     if (childId !== undefined && !Number.isNaN(childId)) {

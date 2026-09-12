@@ -6,6 +6,7 @@ import en from './locales/en.json';
 import vi from './locales/vi.json';
 import zh from './locales/zh.json';
 import { LanguageType } from '../types/language';
+import { applyZodLocale } from '../validation/zodLocale';
 
 export type SupportedLanguage = LanguageType;
 
@@ -23,6 +24,9 @@ export const saveLanguage = async (lang: SupportedLanguage) => {
   await AsyncStorage.setItem(LANGUAGE_KEY, lang);
 };
 
+// 언어 변경 시 zod 기본 검증 문구도 함께 전환 (모듈 로드 시 1회만 등록)
+i18n.on('languageChanged', applyZodLocale);
+
 export const initI18n = async () => {
   const lng = await getInitialLanguage();
 
@@ -38,6 +42,8 @@ export const initI18n = async () => {
     interpolation: { escapeValue: false },
     compatibilityJSON: 'v4',
   });
+
+  applyZodLocale(lng);
 
   return i18n;
 };

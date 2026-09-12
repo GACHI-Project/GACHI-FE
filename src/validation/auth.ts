@@ -74,12 +74,12 @@ export const validatePassword = (
 
 export const loginIdSchema = z
   .string()
-  .min(4, () => t('validation.idMin'))
-  .max(50, () => t('validation.idMax'))
-  .regex(/^[a-zA-Z0-9._-]+$/, () => t('validation.idFormat'));
+  .min(4, { error: () => t('validation.idMin') })
+  .max(50, { error: () => t('validation.idMax') })
+  .regex(/^[a-zA-Z0-9._-]+$/, { error: () => t('validation.idFormat') });
 
 export const phoneNumberSchema = z
   .string()
-  .regex(/^01[0-9]{8,9}$/, () => t('validation.phoneFormat'));
+  .regex(/^01[0-9]{8,9}$/, { error: () => t('validation.phoneFormat') });
 
-export const emailSchema = z.string().email(() => t('validation.emailFormat'));
+export const emailSchema = z.email({ error: () => t('validation.emailFormat') });

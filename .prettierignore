@@ -1,0 +1,13 @@
+# 의존성 / 빌드 산출물
+node_modules/
+dist/
+web-build/
+.expo/
+
+# Expo prebuild 로 생성되는 네이티브 프로젝트
+android/
+ios/
+
+# 외부 도구가 생성하는 파일 (임의 포맷 변경 금지)
+google-services.json
+package-lock.json

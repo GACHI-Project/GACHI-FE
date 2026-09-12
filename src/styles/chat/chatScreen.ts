@@ -27,11 +27,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   headerCenter: {
+    flex: 1,
+    minWidth: 0,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
   },
   headerTexts: {
+    flexShrink: 1,
+    minWidth: 0,
     gap: 2,
   },
   headerName: {
@@ -42,6 +46,7 @@ const styles = StyleSheet.create({
   headerStatusRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    flexShrink: 1,
   },
   headerDot: {
     fontSize: 12,

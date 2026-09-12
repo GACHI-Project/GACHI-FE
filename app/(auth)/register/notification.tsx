@@ -7,7 +7,12 @@ import StepHeader from '../../../src/components/common/StepHeader';
 import { PrimaryButton, SecondaryButton } from '../../../src/components/common/Button';
 import colors from '../../../src/constants/colors';
 import styles from '../../../src/styles/register/notification';
-import { NotificationType, NotificationOption } from '../../../src/types/notification';
+import {
+  NotificationType,
+  NotificationOption,
+  toServerNotificationPreference,
+} from '../../../src/types/notification';
+import { useRegisterStore } from '../../../src/store/registerStore';
 
 // ─── NotificationCard ─────────────────────────────────────────────────────────
 
@@ -60,6 +65,7 @@ const NotificationCard = ({ option, selected, onPress }: NotificationCardProps) 
 const RegisterNotificationScreen = () => {
   const { t } = useTranslation();
   const [selected, setSelected] = useState<NotificationType>('important');
+  const setNotificationPreference = useRegisterStore((s) => s.setNotificationPreference);
 
   const NOTIFICATION_OPTIONS: NotificationOption[] = [
     {
@@ -131,7 +137,10 @@ const RegisterNotificationScreen = () => {
           </View>
           <PrimaryButton
             label={t('common.next')}
-            onPress={() => router.push('/(auth)/register/complete')}
+            onPress={() => {
+              setNotificationPreference(toServerNotificationPreference(selected));
+              router.push('/(auth)/register/complete');
+            }}
           />
           <SecondaryButton
             label={t('common.later')}

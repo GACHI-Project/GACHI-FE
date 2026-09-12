@@ -1,6 +1,7 @@
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 import { router } from 'expo-router';
+import { ServerNotificationPreference } from '../types/notification';
 
 export class AuthApiError extends Error {
   constructor(
@@ -212,6 +213,7 @@ export const signup = async (payload: {
   phoneNumber: string;
   consentAgreed: boolean;
   languageCode: string;
+  notificationPreference: ServerNotificationPreference;
 }): Promise<SignupResult> => {
   try {
     const response = await apiClient.post('/api/v1/auth/signup', payload);

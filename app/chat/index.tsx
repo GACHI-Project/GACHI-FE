@@ -251,7 +251,9 @@ const ChatScreen = () => {
         <View style={styles.headerCenter}>
           <GachiAvatar size={50} />
           <View style={styles.headerTexts}>
-            <Text style={styles.headerName}>{t('chat.title')}</Text>
+            <Text style={styles.headerName} numberOfLines={1}>
+              {t('chat.title')}
+            </Text>
             <View style={styles.headerStatusRow}>
               <Text style={styles.headerDot}>{'• '}</Text>
               <Text style={styles.headerStatusText}>{t('chat.subtitle')}</Text>

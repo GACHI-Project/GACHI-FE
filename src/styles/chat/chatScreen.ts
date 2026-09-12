@@ -27,11 +27,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   headerCenter: {
+    flex: 1,
+    minWidth: 0,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
   },
   headerTexts: {
+    flexShrink: 1,
+    minWidth: 0,
     gap: 2,
   },
   headerName: {
@@ -42,6 +46,7 @@ const styles = StyleSheet.create({
   headerStatusRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    flexShrink: 1,
   },
   headerDot: {
     fontSize: 12,
@@ -52,6 +57,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontFamily: fonts.medium,
     color: colors.text.secondary,
+    flexShrink: 1,
   },
   listContent: {
     paddingBottom: 16,
@@ -64,7 +70,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.gray[100],
     borderRadius: 12,
     paddingHorizontal: 12,
-    height: 24,
+    paddingVertical: 5,
     alignItems: 'center',
     justifyContent: 'center',
   },

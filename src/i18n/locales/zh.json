@@ -612,6 +612,13 @@
       "withdrawTitle": "确定要注销账号吗？",
       "withdrawDesc": "注销后，账号和所有数据\n将被永久删除。",
       "withdrawWarning": "已保存的文件、孩子信息和日历日程都会被删除，且无法恢复。",
+      "withdrawPasswordPlaceholder": "请输入当前密码",
+      "withdrawFailed": "注销失败，请重试。",
+      "withdrawWrongPassword": "当前密码不正确。",
+      "withdrawKeep": "保留我的账号",
+      "withdrawContinue": "继续注销",
+      "withdrawVerifyTitle": "需要验证身份",
+      "withdrawVerifyDesc": "为保护账号安全，\n请输入当前密码。",
       "cancel": "取消"
     },
     "editEmail": {

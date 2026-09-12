@@ -620,6 +620,13 @@
       "withdrawTitle": "Bạn có chắc muốn hủy tài khoản không?",
       "withdrawDesc": "Khi hủy tài khoản, tài khoản và toàn bộ dữ liệu\nsẽ bị xóa vĩnh viễn.",
       "withdrawWarning": "Tất cả tài liệu đã lưu, thông tin về con và lịch sẽ bị xóa và không thể khôi phục.",
+      "withdrawPasswordPlaceholder": "Nhập mật khẩu hiện tại",
+      "withdrawFailed": "Hủy tài khoản thất bại. Vui lòng thử lại.",
+      "withdrawWrongPassword": "Mật khẩu hiện tại không chính xác.",
+      "withdrawKeep": "Giữ tài khoản của tôi",
+      "withdrawContinue": "Tiếp tục hủy",
+      "withdrawVerifyTitle": "Cần xác minh danh tính",
+      "withdrawVerifyDesc": "Để bảo vệ tài khoản,\nvui lòng nhập mật khẩu hiện tại.",
       "cancel": "Hủy"
     },
     "editEmail": {

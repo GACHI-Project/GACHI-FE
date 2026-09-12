@@ -80,15 +80,22 @@ apiClient.interceptors.response.use(
       return apiClient(originalRequest);
     } catch (refreshError) {
       processQueue(refreshError, null);
-      await SecureStore.deleteItemAsync('accessToken');
-      await SecureStore.deleteItemAsync('refreshToken');
-      router.replace('/(auth)/login');
+      await clearSession();
       return Promise.reject(refreshError);
     } finally {
       isRefreshing = false;
     }
   }
 );
+
+export const clearSession = async (): Promise<void> => {
+  // 각 삭제를 독립 실행해 하나가 실패해도 나머지 삭제와 화면 이동을 보장
+  await Promise.allSettled([
+    SecureStore.deleteItemAsync('accessToken'),
+    SecureStore.deleteItemAsync('refreshToken'),
+  ]);
+  router.replace('/(auth)/login');
+};
 
 export const logout = async (): Promise<void> => {
   try {
@@ -104,9 +111,7 @@ export const logout = async (): Promise<void> => {
   } catch {
     // API 실패해도 로컬 토큰 삭제 후 로그인으로 이동
   } finally {
-    await SecureStore.deleteItemAsync('accessToken');
-    await SecureStore.deleteItemAsync('refreshToken');
-    router.replace('/(auth)/login');
+    await clearSession();
   }
 };
 

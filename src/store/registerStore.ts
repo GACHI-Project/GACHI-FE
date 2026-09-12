@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { ChildPayload } from '../api/child';
+import { ServerNotificationPreference } from '../types/notification';
 
 interface RegisterState {
   loginId: string;
@@ -8,6 +9,7 @@ interface RegisterState {
   email: string;
   phoneNumber: string;
   languageCode: string;
+  notificationPreference: ServerNotificationPreference;
   children: ChildPayload[];
   signupDone: boolean;
   loginDone: boolean;
@@ -21,6 +23,7 @@ interface RegisterState {
     phoneNumber: string;
   }) => void;
   setLanguageCode: (v: string) => void;
+  setNotificationPreference: (v: ServerNotificationPreference) => void;
   setChildren: (v: ChildPayload[]) => void;
   setSignupDone: (v: boolean) => void;
   setLoginDone: (v: boolean) => void;
@@ -36,6 +39,7 @@ const initialState = {
   email: '',
   phoneNumber: '',
   languageCode: 'KO',
+  notificationPreference: 'IMPORTANT' as ServerNotificationPreference,
   children: [],
   signupDone: false,
   loginDone: false,
@@ -59,6 +63,7 @@ export const useRegisterStore = create<RegisterState>((set) => ({
       };
     }),
   setLanguageCode: (v) => set({ languageCode: v }),
+  setNotificationPreference: (v) => set({ notificationPreference: v }),
   setChildren: (v) => set({ children: v, registeredChildrenCount: 0 }),
   setSignupDone: (v) => set({ signupDone: v }),
   setLoginDone: (v) => set({ loginDone: v }),

@@ -189,7 +189,7 @@ export const patchCalendarPreviewDates = async (
   try {
     const headers = await getAuthHeader();
     await apiClient.patch(
-      `/api/v1/newsletters/${newsletterId}/calendar/preview/dates`,
+      `/api/v1/newsletters/${newsletterId}/calendar/dates`,
       { events },
       { headers }
     );

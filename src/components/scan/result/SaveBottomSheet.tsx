@@ -14,7 +14,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import i18n from '../../../i18n';
 import styles from './styles';
-import { getCalendarPreview, postCalendarEvents, CalendarApiError } from '../../../api/calendar';
+import {
+  getCalendarPreview,
+  patchCalendarPreviewDates,
+  postCalendarEvents,
+  CalendarApiError,
+} from '../../../api/calendar';
 import type { CalendarPreviewItem } from '../../../api/calendar';
 import {
   createCalendarPreviewDraft,
@@ -256,6 +261,18 @@ const SaveBottomSheet = ({
           ...getCalendarPreviewSchedule(es)!,
         };
       });
+      // 날짜가 바뀐 일정은 등록 전에 서버에 알려야 연결된 체크리스트 날짜도 함께 반영된다.
+      const dateCorrections = postEvents
+        .map((e) => ({
+          tempEventId: e.tempEventId,
+          correctedDate: e.startAt.slice(0, 10),
+          originalDate: eventStates[e.tempEventId].originalStartAt?.slice(0, 10),
+        }))
+        .filter((e) => e.correctedDate !== e.originalDate)
+        .map(({ tempEventId, correctedDate }) => ({ tempEventId, correctedDate }));
+      if (dateCorrections.length > 0) {
+        await patchCalendarPreviewDates(newsletterId!, dateCorrections);
+      }
       await postCalendarEvents(newsletterId!, postEvents);
       setStep('success');
     } catch (e) {

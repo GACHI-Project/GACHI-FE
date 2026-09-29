@@ -5,61 +5,84 @@ import colors from '../../constants/colors';
 import type { CalendarEvent } from '../../api/calendar';
 import calStyles from './styles';
 import ChecklistSection from './ChecklistSection';
+import { formatEventTime } from '../../utils/calendarEventTime';
+import { getCalendarDday } from '../../utils/calendarDday';
 
 interface EventCardProps {
   event: CalendarEvent;
+  today: string;
   expanded: boolean;
   isPast: boolean;
   onToggleExpand: () => void;
   onToggleCheck: (checklistId: number) => void;
 }
 
-const EventCard = ({ event, expanded, isPast, onToggleExpand, onToggleCheck }: EventCardProps) => {
+const EventCard = ({
+  event,
+  today,
+  expanded,
+  isPast,
+  onToggleExpand,
+  onToggleCheck,
+}: EventCardProps) => {
   const { t } = useTranslation();
   const checklistItems = event.checklists;
-
+  const dDay = getCalendarDday(event.periodStartAt ?? event.startAt, today);
+  const timeLabel = formatEventTime(event.periodStartAt ?? event.startAt, event.endAt, {
+    allDay: event.allDay,
+    endAllDay: event.endAllDay,
+    allDayLabel: t('scan.result.saveBottomSheet.fullDay'),
+  });
   return (
     <View style={[calStyles.card, isPast && styles.past]}>
-      <View style={calStyles.cardHeader}>
-        <View style={calStyles.cardLeft}>
-          <Text style={calStyles.cardTitle} numberOfLines={1} ellipsizeMode="tail">
+      <View style={styles.content}>
+        <View style={styles.titleRow}>
+          <Text style={[calStyles.cardTitle, styles.title]} numberOfLines={1} ellipsizeMode="tail">
             {event.title}
           </Text>
-          <View style={calStyles.cardTags}>
+          <View style={calStyles.cardRight}>
+            {!isPast && dDay !== null && dDay >= 0 && (
+              <View style={[calStyles.dDayBadge, dDay === 0 && calStyles.dDayBadgeUrgent]}>
+                <Text style={[calStyles.dDayText, dDay === 0 && calStyles.dDayTextUrgent]}>
+                  D-{dDay}
+                </Text>
+              </View>
+            )}
+            {checklistItems.length > 0 && (
+              <TouchableOpacity
+                onPress={onToggleExpand}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                accessibilityRole="button"
+                accessibilityLabel={
+                  expanded ? t('calendar.checklist.collapse') : t('calendar.checklist.expand')
+                }
+                accessibilityState={{ expanded }}
+              >
+                <Ionicons
+                  name={expanded ? 'chevron-up' : 'chevron-down'}
+                  size={16}
+                  color={colors.gray[300]}
+                />
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+        <View style={calStyles.cardTags}>
+          {event.childName && (
             <View style={[calStyles.tag, calStyles.tagFixed]}>
               <Text style={calStyles.tagText}>{event.childName}</Text>
             </View>
-            <View style={calStyles.tag}>
-              <Text style={calStyles.tagText} numberOfLines={1} ellipsizeMode="tail">
-                {event.newsletterTitle}
-              </Text>
-            </View>
-          </View>
-        </View>
-        <View style={calStyles.cardRight}>
-          {!isPast && (
-            <View style={[calStyles.dDayBadge, event.dDay === 0 && calStyles.dDayBadgeUrgent]}>
-              <Text style={[calStyles.dDayText, event.dDay === 0 && calStyles.dDayTextUrgent]}>
-                D-{event.dDay}
-              </Text>
-            </View>
           )}
-          {checklistItems.length > 0 && (
-            <TouchableOpacity
-              onPress={onToggleExpand}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              accessibilityRole="button"
-              accessibilityLabel={
-                expanded ? t('calendar.checklist.collapse') : t('calendar.checklist.expand')
-              }
-              accessibilityState={{ expanded }}
-            >
-              <Ionicons
-                name={expanded ? 'chevron-up' : 'chevron-down'}
-                size={16}
-                color={colors.gray[300]}
-              />
-            </TouchableOpacity>
+          <View style={calStyles.tag}>
+            <Text style={calStyles.tagText} numberOfLines={1} ellipsizeMode="tail">
+              {event.newsletterTitle}
+            </Text>
+          </View>
+          {timeLabel && (
+            <View style={styles.timeTag}>
+              <Ionicons name="time-outline" size={13} color={colors.text.secondary} />
+              <Text style={[calStyles.tagText, styles.timeText]}>{timeLabel}</Text>
+            </View>
           )}
         </View>
       </View>
@@ -78,6 +101,32 @@ const EventCard = ({ event, expanded, isPast, onToggleExpand, onToggleCheck }: E
 export default EventCard;
 
 const styles = StyleSheet.create({
+  content: {
+    padding: 15,
+    gap: 6,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+  },
+  title: {
+    flex: 1,
+    minWidth: 0,
+  },
+  timeTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    maxWidth: '100%',
+    gap: 4,
+    backgroundColor: colors.gray[100],
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  timeText: {
+    flexShrink: 1,
+  },
   past: {
     opacity: 0.6,
   },

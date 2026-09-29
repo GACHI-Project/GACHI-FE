@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { fetchWeeklyEvents, fetchDailyEvents, completeChecklist } from '../../api/calendar';
 import type { CalendarEvent, WeeklyResult, HolidayItem, SchoolGroup } from '../../api/calendar';
+import { getWeeklyQueryDate, orderWeekDates } from '../../utils/calendarWeek';
 import {
   getHolidaysForDate,
   getAcademicSchedulesForDate,
@@ -45,15 +46,17 @@ const useCalendarEvents = ({
   const [dayEvents, setDayEvents] = useState<CalendarEvent[]>([]);
   const [weekEventsLoading, setWeekEventsLoading] = useState(false);
   const [dailyEventsLoading, setDailyEventsLoading] = useState(false);
+  const [dailyEventsError, setDailyEventsError] = useState(false);
   const weeklyReqIdRef = useRef(0);
   const dailyReqIdRef = useRef(0);
+  const weekReferenceDate = getWeeklyQueryDate(weekDates);
 
   useEffect(() => {
     if (!isWeekMode) return;
     setWeekEventsLoading(true);
     weeklyReqIdRef.current += 1;
     const reqId = weeklyReqIdRef.current;
-    fetchWeeklyEvents(weekDates[0], selectedChildName)
+    fetchWeeklyEvents(weekReferenceDate, selectedChildName)
       .then((data) => {
         if (reqId === weeklyReqIdRef.current) setWeeklyData(data);
       })
@@ -61,22 +64,30 @@ const useCalendarEvents = ({
       .finally(() => {
         if (reqId === weeklyReqIdRef.current) setWeekEventsLoading(false);
       });
-  }, [isWeekMode, weekDates, selectedChildName, focusKey]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [isWeekMode, weekReferenceDate, selectedChildName, focusKey]);
 
   useEffect(() => {
-    if (isWeekMode) return;
+    if (isWeekMode) return undefined;
+    let cancelled = false;
+    setDayEvents([]);
+    setDailyEventsError(false);
     setDailyEventsLoading(true);
     dailyReqIdRef.current += 1;
     const reqId = dailyReqIdRef.current;
     fetchDailyEvents(selectedDate, selectedChildName)
       .then((result) => {
-        if (reqId === dailyReqIdRef.current) setDayEvents(result.events);
+        if (!cancelled && reqId === dailyReqIdRef.current) setDayEvents(result.events);
       })
-      .catch(() => {})
+      .catch(() => {
+        if (!cancelled && reqId === dailyReqIdRef.current) setDailyEventsError(true);
+      })
       .finally(() => {
-        if (reqId === dailyReqIdRef.current) setDailyEventsLoading(false);
+        if (!cancelled && reqId === dailyReqIdRef.current) setDailyEventsLoading(false);
       });
-  }, [isWeekMode, selectedDate, selectedChildName, focusKey]); // eslint-disable-line react-hooks/exhaustive-deps
+    return () => {
+      cancelled = true;
+    };
+  }, [isWeekMode, selectedDate, selectedChildName, focusKey]);
 
   const weekMarkedDates = useMemo(() => {
     if (!weeklyData) return {};
@@ -138,14 +149,14 @@ const useCalendarEvents = ({
       ...(weeklyData?.days.filter((d) => d.events.length > 0).map((d) => d.date) ?? []),
       ...Object.keys(schoolMap),
     ]);
-    return weekDates
+    return orderWeekDates(weekDates, weekReferenceDate)
       .filter((d) => activeDates.has(d))
       .map((d) => ({
         date: d,
         events: eventsMap[d] ?? [],
         schoolSchedules: schoolMap[d] ?? [],
       }));
-  }, [weeklyData, weekDates, commonHolidays, schoolGroups, selectedChildId]);
+  }, [weeklyData, weekDates, weekReferenceDate, commonHolidays, schoolGroups, selectedChildId]);
 
   const toggleCheck = async (eventId: number, checklistId: number) => {
     let currentIsCompleted: boolean | undefined;
@@ -200,6 +211,7 @@ const useCalendarEvents = ({
     daySchoolSchedules,
     weekEventsLoading,
     dailyEventsLoading,
+    dailyEventsError,
     toggleCheck,
   };
 };

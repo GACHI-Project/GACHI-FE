@@ -23,6 +23,7 @@ interface Props {
   markedDatesMap: Record<string, { dots: { key: string; color: string }[] }>;
   isLoading: boolean;
   isDailyLoading: boolean;
+  dailyEventsError: boolean;
   dayEvents: CalendarEvent[];
   daySchoolSchedules: SchoolDisplayEntry[];
   expandedIds: Set<number>;
@@ -42,6 +43,7 @@ const MonthViewContent = ({
   markedDatesMap,
   isLoading,
   isDailyLoading,
+  dailyEventsError,
   dayEvents,
   daySchoolSchedules,
   expandedIds,
@@ -80,9 +82,17 @@ const MonthViewContent = ({
       ) : (
         <View style={styles.listContent}>
           {isDailyLoading && <ActivityIndicator size="small" color={colors.primary[400]} />}
-          {!isDailyLoading && daySchoolSchedules.length === 0 && dayEvents.length === 0 && (
-            <Text style={styles.emptyText}>{t('calendar.emptyDay')}</Text>
+          {!isDailyLoading && dailyEventsError && (
+            <Text style={styles.emptyText} accessibilityRole="alert">
+              {t('calendar.dailyLoadFailed')}
+            </Text>
           )}
+          {!isDailyLoading &&
+            !dailyEventsError &&
+            daySchoolSchedules.length === 0 &&
+            dayEvents.length === 0 && (
+              <Text style={styles.emptyText}>{t('calendar.emptyDay')}</Text>
+            )}
           {!isDailyLoading &&
             daySchoolSchedules.map((entry: SchoolDisplayEntry) => (
               <SchoolScheduleRow
@@ -97,6 +107,7 @@ const MonthViewContent = ({
               <EventCard
                 key={event.eventId}
                 event={event}
+                today={today}
                 expanded={expandedIds.has(event.eventId)}
                 isPast={selectedDate < today}
                 onToggleExpand={() => onToggleExpand(event.eventId)}

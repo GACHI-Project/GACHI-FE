@@ -14,11 +14,11 @@ import { fetchChildren as fetchChildrenApi } from '../../src/api/child';
 import { useChildrenStore } from '../../src/store/childrenStore';
 import useCalendarMarkers from '../../src/hooks/calendar/useCalendarMarkers';
 import useCalendarEvents from '../../src/hooks/calendar/useCalendarEvents';
-
-const todayDate = new Date();
-const today = `${todayDate.getFullYear()}-${String(todayDate.getMonth() + 1).padStart(2, '0')}-${String(todayDate.getDate()).padStart(2, '0')}`;
+import { getKstDate } from '../../src/utils/calendarWeek';
 
 const CalendarScreen = () => {
+  const today = getKstDate();
+  const todayDate = new Date(`${today}T12:00:00`);
   const { t } = useTranslation();
   const { children, setChildren: setStoreChildren } = useChildrenStore();
   const [selectedChildName, setSelectedChildName] = useState<string | undefined>(undefined);
@@ -90,7 +90,7 @@ const CalendarScreen = () => {
   }, [selectedChildName]);
 
   const weekDates = useMemo(() => {
-    const d = new Date();
+    const d = new Date(`${today}T12:00:00`);
     const dayOfWeek = d.getDay();
     d.setDate(d.getDate() - dayOfWeek + weekOffset * 7);
     d.setHours(0, 0, 0, 0);
@@ -100,7 +100,7 @@ const CalendarScreen = () => {
       date.setDate(sunDate + i);
       return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
     });
-  }, [weekOffset]);
+  }, [weekOffset, today]);
 
   const schoolFromDate = useMemo(() => {
     if (isWeekMode) return weekDates[0];
@@ -145,6 +145,7 @@ const CalendarScreen = () => {
     daySchoolSchedules,
     weekEventsLoading,
     dailyEventsLoading,
+    dailyEventsError,
     toggleCheck,
   } = useCalendarEvents({
     isWeekMode,
@@ -261,10 +262,15 @@ const CalendarScreen = () => {
           markedDatesMap={markedDatesMap}
           isLoading={markersLoading}
           isDailyLoading={dailyEventsLoading}
+          dailyEventsError={dailyEventsError}
           dayEvents={dayEvents}
           daySchoolSchedules={daySchoolSchedules}
           expandedIds={expandedIds}
-          onDayPress={setSelectedDate}
+          onDayPress={(date) => {
+            setSelectedDate(date);
+            const [year, month] = date.split('-').map(Number);
+            setCalendarMonth({ year, month: month - 1 });
+          }}
           onPrevMonth={handlePrevMonth}
           onNextMonth={handleNextMonth}
           onScroll={handleScroll}

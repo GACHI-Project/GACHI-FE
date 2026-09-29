@@ -281,17 +281,6 @@
         "button": "Xem hướng dẫn"
       }
     },
-    "guideCards": {
-      "sectionTitle": "Bạn có thắc mắc về những điều này không?",
-      "more": "Xem thêm",
-      "badge": "✓ FAQ",
-      "questions": [
-        "Có nhất thiết phải nộp đơn đồng ý trực tiếp không?",
-        "Tôi có cần liên hệ với giáo viên chủ nhiệm không?",
-        "Cần chuẩn bị những đồ dùng gì?",
-        "Có phải mua riêng đồng phục thể dục không?"
-      ]
-    },
     "recentDocs": {
       "sectionTitle": "Thông báo gần đây",
       "more": "Xem tất cả"
@@ -426,7 +415,7 @@
       },
       "tabs": {
         "full": "Toàn bộ tài liệu",
-        "checklist": "Danh sách việc cần làm",
+        "checklist": "Việc cần làm",
         "aiSummary": "Tóm tắt AI",
         "chat": "Hỏi AI"
       },
@@ -504,6 +493,7 @@
         "register": "✓ Có, đăng ký",
         "successTitle": "Đã đăng ký vào lịch!",
         "successSubtitle": "Chúng tôi sẽ thông báo khi ngày hạn chót đến gần.",
+        "noEvents": "Không có lịch nào được trích xuất.",
         "viewCalendar": "Xem trong lịch",
         "close": "Đóng",
         "accessibilityEdit": "Chỉnh sửa lịch",
@@ -516,7 +506,7 @@
         "error": {
           "invalidDate": "Vui lòng nhập ngày hợp lệ.",
           "loadFailed": "Tải thông tin lịch thất bại.",
-          "expired": "Đang phân tích AI hoặc dữ liệu xem trước đã hết hạn.",
+          "expired": "Dữ liệu xem trước không có hoặc đã hết hạn.",
           "registerFailed": "Đăng ký thất bại",
           "registerDefault": "Đăng ký lịch thất bại.",
           "invalidInput": "Giá trị nhập vào không hợp lệ.",
@@ -532,6 +522,7 @@
     }
   },
   "calendar": {
+    "dailyLoadFailed": "Không thể tải lịch cho ngày đã chọn. Vui lòng thử lại.",
     "title": "Lịch",
     "emptyWeek": "Tuần này không có lịch",
     "emptyDay": "Không có lịch nào được đăng ký",
@@ -652,29 +643,6 @@
         "all": "Nhận tất cả thông báo từ trường, cập nhật và thông tin",
         "important": "Chỉ nhận thông báo có độ ưu tiên cao. Bao gồm thông báo về hạn chót, danh sách việc cần làm và tóm tắt hàng tuần.",
         "urgent": "Chỉ nhận các thông báo thực sự cần thiết như hạn chót"
-      },
-      "itemSection": "Thông báo theo từng mục",
-      "items": {
-        "deadline": {
-          "title": "Thông báo hạn chót",
-          "desc": "Thông báo trước một ngày khi đến hạn",
-          "badge": "Khẩn cấp"
-        },
-        "checklist": {
-          "title": "Thông báo danh sách việc cần làm",
-          "desc": "Thông báo các mục chưa hoàn thành trước 3 ngày và 1 ngày",
-          "badge": "Quan trọng"
-        },
-        "weekly": {
-          "title": "Tóm tắt hàng tuần",
-          "desc": "Thông báo lịch trong tuần vào mỗi Chủ nhật",
-          "badge": "Quan trọng"
-        },
-        "document": {
-          "title": "Phân tích tài liệu mới hoàn tất",
-          "desc": "Thông báo khi phân tích thông báo từ trường hoàn tất",
-          "badge": "Thông thường"
-        }
       }
     }
   },
@@ -696,10 +664,6 @@
     "subtitle": "Bạn có thể nhanh chóng tìm kiếm thông tin cần thiết về giấy tờ, sự kiện, bữa ăn học đường và nhiều hơn nữa.",
     "searchPlaceholder": "Tìm kiếm tiêu đề tài liệu",
     "popularTitle": "Câu hỏi được tìm kiếm nhiều nhất hiện tại",
-    "popularQuestions": [
-      "Không nộp đơn đồng ý tham quan dã ngoại thì sao?",
-      "Có bắt buộc phải tham dự cuộc họp phụ huynh không?"
-    ],
     "questionCount": "{{count}} câu hỏi",
     "totalCount": "Tổng cộng {{count}} câu hỏi",
     "sections": [
@@ -767,153 +731,6 @@
         ]
       }
     ],
-    "qa": {
-      "documents": {
-        "tabs": [
-          "Tất cả",
-          "Thông báo từ trường",
-          "Tham quan dã ngoại",
-          "Thanh toán học đường",
-          "Điểm danh/Chứng nhận"
-        ],
-        "items": [
-          {
-            "id": "1",
-            "tag": "Thông báo từ trường",
-            "question": "Có nhất thiết phải nộp thông báo hỏi về ý kiến không?",
-            "answer": "Thông báo hỏi về ý kiến là tài liệu trường thu thập nhu cầu, bất kể có tham gia hay không đều phải nộp."
-          },
-          {
-            "id": "2",
-            "tag": "Thông báo từ trường",
-            "question": "Trong ví dụ thông báo, 'phiếu trả lời' là tài liệu gì?",
-            "answer": "Đây là tài liệu mà phụ huynh cần đánh dấu hoặc ký tên và gửi lại cho trường. Hãy cắt theo đường kẻ chấm ở phần dưới tờ thông báo giấy và nhờ con mang đến cho giáo viên chủ nhiệm."
-          },
-          {
-            "id": "3",
-            "tag": "Thông báo từ trường",
-            "question": "Ký đồng ý qua ứng dụng di động (e알리미, 하이클래스 v.v.) như thế nào?",
-            "answer": "Bạn có thể ký điện tử trực tiếp trong ứng dụng hoặc nhấn nút đồng ý. Có thể xử lý trong ứng dụng mà không cần in ra."
-          },
-          {
-            "id": "4",
-            "tag": "Thông báo từ trường",
-            "question": "Không nộp đơn đồng ý thu thập và sử dụng thông tin cá nhân thì có bất lợi gì không?",
-            "answer": "Nếu không nộp, việc sử dụng các dịch vụ liên quan có thể bị hạn chế, và có thể khó tham gia các hoạt động của trường hoặc đăng ký một số chương trình."
-          },
-          {
-            "id": "5",
-            "tag": "Thông báo từ trường",
-            "question": "Nộp tài liệu như đơn đăng ký lớp ngoại khóa theo thứ tự đến trước được trước như thế nào?",
-            "answer": "Tài liệu theo thứ tự đến trước được trước sẽ được nộp trực tuyến hoặc trực tiếp theo hướng dẫn của trường. Hãy chắc chắn kiểm tra thời hạn nộp."
-          },
-          {
-            "id": "6",
-            "tag": "Thông báo từ trường",
-            "question": "Đơn đăng ký lớp trông trẻ đầu học kỳ cần những giấy tờ chứng minh gì?",
-            "answer": "Gia đình có cả hai bố mẹ đi làm cần giấy xác nhận công tác, gia đình một bố hoặc một mẹ cần giấy tờ chứng minh liên quan. Mỗi trường có yêu cầu khác nhau nên hãy kiểm tra thông báo của trường."
-          },
-          {
-            "id": "7",
-            "tag": "Thông báo từ trường",
-            "question": "Dù không đăng ký sữa học đường có bắt buộc phải nộp đơn đồng ý không?",
-            "answer": "Một số trường yêu cầu nộp để xác nhận không đăng ký dù không muốn. Hãy kiểm tra thông báo của trường."
-          },
-          {
-            "id": "8",
-            "tag": "Thông báo từ trường",
-            "question": "Khi con bị mất thông báo, làm thế nào để lấy lại mẫu tài liệu?",
-            "answer": "Bạn có thể hỏi giáo viên chủ nhiệm hoặc tải xuống từ website hoặc ứng dụng của trường."
-          },
-          {
-            "id": "9",
-            "tag": "Thông báo từ trường",
-            "question": "Nếu con khó tự nộp tài liệu, phụ huynh có thể trực tiếp mang đến lớp không?",
-            "answer": "Được. Nếu liên hệ trước với giáo viên chủ nhiệm để sắp xếp thời gian ghé thăm sẽ thuận tiện hơn."
-          },
-          {
-            "id": "10",
-            "tag": "Tham quan dã ngoại",
-            "question": "Không nộp đơn đồng ý tham quan dã ngoại thì sao?",
-            "answer": "Nếu không nộp đơn đồng ý, con sẽ không thể tham gia tham quan. Dù không muốn tham gia, trong một số trường hợp vẫn phải nộp phiếu xác nhận không tham gia."
-          },
-          {
-            "id": "11",
-            "tag": "Tham quan dã ngoại",
-            "question": "Chi phí tham quan dã ngoại được thanh toán như thế nào?",
-            "answer": "Hầu hết được thanh toán qua hệ thống thanh toán học đường hoặc tài khoản do trường chỉ định. Hãy chắc chắn tuân thủ hạn thanh toán ghi trong thông báo."
-          },
-          {
-            "id": "12",
-            "tag": "Thanh toán học đường",
-            "question": "Hệ thống thanh toán học đường là gì?",
-            "answer": "Hệ thống thanh toán học đường là hệ thống thanh toán tự động các khoản phí của trường. Nếu đăng ký đầu học kỳ, tiền ăn, tiền tham quan v.v. sẽ được trừ tự động."
-          },
-          {
-            "id": "13",
-            "tag": "Thanh toán học đường",
-            "question": "Tôi muốn thay đổi tài khoản thanh toán học đường thì làm thế nào?",
-            "answer": "Hãy đến phòng hành chính của trường và điền vào đơn thay đổi hệ thống thanh toán. Trong một số trường hợp cần đến ngân hàng nên hãy hỏi trường trước."
-          },
-          {
-            "id": "14",
-            "tag": "Điểm danh/Chứng nhận",
-            "question": "Làm thế nào để lấy giấy xác nhận nghỉ học?",
-            "answer": "Bạn có thể đến phòng hành chính của trường hoặc sử dụng dịch vụ cấp chứng nhận trên website của trường. Một số trường cũng có thể cấp qua Chính phủ điện tử."
-          },
-          {
-            "id": "15",
-            "tag": "Điểm danh/Chứng nhận",
-            "question": "Nếu thông tin điểm danh bị ghi sai thì làm thế nào để sửa?",
-            "answer": "Hãy liên hệ ngay với giáo viên chủ nhiệm để yêu cầu sửa. Có thể cần giấy tờ chứng minh liên quan (giấy chẩn đoán bệnh, ý kiến của bác sĩ v.v.)."
-          }
-        ]
-      },
-      "attendance": {
-        "tabs": ["Tất cả"],
-        "items": []
-      },
-      "events": {
-        "tabs": ["Tất cả"],
-        "items": []
-      },
-      "meals": {
-        "tabs": ["Tất cả"],
-        "items": []
-      },
-      "afterschool": {
-        "tabs": ["Tất cả"],
-        "items": []
-      },
-      "subjects": {
-        "tabs": ["Tất cả"],
-        "items": []
-      },
-      "grades": {
-        "tabs": ["Tất cả"],
-        "items": []
-      },
-      "teacher": {
-        "tabs": ["Tất cả"],
-        "items": []
-      },
-      "health": {
-        "tabs": ["Tất cả"],
-        "items": []
-      },
-      "rules": {
-        "tabs": ["Tất cả"],
-        "items": []
-      },
-      "multicultural": {
-        "tabs": ["Tất cả"],
-        "items": []
-      },
-      "enrollment": {
-        "tabs": ["Tất cả"],
-        "items": []
-      }
-    },
     "loadFailed": "Không thể tải câu hỏi.",
     "searchHint": "Nhập từ khóa tìm kiếm.",
     "searchEmpty": "Không tìm thấy kết quả.",

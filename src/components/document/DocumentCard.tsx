@@ -3,7 +3,7 @@ import { AntDesign, Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import colors from '../../constants/colors';
 import fonts from '../../constants/fonts';
-import { DocumentItem } from '../../mock/documents';
+import type { DocumentItem } from '../../types/document';
 
 interface DocumentCardProps {
   item: DocumentItem;

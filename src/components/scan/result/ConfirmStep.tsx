@@ -22,7 +22,7 @@ interface Props {
   canRegister: boolean;
   onUpdate: (id: string, patch: Partial<EventState>) => void;
   onDateConfirm: (id: string) => void;
-  getDisplayDate: (y: string, m: string, d: string) => string;
+  getDisplayDate: (event: EventState) => string;
   onClose: () => void;
   onRegister: () => void;
 }
@@ -56,11 +56,13 @@ const ConfirmStep = ({
         </View>
         <View style={styles.textBlock}>
           <Text style={styles.title}>{t('scan.result.saveBottomSheet.title')}</Text>
-          <Text style={styles.subtitle}>
-            {hasAnyMissingDate
-              ? t('scan.result.saveBottomSheet.subtitleManualDate')
-              : t('scan.result.saveBottomSheet.subtitleAutoDate')}
-          </Text>
+          {!previewLoading && !previewError && previews.length > 0 && (
+            <Text style={styles.subtitle}>
+              {hasAnyMissingDate
+                ? t('scan.result.saveBottomSheet.subtitleManualDate')
+                : t('scan.result.saveBottomSheet.subtitleAutoDate')}
+            </Text>
+          )}
         </View>
 
         {hasAnyMissingDate && (
@@ -79,6 +81,9 @@ const ConfirmStep = ({
         )}
         {!previewLoading && previewError && (
           <Text style={localStyles.errorText}>{previewError}</Text>
+        )}
+        {!previewLoading && !previewError && previews.length === 0 && (
+          <Text style={localStyles.errorText}>{t('scan.result.saveBottomSheet.noEvents')}</Text>
         )}
         {!previewLoading &&
           !previewError &&

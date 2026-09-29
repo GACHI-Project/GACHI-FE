@@ -56,9 +56,7 @@ const FeatureSection = () => {
                     {line}
                   </Text>
                 ))}
-                <Text style={styles.cardDesc} numberOfLines={2}>
-                  {card.desc}
-                </Text>
+                <Text style={styles.cardDesc}>{card.desc}</Text>
               </View>
               <TouchableOpacity
                 style={[styles.cardButton, { backgroundColor: card.buttonColor }]}

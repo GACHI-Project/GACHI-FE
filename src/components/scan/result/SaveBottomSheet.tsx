@@ -14,14 +14,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import i18n from '../../../i18n';
 import styles from './styles';
-import {
-  getCalendarPreview,
-  postCalendarEvents,
-  injectCalendarPreviewDummy,
-  CalendarApiError,
-} from '../../../api/calendar';
+import { getCalendarPreview, postCalendarEvents, CalendarApiError } from '../../../api/calendar';
 import type { CalendarPreviewItem } from '../../../api/calendar';
-import { getNewsletterTranslation } from '../../../api/newsletter';
+import {
+  createCalendarPreviewDraft,
+  getCalendarPreviewSchedule,
+} from '../../../utils/calendarPreview';
+import { formatEventTime } from '../../../utils/calendarEventTime';
 import type { EventState } from './EventPreviewCard';
 import ConfirmStep from './ConfirmStep';
 import SuccessStep from './SuccessStep';
@@ -33,25 +32,16 @@ interface Props {
   onDismiss: () => void;
   childName: string;
   newsletterId?: number;
-  newsletterTitle?: string;
 }
 
 const SHEET_HEIGHT = 560;
-
-const formatCorrectedDate = (y: string, m: string, d: string): string | null => {
-  const yn = Number(y);
-  const mn = Number(m);
-  const dn = Number(d);
-  if (!y || !m || !d || Number.isNaN(yn) || Number.isNaN(mn) || Number.isNaN(dn)) return null;
-  const date = new Date(yn, mn - 1, dn);
-  if (Number.isNaN(date.getTime()) || date.getMonth() !== mn - 1) return null;
-  return `${String(yn).padStart(4, '0')}-${String(mn).padStart(2, '0')}-${String(dn).padStart(2, '0')}`;
-};
 
 const mapRegisterError = (e: unknown): string => {
   if (e instanceof CalendarApiError) {
     if (e.code === 'COMMON4001') return i18n.t('scan.result.saveBottomSheet.error.invalidInput');
     if (e.code === 'NL4041') return i18n.t('scan.result.saveBottomSheet.error.newsletterNotFound');
+    if (e.status === 404 || e.code === 'CAL4042')
+      return i18n.t('scan.result.saveBottomSheet.error.expired');
   }
   return i18n.t('scan.result.saveBottomSheet.error.registerDefault');
 };
@@ -63,7 +53,6 @@ const SaveBottomSheet = ({
   onDismiss,
   childName,
   newsletterId,
-  newsletterTitle,
 }: Props) => {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
@@ -84,11 +73,6 @@ const SaveBottomSheet = ({
     []
   );
 
-  const newsletterTitleRef = useRef(newsletterTitle);
-  useEffect(() => {
-    newsletterTitleRef.current = newsletterTitle;
-  }, [newsletterTitle]);
-
   const opacity = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(SHEET_HEIGHT)).current;
   const sheetWrapBottom = useRef(new Animated.Value(0)).current;
@@ -103,25 +87,30 @@ const SaveBottomSheet = ({
     [insets.bottom, windowHeight, keyboardHeight]
   );
 
-  const hasAnyMissingDate = previews.some((p) => !p.isDateExtracted);
+  const hasAnyMissingDate = previews.some((p) => !eventStates[p.tempEventId]?.originalStartAt);
 
   const getDisplayDate = useCallback(
-    (y: string, m: string, d: string) => {
-      if (!y || !m || !d) return '';
-      const date = new Date(Number(y), Number(m) - 1, Number(d));
-      if (Number.isNaN(date.getTime())) return '';
+    (event: EventState) => {
+      const schedule = getCalendarPreviewSchedule(event);
+      if (!schedule) return '';
+      const date = new Date(Number(event.year), Number(event.month) - 1, Number(event.day));
       const dateStr = new Intl.DateTimeFormat(i18n.language, {
         year: 'numeric',
         month: 'long',
         day: 'numeric',
         weekday: 'long',
       }).format(date);
-      return `${dateStr} · ${t('scan.result.saveBottomSheet.fullDay')}`;
+      const time = formatEventTime(schedule.startAt, schedule.endAt, {
+        allDay: event.allDay,
+        endAllDay: event.allDay === true ? true : undefined,
+        allDayLabel: t('scan.result.saveBottomSheet.fullDay'),
+      });
+      return time ? `${dateStr} · ${time}` : dateStr;
     },
     [t]
   );
 
-  // 미리보기 데이터 fetch (임시: AI 파이프라인 연결 전 더미 주입 후 preview 조회)
+  // 서버에 임시 저장된 AI 추출 일정을 조회한다.
   useEffect(() => {
     if (!visible || !newsletterId) return () => {};
     let cancelled = false;
@@ -133,48 +122,19 @@ const SaveBottomSheet = ({
 
     const loadPreview = async () => {
       try {
-        const translation = await getNewsletterTranslation(newsletterId);
-        if (cancelled) return;
-
-        const candidates = translation.dateCandidates ?? [];
-        const title = newsletterTitleRef.current || translation.originalText.slice(0, 20);
-        const events =
-          candidates.length > 0
-            ? candidates.map((c) => ({
-                title,
-                extractedDate: c.normalizedDate,
-                checklistIds: null,
-              }))
-            : [{ title, extractedDate: null, checklistIds: null }];
-
-        await injectCalendarPreviewDummy(newsletterId, events);
-        if (cancelled) return;
-      } catch {
-        // inject 실패해도 preview 조회는 시도
-      }
-
-      try {
         const items = await getCalendarPreview(newsletterId);
         if (cancelled) return;
-        setPreviews(items);
         const states = items.reduce<Record<string, EventState>>((acc, item) => {
-          if (item.extractedDate) {
-            const [y, m, d] = item.extractedDate.split('-');
-            acc[item.tempEventId] = {
-              year: y,
-              month: String(Number(m)),
-              day: String(Number(d)),
-              isEditing: false,
-            };
-          } else {
-            acc[item.tempEventId] = { year: '', month: '', day: '', isEditing: false };
-          }
+          const draft = createCalendarPreviewDraft(item);
+          if (!draft) throw new Error('Invalid calendar preview date');
+          acc[item.tempEventId] = { ...draft, isEditing: false };
           return acc;
         }, {});
+        setPreviews(items);
         setEventStates(states);
       } catch (e) {
         if (cancelled) return;
-        if (e instanceof CalendarApiError && e.code === 'CAL4042') {
+        if (e instanceof CalendarApiError && (e.status === 404 || e.code === 'CAL4042')) {
           setPreviewError(i18n.t('scan.result.saveBottomSheet.error.expired'));
         } else {
           setPreviewError(i18n.t('scan.result.saveBottomSheet.error.loadFailed'));
@@ -251,7 +211,7 @@ const SaveBottomSheet = ({
   const handleDateConfirmFor = useCallback(
     (tempEventId: string) => {
       const es = eventStates[tempEventId];
-      if (!formatCorrectedDate(es.year, es.month, es.day)) {
+      if (!es || !getCalendarPreviewSchedule(es)) {
         Alert.alert(
           t('scan.result.saveBottomSheet.error.errorTitle'),
           t('scan.result.saveBottomSheet.error.invalidDate')
@@ -276,7 +236,7 @@ const SaveBottomSheet = ({
 
     const hasInvalidDate = previews.some((p) => {
       const es = eventStates[p.tempEventId];
-      return !formatCorrectedDate(es?.year ?? '', es?.month ?? '', es?.day ?? '');
+      return !es || !getCalendarPreviewSchedule(es);
     });
     if (hasInvalidDate) {
       Alert.alert(
@@ -293,8 +253,7 @@ const SaveBottomSheet = ({
         return {
           tempEventId: p.tempEventId,
           title: p.title,
-          startAt: formatCorrectedDate(es.year, es.month, es.day) as string,
-          endAt: null,
+          ...getCalendarPreviewSchedule(es)!,
         };
       });
       await postCalendarEvents(newsletterId!, postEvents);

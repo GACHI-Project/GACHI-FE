@@ -2,13 +2,12 @@ import { memo, useCallback } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import type { CalendarPreviewItem } from '../../../api/calendar';
+import { getCalendarPreviewTitle } from '../../../utils/calendarPreview';
+import type { CalendarPreviewDraft } from '../../../utils/calendarPreview';
 import styles from './styles';
 import DateInputFields from './DateInputFields';
 
-export type EventState = {
-  year: string;
-  month: string;
-  day: string;
+export type EventState = CalendarPreviewDraft & {
   isEditing: boolean;
 };
 
@@ -18,13 +17,13 @@ interface Props {
   childName: string;
   onUpdate: (id: string, patch: Partial<EventState>) => void;
   onDateConfirm: (id: string) => void;
-  getDisplayDate: (y: string, m: string, d: string) => string;
+  getDisplayDate: (event: EventState) => string;
 }
 
 const EventPreviewCard = memo(
   ({ item, es, childName, onUpdate, onDateConfirm, getDisplayDate }: Props) => {
-    const { t } = useTranslation();
-    const displayDate = getDisplayDate(es.year, es.month, es.day);
+    const { t, i18n } = useTranslation();
+    const displayDate = getDisplayDate(es);
 
     const handleEditToggle = useCallback(
       () => onUpdate(item.tempEventId, { isEditing: !es.isEditing }),
@@ -52,10 +51,10 @@ const EventPreviewCard = memo(
         <View style={styles.eventHeader}>
           <View style={styles.eventDot} />
           <Text style={styles.eventTitle}>
-            {item.title} · {childName}
+            {getCalendarPreviewTitle(item, i18n.language)} · {childName}
           </Text>
         </View>
-        {item.isDateExtracted ? (
+        {es.originalStartAt ? (
           <View style={styles.eventDateRow}>
             <Text style={styles.eventDate}>{displayDate}</Text>
             <TouchableOpacity
@@ -84,7 +83,7 @@ const EventPreviewCard = memo(
             />
           </>
         )}
-        {item.isDateExtracted && es.isEditing && (
+        {es.originalStartAt && es.isEditing && (
           <View style={styles.dateEditorCard}>
             <Text style={styles.dateEditorLabel}>
               {t('scan.result.saveBottomSheet.dateEditor')}

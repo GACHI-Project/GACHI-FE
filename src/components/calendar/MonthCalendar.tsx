@@ -78,7 +78,6 @@ const MonthCalendar = ({
   const cells = [...prevCells, ...currCells, ...nextCells];
 
   const weeks = Array.from({ length: totalRows }, (_, i) => cells.slice(i * 7, i * 7 + 7));
-
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -124,6 +123,10 @@ const MonthCalendar = ({
                 style={styles.dayCell}
                 onPress={() => inMonth && onDayPress(dateStr)}
                 activeOpacity={inMonth ? 0.7 : 1}
+                disabled={!inMonth}
+                accessibilityRole="button"
+                accessibilityLabel={dateStr}
+                accessibilityState={{ selected: dateStr === selectedDate }}
               >
                 <View
                   style={[

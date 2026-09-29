@@ -123,6 +123,8 @@ export default StyleSheet.create({
   },
   cardTags: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
     gap: 10,
   },
   tag: {

@@ -113,6 +113,7 @@ const WeekViewContent = ({
                     <EventCard
                       key={event.eventId}
                       event={event}
+                      today={today}
                       expanded={expandedIds.has(event.eventId)}
                       isPast={group.date < today}
                       onToggleExpand={() => onToggleExpand(event.eventId)}

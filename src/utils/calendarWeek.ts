@@ -14,6 +14,7 @@ export const getWeeklyQueryDate = (weekDates: string[], now = new Date()): strin
   return weekDates.includes(today) ? today : weekDates[0];
 };
 
+// Past dates in the current week stay visible (after upcoming ones) so unchecked items can be revisited.
 export const orderWeekDates = (weekDates: string[], referenceDate: string): string[] => [
   ...weekDates.filter((date) => date >= referenceDate),
   ...weekDates.filter((date) => date < referenceDate),

@@ -71,12 +71,16 @@ export const getCalendarPreviewSchedule = (
 ): { startAt: string; endAt: string | null } | null => {
   const startAt = formatCalendarPreviewStartAt(draft);
   if (!startAt) return null;
-  if (!draft.endAt || !draft.originalStartAt) return { startAt, endAt: draft.endAt };
-  const original = parseCalendarPreviewDate(draft.originalStartAt);
+  if (!draft.endAt) return { startAt, endAt: null };
   const end = parseCalendarPreviewDate(draft.endAt);
-  if (!original || !end) return null;
+  if (!end) return null;
   const toDay = (fields: CalendarPreviewDateFields) =>
     Date.UTC(Number(fields.year), Number(fields.month) - 1, Number(fields.day));
+  // A start date entered by hand must not fall after the existing end date.
+  if (!draft.originalStartAt)
+    return toDay(draft) > toDay(end) ? null : { startAt, endAt: draft.endAt };
+  const original = parseCalendarPreviewDate(draft.originalStartAt);
+  if (!original) return null;
   const shift = toDay(draft) - toDay(original);
   if (shift === 0) return { startAt, endAt: draft.endAt };
   const endDate = new Date(toDay(end) + shift);

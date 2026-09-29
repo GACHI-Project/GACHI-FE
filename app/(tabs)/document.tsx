@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import colors from '../../src/constants/colors';
 import fonts from '../../src/constants/fonts';
 import layout from '../../src/constants/layout';
-import { DocumentItem } from '../../src/mock/documents';
+import type { DocumentItem } from '../../src/types/document';
 import { useChildrenStore } from '../../src/store/childrenStore';
 import { type NewsletterItem } from '../../src/api/newsletter';
 import DocumentCard from '../../src/components/document/DocumentCard';

@@ -13,7 +13,6 @@ import TaskCard from '../../src/components/home/TaskCard';
 // import ScanBanner from '../../src/components/home/ScanBanner';
 import FeatureSection from '../../src/components/home/FeatureSection';
 import MealTimetableWidget from '../../src/components/home/MealTimetableWidget';
-// import GuideCards from '../../src/components/home/GuideCards';
 import RecentDocs from '../../src/components/home/RecentDocs';
 import colors from '../../src/constants/colors';
 import styles from '../../src/styles/home/homeScreen';
@@ -87,7 +86,6 @@ const HomeScreen = () => {
             {/* <ScanBanner /> */}
             <FeatureSection />
             <MealTimetableWidget />
-            {/* <GuideCards /> */}
             <RecentDocs />
           </View>
         </View>

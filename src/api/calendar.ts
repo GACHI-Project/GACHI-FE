@@ -5,7 +5,8 @@ import { apiClient } from './auth';
 export class CalendarApiError extends Error {
   constructor(
     public readonly code: string,
-    message: string
+    message: string,
+    public readonly status?: number
   ) {
     super(message);
     this.name = 'CalendarApiError';
@@ -13,10 +14,11 @@ export class CalendarApiError extends Error {
 }
 
 const wrapError = (error: unknown): Error => {
-  if (axios.isAxiosError(error) && error.response?.data?.code) {
+  if (axios.isAxiosError(error) && error.response) {
     return new CalendarApiError(
-      error.response.data.code,
-      error.response.data.message ?? '알 수 없는 오류'
+      error.response.data?.code ?? `HTTP${error.response.status}`,
+      error.response.data?.message ?? '알 수 없는 오류',
+      error.response.status
     );
   }
   return error instanceof Error ? error : new Error(String(error));
@@ -32,9 +34,13 @@ const getAuthHeader = async () => {
 
 export interface CalendarChecklist {
   checklistId: number;
+  type?: string;
   content: string;
   detail: string | null;
   isCompleted: boolean;
+  dueDate?: string | null;
+  targetDate?: string | null;
+  targetDateLabel?: string | null;
 }
 
 export interface CalendarEvent {
@@ -42,6 +48,9 @@ export interface CalendarEvent {
   title: string;
   startAt: string;
   endAt: string | null;
+  periodStartAt?: string | null;
+  allDay?: boolean | null;
+  endAllDay?: boolean | null;
   dDay: number;
   childName: string | null;
   calendarColor: string;
@@ -145,8 +154,14 @@ export const fetchWeeklyEvents = async (
 export interface CalendarPreviewItem {
   tempEventId: string;
   title: string;
+  titleI18n?: Record<string, string> | null;
   extractedDate: string | null;
   isDateExtracted: boolean;
+  checklistIds?: number[] | null;
+  startAt?: string | null;
+  endAt?: string | null;
+  periodStartAt?: string | null;
+  allDay?: boolean | null;
 }
 
 export const getCalendarPreview = async (newsletterId: number): Promise<CalendarPreviewItem[]> => {
@@ -202,28 +217,6 @@ export const postCalendarEvents = async (
       { headers }
     );
     return response.data.result;
-  } catch (error) {
-    throw wrapError(error);
-  }
-};
-
-export interface CalendarPreviewDummyEvent {
-  title: string;
-  extractedDate: string | null;
-  checklistIds: number[] | null;
-}
-
-export const injectCalendarPreviewDummy = async (
-  newsletterId: number,
-  events: CalendarPreviewDummyEvent[]
-): Promise<void> => {
-  try {
-    const headers = await getAuthHeader();
-    await apiClient.post(
-      `/api/v1/newsletters/${newsletterId}/calendar/preview/mock`,
-      { events },
-      { headers }
-    );
   } catch (error) {
     throw wrapError(error);
   }

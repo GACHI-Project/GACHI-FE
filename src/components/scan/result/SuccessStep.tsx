@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { PrimaryButton, SecondaryButton } from '../../common/Button';
 import type { EventState } from './EventPreviewCard';
 import type { CalendarPreviewItem } from '../../../api/calendar';
+import { getCalendarPreviewTitle } from '../../../utils/calendarPreview';
 import styles from './styles';
 import colors from '../../../constants/colors';
 
@@ -13,7 +14,7 @@ interface Props {
   previews: CalendarPreviewItem[];
   eventStates: Record<string, EventState>;
   childName: string;
-  getDisplayDate: (y: string, m: string, d: string) => string;
+  getDisplayDate: (event: EventState) => string;
   onConfirm: () => void;
   onDismiss: () => void;
 }
@@ -26,7 +27,7 @@ const SuccessStep = ({
   onConfirm,
   onDismiss,
 }: Props) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   return (
     <>
       <ScrollView
@@ -50,13 +51,9 @@ const SuccessStep = ({
                 <View style={styles.eventDot} />
                 <View style={styles.successEventInfo}>
                   <Text style={styles.eventTitle}>
-                    {p.title} · {childName}
+                    {getCalendarPreviewTitle(p, i18n.language)} · {childName}
                   </Text>
-                  {es && (
-                    <Text style={styles.eventDate}>
-                      {getDisplayDate(es.year, es.month, es.day)}
-                    </Text>
-                  )}
+                  {es && <Text style={styles.eventDate}>{getDisplayDate(es)}</Text>}
                 </View>
               </View>
             </View>

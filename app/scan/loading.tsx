@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View,
   Image,
@@ -18,9 +18,13 @@ import ScanStepIndicator from '../../src/components/scan/ScanStepIndicator';
 import {
   uploadNewsletter,
   getNewsletterStatus,
+  resumeNewsletter,
+  skipNewsletterPage,
   NewsletterApiError,
   NewsletterStatus,
+  NewsletterStatusResult,
 } from '../../src/api/newsletter';
+import { getPausedTitle, getPausedDescription } from '../../src/utils/newsletterPaused';
 import { SCAN_FRAME_H } from '../../src/constants/scan';
 import colors from '../../src/constants/colors';
 import styles from '../../src/styles/scan/loading';
@@ -62,9 +66,18 @@ const ScanLoadingScreen = () => {
   const [isComplete, setIsComplete] = useState(false);
   const [helpVisible, setHelpVisible] = useState(false);
   const [newsletterId, setNewsletterId] = useState<number | null>(null);
+  const [pageProgress, setPageProgress] = useState<{ total?: number; processed?: number }>({});
+  const [pausedInfo, setPausedInfo] = useState<NewsletterStatusResult | null>(null);
+  const [actionLoading, setActionLoading] = useState<'retry' | 'skip' | null>(null);
   const pollingRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const startPollingRef = useRef<((id: number) => void) | undefined>(undefined);
 
   useEffect(() => {
+    if (pausedInfo) {
+      scanLine.stopAnimation();
+      return undefined;
+    }
+
     const loopScanLine = () => {
       scanLine.setValue(0);
       Animated.timing(scanLine, {
@@ -80,47 +93,55 @@ const ScanLoadingScreen = () => {
     return () => {
       scanLine.stopAnimation();
     };
-  }, [scanLine]);
+  }, [scanLine, pausedInfo]);
 
   useEffect(() => {
     if (photoUris.length === 0) return () => {};
     let cancelled = false;
 
-    const startPolling = (id: number) => {
-      const poll = async () => {
+    const poll = async (id: number) => {
+      if (cancelled) return;
+      try {
+        const result = await getNewsletterStatus(id);
         if (cancelled) return;
-        try {
-          const result = await getNewsletterStatus(id);
-          if (cancelled) return;
 
-          setDisplayPercent(result.progressPercent);
-          setAnalysisStatus(result.status);
-          Animated.timing(progress, {
-            toValue: result.progressPercent / 100,
-            duration: 400,
-            useNativeDriver: false,
-          }).start();
+        setDisplayPercent(result.progressPercent);
+        setAnalysisStatus(result.status);
+        setPageProgress({ total: result.totalPages, processed: result.processedPages });
+        Animated.timing(progress, {
+          toValue: result.progressPercent / 100,
+          duration: 400,
+          useNativeDriver: false,
+        }).start();
 
-          if (result.status === 'COMPLETED') {
-            setIsComplete(true);
-            return;
-          }
-          if (result.status === 'FAILED') {
-            Alert.alert(
-              t('scan.loading.error.analysisFailed'),
-              t('scan.loading.error.analysisFailedMsg'),
-              [{ text: t('common.confirm'), onPress: () => router.back() }]
-            );
-            return;
-          }
-        } catch {
-          // 폴링 중 네트워크 오류는 무시하고 계속 시도
+        if (result.status === 'COMPLETED') {
+          setPausedInfo(null);
+          setIsComplete(true);
+          return;
         }
-        pollingRef.current = setTimeout(poll, 2000);
-      };
-
-      pollingRef.current = setTimeout(poll, 2000);
+        if (result.status === 'FAILED') {
+          Alert.alert(
+            t('scan.loading.error.analysisFailed'),
+            t('scan.loading.error.analysisFailedMsg'),
+            [{ text: t('common.confirm'), onPress: () => router.back() }]
+          );
+          return;
+        }
+        if (result.status === 'PAUSED') {
+          setPausedInfo(result);
+          return;
+        }
+        setPausedInfo(null);
+      } catch {
+        // 폴링 중 네트워크 오류는 무시하고 계속 시도
+      }
+      pollingRef.current = setTimeout(() => poll(id), 2000);
     };
+
+    const startPolling = (id: number) => {
+      pollingRef.current = setTimeout(() => poll(id), 2000);
+    };
+    startPollingRef.current = startPolling;
 
     const parsedChildId = childId ? Number(childId) : undefined;
     uploadNewsletter(photoUris, parsedChildId)
@@ -217,6 +238,52 @@ const ScanLoadingScreen = () => {
     nextBtnSlide,
   ]);
 
+  const handleActionError = useCallback(() => {
+    Alert.alert(t('scan.loading.error.analysisFailed'), t('scan.loading.error.analysisFailedMsg'));
+  }, [t]);
+
+  const applyResumeResult = useCallback(
+    async (id: number, result: { status: NewsletterStatus }) => {
+      if (result.status === 'PAUSED') {
+        const fresh = await getNewsletterStatus(id);
+        setPausedInfo(fresh);
+        setDisplayPercent(fresh.progressPercent);
+        setAnalysisStatus(fresh.status);
+        return;
+      }
+      setPausedInfo(null);
+      setAnalysisStatus(result.status);
+      startPollingRef.current?.(id);
+    },
+    []
+  );
+
+  const handleRetry = async () => {
+    if (!newsletterId || actionLoading) return;
+    setActionLoading('retry');
+    try {
+      const result = await resumeNewsletter(newsletterId);
+      await applyResumeResult(newsletterId, result);
+    } catch {
+      handleActionError();
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleSkip = async () => {
+    if (!newsletterId || !pausedInfo?.pausedPageNo || actionLoading) return;
+    setActionLoading('skip');
+    try {
+      const result = await skipNewsletterPage(newsletterId, pausedInfo.pausedPageNo);
+      await applyResumeResult(newsletterId, result);
+    } catch {
+      handleActionError();
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
   const progressWidth = progress.interpolate({
     inputRange: [0, 1],
     outputRange: ['0%', '100%'],
@@ -227,9 +294,46 @@ const ScanLoadingScreen = () => {
     outputRange: [0, SCAN_FRAME_H],
   });
 
-  const statusTitle = isComplete
-    ? t('scan.loading.complete')
-    : t(`scan.loading.${analysisStatus === 'PROCESSING' ? 'analyzing' : 'preparing'}`);
+  const showPageCount =
+    !pausedInfo &&
+    analysisStatus === 'PROCESSING' &&
+    (pageProgress.total ?? 0) > 1 &&
+    pageProgress.total !== undefined;
+  const pageNo = showPageCount
+    ? Math.min((pageProgress.processed ?? 0) + 1, pageProgress.total!)
+    : 0;
+
+  let statusTitle: string;
+  if (isComplete) {
+    statusTitle = t('scan.loading.complete');
+  } else if (pausedInfo) {
+    statusTitle = getPausedTitle(pausedInfo, t);
+  } else if (showPageCount) {
+    statusTitle = t('scan.loading.analyzingWithPage', { n: pageNo, total: pageProgress.total });
+  } else {
+    statusTitle = t(`scan.loading.${analysisStatus === 'PROCESSING' ? 'analyzing' : 'preparing'}`);
+  }
+
+  const pausedDescription = pausedInfo ? getPausedDescription(pausedInfo, t) : '';
+  const showRetry = !!pausedInfo?.retryable;
+  const showSkip = !!pausedInfo?.skippable;
+
+  let statusIcon: React.ReactNode;
+  if (isComplete) {
+    statusIcon = (
+      <View style={styles.doneIcon}>
+        <Ionicons name="checkmark" size={22} color={colors.text.white} />
+      </View>
+    );
+  } else if (pausedInfo) {
+    statusIcon = (
+      <View style={styles.pausedIcon}>
+        <Ionicons name="warning" size={28} color={colors.secondary[500]} />
+      </View>
+    );
+  } else {
+    statusIcon = <ActivityIndicator size="large" color={colors.primary[400]} />;
+  }
 
   return (
     <View style={[styles.screen, { paddingBottom: insets.bottom }]}>
@@ -265,30 +369,36 @@ const ScanLoadingScreen = () => {
 
       <View style={styles.statusArea}>
         <View style={styles.statusRow}>
-          {isComplete ? (
-            <View style={styles.doneIcon}>
-              <Ionicons name="checkmark" size={22} color={colors.text.white} />
-            </View>
-          ) : (
-            <ActivityIndicator size="large" color={colors.primary[400]} />
-          )}
+          {statusIcon}
           <View style={styles.statusTexts}>
-            <Text style={styles.statusTitle} numberOfLines={1}>
+            <Text style={styles.statusTitle} numberOfLines={pausedInfo || showPageCount ? 2 : 1}>
               {statusTitle}
             </Text>
             {!isComplete && (
               <Text style={styles.statusSubtitle} numberOfLines={2}>
-                {t('scan.loading.analyzing')}
+                {pausedInfo ? pausedDescription : t('scan.loading.analyzing')}
               </Text>
             )}
           </View>
-          <Text style={styles.percentText} allowFontScaling={false}>
-            {displayPercent}%
-          </Text>
+          {pausedInfo ? (
+            <Text style={styles.pausedPageText} allowFontScaling={false}>
+              {pausedInfo.pausedPageNo}/{pausedInfo.totalPages}
+            </Text>
+          ) : (
+            <Text style={styles.percentText} allowFontScaling={false}>
+              {displayPercent}%
+            </Text>
+          )}
         </View>
 
         <View style={styles.progressTrack}>
-          <Animated.View style={[styles.progressFill, { width: progressWidth }]} />
+          <Animated.View
+            style={[
+              styles.progressFill,
+              { width: progressWidth },
+              pausedInfo && styles.progressFillPaused,
+            ]}
+          />
         </View>
       </View>
 
@@ -324,6 +434,63 @@ const ScanLoadingScreen = () => {
           </TouchableOpacity>
         </Animated.View>
       )}
+
+      {pausedInfo && (showRetry || showSkip) && (
+        <View style={styles.pausedButtonRow}>
+          {showSkip && (
+            <TouchableOpacity
+              style={[
+                styles.pausedButton,
+                showRetry ? styles.pausedButtonOutline : styles.pausedButtonFilled,
+                actionLoading && styles.pausedButtonDisabled,
+              ]}
+              onPress={handleSkip}
+              disabled={!!actionLoading}
+              activeOpacity={0.8}
+              accessibilityRole="button"
+              accessibilityLabel={t('scan.loading.paused.accessibilitySkip')}
+            >
+              {actionLoading === 'skip' ? (
+                <ActivityIndicator
+                  size="small"
+                  color={showRetry ? colors.primary[400] : colors.text.white}
+                />
+              ) : (
+                <Text
+                  style={showRetry ? styles.pausedButtonOutlineText : styles.pausedButtonFilledText}
+                >
+                  {showRetry
+                    ? t('scan.loading.paused.skipButton')
+                    : t('scan.loading.paused.skipContinueButton')}
+                </Text>
+              )}
+            </TouchableOpacity>
+          )}
+          {showRetry && (
+            <TouchableOpacity
+              style={[
+                styles.pausedButton,
+                styles.pausedButtonFilled,
+                actionLoading && styles.pausedButtonDisabled,
+              ]}
+              onPress={handleRetry}
+              disabled={!!actionLoading}
+              activeOpacity={0.8}
+              accessibilityRole="button"
+              accessibilityLabel={t('scan.loading.paused.accessibilityRetry')}
+            >
+              {actionLoading === 'retry' ? (
+                <ActivityIndicator size="small" color={colors.text.white} />
+              ) : (
+                <Text style={styles.pausedButtonFilledText}>
+                  {t('scan.loading.paused.retryButton')}
+                </Text>
+              )}
+            </TouchableOpacity>
+          )}
+        </View>
+      )}
+
       <ScanHelpModal visible={helpVisible} onClose={() => setHelpVisible(false)} />
     </View>
   );

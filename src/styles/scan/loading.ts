@@ -117,6 +117,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  pausedIcon: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pausedPageText: {
+    fontSize: 13,
+    fontFamily: fonts.semiBold,
+    color: colors.text.secondary,
+  },
   progressTrack: {
     height: 6,
     backgroundColor: colors.gray[100],
@@ -127,6 +138,9 @@ const styles = StyleSheet.create({
     height: 6,
     backgroundColor: colors.primary[400],
     borderRadius: 3,
+  },
+  progressFillPaused: {
+    backgroundColor: colors.secondary[500],
   },
   nextBtnWrapper: {
     marginHorizontal: layout.screenPaddingHorizontal,
@@ -143,6 +157,41 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: fonts.bold,
     color: colors.text.white,
+  },
+  pausedButtonRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginHorizontal: layout.screenPaddingHorizontal,
+    marginTop: 16,
+    marginBottom: 16,
+  },
+  pausedButton: {
+    flex: 1,
+    paddingVertical: 18,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pausedButtonOutline: {
+    backgroundColor: colors.text.white,
+    borderWidth: 1,
+    borderColor: colors.primary[400],
+  },
+  pausedButtonOutlineText: {
+    fontSize: 16,
+    fontFamily: fonts.bold,
+    color: colors.primary[400],
+  },
+  pausedButtonFilled: {
+    backgroundColor: colors.primary[400],
+  },
+  pausedButtonFilledText: {
+    fontSize: 16,
+    fontFamily: fonts.bold,
+    color: colors.text.white,
+  },
+  pausedButtonDisabled: {
+    opacity: 0.6,
   },
 });
 

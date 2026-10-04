@@ -2,12 +2,27 @@ import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 import { apiClient } from './auth';
 
-export type NewsletterStatus = 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED';
+export type NewsletterStatus = 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED' | 'PAUSED';
+
+export type PausedStage = 'OCR' | 'TRANSLATION';
+export type PausedReason = 'OCR_FAILED' | 'UNREADABLE' | 'TRANSLATION_FAILED';
 
 export interface NewsletterStatusResult {
   status: NewsletterStatus;
   progressPercent: number;
   progressMessage: string;
+  errorMessage?: string;
+  failureStage?: string;
+  canRetry?: boolean;
+  sourceType?: SourceType;
+  totalPages?: number;
+  processedPages?: number;
+  pausedPageNo?: number;
+  pausedStage?: PausedStage;
+  pausedReason?: PausedReason;
+  retryCount?: number;
+  retryable?: boolean;
+  skippable?: boolean;
 }
 
 export class NewsletterApiError extends Error {
@@ -230,6 +245,42 @@ export const getNewsletterStatus = async (
     const headers = await getAuthHeader();
     const response = await apiClient.get<{ result: NewsletterStatusResult }>(
       `/api/v1/newsletters/${newsletterId}/status`,
+      { headers }
+    );
+    return response.data.result;
+  } catch (error) {
+    throw wrapError(error);
+  }
+};
+
+export interface NewsletterResumeResult {
+  newsletterId: number;
+  status: NewsletterStatus;
+}
+
+export const resumeNewsletter = async (newsletterId: number): Promise<NewsletterResumeResult> => {
+  try {
+    const headers = await getAuthHeader();
+    const response = await apiClient.post<{ result: NewsletterResumeResult }>(
+      `/api/v1/newsletters/${newsletterId}/resume`,
+      undefined,
+      { headers }
+    );
+    return response.data.result;
+  } catch (error) {
+    throw wrapError(error);
+  }
+};
+
+export const skipNewsletterPage = async (
+  newsletterId: number,
+  pageNo: number
+): Promise<NewsletterResumeResult> => {
+  try {
+    const headers = await getAuthHeader();
+    const response = await apiClient.post<{ result: NewsletterResumeResult }>(
+      `/api/v1/newsletters/${newsletterId}/pages/${pageNo}/skip`,
+      undefined,
       { headers }
     );
     return response.data.result;

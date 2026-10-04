@@ -420,8 +420,8 @@
         "titleUnreadable": "We couldn't recognize the text on page {{page}}",
         "titleTranslationFailed": "We couldn't translate page {{page}}",
         "titleGeneric": "Analysis paused on page {{page}}",
-        "descRetrySkipTranslation": "Retry, or skip and this page will be saved with the original text only",
-        "descRetrySkipGeneric": "Retry, or skip and this page will be saved without content",
+        "descRetrySkipTranslation": "If you skip, this page will be saved with the original text only",
+        "descRetrySkipGeneric": "If you skip, this page will be saved without content",
         "descSkipOnlyTranslation": "If you skip, this page will be saved with the original text only",
         "descSkipOnlyGeneric": "If you skip, this page will be saved without content",
         "descRetryOnly": "Retrying will continue the analysis from this page",
@@ -605,7 +605,9 @@
     "title": "Documents",
     "searchPlaceholder": "Search document title",
     "empty": "No matching documents",
-    "detail": "Document Detail"
+    "detail": "Document Detail",
+    "pausedTitle": "Analysis paused",
+    "continueBadge": "Continue"
   },
   "profile": {
     "title": "My Page",

@@ -420,8 +420,8 @@
         "titleUnreadable": "无法识别第{{page}}页的文字",
         "titleTranslationFailed": "无法翻译第{{page}}页",
         "titleGeneric": "第{{page}}页的分析已暂停",
-        "descRetrySkipTranslation": "重试，或跳过后此页将只保存原文",
-        "descRetrySkipGeneric": "重试，或跳过后此页将不保存任何内容",
+        "descRetrySkipTranslation": "跳过后此页将只保存原文",
+        "descRetrySkipGeneric": "跳过后此页将不保存任何内容",
         "descSkipOnlyTranslation": "跳过后此页将只保存原文",
         "descSkipOnlyGeneric": "跳过后此页将不保存任何内容",
         "descRetryOnly": "重试将从此页继续分析",
@@ -605,7 +605,9 @@
     "title": "文件",
     "searchPlaceholder": "搜索文件标题",
     "empty": "没有符合条件的文件",
-    "detail": "文件详情"
+    "detail": "文件详情",
+    "pausedTitle": "分析已暂停",
+    "continueBadge": "继续"
   },
   "profile": {
     "title": "我的页面",

@@ -19,6 +19,8 @@ const hexToRgba = (hex: string, alpha: number): string => {
 
 const DocumentCard = ({ item, onPress }: DocumentCardProps) => {
   const { t } = useTranslation();
+  const isPaused = item.status === 'PAUSED';
+
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.75}>
       <View style={[styles.colorBar, { backgroundColor: item.calendarColor }]} />
@@ -42,12 +44,19 @@ const DocumentCard = ({ item, onPress }: DocumentCardProps) => {
         )}
 
         <Text style={styles.title} numberOfLines={2}>
-          {item.title}
+          {item.title || t('document.pausedTitle')}
         </Text>
 
         <View style={styles.bottomRow}>
           <Text style={styles.date}>{item.date}</Text>
-          <Ionicons name="chevron-forward" size={20} color={colors.gray[200]} />
+          {isPaused ? (
+            <View style={styles.continueBadge}>
+              <Ionicons name="play" size={11} color={colors.secondary[600]} />
+              <Text style={styles.continueBadgeText}>{t('document.continueBadge')}</Text>
+            </View>
+          ) : (
+            <Ionicons name="chevron-forward" size={20} color={colors.gray[200]} />
+          )}
         </View>
       </View>
     </TouchableOpacity>
@@ -117,5 +126,19 @@ const styles = StyleSheet.create({
   },
   docIcon: {
     marginLeft: 2,
+  },
+  continueBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 10,
+    backgroundColor: colors.secondary[100],
+  },
+  continueBadgeText: {
+    fontSize: 11,
+    fontFamily: fonts.semiBold,
+    color: colors.secondary[600],
   },
 });

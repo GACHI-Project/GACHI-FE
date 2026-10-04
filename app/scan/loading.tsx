@@ -20,6 +20,7 @@ import {
   getNewsletterStatus,
   resumeNewsletter,
   skipNewsletterPage,
+  retryAnalysis,
   NewsletterApiError,
   NewsletterStatus,
   NewsletterStatusResult,
@@ -30,13 +31,22 @@ import colors from '../../src/constants/colors';
 import styles from '../../src/styles/scan/loading';
 
 const ScanLoadingScreen = () => {
-  const { photoUri, pages, childId, childName, childColor, childGrade } = useLocalSearchParams<{
+  const {
+    photoUri,
+    pages,
+    childId,
+    childName,
+    childColor,
+    childGrade,
+    newsletterId: resumeNewsletterIdParam,
+  } = useLocalSearchParams<{
     photoUri?: string;
     pages?: string;
     childId: string;
     childName: string;
     childColor: string;
     childGrade: string;
+    newsletterId?: string;
   }>();
   let photoUris: string[] = [];
   if (pages) {
@@ -45,6 +55,7 @@ const ScanLoadingScreen = () => {
     photoUris = [photoUri];
   }
   const displayUri = photoUris[0];
+  const resumeNewsletterId = resumeNewsletterIdParam ? Number(resumeNewsletterIdParam) : undefined;
 
   const insets = useSafeAreaInsets();
   const progress = useRef(new Animated.Value(0)).current;
@@ -72,6 +83,26 @@ const ScanLoadingScreen = () => {
   const pollingRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const startPollingRef = useRef<((id: number) => void) | undefined>(undefined);
 
+  const handleActionError = useCallback(() => {
+    Alert.alert(t('scan.loading.error.analysisFailed'), t('scan.loading.error.analysisFailedMsg'));
+  }, [t]);
+
+  const applyResumeResult = useCallback(
+    async (id: number, result: { status: NewsletterStatus }) => {
+      if (result.status === 'PAUSED') {
+        const fresh = await getNewsletterStatus(id);
+        setPausedInfo(fresh);
+        setDisplayPercent(fresh.progressPercent);
+        setAnalysisStatus(fresh.status);
+        return;
+      }
+      setPausedInfo(null);
+      setAnalysisStatus(result.status);
+      startPollingRef.current?.(id);
+    },
+    []
+  );
+
   useEffect(() => {
     if (pausedInfo) {
       scanLine.stopAnimation();
@@ -96,7 +127,7 @@ const ScanLoadingScreen = () => {
   }, [scanLine, pausedInfo]);
 
   useEffect(() => {
-    if (photoUris.length === 0) return () => {};
+    if (photoUris.length === 0 && resumeNewsletterId === undefined) return () => {};
     let cancelled = false;
 
     const poll = async (id: number) => {
@@ -123,7 +154,27 @@ const ScanLoadingScreen = () => {
           Alert.alert(
             t('scan.loading.error.analysisFailed'),
             t('scan.loading.error.analysisFailedMsg'),
-            [{ text: t('common.confirm'), onPress: () => router.back() }]
+            [
+              { text: t('common.cancel'), style: 'cancel', onPress: () => router.back() },
+              {
+                text: t('scan.loading.paused.retryButton'),
+                onPress: () => {
+                  retryAnalysis(id)
+                    .then((retryResult) => {
+                      if (cancelled) return;
+                      applyResumeResult(id, retryResult);
+                    })
+                    .catch(() => {
+                      if (cancelled) return;
+                      Alert.alert(
+                        t('scan.loading.error.analysisFailed'),
+                        t('scan.loading.error.analysisFailedMsg'),
+                        [{ text: t('common.confirm'), onPress: () => router.back() }]
+                      );
+                    });
+                },
+              },
+            ]
           );
           return;
         }
@@ -143,25 +194,42 @@ const ScanLoadingScreen = () => {
     };
     startPollingRef.current = startPolling;
 
-    const parsedChildId = childId ? Number(childId) : undefined;
-    uploadNewsletter(photoUris, parsedChildId)
-      .then((result) => {
-        if (cancelled) return;
-        setNewsletterId(result.newsletterId);
-        startPolling(result.newsletterId);
-      })
-      .catch((error: unknown) => {
-        if (cancelled) return;
-        let message = t('scan.loading.error.uploadDefault');
-        if (error instanceof NewsletterApiError) {
-          if (error.code === 'NL4091') message = t('scan.loading.error.duplicate');
-          else if (error.code === 'NL4002') message = t('scan.loading.error.unsupportedFormat');
-          else if (error.code === 'NL4003') message = t('scan.loading.error.fileTooLarge');
-        }
-        Alert.alert(t('scan.loading.error.uploadFailed'), message, [
-          { text: t('common.confirm'), onPress: () => router.back() },
-        ]);
-      });
+    if (resumeNewsletterId !== undefined) {
+      setNewsletterId(resumeNewsletterId);
+      resumeNewsletter(resumeNewsletterId)
+        .then((result) => {
+          if (cancelled) return;
+          applyResumeResult(resumeNewsletterId, result);
+        })
+        .catch(() => {
+          if (cancelled) return;
+          Alert.alert(
+            t('scan.loading.error.analysisFailed'),
+            t('scan.loading.error.analysisFailedMsg'),
+            [{ text: t('common.confirm'), onPress: () => router.back() }]
+          );
+        });
+    } else {
+      const parsedChildId = childId ? Number(childId) : undefined;
+      uploadNewsletter(photoUris, parsedChildId)
+        .then((result) => {
+          if (cancelled) return;
+          setNewsletterId(result.newsletterId);
+          startPolling(result.newsletterId);
+        })
+        .catch((error: unknown) => {
+          if (cancelled) return;
+          let message = t('scan.loading.error.uploadDefault');
+          if (error instanceof NewsletterApiError) {
+            if (error.code === 'NL4091') message = t('scan.loading.error.duplicate');
+            else if (error.code === 'NL4002') message = t('scan.loading.error.unsupportedFormat');
+            else if (error.code === 'NL4003') message = t('scan.loading.error.fileTooLarge');
+          }
+          Alert.alert(t('scan.loading.error.uploadFailed'), message, [
+            { text: t('common.confirm'), onPress: () => router.back() },
+          ]);
+        });
+    }
 
     return () => {
       cancelled = true;
@@ -237,26 +305,6 @@ const ScanLoadingScreen = () => {
     nextBtnOpacity,
     nextBtnSlide,
   ]);
-
-  const handleActionError = useCallback(() => {
-    Alert.alert(t('scan.loading.error.analysisFailed'), t('scan.loading.error.analysisFailedMsg'));
-  }, [t]);
-
-  const applyResumeResult = useCallback(
-    async (id: number, result: { status: NewsletterStatus }) => {
-      if (result.status === 'PAUSED') {
-        const fresh = await getNewsletterStatus(id);
-        setPausedInfo(fresh);
-        setDisplayPercent(fresh.progressPercent);
-        setAnalysisStatus(fresh.status);
-        return;
-      }
-      setPausedInfo(null);
-      setAnalysisStatus(result.status);
-      startPollingRef.current?.(id);
-    },
-    []
-  );
 
   const handleRetry = async () => {
     if (!newsletterId || actionLoading) return;

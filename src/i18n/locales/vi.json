@@ -428,8 +428,8 @@
         "titleUnreadable": "Không thể nhận dạng chữ ở trang {{page}}",
         "titleTranslationFailed": "Không thể dịch trang {{page}}",
         "titleGeneric": "Quá trình phân tích trang {{page}} đã dừng lại",
-        "descRetrySkipTranslation": "Thử lại, hoặc bỏ qua thì trang này sẽ chỉ lưu bản gốc",
-        "descRetrySkipGeneric": "Thử lại, hoặc bỏ qua thì trang này sẽ được lưu mà không có nội dung",
+        "descRetrySkipTranslation": "Nếu bỏ qua, trang này sẽ chỉ lưu bản gốc",
+        "descRetrySkipGeneric": "Nếu bỏ qua, trang này sẽ được lưu mà không có nội dung",
         "descSkipOnlyTranslation": "Nếu bỏ qua, trang này sẽ chỉ lưu bản gốc",
         "descSkipOnlyGeneric": "Nếu bỏ qua, trang này sẽ được lưu mà không có nội dung",
         "descRetryOnly": "Thử lại sẽ tiếp tục phân tích từ trang này",
@@ -613,7 +613,9 @@
     "title": "Tài liệu",
     "searchPlaceholder": "Tìm kiếm tiêu đề tài liệu",
     "empty": "Không có tài liệu nào phù hợp",
-    "detail": "Chi tiết tài liệu"
+    "detail": "Chi tiết tài liệu",
+    "pausedTitle": "Phân tích đã tạm dừng",
+    "continueBadge": "Tiếp tục"
   },
   "profile": {
     "title": "Trang cá nhân",

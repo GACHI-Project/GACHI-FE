@@ -272,6 +272,20 @@ export const resumeNewsletter = async (newsletterId: number): Promise<Newsletter
   }
 };
 
+export const retryAnalysis = async (newsletterId: number): Promise<NewsletterResumeResult> => {
+  try {
+    const headers = await getAuthHeader();
+    const response = await apiClient.post<{ result: NewsletterResumeResult }>(
+      `/api/v1/newsletters/${newsletterId}/analysis/retry`,
+      undefined,
+      { headers }
+    );
+    return response.data.result;
+  } catch (error) {
+    throw wrapError(error);
+  }
+};
+
 export const skipNewsletterPage = async (
   newsletterId: number,
   pageNo: number
@@ -322,6 +336,7 @@ export interface NewsletterItem {
   childColor: string | null;
   isCalendarRegistered: boolean;
   createdAt: string;
+  status?: NewsletterStatus;
 }
 
 export interface NewsletterListResult {

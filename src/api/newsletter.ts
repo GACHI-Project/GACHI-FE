@@ -93,12 +93,44 @@ export interface DateCandidate {
   extractionType: string;
 }
 
+export type SourceType = 'PDF' | 'IMAGE';
+export type PageStatus =
+  | 'PENDING'
+  | 'OCR_DONE'
+  | 'SUCCESS'
+  | 'OCR_FAILED'
+  | 'UNREADABLE'
+  | 'TRANSLATION_FAILED'
+  | 'SKIPPED'
+  | string;
+
+export interface OverlayBlock {
+  blockNo: number;
+  originalText: string;
+  translatedText?: string;
+  box: { x: number; y: number; width: number; height: number };
+}
+
+export interface TranslationPage {
+  pageNo: number;
+  status: PageStatus;
+  originalText?: string;
+  translatedText?: string;
+  imageUrl?: string;
+  imageWidth?: number;
+  imageHeight?: number;
+  blocks?: OverlayBlock[];
+}
+
 export interface NewsletterTranslationResult {
   originalText: string;
   translatedText?: string;
   language: string;
   fileUrl: string;
   dateCandidates?: DateCandidate[];
+  sourceType?: SourceType;
+  totalPages?: number;
+  pages?: TranslationPage[];
 }
 
 export const getNewsletterTranslation = async (

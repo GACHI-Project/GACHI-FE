@@ -444,6 +444,28 @@
         "translated": "翻译后的文件",
         "original": "原文",
         "ocrOriginal": "OCR原文",
+        "pageLabel": "第 {{pageNo}} 页",
+        "pageOf": "共 {{total}} 页中的第 {{pageNo}} 页",
+        "translatedLabel": "译文 · {{language}}",
+        "recognitionFailedNotice": "无法识别此页的文字",
+        "translationFailedNotice": "翻译失败，显示原文",
+        "languageNames": {
+          "ko": "韩语",
+          "en": "英语",
+          "vi": "越南语",
+          "zh": "中文"
+        },
+        "ocr": {
+          "title": "查看原文 (OCR)",
+          "subtitle": "韩语原文",
+          "collapseLabel": "收起原文"
+        },
+        "viewer": {
+          "closeAccessibility": "关闭",
+          "pageIndicator": "第 {{current}} / {{total}} 页",
+          "showOriginal": "查看原文",
+          "showTranslation": "查看译文"
+        },
         "error": {
           "notFound": "找不到该家庭通知书的信息。",
           "notAnalyzed": "这份家庭通知书还没有分析完成。",

@@ -444,6 +444,28 @@
         "translated": "Translated Document",
         "original": "Original",
         "ocrOriginal": "OCR Original",
+        "pageLabel": "Page {{pageNo}}",
+        "pageOf": "Page {{pageNo}} of {{total}}",
+        "translatedLabel": "Translation · {{language}}",
+        "recognitionFailedNotice": "We couldn't recognize the text on this page",
+        "translationFailedNotice": "Translation failed, showing the original text",
+        "languageNames": {
+          "ko": "Korean",
+          "en": "English",
+          "vi": "Vietnamese",
+          "zh": "Chinese"
+        },
+        "ocr": {
+          "title": "View Original (OCR)",
+          "subtitle": "Original Korean text",
+          "collapseLabel": "Collapse original"
+        },
+        "viewer": {
+          "closeAccessibility": "Close",
+          "pageIndicator": "Page {{current}} / {{total}}",
+          "showOriginal": "Show Original",
+          "showTranslation": "Show Translation"
+        },
         "error": {
           "notFound": "School notice info not found.",
           "notAnalyzed": "This school notice hasn’t been fully analyzed yet.",

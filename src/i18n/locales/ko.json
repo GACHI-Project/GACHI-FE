@@ -444,6 +444,28 @@
         "translated": "번역된 문서",
         "original": "원문",
         "ocrOriginal": "OCR 원문",
+        "pageLabel": "페이지 {{pageNo}}",
+        "pageOf": "{{total}}페이지 중 {{pageNo}}번째",
+        "translatedLabel": "번역본 · {{language}}",
+        "recognitionFailedNotice": "이 페이지는 글자를 인식하지 못했어요",
+        "translationFailedNotice": "번역하지 못해 원문을 보여드려요",
+        "languageNames": {
+          "ko": "한국어",
+          "en": "영어",
+          "vi": "베트남어",
+          "zh": "중국어"
+        },
+        "ocr": {
+          "title": "원문 (OCR) 보기",
+          "subtitle": "한국어 원본 텍스트",
+          "collapseLabel": "원문 접기"
+        },
+        "viewer": {
+          "closeAccessibility": "닫기",
+          "pageIndicator": "페이지 {{current}} / {{total}}",
+          "showOriginal": "원본 보기",
+          "showTranslation": "번역 보기"
+        },
         "error": {
           "notFound": "가정통신문 정보를 찾을 수 없어요.",
           "notAnalyzed": "아직 분석이 완료되지 않은 가정통신문이에요.",

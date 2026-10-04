@@ -452,6 +452,28 @@
         "translated": "Tài liệu đã dịch",
         "original": "Bản gốc",
         "ocrOriginal": "Bản gốc OCR",
+        "pageLabel": "Trang {{pageNo}}",
+        "pageOf": "Trang {{pageNo}} trong {{total}} trang",
+        "translatedLabel": "Bản dịch · {{language}}",
+        "recognitionFailedNotice": "Không thể nhận dạng chữ trên trang này",
+        "translationFailedNotice": "Dịch thất bại, hiển thị bản gốc",
+        "languageNames": {
+          "ko": "Tiếng Hàn",
+          "en": "Tiếng Anh",
+          "vi": "Tiếng Việt",
+          "zh": "Tiếng Trung"
+        },
+        "ocr": {
+          "title": "Xem bản gốc (OCR)",
+          "subtitle": "Văn bản gốc tiếng Hàn",
+          "collapseLabel": "Thu gọn bản gốc"
+        },
+        "viewer": {
+          "closeAccessibility": "Đóng",
+          "pageIndicator": "Trang {{current}} / {{total}}",
+          "showOriginal": "Xem bản gốc",
+          "showTranslation": "Xem bản dịch"
+        },
         "error": {
           "notFound": "Không tìm thấy thông tin thông báo.",
           "notAnalyzed": "Thông báo này chưa hoàn tất phân tích.",

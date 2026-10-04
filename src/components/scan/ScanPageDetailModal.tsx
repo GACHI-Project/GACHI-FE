@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -9,93 +9,14 @@ import {
   NativeSyntheticEvent,
   NativeScrollEvent,
 } from 'react-native';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
-import { scheduleOnRN } from 'react-native-worklets';
 import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
+import PinchZoomView from '../common/PinchZoomView';
 import colors from '../../constants/colors';
 import { CapturedPage, SCAN_FRAME_W, SCAN_FRAME_H } from '../../constants/scan';
 import styles from '../../styles/scan/pageDetail';
-
-interface ZoomableImageProps {
-  uri: string;
-  active: boolean;
-  onZoomChange: (zoomed: boolean) => void;
-}
-
-const MAX_ZOOM = 3;
-
-const ZoomableImage = ({ uri, active, onZoomChange }: ZoomableImageProps) => {
-  const scale = useSharedValue(1);
-  const savedScale = useSharedValue(1);
-  const translateX = useSharedValue(0);
-  const translateY = useSharedValue(0);
-  const savedTranslateX = useSharedValue(0);
-  const savedTranslateY = useSharedValue(0);
-
-  const notifyZoom = useCallback((zoomed: boolean) => onZoomChange(zoomed), [onZoomChange]);
-
-  useEffect(() => {
-    if (!active) {
-      scale.value = 1;
-      savedScale.value = 1;
-      translateX.value = 0;
-      translateY.value = 0;
-      savedTranslateX.value = 0;
-      savedTranslateY.value = 0;
-    }
-  }, [active, scale, savedScale, translateX, translateY, savedTranslateX, savedTranslateY]);
-
-  const pinch = Gesture.Pinch()
-    .enabled(active)
-    .onUpdate((event) => {
-      scale.value = Math.max(1, Math.min(savedScale.value * event.scale, MAX_ZOOM));
-    })
-    .onEnd(() => {
-      savedScale.value = scale.value;
-      scheduleOnRN(notifyZoom, scale.value > 1.05);
-      if (scale.value <= 1) {
-        scale.value = withSpring(1);
-        translateX.value = withSpring(0);
-        translateY.value = withSpring(0);
-        savedTranslateX.value = 0;
-        savedTranslateY.value = 0;
-      }
-    });
-
-  const pan = Gesture.Pan()
-    .enabled(active)
-    .onUpdate((event) => {
-      if (savedScale.value <= 1) return;
-      translateX.value = savedTranslateX.value + event.translationX;
-      translateY.value = savedTranslateY.value + event.translationY;
-    })
-    .onEnd(() => {
-      savedTranslateX.value = translateX.value;
-      savedTranslateY.value = translateY.value;
-    });
-
-  const composed = Gesture.Simultaneous(pinch, pan);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [
-      { translateX: translateX.value },
-      { translateY: translateY.value },
-      { scale: scale.value },
-    ],
-  }));
-
-  return (
-    <GestureDetector gesture={composed}>
-      <Animated.View style={[styles.pageSlide, animatedStyle]}>
-        <Image source={{ uri }} style={styles.pageImage} resizeMode="cover" />
-      </Animated.View>
-    </GestureDetector>
-  );
-};
 
 interface ScanPageDetailModalProps {
   visible: boolean;
@@ -141,7 +62,6 @@ const ScanPageDetailModal = ({
     onIndexChange(clamped);
   };
 
-  // 회전 기능: BE 자동 보정 적용 여부 확정되면 이 핸들러와 아래 회전 버튼 블록만 삭제하면 됨
   const handleRotate = async () => {
     const target = pages[currentIndex];
     if (!target || rotating) return;
@@ -199,12 +119,14 @@ const ScanPageDetailModal = ({
             style={{ width: SCAN_FRAME_W, height: SCAN_FRAME_H }}
           >
             {pages.map((page, index) => (
-              <ZoomableImage
+              <PinchZoomView
                 key={page.id}
-                uri={page.uri}
                 active={index === currentIndex}
                 onZoomChange={setZoomed}
-              />
+                style={styles.pageSlide}
+              >
+                <Image source={{ uri: page.uri }} style={styles.pageImage} resizeMode="cover" />
+              </PinchZoomView>
             ))}
           </ScrollView>
 

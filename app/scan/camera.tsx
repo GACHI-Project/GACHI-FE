@@ -56,7 +56,8 @@ const ScanCameraScreen = () => {
   };
 
   const handleCapture = async () => {
-    if (!cameraRef.current || capturing || pages.length >= MAX_PAGES) return;
+    if (!cameraRef.current || capturing) return;
+    if (replaceIndex === null && pages.length >= MAX_PAGES) return;
     setCapturing(true);
     try {
       const photo = await cameraRef.current.takePictureAsync({ quality: 1 });
@@ -151,7 +152,7 @@ const ScanCameraScreen = () => {
   }
 
   const hasChild = !!childName;
-  const maxReached = pages.length >= MAX_PAGES;
+  const maxReached = replaceIndex === null && pages.length >= MAX_PAGES;
 
   return (
     <View style={styles.screen}>

@@ -67,13 +67,15 @@ const EventCard = ({
             )}
           </View>
         </View>
-        <View style={calStyles.cardTags}>
+        <View style={[calStyles.cardTags, styles.tagsRow]}>
           {event.childName && (
             <View style={[calStyles.tag, calStyles.tagFixed]}>
-              <Text style={calStyles.tagText}>{event.childName}</Text>
+              <Text style={calStyles.tagText} numberOfLines={1}>
+                {event.childName}
+              </Text>
             </View>
           )}
-          <View style={calStyles.tag}>
+          <View style={[calStyles.tag, styles.newsletterTag]}>
             <Text style={calStyles.tagText} numberOfLines={1} ellipsizeMode="tail">
               {event.newsletterTitle}
             </Text>
@@ -81,7 +83,9 @@ const EventCard = ({
           {timeLabel && (
             <View style={styles.timeTag}>
               <Ionicons name="time-outline" size={13} color={colors.text.secondary} />
-              <Text style={[calStyles.tagText, styles.timeText]}>{timeLabel}</Text>
+              <Text style={[calStyles.tagText, styles.timeText]} numberOfLines={1}>
+                {timeLabel}
+              </Text>
             </View>
           )}
         </View>
@@ -114,10 +118,16 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 0,
   },
+  tagsRow: {
+    flexWrap: 'nowrap',
+  },
+  newsletterTag: {
+    flexGrow: 1,
+  },
   timeTag: {
     flexDirection: 'row',
     alignItems: 'center',
-    maxWidth: '100%',
+    flexShrink: 0,
     gap: 4,
     backgroundColor: colors.gray[100],
     borderRadius: 8,
@@ -125,7 +135,7 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
   },
   timeText: {
-    flexShrink: 1,
+    flexShrink: 0,
   },
   past: {
     opacity: 0.6,

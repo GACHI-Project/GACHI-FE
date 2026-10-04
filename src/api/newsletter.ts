@@ -50,17 +50,18 @@ const getMimeType = (uri: string) => {
 };
 
 export const uploadNewsletter = async (
-  photoUri: string,
+  photoUris: string[],
   childId?: number
 ): Promise<{ newsletterId: number; status: NewsletterStatus }> => {
   try {
     const authHeaders = await getAuthHeader();
-    const filename = photoUri.split('/').pop() ?? 'scan.jpg';
-
-    const mimeType = getMimeType(photoUri);
-    const filePayload: RNFile = { uri: photoUri, name: filename, type: mimeType };
     const formData = new FormData();
-    formData.append('files', filePayload as unknown as Blob);
+    photoUris.forEach((photoUri) => {
+      const filename = photoUri.split('/').pop() ?? 'scan.jpg';
+      const mimeType = getMimeType(photoUri);
+      const filePayload: RNFile = { uri: photoUri, name: filename, type: mimeType };
+      formData.append('files', filePayload as unknown as Blob);
+    });
 
     const params: Record<string, unknown> = { language: 'KO' };
     if (childId !== undefined && !Number.isNaN(childId)) {

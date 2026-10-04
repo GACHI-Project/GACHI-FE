@@ -26,13 +26,21 @@ import colors from '../../src/constants/colors';
 import styles from '../../src/styles/scan/loading';
 
 const ScanLoadingScreen = () => {
-  const { photoUri, childId, childName, childColor, childGrade } = useLocalSearchParams<{
-    photoUri: string;
+  const { photoUri, pages, childId, childName, childColor, childGrade } = useLocalSearchParams<{
+    photoUri?: string;
+    pages?: string;
     childId: string;
     childName: string;
     childColor: string;
     childGrade: string;
   }>();
+  let photoUris: string[] = [];
+  if (pages) {
+    photoUris = JSON.parse(pages) as string[];
+  } else if (photoUri) {
+    photoUris = [photoUri];
+  }
+  const displayUri = photoUris[0];
 
   const insets = useSafeAreaInsets();
   const progress = useRef(new Animated.Value(0)).current;
@@ -75,7 +83,7 @@ const ScanLoadingScreen = () => {
   }, [scanLine]);
 
   useEffect(() => {
-    if (!photoUri) return () => {};
+    if (photoUris.length === 0) return () => {};
     let cancelled = false;
 
     const startPolling = (id: number) => {
@@ -115,7 +123,7 @@ const ScanLoadingScreen = () => {
     };
 
     const parsedChildId = childId ? Number(childId) : undefined;
-    uploadNewsletter(photoUri, parsedChildId)
+    uploadNewsletter(photoUris, parsedChildId)
       .then((result) => {
         if (cancelled) return;
         setNewsletterId(result.newsletterId);
@@ -246,8 +254,8 @@ const ScanLoadingScreen = () => {
         </Animated.View>
       ) : (
         <View style={styles.imageWrapper}>
-          {photoUri ? (
-            <Image source={{ uri: photoUri }} style={styles.image} resizeMode="cover" />
+          {displayUri ? (
+            <Image source={{ uri: displayUri }} style={styles.image} resizeMode="cover" />
           ) : (
             <View style={styles.imagePlaceholder} />
           )}
@@ -303,7 +311,7 @@ const ScanLoadingScreen = () => {
               router.push({
                 pathname: '/scan/result',
                 params: {
-                  photoUri,
+                  photoUri: displayUri,
                   childName,
                   childColor,
                   childGrade,

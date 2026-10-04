@@ -370,7 +370,11 @@
       "accessibilityCapture": "拍照",
       "accessibilityFlip": "切换摄像头",
       "permissionTitle": "需要权限",
-      "errorTitle": "错误"
+      "errorTitle": "错误",
+      "stackConfirmLink": "查看已拍摄",
+      "stackConfirmAccessibility": "查看已拍摄的页面",
+      "maxPagesReached": "最多可以拍摄10页",
+      "accessibilityComplete": "完成拍摄"
     },
     "preview": {
       "pdfLabel": "PDF文件",
@@ -378,6 +382,29 @@
       "retake": "重新拍摄",
       "reselect": "重新选择",
       "use": "使用"
+    },
+    "reviewSheet": {
+      "title": "已拍摄的页面",
+      "count": "{{count}} / {{max}}",
+      "instruction": "长按项目可以更改页面顺序",
+      "pageLabel": "第 {{number}} 页",
+      "tapHint": "点击查看大图",
+      "deleteAccessibility": "删除第 {{number}} 页",
+      "dragAccessibility": "调整第 {{number}} 页顺序",
+      "continueButton": "继续拍摄",
+      "completeButton": "完成拍摄"
+    },
+    "pageDetail": {
+      "pageIndicator": "第 {{current}} / {{total}} 页",
+      "rotate": "旋转",
+      "rotateAccessibility": "旋转页面",
+      "swipeHint": "左右滑动可查看其他页面",
+      "zoomHint": "双指缩放",
+      "delete": "删除",
+      "retake": "重新拍摄此页",
+      "prevAccessibility": "上一页",
+      "nextAccessibility": "下一页",
+      "thumbnailAccessibility": "跳转到第 {{number}} 页"
     },
     "loading": {
       "preparing": "正在准备文件",

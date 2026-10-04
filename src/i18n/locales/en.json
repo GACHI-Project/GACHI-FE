@@ -370,7 +370,11 @@
       "accessibilityCapture": "Take photo",
       "accessibilityFlip": "Flip camera",
       "permissionTitle": "Permission Required",
-      "errorTitle": "Error"
+      "errorTitle": "Error",
+      "stackConfirmLink": "View captures",
+      "stackConfirmAccessibility": "View captured pages",
+      "maxPagesReached": "You can capture up to 10 pages",
+      "accessibilityComplete": "Finish capturing"
     },
     "preview": {
       "pdfLabel": "PDF File",
@@ -378,6 +382,29 @@
       "retake": "Retake",
       "reselect": "Reselect",
       "use": "Use This"
+    },
+    "reviewSheet": {
+      "title": "Captured pages",
+      "count": "{{count}} / {{max}}",
+      "instruction": "Press and hold an item to reorder pages",
+      "pageLabel": "Page {{number}}",
+      "tapHint": "Tap to view larger",
+      "deleteAccessibility": "Delete page {{number}}",
+      "dragAccessibility": "Reorder page {{number}}",
+      "continueButton": "Keep capturing",
+      "completeButton": "Done capturing"
+    },
+    "pageDetail": {
+      "pageIndicator": "Page {{current}} / {{total}}",
+      "rotate": "Rotate",
+      "rotateAccessibility": "Rotate page",
+      "swipeHint": "Swipe left or right to view other pages",
+      "zoomHint": "Pinch to zoom",
+      "delete": "Delete",
+      "retake": "Retake this page",
+      "prevAccessibility": "Previous page",
+      "nextAccessibility": "Next page",
+      "thumbnailAccessibility": "Go to page {{number}}"
     },
     "loading": {
       "preparing": "Preparing document",

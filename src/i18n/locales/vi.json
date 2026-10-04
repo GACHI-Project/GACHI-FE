@@ -378,7 +378,11 @@
       "accessibilityCapture": "Chụp ảnh",
       "accessibilityFlip": "Chuyển đổi camera",
       "permissionTitle": "Cần quyền truy cập",
-      "errorTitle": "Lỗi"
+      "errorTitle": "Lỗi",
+      "stackConfirmLink": "Xem ảnh đã chụp",
+      "stackConfirmAccessibility": "Xem các trang đã chụp",
+      "maxPagesReached": "Bạn có thể chụp tối đa 10 trang",
+      "accessibilityComplete": "Hoàn tất chụp"
     },
     "preview": {
       "pdfLabel": "Tệp PDF",
@@ -386,6 +390,29 @@
       "retake": "Chụp lại",
       "reselect": "Chọn lại",
       "use": "Sử dụng"
+    },
+    "reviewSheet": {
+      "title": "Các trang đã chụp",
+      "count": "{{count}} / {{max}}",
+      "instruction": "Nhấn giữ một mục để sắp xếp lại thứ tự trang",
+      "pageLabel": "Trang {{number}}",
+      "tapHint": "Chạm để xem lớn hơn",
+      "deleteAccessibility": "Xóa trang {{number}}",
+      "dragAccessibility": "Sắp xếp lại trang {{number}}",
+      "continueButton": "Tiếp tục chụp",
+      "completeButton": "Hoàn tất chụp"
+    },
+    "pageDetail": {
+      "pageIndicator": "Trang {{current}} / {{total}}",
+      "rotate": "Xoay",
+      "rotateAccessibility": "Xoay trang",
+      "swipeHint": "Vuốt sang trái hoặc phải để xem trang khác",
+      "zoomHint": "Chụm hai ngón tay để phóng to",
+      "delete": "Xóa",
+      "retake": "Chụp lại trang này",
+      "prevAccessibility": "Trang trước",
+      "nextAccessibility": "Trang sau",
+      "thumbnailAccessibility": "Đi đến trang {{number}}"
     },
     "loading": {
       "preparing": "Đang chuẩn bị tài liệu",

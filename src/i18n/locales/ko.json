@@ -370,7 +370,11 @@
       "accessibilityCapture": "사진 촬영",
       "accessibilityFlip": "카메라 전환",
       "permissionTitle": "권한 필요",
-      "errorTitle": "오류"
+      "errorTitle": "오류",
+      "stackConfirmLink": "촬영본 확인",
+      "stackConfirmAccessibility": "촬영본 확인하기",
+      "maxPagesReached": "최대 10장까지 촬영할 수 있어요",
+      "accessibilityComplete": "촬영 완료"
     },
     "preview": {
       "pdfLabel": "PDF 파일",
@@ -378,6 +382,29 @@
       "retake": "다시 찍기",
       "reselect": "다시 선택하기",
       "use": "사용하기"
+    },
+    "reviewSheet": {
+      "title": "촬영한 페이지",
+      "count": "{{count}} / {{max}}",
+      "instruction": "항목을 길게 눌러 페이지 순서를 바꿀 수 있어요",
+      "pageLabel": "페이지 {{number}}",
+      "tapHint": "탭하여 크게 보기",
+      "deleteAccessibility": "페이지 {{number}} 삭제",
+      "dragAccessibility": "페이지 {{number}} 순서 변경",
+      "continueButton": "촬영 계속하기",
+      "completeButton": "촬영 완료"
+    },
+    "pageDetail": {
+      "pageIndicator": "페이지 {{current}} / {{total}}",
+      "rotate": "회전",
+      "rotateAccessibility": "페이지 회전",
+      "swipeHint": "좌우로 넘겨 다른 페이지를 볼 수 있어요",
+      "zoomHint": "두 손가락으로 확대",
+      "delete": "삭제",
+      "retake": "이 페이지 다시 촬영",
+      "prevAccessibility": "이전 페이지",
+      "nextAccessibility": "다음 페이지",
+      "thumbnailAccessibility": "페이지 {{number}}로 이동"
     },
     "loading": {
       "preparing": "문서를 준비하고 있어요",

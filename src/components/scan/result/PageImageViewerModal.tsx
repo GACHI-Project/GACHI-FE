@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { View, Text, Image, TouchableOpacity, Modal, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import PinchZoomView from '../../common/PinchZoomView';
@@ -46,7 +47,8 @@ const PageImageViewerModal = ({
 
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
-      <View style={[styles.screen, { paddingTop: insets.top + 12 }]}>
+      {/* Modal은 별도 네이티브 창이라 루트의 GestureHandlerRootView가 닿지 않아 핀치 줌을 위해 다시 감쌈 */}
+      <GestureHandlerRootView style={[styles.screen, { paddingTop: insets.top + 12 }]}>
         <View style={styles.header}>
           <View style={styles.headerSideSlot}>
             <TouchableOpacity
@@ -93,7 +95,7 @@ const PageImageViewerModal = ({
             style={{ ...styles.toggleButton, marginBottom: insets.bottom + 16 }}
           />
         )}
-      </View>
+      </GestureHandlerRootView>
     </Modal>
   );
 };

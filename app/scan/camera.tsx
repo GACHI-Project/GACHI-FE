@@ -1,7 +1,17 @@
-import React, { useRef, useState } from 'react';
-import { View, Text, Alert, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  View,
+  Text,
+  Alert,
+  TouchableOpacity,
+  StyleSheet,
+  ActivityIndicator,
+  AppState,
+  Linking,
+} from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { router, useLocalSearchParams } from 'expo-router';
+import { useIsFocused, usePreventRemove } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
@@ -23,6 +33,7 @@ import {
   MAX_PAGES,
   CapturedPage,
 } from '../../src/constants/scan';
+import useScanModalFlow from '../../src/hooks/scan/useScanModalFlow';
 
 type ViewMode = 'camera' | 'reviewSheet' | 'pageDetail';
 
@@ -37,85 +48,174 @@ const ScanCameraScreen = () => {
   const [facing, setFacing] = useState<'front' | 'back'>('back');
   const [helpVisible, setHelpVisible] = useState(false);
   const [capturing, setCapturing] = useState(false);
-  const [permission, requestPermission] = useCameraPermissions();
+  const [cameraReady, setCameraReady] = useState(false);
+  const [cameraError, setCameraError] = useState(false);
+  const [permissionBusy, setPermissionBusy] = useState(false);
+  const [permission, requestPermission, getPermission] = useCameraPermissions();
+  const [appState, setAppState] = useState(AppState.currentState);
+  const focused = useIsFocused();
   const cameraRef = useRef<CameraView>(null);
+  const readyRef = useRef(false);
+  const captureLock = useRef(false);
+  const captureGeneration = useRef(0);
+  const mounted = useRef(true);
   const pageIdRef = useRef(0);
   const insets = useSafeAreaInsets();
 
   const [pages, setPages] = useState<CapturedPage[]>([]);
-  const [viewMode, setViewMode] = useState<ViewMode>('camera');
+  const { viewMode, setViewMode, closing, runAfterModalClose, onModalClosed } =
+    useScanModalFlow<ViewMode>('camera', 'camera');
   const [detailIndex, setDetailIndex] = useState(0);
-  const [replaceIndex, setReplaceIndex] = useState<number | null>(null);
+  const [replacePageId, setReplacePageId] = useState<string | null>(null);
+  const busy = capturing || closing;
+  const cameraVisible =
+    focused &&
+    appState === 'active' &&
+    !!permission?.granted &&
+    viewMode === 'camera' &&
+    !closing &&
+    !helpVisible;
 
-  const compressImage = async (uri: string): Promise<string> => {
-    const result = await manipulateAsync(uri, [{ resize: { width: 2048 } }], {
-      compress: 0.85,
-      format: SaveFormat.JPEG,
+  const resetReady = useCallback(() => {
+    readyRef.current = false;
+    setCameraReady(false);
+  }, []);
+
+  const invalidateCapture = useCallback(() => {
+    captureGeneration.current += 1;
+    captureLock.current = false;
+    resetReady();
+    setCapturing(false);
+  }, [resetReady]);
+
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+      captureGeneration.current += 1;
+      captureLock.current = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!focused) invalidateCapture();
+    else void getPermission().catch(() => {});
+  }, [focused, getPermission, invalidateCapture]);
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (next) => {
+      if (next !== 'active') invalidateCapture();
+      else if (focused) void getPermission().catch(() => {});
+      setAppState(next);
     });
-    return result.uri;
+    return () => subscription.remove();
+  }, [focused, getPermission, invalidateCapture]);
+
+  useEffect(() => {
+    if (!cameraVisible) resetReady();
+  }, [cameraVisible, resetReady]);
+
+  const cancelRetake = () => {
+    const targetIndex = pages.findIndex((page) => page.id === replacePageId);
+    setReplacePageId(null);
+    if (targetIndex >= 0) {
+      setDetailIndex(targetIndex);
+      setViewMode('pageDetail');
+    }
   };
 
+  usePreventRemove(busy || replacePageId !== null, () => {
+    if (!captureLock.current && !closing && replacePageId !== null) cancelRetake();
+  });
+
   const handleCapture = async () => {
-    if (!cameraRef.current || capturing) return;
-    if (replaceIndex === null && pages.length >= MAX_PAGES) return;
+    if (!cameraRef.current || !readyRef.current || !cameraVisible || captureLock.current || closing)
+      return;
+    if (replacePageId === null && pages.length >= MAX_PAGES) return;
+    const targetId = replacePageId;
+    const targetIndex = pages.findIndex((page) => page.id === targetId);
+    if (targetId !== null && targetIndex < 0) {
+      setReplacePageId(null);
+      return;
+    }
+    captureLock.current = true;
     setCapturing(true);
+    const generation = captureGeneration.current;
+    const isCurrent = () => mounted.current && generation === captureGeneration.current;
     try {
       const photo = await cameraRef.current.takePictureAsync({ quality: 1 });
-      if (photo) {
-        const compressedUri = await compressImage(photo.uri);
-        setCapturing(false);
-        if (replaceIndex !== null) {
-          const targetIndex = replaceIndex;
-          setPages((prev) =>
-            prev.map((page, i) => (i === targetIndex ? { ...page, uri: compressedUri } : page))
-          );
-          setReplaceIndex(null);
-          setDetailIndex(targetIndex);
-          setViewMode('pageDetail');
-          return;
-        }
+      if (!isCurrent() || !photo) return;
+      const result = await manipulateAsync(photo.uri, [{ resize: { width: 2048 } }], {
+        compress: 0.85,
+        format: SaveFormat.JPEG,
+      });
+      if (!isCurrent()) return;
+      if (targetId !== null) {
+        setPages((prev) =>
+          prev.map((page) => (page.id === targetId ? { ...page, uri: result.uri } : page))
+        );
+        setReplacePageId(null);
+        setDetailIndex(targetIndex);
+        setViewMode('pageDetail');
+      } else {
         pageIdRef.current += 1;
-        setPages((prev) => [...prev, { id: `page-${pageIdRef.current}`, uri: compressedUri }]);
-        return;
+        const page = { id: `page-${pageIdRef.current}`, uri: result.uri };
+        setPages((prev) => [...prev, page]);
       }
-      setCapturing(false);
     } catch {
-      Alert.alert(t('scan.camera.captureError'), t('scan.camera.captureErrorMsg'));
-      setCapturing(false);
+      if (isCurrent()) Alert.alert(t('scan.camera.captureError'), t('scan.camera.captureErrorMsg'));
+    } finally {
+      if (isCurrent()) {
+        captureLock.current = false;
+        setCapturing(false);
+      }
     }
   };
 
   const handleHeaderBack = () => {
-    if (replaceIndex !== null) {
-      setReplaceIndex(null);
-      setViewMode('pageDetail');
-      return;
-    }
-    router.back();
+    if (captureLock.current || closing) return;
+    if (replacePageId !== null) cancelRetake();
+    else router.back();
   };
-
-  const handleReorder = (next: CapturedPage[]) => setPages(next);
-  const handleDeleteFromSheet = (id: string) => setPages((prev) => prev.filter((p) => p.id !== id));
+  const handleOpenReview = () => {
+    if (captureLock.current || closing) return;
+    setViewMode('reviewSheet');
+  };
+  const handleReorder = (next: CapturedPage[]) => {
+    if (!captureLock.current) setPages(next);
+  };
+  const handleDeleteFromSheet = (id: string) => {
+    if (captureLock.current) return;
+    setPages((prev) => prev.filter((page) => page.id !== id));
+    if (replacePageId === id) setReplacePageId(null);
+  };
   const handlePageTap = (index: number) => {
+    if (captureLock.current || closing) return;
     setDetailIndex(index);
     setViewMode('pageDetail');
   };
   const handleCompleteCapture = () => {
-    router.push({
-      pathname: '/scan/loading',
-      params: {
-        pages: JSON.stringify(pages.map((p) => p.uri)),
-        childId: childId ?? '',
-        childName: childName ?? '',
-        childColor: childColor ?? '',
-        childGrade: childGrade ?? '',
-      },
+    if (captureLock.current || closing || pages.length === 0) return;
+    runAfterModalClose(() => {
+      setReplacePageId(null);
+      router.push({
+        pathname: '/scan/loading',
+        params: {
+          pages: JSON.stringify(pages.map((page) => page.uri)),
+          childId: childId ?? '',
+          childName: childName ?? '',
+          childColor: childColor ?? '',
+          childGrade: childGrade ?? '',
+        },
+      });
     });
   };
 
   const handleDetailDelete = () => {
-    const next = pages.filter((_, i) => i !== detailIndex);
+    const deletedId = pages[detailIndex]?.id;
+    const next = pages.filter((page) => page.id !== deletedId);
     setPages(next);
+    if (deletedId === replacePageId) setReplacePageId(null);
     if (next.length === 0) {
       setViewMode('camera');
       setDetailIndex(0);
@@ -124,57 +224,152 @@ const ScanCameraScreen = () => {
     }
   };
   const handleDetailRetake = () => {
-    setReplaceIndex(detailIndex);
+    const target = pages[detailIndex];
+    if (!target) return;
+    setReplacePageId(target.id);
     setViewMode('camera');
   };
   const handleDetailRotate = (pageId: string, newUri: string) => {
     setPages((prev) => prev.map((page) => (page.id === pageId ? { ...page, uri: newUri } : page)));
   };
 
-  if (!permission) return <View style={styles.screen} />;
+  const handlePermission = async () => {
+    if (permissionBusy) return;
+    setPermissionBusy(true);
+    try {
+      if (permission?.canAskAgain === false) await Linking.openSettings();
+      else await requestPermission();
+    } catch {
+      if (mounted.current)
+        Alert.alert(t('scan.camera.errorTitle'), t('scan.camera.permissionError'));
+    } finally {
+      if (mounted.current) setPermissionBusy(false);
+    }
+  };
 
-  if (!permission.granted) {
+  if (!permission?.granted) {
     return (
-      <View style={styles.permissionScreen}>
-        <Ionicons name="camera-outline" size={40} color={colors.primary[400]} />
-        <Text style={styles.permissionText}>{t('scan.camera.permissionText')}</Text>
-        <TouchableOpacity
-          style={styles.permissionBtn}
-          onPress={requestPermission}
-          accessibilityRole="button"
-        >
-          <Text style={styles.permissionBtnText}>{t('scan.camera.allowPermission')}</Text>
-        </TouchableOpacity>
+      <View style={styles.screen}>
+        <Header title={t('scan.title')} onBack={handleHeaderBack} />
+        <View style={styles.permissionScreen}>
+          {!permission ? (
+            <ActivityIndicator color={colors.primary[400]} />
+          ) : (
+            <>
+              <Ionicons name="camera-outline" size={40} color={colors.primary[400]} />
+              <Text style={styles.permissionText}>
+                {t(
+                  permission.canAskAgain
+                    ? 'scan.camera.permissionText'
+                    : 'scan.camera.permissionSettings'
+                )}
+              </Text>
+              <TouchableOpacity
+                style={styles.permissionBtn}
+                onPress={handlePermission}
+                disabled={permissionBusy}
+                accessibilityRole="button"
+              >
+                {permissionBusy ? (
+                  <ActivityIndicator color={colors.text.white} />
+                ) : (
+                  <Text style={styles.permissionBtnText}>
+                    {t(
+                      permission.canAskAgain
+                        ? 'scan.camera.allowPermission'
+                        : 'scan.camera.openSettings'
+                    )}
+                  </Text>
+                )}
+              </TouchableOpacity>
+            </>
+          )}
+        </View>
       </View>
     );
   }
 
   const hasChild = !!childName;
-  const maxReached = replaceIndex === null && pages.length >= MAX_PAGES;
+  const maxReached = replacePageId === null && pages.length >= MAX_PAGES;
+  const captureDisabled = busy || maxReached || !cameraReady || !cameraVisible || cameraError;
+  const replacementNumber = pages.findIndex((page) => page.id === replacePageId) + 1;
 
   return (
     <View style={styles.screen}>
       <Header
         title={t('scan.title')}
         onBack={handleHeaderBack}
-        onHelp={() => setHelpVisible(true)}
+        disabled={busy}
+        onHelp={() => {
+          if (!captureLock.current && !closing) setHelpVisible(true);
+        }}
       />
       <ScanStepIndicator currentStep={2} />
-
       {hasChild && (
         <ScanChildPill
           name={childName}
           color={childColor || SCAN_DEFAULT_CHILD_COLOR}
-          onChangePress={() => router.back()}
+          onChangePress={
+            busy || replacePageId !== null
+              ? undefined
+              : () => {
+                  if (!captureLock.current && !closing) router.back();
+                }
+          }
         />
       )}
-
       <View style={styles.cameraWrapper}>
-        <CameraView ref={cameraRef} style={styles.camera} facing={facing} />
+        {cameraVisible && !cameraError && (
+          <CameraView
+            key={facing}
+            ref={cameraRef}
+            style={styles.camera}
+            facing={facing}
+            onCameraReady={() => {
+              readyRef.current = true;
+              setCameraReady(true);
+            }}
+            onMountError={() => {
+              resetReady();
+              setCameraError(true);
+              invalidateCapture();
+            }}
+          />
+        )}
         <ScanCornerBrackets />
+        {cameraError ? (
+          <View style={styles.cameraStatus}>
+            <Text style={styles.statusText}>{t('scan.camera.unavailable')}</Text>
+            <TouchableOpacity
+              style={styles.permissionBtn}
+              accessibilityRole="button"
+              onPress={() => {
+                resetReady();
+                setCameraError(false);
+              }}
+            >
+              <Text style={styles.permissionBtnText}>{t('common.retry')}</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          (capturing || (cameraVisible && !cameraReady)) && (
+            <View style={styles.cameraStatus} pointerEvents="none">
+              <ActivityIndicator color={colors.primary[400]} />
+              <Text style={styles.statusText}>
+                {t(capturing ? 'scan.camera.processing' : 'common.preparing')}
+              </Text>
+            </View>
+          )
+        )}
         <TouchableOpacity
           style={styles.flipButton}
-          onPress={() => setFacing((f) => (f === 'back' ? 'front' : 'back'))}
+          onPress={() => {
+            if (captureLock.current || closing) return;
+            resetReady();
+            setCameraError(false);
+            setFacing((value) => (value === 'back' ? 'front' : 'back'));
+          }}
+          disabled={busy}
           activeOpacity={0.8}
           accessibilityLabel={t('scan.camera.accessibilityFlip')}
           accessibilityRole="button"
@@ -182,31 +377,32 @@ const ScanCameraScreen = () => {
           <Ionicons name="camera-reverse-outline" size={18} color={colors.text.white} />
         </TouchableOpacity>
       </View>
-
+      {replacementNumber > 0 && (
+        <Text style={styles.statusText}>
+          {t('scan.camera.retakingPage', { number: replacementNumber })}
+        </Text>
+      )}
       {maxReached && <Text style={styles.maxPagesText}>{t('scan.camera.maxPagesReached')}</Text>}
-
       <View style={[styles.bottomControls, { paddingBottom: insets.bottom + 16 }]}>
         <View style={styles.stackSlot}>
-          <ScanCapturedStack pages={pages} onPress={() => setViewMode('reviewSheet')} />
+          <ScanCapturedStack pages={pages} onPress={handleOpenReview} disabled={busy} />
         </View>
-
         <View style={styles.captureRingShadow}>
           <TouchableOpacity
             style={styles.captureRing}
             onPress={handleCapture}
-            disabled={capturing || maxReached}
+            disabled={captureDisabled}
             activeOpacity={0.85}
             accessibilityLabel={t('scan.camera.accessibilityCapture')}
             accessibilityRole="button"
           >
-            <View style={[styles.captureButton, maxReached && styles.captureButtonDisabled]} />
+            <View style={[styles.captureButton, captureDisabled && styles.captureButtonDisabled]} />
           </TouchableOpacity>
         </View>
-
         <TouchableOpacity
-          style={[styles.checkButton, pages.length === 0 && styles.checkButtonDisabled]}
-          onPress={() => setViewMode('reviewSheet')}
-          disabled={pages.length === 0}
+          style={[styles.checkButton, (busy || pages.length === 0) && styles.checkButtonDisabled]}
+          onPress={handleOpenReview}
+          disabled={busy || pages.length === 0}
           activeOpacity={0.8}
           accessibilityLabel={t('scan.camera.accessibilityComplete')}
           accessibilityRole="button"
@@ -214,9 +410,7 @@ const ScanCameraScreen = () => {
           <Ionicons name="checkmark" size={24} color={colors.text.white} />
         </TouchableOpacity>
       </View>
-
       <ScanHelpModal visible={helpVisible} onClose={() => setHelpVisible(false)} />
-
       <ScanPageReviewSheet
         visible={viewMode === 'reviewSheet'}
         pages={pages}
@@ -225,14 +419,15 @@ const ScanCameraScreen = () => {
         onPageTap={handlePageTap}
         onContinue={() => setViewMode('camera')}
         onComplete={handleCompleteCapture}
+        onClosed={onModalClosed}
       />
-
       <ScanPageDetailModal
         visible={viewMode === 'pageDetail'}
         pages={pages}
         currentIndex={detailIndex}
         onIndexChange={setDetailIndex}
         onClose={() => setViewMode('camera')}
+        onClosed={onModalClosed}
         onDelete={handleDetailDelete}
         onRetake={handleDetailRetake}
         onRotate={handleDetailRotate}
@@ -256,6 +451,21 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     borderRadius: 16,
     overflow: 'hidden',
+  },
+  cameraStatus: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.gray[100],
+    gap: 12,
+  },
+  statusText: {
+    fontSize: 14,
+    fontFamily: fonts.medium,
+    color: colors.text.secondary,
+    textAlign: 'center',
+    paddingHorizontal: 20,
+    paddingTop: 8,
   },
   camera: {
     width: SCAN_FRAME_W,
@@ -334,6 +544,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.text.white,
   },
   permissionText: {
+    textAlign: 'center',
+    paddingHorizontal: 24,
     fontSize: 16,
     fontFamily: fonts.medium,
     marginTop: 12,

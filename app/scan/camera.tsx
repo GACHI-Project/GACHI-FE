@@ -127,10 +127,8 @@ const ScanCameraScreen = () => {
     setReplaceIndex(detailIndex);
     setViewMode('camera');
   };
-  const handleDetailRotate = (newUri: string) => {
-    setPages((prev) =>
-      prev.map((page, i) => (i === detailIndex ? { ...page, uri: newUri } : page))
-    );
+  const handleDetailRotate = (pageId: string, newUri: string) => {
+    setPages((prev) => prev.map((page) => (page.id === pageId ? { ...page, uri: newUri } : page)));
   };
 
   if (!permission) return <View style={styles.screen} />;

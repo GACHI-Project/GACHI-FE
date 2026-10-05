@@ -161,8 +161,8 @@ const ScanLoadingScreen = () => {
                 onPress: () => {
                   retryAnalysis(id)
                     .then((retryResult) => {
-                      if (cancelled) return;
-                      applyResumeResult(id, retryResult);
+                      if (cancelled) return undefined;
+                      return applyResumeResult(id, retryResult);
                     })
                     .catch(() => {
                       if (cancelled) return;
@@ -198,8 +198,8 @@ const ScanLoadingScreen = () => {
       setNewsletterId(resumeNewsletterId);
       resumeNewsletter(resumeNewsletterId)
         .then((result) => {
-          if (cancelled) return;
-          applyResumeResult(resumeNewsletterId, result);
+          if (cancelled) return undefined;
+          return applyResumeResult(resumeNewsletterId, result);
         })
         .catch(() => {
           if (cancelled) return;

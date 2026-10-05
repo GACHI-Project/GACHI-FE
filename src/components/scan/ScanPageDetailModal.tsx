@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
+  Alert,
   Image,
   TouchableOpacity,
   ScrollView,
@@ -26,7 +27,7 @@ interface ScanPageDetailModalProps {
   onClose: () => void;
   onDelete: () => void;
   onRetake: () => void;
-  onRotate: (newUri: string) => void;
+  onRotate: (pageId: string, newUri: string) => void;
 }
 
 const ScanPageDetailModal = ({
@@ -71,7 +72,9 @@ const ScanPageDetailModal = ({
         compress: 0.9,
         format: SaveFormat.JPEG,
       });
-      onRotate(result.uri);
+      onRotate(target.id, result.uri);
+    } catch {
+      Alert.alert(t('scan.camera.errorTitle'), t('scan.camera.captureErrorMsg'));
     } finally {
       setRotating(false);
     }

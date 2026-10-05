@@ -69,8 +69,12 @@ const EventCard = ({
         </View>
         <View style={[calStyles.cardTags, styles.tagsRow]}>
           {event.childName && (
-            <View style={[calStyles.tag, calStyles.tagFixed]}>
-              <Text style={calStyles.tagText} numberOfLines={1}>
+            <View style={[calStyles.tag, calStyles.tagFixed, styles.childTag]}>
+              <Text
+                style={[calStyles.tagText, styles.childText]}
+                numberOfLines={1}
+                ellipsizeMode="tail"
+              >
                 {event.childName}
               </Text>
             </View>
@@ -83,7 +87,11 @@ const EventCard = ({
           {timeLabel && (
             <View style={styles.timeTag}>
               <Ionicons name="time-outline" size={13} color={colors.text.secondary} />
-              <Text style={[calStyles.tagText, styles.timeText]} numberOfLines={1}>
+              <Text
+                style={[calStyles.tagText, styles.timeText]}
+                numberOfLines={1}
+                ellipsizeMode="tail"
+              >
                 {timeLabel}
               </Text>
             </View>
@@ -124,10 +132,19 @@ const styles = StyleSheet.create({
   newsletterTag: {
     flexGrow: 1,
   },
+  childTag: {
+    flexShrink: 1,
+    minWidth: 0,
+  },
+  childText: {
+    flexShrink: 1,
+    minWidth: 0,
+  },
   timeTag: {
     flexDirection: 'row',
     alignItems: 'center',
-    flexShrink: 0,
+    flexShrink: 1,
+    minWidth: 0,
     gap: 4,
     backgroundColor: colors.gray[100],
     borderRadius: 8,
@@ -135,7 +152,8 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
   },
   timeText: {
-    flexShrink: 0,
+    flexShrink: 1,
+    minWidth: 0,
   },
   past: {
     opacity: 0.6,

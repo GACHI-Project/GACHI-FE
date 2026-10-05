@@ -56,7 +56,7 @@ const ScanPreviewScreen = () => {
           <Image
             source={{ uri: photoUri }}
             style={styles.image}
-            resizeMode="cover"
+            resizeMode="contain"
             accessibilityLabel={t('scan.preview.accessibilityPreview')}
           />
         )}

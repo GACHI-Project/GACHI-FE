@@ -7,3 +7,10 @@ export const SCAN_FRAME_H = SCAN_FRAME_W * 1.35;
 export const SCAN_CORNER = 28;
 export const SCAN_THICK = 4;
 export const SCAN_DEFAULT_CHILD_COLOR = '#2CDA00';
+
+export const MAX_PAGES = 10;
+
+export interface CapturedPage {
+  id: string;
+  uri: string;
+}

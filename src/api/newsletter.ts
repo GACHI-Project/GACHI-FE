@@ -2,12 +2,27 @@ import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 import { apiClient } from './auth';
 
-export type NewsletterStatus = 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED';
+export type NewsletterStatus = 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED' | 'PAUSED';
+
+export type PausedStage = 'OCR' | 'TRANSLATION';
+export type PausedReason = 'OCR_FAILED' | 'UNREADABLE' | 'TRANSLATION_FAILED';
 
 export interface NewsletterStatusResult {
   status: NewsletterStatus;
   progressPercent: number;
   progressMessage: string;
+  errorMessage?: string;
+  failureStage?: string;
+  canRetry?: boolean;
+  sourceType?: SourceType;
+  totalPages?: number;
+  processedPages?: number;
+  pausedPageNo?: number;
+  pausedStage?: PausedStage;
+  pausedReason?: PausedReason;
+  retryCount?: number;
+  retryable?: boolean;
+  skippable?: boolean;
 }
 
 export class NewsletterApiError extends Error {
@@ -50,17 +65,18 @@ const getMimeType = (uri: string) => {
 };
 
 export const uploadNewsletter = async (
-  photoUri: string,
+  photoUris: string[],
   childId?: number
 ): Promise<{ newsletterId: number; status: NewsletterStatus }> => {
   try {
     const authHeaders = await getAuthHeader();
-    const filename = photoUri.split('/').pop() ?? 'scan.jpg';
-
-    const mimeType = getMimeType(photoUri);
-    const filePayload: RNFile = { uri: photoUri, name: filename, type: mimeType };
     const formData = new FormData();
-    formData.append('files', filePayload as unknown as Blob);
+    photoUris.forEach((photoUri) => {
+      const filename = photoUri.split('/').pop() ?? 'scan.jpg';
+      const mimeType = getMimeType(photoUri);
+      const filePayload: RNFile = { uri: photoUri, name: filename, type: mimeType };
+      formData.append('files', filePayload as unknown as Blob);
+    });
 
     const params: Record<string, unknown> = { language: 'KO' };
     if (childId !== undefined && !Number.isNaN(childId)) {
@@ -92,12 +108,44 @@ export interface DateCandidate {
   extractionType: string;
 }
 
+export type SourceType = 'PDF' | 'IMAGE';
+export type PageStatus =
+  | 'PENDING'
+  | 'OCR_DONE'
+  | 'SUCCESS'
+  | 'OCR_FAILED'
+  | 'UNREADABLE'
+  | 'TRANSLATION_FAILED'
+  | 'SKIPPED'
+  | string;
+
+export interface OverlayBlock {
+  blockNo: number;
+  originalText: string;
+  translatedText?: string;
+  box: { x: number; y: number; width: number; height: number };
+}
+
+export interface TranslationPage {
+  pageNo: number;
+  status: PageStatus;
+  originalText?: string;
+  translatedText?: string;
+  imageUrl?: string;
+  imageWidth?: number;
+  imageHeight?: number;
+  blocks?: OverlayBlock[];
+}
+
 export interface NewsletterTranslationResult {
   originalText: string;
   translatedText?: string;
   language: string;
   fileUrl: string;
   dateCandidates?: DateCandidate[];
+  sourceType?: SourceType;
+  totalPages?: number;
+  pages?: TranslationPage[];
 }
 
 export const getNewsletterTranslation = async (
@@ -205,6 +253,56 @@ export const getNewsletterStatus = async (
   }
 };
 
+export interface NewsletterResumeResult {
+  newsletterId: number;
+  status: NewsletterStatus;
+}
+
+export const resumeNewsletter = async (newsletterId: number): Promise<NewsletterResumeResult> => {
+  try {
+    const headers = await getAuthHeader();
+    const response = await apiClient.post<{ result: NewsletterResumeResult }>(
+      `/api/v1/newsletters/${newsletterId}/resume`,
+      undefined,
+      { headers }
+    );
+    return response.data.result;
+  } catch (error) {
+    throw wrapError(error);
+  }
+};
+
+export const retryAnalysis = async (newsletterId: number): Promise<NewsletterResumeResult> => {
+  try {
+    const headers = await getAuthHeader();
+    const response = await apiClient.post<{ result: NewsletterResumeResult }>(
+      `/api/v1/newsletters/${newsletterId}/analysis/retry`,
+      undefined,
+      { headers }
+    );
+    return response.data.result;
+  } catch (error) {
+    throw wrapError(error);
+  }
+};
+
+export const skipNewsletterPage = async (
+  newsletterId: number,
+  pageNo: number
+): Promise<NewsletterResumeResult> => {
+  try {
+    const headers = await getAuthHeader();
+    const response = await apiClient.post<{ result: NewsletterResumeResult }>(
+      `/api/v1/newsletters/${newsletterId}/pages/${pageNo}/skip`,
+      undefined,
+      { headers }
+    );
+    return response.data.result;
+  } catch (error) {
+    throw wrapError(error);
+  }
+};
+
 export interface RecentNewsletterItem {
   newsletterId: number;
   title: string | null;
@@ -238,6 +336,7 @@ export interface NewsletterItem {
   childColor: string | null;
   isCalendarRegistered: boolean;
   createdAt: string;
+  status?: NewsletterStatus;
 }
 
 export interface NewsletterListResult {

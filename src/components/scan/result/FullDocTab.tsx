@@ -1,23 +1,33 @@
-import { useEffect, useState } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { RefObject, useCallback, useEffect, useRef, useState } from 'react';
+import { View, ScrollView, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import {
   getNewsletterTranslation,
   NewsletterTranslationResult,
   NewsletterApiError,
+  TranslationPage,
 } from '../../../api/newsletter';
+import { fromServerLanguageCode } from '../../../types/language';
+import colors from '../../../constants/colors';
 import CenteredMessage from '../../common/CenteredMessage';
 import TextSection from './TextSection';
+import FullDocPageSection from './FullDocPageSection';
+import PageImageViewerModal from './PageImageViewerModal';
 
 interface Props {
   newsletterId?: number;
+  scrollRef?: RefObject<ScrollView | null>;
+  scrollY?: number;
 }
 
-const FullDocTab = ({ newsletterId }: Props) => {
+const FullDocTab = ({ newsletterId, scrollRef, scrollY = 0 }: Props) => {
   const { t } = useTranslation();
   const [data, setData] = useState<NewsletterTranslationResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [viewerPage, setViewerPage] = useState<TranslationPage | null>(null);
+  const pageOffsetsRef = useRef<Record<number, number>>({});
+  const containerYRef = useRef(0);
 
   useEffect(() => {
     setLoading(true);
@@ -55,9 +65,69 @@ const FullDocTab = ({ newsletterId }: Props) => {
     };
   }, [newsletterId]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const totalPages = data?.totalPages ?? data?.pages?.length ?? 0;
+
+  const scrollToPage = useCallback(
+    (pageNo: number) => {
+      const offset = containerYRef.current + (pageOffsetsRef.current[pageNo] ?? 0);
+      scrollRef?.current?.scrollTo({ y: offset, animated: true });
+    },
+    [scrollRef]
+  );
+
+  const handleOcrCollapse = useCallback(
+    (pageNo: number) => {
+      const offset = containerYRef.current + (pageOffsetsRef.current[pageNo] ?? 0);
+      if (offset < scrollY) scrollToPage(pageNo);
+    },
+    [scrollY, scrollToPage]
+  );
+
   if (loading) return <CenteredMessage loading />;
   if (error || !data)
     return <CenteredMessage message={error ?? t('scan.result.fullDoc.error.loadFailed')} />;
+
+  if (data.pages && data.pages.length > 0) {
+    const sourceType = data.sourceType ?? 'IMAGE';
+    const isKoreanUser = data.language === 'KO';
+    const languageName = t(
+      `scan.result.fullDoc.languageNames.${fromServerLanguageCode(data.language)}`
+    );
+
+    return (
+      <View
+        style={styles.pagesContainer}
+        onLayout={(e) => {
+          containerYRef.current = e.nativeEvent.layout.y;
+        }}
+      >
+        {data.pages.map((page) => (
+          <View
+            key={page.pageNo}
+            onLayout={(e) => {
+              pageOffsetsRef.current[page.pageNo] = e.nativeEvent.layout.y;
+            }}
+          >
+            <FullDocPageSection
+              page={page}
+              totalPages={totalPages}
+              sourceType={sourceType}
+              isKoreanUser={isKoreanUser}
+              languageName={languageName}
+              onOpenViewer={() => setViewerPage(page)}
+              onOcrCollapse={() => handleOcrCollapse(page.pageNo)}
+            />
+          </View>
+        ))}
+        <PageImageViewerModal
+          visible={!!viewerPage}
+          page={viewerPage}
+          totalPages={totalPages}
+          onClose={() => setViewerPage(null)}
+        />
+      </View>
+    );
+  }
 
   const showTranslation = !!data.translatedText;
 
@@ -81,5 +151,16 @@ export default FullDocTab;
 const styles = StyleSheet.create({
   container: {
     gap: 20,
+  },
+  pagesContainer: {
+    gap: 28,
+    backgroundColor: colors.text.white,
+    borderRadius: 20,
+    padding: 16,
+    shadowColor: colors.gray[300],
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
   },
 });

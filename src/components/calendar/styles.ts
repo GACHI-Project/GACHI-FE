@@ -134,6 +134,7 @@ export default StyleSheet.create({
     paddingVertical: 3,
     maxWidth: 220,
     flexShrink: 1,
+    minWidth: 0,
   },
   tagFixed: {
     flexShrink: 0,

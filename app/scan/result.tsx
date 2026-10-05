@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, BackHandler } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -37,6 +37,9 @@ const ScanResultScreen = () => {
   const [helpVisible, setHelpVisible] = useState(false);
   const [saveVisible, setSaveVisible] = useState(false);
   const [unsavedVisible, setUnsavedVisible] = useState(false);
+
+  const scrollRef = useRef<ScrollView>(null);
+  const [scrollY, setScrollY] = useState(0);
 
   const { detail, loading: detailLoading } = useNewsletterDetail(newsletterId);
 
@@ -77,11 +80,16 @@ const ScanResultScreen = () => {
         <View style={styles.tabDivider} />
 
         <ScrollView
+          ref={scrollRef}
           style={[styles.scrollView, styles.scrollViewTinted]}
           contentContainerStyle={styles.scrollContent}
+          onScroll={(e) => setScrollY(e.nativeEvent.contentOffset.y)}
+          scrollEventThrottle={16}
           showsVerticalScrollIndicator
         >
-          {activeTab === 'full' && <FullDocTab newsletterId={newsletterId} />}
+          {activeTab === 'full' && (
+            <FullDocTab newsletterId={newsletterId} scrollRef={scrollRef} scrollY={scrollY} />
+          )}
           {activeTab === 'checklist' && <ChecklistTab newsletterId={newsletterId} />}
           {activeTab === 'aiSummary' && <AISummaryTab newsletterId={newsletterId} />}
         </ScrollView>

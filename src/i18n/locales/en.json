@@ -370,7 +370,11 @@
       "accessibilityCapture": "Take photo",
       "accessibilityFlip": "Flip camera",
       "permissionTitle": "Permission Required",
-      "errorTitle": "Error"
+      "errorTitle": "Error",
+      "stackConfirmLink": "View captures",
+      "stackConfirmAccessibility": "View captured pages",
+      "maxPagesReached": "You can capture up to 10 pages",
+      "accessibilityComplete": "Finish capturing"
     },
     "preview": {
       "pdfLabel": "PDF File",
@@ -379,13 +383,55 @@
       "reselect": "Reselect",
       "use": "Use This"
     },
+    "reviewSheet": {
+      "title": "Captured pages",
+      "count": "{{count}} / {{max}}",
+      "instruction": "Press and hold an item to reorder pages",
+      "pageLabel": "Page {{number}}",
+      "tapHint": "Tap to view larger",
+      "deleteAccessibility": "Delete page {{number}}",
+      "dragAccessibility": "Reorder page {{number}}",
+      "continueButton": "Keep capturing",
+      "completeButton": "Done capturing"
+    },
+    "pageDetail": {
+      "pageIndicator": "Page {{current}} / {{total}}",
+      "rotate": "Rotate",
+      "rotateAccessibility": "Rotate page",
+      "swipeHint": "Swipe left or right to view other pages",
+      "zoomHint": "Pinch to zoom",
+      "delete": "Delete",
+      "retake": "Retake this page",
+      "prevAccessibility": "Previous page",
+      "nextAccessibility": "Next page",
+      "thumbnailAccessibility": "Go to page {{number}}"
+    },
     "loading": {
       "preparing": "Preparing document",
       "analyzing": "Analyzing text and layout",
+      "analyzingWithPage": "Analyzing text and layout ({{n}}/{{total}})",
       "complete": "Translation & summary complete!",
       "scanComplete": "Scan Complete!",
       "next": "Next →",
       "accessibilityNext": "Next",
+      "paused": {
+        "titleRetryFailed": "Still couldn't read page {{page}} after retrying",
+        "titleOcrFailed": "We ran into a problem reading page {{page}}",
+        "titleUnreadable": "We couldn't recognize the text on page {{page}}",
+        "titleTranslationFailed": "We couldn't translate page {{page}}",
+        "titleGeneric": "Analysis paused on page {{page}}",
+        "descRetrySkipTranslation": "If you skip, this page will be saved with the original text only",
+        "descRetrySkipGeneric": "If you skip, this page will be saved without content",
+        "descSkipOnlyTranslation": "If you skip, this page will be saved with the original text only",
+        "descSkipOnlyGeneric": "If you skip, this page will be saved without content",
+        "descRetryOnly": "Retrying will continue the analysis from this page",
+        "descGenericFallback": "Please try again in a moment",
+        "retryButton": "Retry",
+        "skipButton": "Skip",
+        "skipContinueButton": "Skip and continue",
+        "accessibilityRetry": "Retry",
+        "accessibilitySkip": "Skip this page"
+      },
       "error": {
         "analysisFailed": "Analysis Failed",
         "analysisFailedMsg": "Document analysis failed. Please try again.",
@@ -417,6 +463,28 @@
         "translated": "Translated Document",
         "original": "Original",
         "ocrOriginal": "OCR Original",
+        "pageLabel": "Page {{pageNo}}",
+        "pageOf": "Page {{pageNo}} of {{total}}",
+        "translatedLabel": "Translation · {{language}}",
+        "recognitionFailedNotice": "We couldn't recognize the text on this page",
+        "translationFailedNotice": "Translation failed, showing the original text",
+        "languageNames": {
+          "ko": "Korean",
+          "en": "English",
+          "vi": "Vietnamese",
+          "zh": "Chinese"
+        },
+        "ocr": {
+          "title": "View Original (OCR)",
+          "subtitle": "Original Korean text",
+          "collapseLabel": "Collapse original"
+        },
+        "viewer": {
+          "closeAccessibility": "Close",
+          "pageIndicator": "Page {{current}} / {{total}}",
+          "showOriginal": "Show Original",
+          "showTranslation": "Show Translation"
+        },
         "error": {
           "notFound": "School notice info not found.",
           "notAnalyzed": "This school notice hasn’t been fully analyzed yet.",
@@ -537,7 +605,9 @@
     "title": "Documents",
     "searchPlaceholder": "Search document title",
     "empty": "No matching documents",
-    "detail": "Document Detail"
+    "detail": "Document Detail",
+    "pausedTitle": "Analysis paused",
+    "continueBadge": "Continue"
   },
   "profile": {
     "title": "My Page",

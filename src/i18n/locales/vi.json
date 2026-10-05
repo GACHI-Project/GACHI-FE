@@ -378,7 +378,11 @@
       "accessibilityCapture": "Chụp ảnh",
       "accessibilityFlip": "Chuyển đổi camera",
       "permissionTitle": "Cần quyền truy cập",
-      "errorTitle": "Lỗi"
+      "errorTitle": "Lỗi",
+      "stackConfirmLink": "Xem ảnh đã chụp",
+      "stackConfirmAccessibility": "Xem các trang đã chụp",
+      "maxPagesReached": "Bạn có thể chụp tối đa 10 trang",
+      "accessibilityComplete": "Hoàn tất chụp"
     },
     "preview": {
       "pdfLabel": "Tệp PDF",
@@ -387,13 +391,55 @@
       "reselect": "Chọn lại",
       "use": "Sử dụng"
     },
+    "reviewSheet": {
+      "title": "Các trang đã chụp",
+      "count": "{{count}} / {{max}}",
+      "instruction": "Nhấn giữ một mục để sắp xếp lại thứ tự trang",
+      "pageLabel": "Trang {{number}}",
+      "tapHint": "Chạm để xem lớn hơn",
+      "deleteAccessibility": "Xóa trang {{number}}",
+      "dragAccessibility": "Sắp xếp lại trang {{number}}",
+      "continueButton": "Tiếp tục chụp",
+      "completeButton": "Hoàn tất chụp"
+    },
+    "pageDetail": {
+      "pageIndicator": "Trang {{current}} / {{total}}",
+      "rotate": "Xoay",
+      "rotateAccessibility": "Xoay trang",
+      "swipeHint": "Vuốt sang trái hoặc phải để xem trang khác",
+      "zoomHint": "Chụm hai ngón tay để phóng to",
+      "delete": "Xóa",
+      "retake": "Chụp lại trang này",
+      "prevAccessibility": "Trang trước",
+      "nextAccessibility": "Trang sau",
+      "thumbnailAccessibility": "Đi đến trang {{number}}"
+    },
     "loading": {
       "preparing": "Đang chuẩn bị tài liệu",
       "analyzing": "Đang phân tích văn bản và bố cục",
+      "analyzingWithPage": "Đang phân tích văn bản và bố cục ({{n}}/{{total}})",
       "complete": "Đã hoàn tất dịch và tóm tắt!",
       "scanComplete": "Quét hoàn tất!",
       "next": "Tiếp theo →",
       "accessibilityNext": "Tiếp theo",
+      "paused": {
+        "titleRetryFailed": "Đã thử lại nhưng vẫn không đọc được trang {{page}}",
+        "titleOcrFailed": "Đã xảy ra sự cố khi đọc trang {{page}}",
+        "titleUnreadable": "Không thể nhận dạng chữ ở trang {{page}}",
+        "titleTranslationFailed": "Không thể dịch trang {{page}}",
+        "titleGeneric": "Quá trình phân tích trang {{page}} đã dừng lại",
+        "descRetrySkipTranslation": "Nếu bỏ qua, trang này sẽ chỉ lưu bản gốc",
+        "descRetrySkipGeneric": "Nếu bỏ qua, trang này sẽ được lưu mà không có nội dung",
+        "descSkipOnlyTranslation": "Nếu bỏ qua, trang này sẽ chỉ lưu bản gốc",
+        "descSkipOnlyGeneric": "Nếu bỏ qua, trang này sẽ được lưu mà không có nội dung",
+        "descRetryOnly": "Thử lại sẽ tiếp tục phân tích từ trang này",
+        "descGenericFallback": "Vui lòng thử lại sau giây lát",
+        "retryButton": "Thử lại",
+        "skipButton": "Bỏ qua",
+        "skipContinueButton": "Bỏ qua và tiếp tục",
+        "accessibilityRetry": "Thử lại",
+        "accessibilitySkip": "Bỏ qua trang này"
+      },
       "error": {
         "analysisFailed": "Phân tích thất bại",
         "analysisFailedMsg": "Phân tích tài liệu thất bại. Vui lòng thử lại.",
@@ -425,6 +471,28 @@
         "translated": "Tài liệu đã dịch",
         "original": "Bản gốc",
         "ocrOriginal": "Bản gốc OCR",
+        "pageLabel": "Trang {{pageNo}}",
+        "pageOf": "Trang {{pageNo}} trong {{total}} trang",
+        "translatedLabel": "Bản dịch · {{language}}",
+        "recognitionFailedNotice": "Không thể nhận dạng chữ trên trang này",
+        "translationFailedNotice": "Dịch thất bại, hiển thị bản gốc",
+        "languageNames": {
+          "ko": "Tiếng Hàn",
+          "en": "Tiếng Anh",
+          "vi": "Tiếng Việt",
+          "zh": "Tiếng Trung"
+        },
+        "ocr": {
+          "title": "Xem bản gốc (OCR)",
+          "subtitle": "Văn bản gốc tiếng Hàn",
+          "collapseLabel": "Thu gọn bản gốc"
+        },
+        "viewer": {
+          "closeAccessibility": "Đóng",
+          "pageIndicator": "Trang {{current}} / {{total}}",
+          "showOriginal": "Xem bản gốc",
+          "showTranslation": "Xem bản dịch"
+        },
         "error": {
           "notFound": "Không tìm thấy thông tin thông báo.",
           "notAnalyzed": "Thông báo này chưa hoàn tất phân tích.",
@@ -545,7 +613,9 @@
     "title": "Tài liệu",
     "searchPlaceholder": "Tìm kiếm tiêu đề tài liệu",
     "empty": "Không có tài liệu nào phù hợp",
-    "detail": "Chi tiết tài liệu"
+    "detail": "Chi tiết tài liệu",
+    "pausedTitle": "Phân tích đã tạm dừng",
+    "continueBadge": "Tiếp tục"
   },
   "profile": {
     "title": "Trang cá nhân",

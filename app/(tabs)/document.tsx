@@ -23,6 +23,7 @@ const toDocumentItem = (doc: NewsletterItem): DocumentItem => ({
   calendarColor: doc.childColor ?? colors.primary[400],
   title: doc.title ?? '',
   date: formatShortDate(doc.createdAt),
+  status: doc.status,
 });
 
 const DocumentScreen = () => {
@@ -45,12 +46,21 @@ const DocumentScreen = () => {
       return <Text style={styles.emptyText}>{t('document.empty')}</Text>;
     }
     return newsletters
-      .filter((doc) => doc.title != null)
+      .filter((doc) => doc.title != null || doc.status === 'PAUSED')
       .map((doc) => (
         <DocumentCard
           key={doc.newsletterId}
           item={toDocumentItem(doc)}
-          onPress={() => router.push(`/newsletter/${doc.newsletterId}`)}
+          onPress={() => {
+            if (doc.status === 'PAUSED') {
+              router.push({
+                pathname: '/scan/loading',
+                params: { newsletterId: String(doc.newsletterId) },
+              });
+              return;
+            }
+            router.push(`/newsletter/${doc.newsletterId}`);
+          }}
         />
       ));
   };

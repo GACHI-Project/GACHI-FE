@@ -370,7 +370,11 @@
       "accessibilityCapture": "拍照",
       "accessibilityFlip": "切换摄像头",
       "permissionTitle": "需要权限",
-      "errorTitle": "错误"
+      "errorTitle": "错误",
+      "stackConfirmLink": "查看已拍摄",
+      "stackConfirmAccessibility": "查看已拍摄的页面",
+      "maxPagesReached": "最多可以拍摄10页",
+      "accessibilityComplete": "完成拍摄"
     },
     "preview": {
       "pdfLabel": "PDF文件",
@@ -379,13 +383,55 @@
       "reselect": "重新选择",
       "use": "使用"
     },
+    "reviewSheet": {
+      "title": "已拍摄的页面",
+      "count": "{{count}} / {{max}}",
+      "instruction": "长按项目可以更改页面顺序",
+      "pageLabel": "第 {{number}} 页",
+      "tapHint": "点击查看大图",
+      "deleteAccessibility": "删除第 {{number}} 页",
+      "dragAccessibility": "调整第 {{number}} 页顺序",
+      "continueButton": "继续拍摄",
+      "completeButton": "完成拍摄"
+    },
+    "pageDetail": {
+      "pageIndicator": "第 {{current}} / {{total}} 页",
+      "rotate": "旋转",
+      "rotateAccessibility": "旋转页面",
+      "swipeHint": "左右滑动可查看其他页面",
+      "zoomHint": "双指缩放",
+      "delete": "删除",
+      "retake": "重新拍摄此页",
+      "prevAccessibility": "上一页",
+      "nextAccessibility": "下一页",
+      "thumbnailAccessibility": "跳转到第 {{number}} 页"
+    },
     "loading": {
       "preparing": "正在准备文件",
       "analyzing": "正在分析文字和排版",
+      "analyzingWithPage": "正在分析文字和排版 ({{n}}/{{total}})",
       "complete": "翻译和摘要已完成！",
       "scanComplete": "扫描完成！",
       "next": "下一步 →",
       "accessibilityNext": "下一步",
+      "paused": {
+        "titleRetryFailed": "重试后仍无法读取第{{page}}页",
+        "titleOcrFailed": "读取第{{page}}页时出现问题",
+        "titleUnreadable": "无法识别第{{page}}页的文字",
+        "titleTranslationFailed": "无法翻译第{{page}}页",
+        "titleGeneric": "第{{page}}页的分析已暂停",
+        "descRetrySkipTranslation": "跳过后此页将只保存原文",
+        "descRetrySkipGeneric": "跳过后此页将不保存任何内容",
+        "descSkipOnlyTranslation": "跳过后此页将只保存原文",
+        "descSkipOnlyGeneric": "跳过后此页将不保存任何内容",
+        "descRetryOnly": "重试将从此页继续分析",
+        "descGenericFallback": "请稍后再试",
+        "retryButton": "重试",
+        "skipButton": "跳过",
+        "skipContinueButton": "跳过并继续",
+        "accessibilityRetry": "重试",
+        "accessibilitySkip": "跳过此页"
+      },
       "error": {
         "analysisFailed": "分析失败",
         "analysisFailedMsg": "文件分析失败，请重试。",
@@ -417,6 +463,28 @@
         "translated": "翻译后的文件",
         "original": "原文",
         "ocrOriginal": "OCR原文",
+        "pageLabel": "第 {{pageNo}} 页",
+        "pageOf": "共 {{total}} 页中的第 {{pageNo}} 页",
+        "translatedLabel": "译文 · {{language}}",
+        "recognitionFailedNotice": "无法识别此页的文字",
+        "translationFailedNotice": "翻译失败，显示原文",
+        "languageNames": {
+          "ko": "韩语",
+          "en": "英语",
+          "vi": "越南语",
+          "zh": "中文"
+        },
+        "ocr": {
+          "title": "查看原文 (OCR)",
+          "subtitle": "韩语原文",
+          "collapseLabel": "收起原文"
+        },
+        "viewer": {
+          "closeAccessibility": "关闭",
+          "pageIndicator": "第 {{current}} / {{total}} 页",
+          "showOriginal": "查看原文",
+          "showTranslation": "查看译文"
+        },
         "error": {
           "notFound": "找不到该家庭通知书的信息。",
           "notAnalyzed": "这份家庭通知书还没有分析完成。",
@@ -537,7 +605,9 @@
     "title": "文件",
     "searchPlaceholder": "搜索文件标题",
     "empty": "没有符合条件的文件",
-    "detail": "文件详情"
+    "detail": "文件详情",
+    "pausedTitle": "分析已暂停",
+    "continueBadge": "继续"
   },
   "profile": {
     "title": "我的页面",

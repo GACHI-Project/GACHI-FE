@@ -374,7 +374,13 @@
       "stackConfirmLink": "촬영본 확인",
       "stackConfirmAccessibility": "촬영본 확인하기",
       "maxPagesReached": "최대 10장까지 촬영할 수 있어요",
-      "accessibilityComplete": "촬영 완료"
+      "accessibilityComplete": "촬영 완료",
+      "permissionSettings": "설정에서 카메라 접근을 허용한 뒤 돌아와 주세요.",
+      "openSettings": "설정 열기",
+      "permissionError": "카메라 권한을 확인하지 못했어요. 다시 시도해주세요.",
+      "unavailable": "카메라를 시작하지 못했어요. 다시 시도해주세요.",
+      "processing": "사진을 저장하고 있어요",
+      "retakingPage": "페이지 {{number}} 다시 촬영 중"
     },
     "preview": {
       "pdfLabel": "PDF 파일",
@@ -382,6 +388,11 @@
       "retake": "다시 찍기",
       "reselect": "다시 선택하기",
       "use": "사용하기"
+    },
+    "galleryReview": {
+      "reviewButton": "페이지 확인하기",
+      "maxPages": "최대 {{max}}장까지 선택할 수 있어요",
+      "empty": "선택한 사진이 없어요"
     },
     "reviewSheet": {
       "title": "촬영한 페이지",
@@ -392,7 +403,12 @@
       "deleteAccessibility": "페이지 {{number}} 삭제",
       "dragAccessibility": "페이지 {{number}} 순서 변경",
       "continueButton": "촬영 계속하기",
-      "completeButton": "촬영 완료"
+      "completeButton": "촬영 완료",
+      "gallery": {
+        "title": "선택한 페이지",
+        "continueButton": "사진 추가하기",
+        "completeButton": "선택 완료"
+      }
     },
     "pageDetail": {
       "pageIndicator": "페이지 {{current}} / {{total}}",
@@ -404,7 +420,8 @@
       "retake": "이 페이지 다시 촬영",
       "prevAccessibility": "이전 페이지",
       "nextAccessibility": "다음 페이지",
-      "thumbnailAccessibility": "페이지 {{number}}로 이동"
+      "thumbnailAccessibility": "페이지 {{number}}로 이동",
+      "reselect": "다른 사진으로 바꾸기"
     },
     "loading": {
       "preparing": "문서를 준비하고 있어요",

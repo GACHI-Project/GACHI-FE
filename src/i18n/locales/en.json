@@ -374,7 +374,13 @@
       "stackConfirmLink": "View captures",
       "stackConfirmAccessibility": "View captured pages",
       "maxPagesReached": "You can capture up to 10 pages",
-      "accessibilityComplete": "Finish capturing"
+      "accessibilityComplete": "Finish capturing",
+      "permissionSettings": "Allow camera access in Settings, then return to the app.",
+      "openSettings": "Open Settings",
+      "permissionError": "Unable to check camera permission. Please try again.",
+      "unavailable": "Unable to start the camera. Please try again.",
+      "processing": "Saving photo",
+      "retakingPage": "Retaking page {{number}}"
     },
     "preview": {
       "pdfLabel": "PDF File",
@@ -382,6 +388,11 @@
       "retake": "Retake",
       "reselect": "Reselect",
       "use": "Use This"
+    },
+    "galleryReview": {
+      "reviewButton": "Review pages",
+      "maxPages": "You can select up to {{max}} photos",
+      "empty": "No photos selected"
     },
     "reviewSheet": {
       "title": "Captured pages",
@@ -392,7 +403,12 @@
       "deleteAccessibility": "Delete page {{number}}",
       "dragAccessibility": "Reorder page {{number}}",
       "continueButton": "Keep capturing",
-      "completeButton": "Done capturing"
+      "completeButton": "Done capturing",
+      "gallery": {
+        "title": "Selected pages",
+        "continueButton": "Add photos",
+        "completeButton": "Done selecting"
+      }
     },
     "pageDetail": {
       "pageIndicator": "Page {{current}} / {{total}}",
@@ -404,7 +420,8 @@
       "retake": "Retake this page",
       "prevAccessibility": "Previous page",
       "nextAccessibility": "Next page",
-      "thumbnailAccessibility": "Go to page {{number}}"
+      "thumbnailAccessibility": "Go to page {{number}}",
+      "reselect": "Replace with another photo"
     },
     "loading": {
       "preparing": "Preparing document",

@@ -382,7 +382,13 @@
       "stackConfirmLink": "Xem ảnh đã chụp",
       "stackConfirmAccessibility": "Xem các trang đã chụp",
       "maxPagesReached": "Bạn có thể chụp tối đa 10 trang",
-      "accessibilityComplete": "Hoàn tất chụp"
+      "accessibilityComplete": "Hoàn tất chụp",
+      "permissionSettings": "Hãy cho phép truy cập máy ảnh trong Cài đặt, rồi quay lại ứng dụng.",
+      "openSettings": "Mở Cài đặt",
+      "permissionError": "Không thể kiểm tra quyền truy cập máy ảnh. Vui lòng thử lại.",
+      "unavailable": "Không thể khởi động máy ảnh. Vui lòng thử lại.",
+      "processing": "Đang lưu ảnh",
+      "retakingPage": "Đang chụp lại trang {{number}}"
     },
     "preview": {
       "pdfLabel": "Tệp PDF",
@@ -390,6 +396,11 @@
       "retake": "Chụp lại",
       "reselect": "Chọn lại",
       "use": "Sử dụng"
+    },
+    "galleryReview": {
+      "reviewButton": "Xem lại các trang",
+      "maxPages": "Bạn có thể chọn tối đa {{max}} ảnh",
+      "empty": "Chưa chọn ảnh nào"
     },
     "reviewSheet": {
       "title": "Các trang đã chụp",
@@ -400,7 +411,12 @@
       "deleteAccessibility": "Xóa trang {{number}}",
       "dragAccessibility": "Sắp xếp lại trang {{number}}",
       "continueButton": "Tiếp tục chụp",
-      "completeButton": "Hoàn tất chụp"
+      "completeButton": "Hoàn tất chụp",
+      "gallery": {
+        "title": "Các trang đã chọn",
+        "continueButton": "Thêm ảnh",
+        "completeButton": "Hoàn tất chọn"
+      }
     },
     "pageDetail": {
       "pageIndicator": "Trang {{current}} / {{total}}",
@@ -412,7 +428,8 @@
       "retake": "Chụp lại trang này",
       "prevAccessibility": "Trang trước",
       "nextAccessibility": "Trang sau",
-      "thumbnailAccessibility": "Đi đến trang {{number}}"
+      "thumbnailAccessibility": "Đi đến trang {{number}}",
+      "reselect": "Thay bằng ảnh khác"
     },
     "loading": {
       "preparing": "Đang chuẩn bị tài liệu",

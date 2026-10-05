@@ -14,7 +14,6 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useIsFocused, usePreventRemove } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
 import { useTranslation } from 'react-i18next';
 import Header from '../../src/components/common/Header';
 import ScanStepIndicator from '../../src/components/scan/ScanStepIndicator';
@@ -32,19 +31,19 @@ import {
   SCAN_DEFAULT_CHILD_COLOR,
   MAX_PAGES,
   CapturedPage,
+  ScanChildParams,
 } from '../../src/constants/scan';
+import { compressScanImage } from '../../src/utils/scanImage';
+import { pushScanLoading } from '../../src/utils/scanNavigation';
 import useScanModalFlow from '../../src/hooks/scan/useScanModalFlow';
+import useScanPages from '../../src/hooks/scan/useScanPages';
 
 type ViewMode = 'camera' | 'reviewSheet' | 'pageDetail';
 
 const ScanCameraScreen = () => {
   const { t } = useTranslation();
-  const { childId, childName, childColor, childGrade } = useLocalSearchParams<{
-    childId: string;
-    childName: string;
-    childColor: string;
-    childGrade: string;
-  }>();
+  const child = useLocalSearchParams<ScanChildParams>();
+  const { childName, childColor } = child;
   const [facing, setFacing] = useState<'front' | 'back'>('back');
   const [helpVisible, setHelpVisible] = useState(false);
   const [capturing, setCapturing] = useState(false);
@@ -59,13 +58,20 @@ const ScanCameraScreen = () => {
   const captureLock = useRef(false);
   const captureGeneration = useRef(0);
   const mounted = useRef(true);
-  const pageIdRef = useRef(0);
   const insets = useSafeAreaInsets();
 
-  const [pages, setPages] = useState<CapturedPage[]>([]);
+  const {
+    pages,
+    setPages,
+    detailIndex,
+    setDetailIndex,
+    addPages,
+    replacePage,
+    removePage,
+    removeDetailPage,
+  } = useScanPages();
   const { viewMode, setViewMode, closing, runAfterModalClose, onModalClosed } =
     useScanModalFlow<ViewMode>('camera', 'camera');
-  const [detailIndex, setDetailIndex] = useState(0);
   const [replacePageId, setReplacePageId] = useState<string | null>(null);
   const busy = capturing || closing;
   const cameraVisible =
@@ -145,22 +151,15 @@ const ScanCameraScreen = () => {
     try {
       const photo = await cameraRef.current.takePictureAsync({ quality: 1 });
       if (!isCurrent() || !photo) return;
-      const result = await manipulateAsync(photo.uri, [{ resize: { width: 2048 } }], {
-        compress: 0.85,
-        format: SaveFormat.JPEG,
-      });
+      const compressedUri = await compressScanImage(photo.uri);
       if (!isCurrent()) return;
       if (targetId !== null) {
-        setPages((prev) =>
-          prev.map((page) => (page.id === targetId ? { ...page, uri: result.uri } : page))
-        );
+        replacePage(targetId, compressedUri);
         setReplacePageId(null);
         setDetailIndex(targetIndex);
         setViewMode('pageDetail');
       } else {
-        pageIdRef.current += 1;
-        const page = { id: `page-${pageIdRef.current}`, uri: result.uri };
-        setPages((prev) => [...prev, page]);
+        addPages([compressedUri]);
       }
     } catch {
       if (isCurrent()) Alert.alert(t('scan.camera.captureError'), t('scan.camera.captureErrorMsg'));
@@ -186,7 +185,7 @@ const ScanCameraScreen = () => {
   };
   const handleDeleteFromSheet = (id: string) => {
     if (captureLock.current) return;
-    setPages((prev) => prev.filter((page) => page.id !== id));
+    removePage(id);
     if (replacePageId === id) setReplacePageId(null);
   };
   const handlePageTap = (index: number) => {
@@ -198,39 +197,23 @@ const ScanCameraScreen = () => {
     if (captureLock.current || closing || pages.length === 0) return;
     runAfterModalClose(() => {
       setReplacePageId(null);
-      router.push({
-        pathname: '/scan/loading',
-        params: {
-          pages: JSON.stringify(pages.map((page) => page.uri)),
-          childId: childId ?? '',
-          childName: childName ?? '',
-          childColor: childColor ?? '',
-          childGrade: childGrade ?? '',
-        },
-      });
+      pushScanLoading(
+        pages.map((page) => page.uri),
+        child
+      );
     });
   };
 
   const handleDetailDelete = () => {
-    const deletedId = pages[detailIndex]?.id;
-    const next = pages.filter((page) => page.id !== deletedId);
-    setPages(next);
-    if (deletedId === replacePageId) setReplacePageId(null);
-    if (next.length === 0) {
-      setViewMode('camera');
-      setDetailIndex(0);
-    } else {
-      setDetailIndex(Math.min(detailIndex, next.length - 1));
-    }
+    const { removedId, remaining } = removeDetailPage();
+    if (removedId === replacePageId) setReplacePageId(null);
+    if (remaining === 0) setViewMode('camera');
   };
   const handleDetailRetake = () => {
     const target = pages[detailIndex];
     if (!target) return;
     setReplacePageId(target.id);
     setViewMode('camera');
-  };
-  const handleDetailRotate = (pageId: string, newUri: string) => {
-    setPages((prev) => prev.map((page) => (page.id === pageId ? { ...page, uri: newUri } : page)));
   };
 
   const handlePermission = async () => {
@@ -430,7 +413,7 @@ const ScanCameraScreen = () => {
         onClosed={onModalClosed}
         onDelete={handleDetailDelete}
         onRetake={handleDetailRetake}
-        onRotate={handleDetailRotate}
+        onRotate={replacePage}
       />
     </View>
   );

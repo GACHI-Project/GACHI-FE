@@ -27,43 +27,33 @@ import {
   SCAN_FRAME_H,
   SCAN_DEFAULT_CHILD_COLOR,
   MAX_PAGES,
-  CapturedPage,
+  ScanChildParams,
 } from '../../src/constants/scan';
 import { pickGalleryImages } from '../../src/utils/scanImage';
+import { parsePagesParam, pushScanLoading } from '../../src/utils/scanNavigation';
 import useScanModalFlow from '../../src/hooks/scan/useScanModalFlow';
+import useScanPages from '../../src/hooks/scan/useScanPages';
 
 type ViewMode = 'screen' | 'reviewSheet' | 'pageDetail';
 
 const ScanGalleryReviewScreen = () => {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const { pages: pagesParam, ...child } = useLocalSearchParams<
+    ScanChildParams & { pages: string }
+  >();
+  const { childName, childColor } = child;
+
   const {
-    pages: pagesParam,
-    childId,
-    childName,
-    childColor,
-    childGrade,
-  } = useLocalSearchParams<{
-    pages: string;
-    childId: string;
-    childName: string;
-    childColor: string;
-    childGrade: string;
-  }>();
-
-  const pageIdRef = useRef(0);
-  const createPage = (uri: string): CapturedPage => {
-    pageIdRef.current += 1;
-    return { id: `page-${pageIdRef.current}`, uri };
-  };
-
-  const [pages, setPages] = useState<CapturedPage[]>(() => {
-    try {
-      return (JSON.parse(pagesParam ?? '[]') as string[]).map(createPage);
-    } catch {
-      return [];
-    }
-  });
+    pages,
+    setPages,
+    detailIndex,
+    setDetailIndex,
+    addPages,
+    replacePage,
+    removePage,
+    removeDetailPage,
+  } = useScanPages(parsePagesParam(pagesParam));
   const { viewMode, setViewMode, closing, runAfterModalClose, onModalClosed } =
     useScanModalFlow<ViewMode>('screen', 'reviewSheet');
   const mounted = useRef(true);
@@ -73,7 +63,6 @@ const ScanGalleryReviewScreen = () => {
       mounted.current = false;
     };
   }, []);
-  const [detailIndex, setDetailIndex] = useState(0);
   const [helpVisible, setHelpVisible] = useState(false);
   const [picking, setPicking] = useState(false);
 
@@ -117,57 +106,32 @@ const ScanGalleryReviewScreen = () => {
       Alert.alert(t('scan.galleryReview.maxPages', { max: MAX_PAGES }));
       return;
     }
-    pickAfterModalClose(
-      remaining,
-      (uris) => setPages((prev) => [...prev, ...uris.map(createPage)]),
-      'reviewSheet'
-    );
+    pickAfterModalClose(remaining, addPages, 'reviewSheet');
   };
 
   const handleReplacePage = () => {
     if (picking) return;
     const targetId = pages[detailIndex]?.id;
     if (!targetId) return;
-    pickAfterModalClose(
-      1,
-      ([uri]) =>
-        setPages((prev) => prev.map((page) => (page.id === targetId ? { ...page, uri } : page))),
-      'pageDetail'
-    );
+    pickAfterModalClose(1, ([uri]) => replacePage(targetId, uri), 'pageDetail');
   };
 
-  const handleDeleteFromSheet = (id: string) => setPages((prev) => prev.filter((p) => p.id !== id));
   const handlePageTap = (index: number) => {
     setDetailIndex(index);
     setViewMode('pageDetail');
   };
   const handleDetailDelete = () => {
-    const next = pages.filter((_, i) => i !== detailIndex);
-    setPages(next);
-    if (next.length === 0) {
-      setViewMode('reviewSheet');
-      setDetailIndex(0);
-    } else {
-      setDetailIndex(Math.min(detailIndex, next.length - 1));
-    }
-  };
-  const handleDetailRotate = (pageId: string, newUri: string) => {
-    setPages((prev) => prev.map((page) => (page.id === pageId ? { ...page, uri: newUri } : page)));
+    const { remaining } = removeDetailPage();
+    if (remaining === 0) setViewMode('reviewSheet');
   };
 
   const handleComplete = () => {
     if (pages.length === 0 || picking) return;
     runAfterModalClose(() =>
-      router.push({
-        pathname: '/scan/loading',
-        params: {
-          pages: JSON.stringify(pages.map((p) => p.uri)),
-          childId: childId ?? '',
-          childName: childName ?? '',
-          childColor: childColor ?? '',
-          childGrade: childGrade ?? '',
-        },
-      })
+      pushScanLoading(
+        pages.map((page) => page.uri),
+        child
+      )
     );
   };
 
@@ -248,7 +212,7 @@ const ScanGalleryReviewScreen = () => {
         source="gallery"
         pages={pages}
         onReorder={setPages}
-        onDelete={handleDeleteFromSheet}
+        onDelete={removePage}
         onPageTap={handlePageTap}
         onContinue={handleAddPages}
         onComplete={handleComplete}
@@ -266,7 +230,7 @@ const ScanGalleryReviewScreen = () => {
         onClosed={onModalClosed}
         onDelete={handleDetailDelete}
         onRetake={handleReplacePage}
-        onRotate={handleDetailRotate}
+        onRotate={replacePage}
       />
     </View>
   );

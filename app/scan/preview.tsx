@@ -11,20 +11,24 @@ import ScanCornerBrackets from '../../src/components/scan/ScanCornerBrackets';
 import colors from '../../src/constants/colors';
 import fonts from '../../src/constants/fonts';
 import layout from '../../src/constants/layout';
-import { SCAN_FRAME_W, SCAN_FRAME_H, SCAN_DEFAULT_CHILD_COLOR } from '../../src/constants/scan';
+import {
+  SCAN_FRAME_W,
+  SCAN_FRAME_H,
+  SCAN_DEFAULT_CHILD_COLOR,
+  ScanChildParams,
+} from '../../src/constants/scan';
+import { pushScanLoading } from '../../src/utils/scanNavigation';
 
 const ScanPreviewScreen = () => {
   const { t } = useTranslation();
-  const { photoUri, childId, childName, childColor, childGrade, source, fileType } =
-    useLocalSearchParams<{
+  const { photoUri, source, fileType, ...child } = useLocalSearchParams<
+    ScanChildParams & {
       photoUri: string;
-      childId: string;
-      childName: string;
-      childColor: string;
-      childGrade: string;
       source: 'camera' | 'gallery' | 'pdf';
       fileType?: string;
-    }>();
+    }
+  >();
+  const { childName, childColor } = child;
   const insets = useSafeAreaInsets();
 
   const hasChild = !!childName;
@@ -77,12 +81,7 @@ const ScanPreviewScreen = () => {
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.confirmBtn}
-          onPress={() =>
-            router.push({
-              pathname: '/scan/loading',
-              params: { photoUri, childId, childName, childColor, childGrade },
-            })
-          }
+          onPress={() => pushScanLoading([photoUri], child)}
           activeOpacity={0.8}
           accessibilityRole="button"
         >

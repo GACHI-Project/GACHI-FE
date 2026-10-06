@@ -19,7 +19,6 @@ import Header from '../../src/components/common/Header';
 import ScanStepIndicator from '../../src/components/scan/ScanStepIndicator';
 import ScanHelpModal from '../../src/components/scan/ScanHelpModal';
 import ScanChildPill from '../../src/components/scan/ScanChildPill';
-import ScanCornerBrackets from '../../src/components/scan/ScanCornerBrackets';
 import ScanCapturedStack from '../../src/components/scan/ScanCapturedStack';
 import ScanPageReviewSheet from '../../src/components/scan/ScanPageReviewSheet';
 import ScanPageDetailModal from '../../src/components/scan/ScanPageDetailModal';
@@ -319,7 +318,6 @@ const ScanCameraScreen = () => {
             }}
           />
         )}
-        <ScanCornerBrackets />
         {cameraError ? (
           <View style={styles.cameraStatus}>
             <Text style={styles.statusText}>{t('scan.camera.unavailable')}</Text>

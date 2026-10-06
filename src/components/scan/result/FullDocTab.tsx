@@ -8,7 +8,6 @@ import {
   TranslationPage,
 } from '../../../api/newsletter';
 import { fromServerLanguageCode } from '../../../types/language';
-import colors from '../../../constants/colors';
 import CenteredMessage from '../../common/CenteredMessage';
 import TextSection from './TextSection';
 import FullDocPageSection from './FullDocPageSection';
@@ -153,14 +152,6 @@ const styles = StyleSheet.create({
     gap: 20,
   },
   pagesContainer: {
-    gap: 28,
-    backgroundColor: colors.text.white,
-    borderRadius: 20,
-    padding: 16,
-    shadowColor: colors.gray[300],
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
+    gap: 16,
   },
 });

@@ -1,6 +1,6 @@
-import { useCallback } from 'react';
+import { useCallback, useLayoutEffect, useRef } from 'react';
 import { Gesture } from 'react-native-gesture-handler';
-import { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
+import { useSharedValue, useAnimatedStyle } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
 export const reorderArray = <T>(arr: T[], from: number, to: number): T[] => {
@@ -28,9 +28,20 @@ export const useDragRow = ({
 }: UseDragRowParams) => {
   const translateY = useSharedValue(0);
   const isActive = useSharedValue(false);
+  const previousIndex = useRef(index);
 
   const commitReorder = useCallback((from: number, to: number) => onReorder(from, to), [onReorder]);
   const notifyActive = useCallback((active: boolean) => onActiveChange?.(active), [onActiveChange]);
+
+  useLayoutEffect(() => {
+    if (previousIndex.current === index) return;
+    previousIndex.current = index;
+    translateY.value = 0;
+    if (isActive.value) {
+      isActive.value = false;
+      notifyActive(false);
+    }
+  }, [index, isActive, translateY, notifyActive]);
 
   const pan = Gesture.Pan()
     .activateAfterLongPress(220)
@@ -41,19 +52,23 @@ export const useDragRow = ({
     .onUpdate((event) => {
       translateY.value = event.translationY;
     })
-    .onEnd(() => {
+    .onEnd((_event, success) => {
+      if (!success) return;
       const offset = Math.round(translateY.value / rowHeight);
       const targetIndex = Math.min(Math.max(index + offset, 0), itemCount - 1);
-      translateY.value = withSpring(0, { damping: 18 });
-      isActive.value = false;
-      scheduleOnRN(notifyActive, false);
       if (targetIndex !== index) {
+        // Keep the card at its destination until React commits the new row index.
+        translateY.value = (targetIndex - index) * rowHeight;
         scheduleOnRN(commitReorder, index, targetIndex);
+      } else {
+        translateY.value = 0;
+        isActive.value = false;
+        scheduleOnRN(notifyActive, false);
       }
     })
-    .onFinalize(() => {
-      if (isActive.value) {
-        translateY.value = withSpring(0, { damping: 18 });
+    .onFinalize((_event, success) => {
+      if (!success && isActive.value) {
+        translateY.value = 0;
         isActive.value = false;
         scheduleOnRN(notifyActive, false);
       }

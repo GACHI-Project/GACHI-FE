@@ -374,7 +374,13 @@
       "stackConfirmLink": "查看已拍摄",
       "stackConfirmAccessibility": "查看已拍摄的页面",
       "maxPagesReached": "最多可以拍摄10页",
-      "accessibilityComplete": "完成拍摄"
+      "accessibilityComplete": "完成拍摄",
+      "permissionSettings": "请在设置中允许相机访问，然后返回应用。",
+      "openSettings": "打开设置",
+      "permissionError": "无法检查相机权限，请重试。",
+      "unavailable": "无法启动相机，请重试。",
+      "processing": "正在保存照片",
+      "retakingPage": "正在重新拍摄第 {{number}} 页"
     },
     "preview": {
       "pdfLabel": "PDF文件",
@@ -382,6 +388,11 @@
       "retake": "重新拍摄",
       "reselect": "重新选择",
       "use": "使用"
+    },
+    "galleryReview": {
+      "reviewButton": "查看页面",
+      "maxPages": "最多可以选择{{max}}张",
+      "empty": "没有选择照片"
     },
     "reviewSheet": {
       "title": "已拍摄的页面",
@@ -392,7 +403,12 @@
       "deleteAccessibility": "删除第 {{number}} 页",
       "dragAccessibility": "调整第 {{number}} 页顺序",
       "continueButton": "继续拍摄",
-      "completeButton": "完成拍摄"
+      "completeButton": "完成拍摄",
+      "gallery": {
+        "title": "已选择的页面",
+        "continueButton": "添加照片",
+        "completeButton": "完成选择"
+      }
     },
     "pageDetail": {
       "pageIndicator": "第 {{current}} / {{total}} 页",
@@ -404,7 +420,8 @@
       "retake": "重新拍摄此页",
       "prevAccessibility": "上一页",
       "nextAccessibility": "下一页",
-      "thumbnailAccessibility": "跳转到第 {{number}} 页"
+      "thumbnailAccessibility": "跳转到第 {{number}} 页",
+      "reselect": "更换为其他照片"
     },
     "loading": {
       "preparing": "正在准备文件",

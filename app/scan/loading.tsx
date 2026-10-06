@@ -26,7 +26,8 @@ import {
   NewsletterStatusResult,
 } from '../../src/api/newsletter';
 import { getPausedTitle, getPausedDescription } from '../../src/utils/newsletterPaused';
-import { SCAN_FRAME_H } from '../../src/constants/scan';
+import { SCAN_FRAME_H, ScanChildParams } from '../../src/constants/scan';
+import { parsePagesParam } from '../../src/utils/scanNavigation';
 import colors from '../../src/constants/colors';
 import styles from '../../src/styles/scan/loading';
 
@@ -39,18 +40,16 @@ const ScanLoadingScreen = () => {
     childColor,
     childGrade,
     newsletterId: resumeNewsletterIdParam,
-  } = useLocalSearchParams<{
-    photoUri?: string;
-    pages?: string;
-    childId: string;
-    childName: string;
-    childColor: string;
-    childGrade: string;
-    newsletterId?: string;
-  }>();
+  } = useLocalSearchParams<
+    ScanChildParams & {
+      photoUri?: string;
+      pages?: string;
+      newsletterId?: string;
+    }
+  >();
   let photoUris: string[] = [];
   if (pages) {
-    photoUris = JSON.parse(pages) as string[];
+    photoUris = parsePagesParam(pages);
   } else if (photoUri) {
     photoUris = [photoUri];
   }

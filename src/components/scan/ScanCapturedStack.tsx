@@ -8,9 +8,10 @@ import { CapturedPage } from '../../constants/scan';
 interface ScanCapturedStackProps {
   pages: CapturedPage[];
   onPress: () => void;
+  disabled?: boolean;
 }
 
-const ScanCapturedStack = ({ pages, onPress }: ScanCapturedStackProps) => {
+const ScanCapturedStack = ({ pages, onPress, disabled = false }: ScanCapturedStackProps) => {
   const { t } = useTranslation();
   if (pages.length === 0) return null;
 
@@ -21,6 +22,7 @@ const ScanCapturedStack = ({ pages, onPress }: ScanCapturedStackProps) => {
     <TouchableOpacity
       style={styles.container}
       onPress={onPress}
+      disabled={disabled}
       activeOpacity={0.8}
       accessibilityRole="button"
       accessibilityLabel={t('scan.camera.stackConfirmAccessibility')}

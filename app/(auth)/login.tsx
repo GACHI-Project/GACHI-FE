@@ -90,16 +90,10 @@ const LoginScreen = () => {
     setErrorMessage(undefined);
     try {
       useKakaoAuthStore.getState().setRememberMe(stayLoggedIn);
-      const result = await WebBrowser.openAuthSessionAsync(
-        getKakaoAuthorizeUrl(),
-        KAKAO_REDIRECT_URI
-      );
-
-      if (result.type !== 'success') {
-        setKakaoLoading(false);
-      }
+      await WebBrowser.openAuthSessionAsync(getKakaoAuthorizeUrl(), KAKAO_REDIRECT_URI);
     } catch {
       setErrorMessage(t('common.networkError'));
+    } finally {
       setKakaoLoading(false);
     }
   };

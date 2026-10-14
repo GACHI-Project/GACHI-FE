@@ -12,6 +12,7 @@ import layout from '../../../src/constants/layout';
 import { signup, login, signupWithKakao } from '../../../src/api/auth';
 import { registerChild } from '../../../src/api/child';
 import { useRegisterStore } from '../../../src/store/registerStore';
+import { useKakaoAuthStore } from '../../../src/store/kakaoAuthStore';
 
 // ─── 메인 화면 ────────────────────────────────────────────────────────────────
 
@@ -67,7 +68,7 @@ const RegisterCompleteScreen = () => {
             consentAgreed: socialTermsAgreed,
             languageCode,
             notificationPreference,
-            rememberMe: false,
+            rememberMe: useKakaoAuthStore.getState().rememberMe,
           });
           await SecureStore.setItemAsync('accessToken', tokens.accessToken);
           await SecureStore.setItemAsync('refreshToken', tokens.refreshToken);

@@ -294,3 +294,54 @@ export const resetPassword = async (
     throw wrapError(error);
   }
 };
+
+export const getKakaoAuthorizeUrl = (): string =>
+  `${apiClient.defaults.baseURL}/api/v1/auth/kakao/authorize`;
+
+export interface KakaoTokens {
+  tokenType: string;
+  accessToken: string;
+  refreshToken: string;
+  accessTokenExpiresAt: string;
+  refreshTokenExpiresAt: string;
+  rememberMe: boolean;
+}
+
+export interface KakaoCompleteResult {
+  status: 'LOGIN_SUCCESS' | 'SIGNUP_REQUIRED' | 'LINK_REQUIRED';
+  tokens?: KakaoTokens;
+  signupToken?: string;
+  linkToken?: string;
+  email?: string;
+  nickname?: string;
+}
+
+export const completeKakaoLogin = async (
+  ticket: string,
+  rememberMe: boolean
+): Promise<KakaoCompleteResult> => {
+  try {
+    const response = await apiClient.post('/api/v1/auth/kakao/complete', {
+      ticket,
+      rememberMe,
+    });
+    return response.data.result;
+  } catch (error) {
+    throw wrapError(error);
+  }
+};
+
+export const signupWithKakao = async (payload: {
+  signupToken: string;
+  consentAgreed: boolean;
+  languageCode: string;
+  notificationPreference: ServerNotificationPreference;
+  rememberMe: boolean;
+}): Promise<KakaoTokens> => {
+  try {
+    const response = await apiClient.post('/api/v1/auth/kakao/signup', payload);
+    return response.data.result;
+  } catch (error) {
+    throw wrapError(error);
+  }
+};

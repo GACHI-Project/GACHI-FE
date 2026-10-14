@@ -37,6 +37,7 @@
       "loading": "登录中...",
       "forgotId": "找回用户名",
       "forgotPassword": "找回密码",
+      "socialDivider": "快速登录",
       "noAccount": "还没有账号？",
       "signUp": "注册",
       "error": {
@@ -51,6 +52,13 @@
         "title": "请选择您要使用的语言",
         "subtitle": "我们会用您选择的语言翻译家庭通知书并进行简单说明",
         "settingsTip": "语言可以随时在设置中更改"
+      },
+      "socialTerms": {
+        "title": "请同意使用加治(GACHI)\n所需的条款",
+        "all": "全部同意",
+        "ageRequired": "[必填] 我已满14周岁。",
+        "termsRequired": "[必填] 同意服务使用条款",
+        "privacy": "[必填] 隐私政策"
       },
       "basic": {
         "title": "创建新账号",
@@ -136,7 +144,8 @@
         "subtitle": "现在和GACHI一起，更轻松地了解孩子的学校生活",
         "button": "前往登录 →",
         "noInfo": "没有注册信息，请从头重新开始。",
-        "error": "出现错误，请重试。"
+        "error": "出现错误，请重试。",
+        "backToLogin": "返回登录"
       }
     },
     "terms": {

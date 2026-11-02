@@ -1,7 +1,6 @@
 import { StyleSheet } from 'react-native';
 import colors from '../../constants/colors';
 import fonts from '../../constants/fonts';
-import layout from '../../constants/layout';
 
 export default StyleSheet.create({
   modalRoot: {
@@ -21,19 +20,23 @@ export default StyleSheet.create({
   },
   sheet: {
     backgroundColor: colors.text.white,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    paddingHorizontal: layout.screenPaddingHorizontal,
-    paddingTop: 14,
-    gap: 15,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    paddingHorizontal: 24,
+    paddingTop: 16,
+    gap: 24,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: -4 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 12,
   },
+  topChrome: {
+    flexShrink: 0,
+  },
   handleWrap: {
     alignItems: 'center',
+    marginBottom: 24,
   },
   handle: {
     width: 34,
@@ -45,35 +48,54 @@ export default StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    gap: 12,
   },
   title: {
-    fontSize: 18,
+    flex: 1,
+    fontSize: 20,
+    lineHeight: 28,
     fontFamily: fonts.bold,
     color: colors.text.primary,
   },
   count: {
-    fontSize: 18,
-    fontFamily: fonts.bold,
+    flexShrink: 0,
+    fontSize: 14,
+    lineHeight: 20,
+    fontFamily: fonts.semiBold,
     color: colors.primary[500],
+    backgroundColor: colors.primary[0],
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 10,
+    overflow: 'hidden',
   },
   instruction: {
-    fontSize: 14,
-    fontFamily: fonts.medium,
+    marginTop: 10,
+    fontSize: 13,
+    lineHeight: 20,
+    fontFamily: fonts.regular,
     color: colors.text.secondary,
   },
+  list: {
+    flexGrow: 0,
+    flexShrink: 0,
+  },
   listContent: {
-    gap: 10,
-    paddingVertical: 2,
+    gap: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 2,
   },
   buttonRow: {
+    flexShrink: 0,
     flexDirection: 'row',
-    gap: 16,
-    paddingVertical: 10,
+    gap: 12,
   },
   button: {
     flex: 1,
-    height: 55,
-    borderRadius: 15,
+    minHeight: 56,
+    paddingVertical: 14,
+    paddingHorizontal: 10,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -83,7 +105,9 @@ export default StyleSheet.create({
     borderColor: colors.primary[400],
   },
   buttonOutlineText: {
-    fontSize: 16,
+    textAlign: 'center',
+    fontSize: 15,
+    lineHeight: 22,
     fontFamily: fonts.semiBold,
     color: colors.primary[400],
   },
@@ -94,7 +118,9 @@ export default StyleSheet.create({
     backgroundColor: colors.primary[200],
   },
   buttonFilledText: {
-    fontSize: 16,
+    textAlign: 'center',
+    fontSize: 15,
+    lineHeight: 22,
     fontFamily: fonts.semiBold,
     color: colors.text.white,
   },

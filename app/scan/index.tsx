@@ -10,9 +10,7 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
-import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PrimaryButton } from '../../src/components/common/Button';
@@ -24,6 +22,8 @@ import { getMyChildren, ChildResult } from '../../src/api/child';
 import colors from '../../src/constants/colors';
 import fonts from '../../src/constants/fonts';
 import layout from '../../src/constants/layout';
+import { MAX_PAGES } from '../../src/constants/scan';
+import { pickGalleryImages } from '../../src/utils/scanImage';
 
 const ScanChildSelectScreen = () => {
   const { t } = useTranslation();
@@ -32,6 +32,7 @@ const ScanChildSelectScreen = () => {
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [helpVisible, setHelpVisible] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [pickingGallery, setPickingGallery] = useState(false);
 
   useEffect(() => {
     getMyChildren()
@@ -80,32 +81,29 @@ const ScanChildSelectScreen = () => {
   };
 
   const handleGallery = async () => {
+    if (pickingGallery) return;
+    setPickingGallery(true);
     try {
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (status !== 'granted') {
+      const result = await pickGalleryImages(MAX_PAGES);
+      if (result.status === 'denied') {
         Alert.alert(
           t('scan.select.error.permissionTitle'),
           t('scan.select.error.galleryPermission')
         );
         return;
       }
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ['images'],
-        quality: 1,
-      });
-      if (!result.canceled) {
-        const compressed = await manipulateAsync(
-          result.assets[0].uri,
-          [{ resize: { width: 2048 } }],
-          { compress: 0.85, format: SaveFormat.JPEG }
-        );
-        router.push({
-          pathname: '/scan/preview',
-          params: { photoUri: compressed.uri, ...childParams, source: 'gallery' },
-        });
+      if (result.status === 'canceled') return;
+      if (result.truncated) {
+        Alert.alert(t('scan.galleryReview.maxPages', { max: MAX_PAGES }));
       }
+      router.push({
+        pathname: '/scan/gallery-review',
+        params: { pages: JSON.stringify(result.uris), ...childParams },
+      });
     } catch {
       Alert.alert(t('scan.select.error.errorTitle'), t('scan.select.error.gallery'));
+    } finally {
+      setPickingGallery(false);
     }
   };
 
@@ -171,7 +169,11 @@ const ScanChildSelectScreen = () => {
 
         <View style={styles.buttonGroup}>
           <PrimaryButton label={t('scan.select.camera')} onPress={handleCamera} />
-          <PrimaryButton label={t('scan.select.gallery')} onPress={handleGallery} />
+          <PrimaryButton
+            label={t('scan.select.gallery')}
+            onPress={handleGallery}
+            disabled={pickingGallery}
+          />
           <PrimaryButton label={t('scan.select.pdf')} onPress={handlePdf} />
         </View>
       </ScrollView>

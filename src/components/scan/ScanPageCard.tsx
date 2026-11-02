@@ -1,6 +1,6 @@
-import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, Image, TouchableOpacity, StyleSheet, LayoutChangeEvent } from 'react-native';
 import { GestureDetector } from 'react-native-gesture-handler';
-import Animated, { LinearTransition } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import colors from '../../constants/colors';
@@ -17,6 +17,7 @@ interface ScanPageCardProps {
   onDelete: () => void;
   onReorder: (from: number, to: number) => void;
   onActiveChange?: (active: boolean) => void;
+  onLayout?: (event: LayoutChangeEvent) => void;
 }
 
 const ScanPageCard = ({
@@ -28,6 +29,7 @@ const ScanPageCard = ({
   onDelete,
   onReorder,
   onActiveChange,
+  onLayout,
 }: ScanPageCardProps) => {
   const { t } = useTranslation();
   const pageNumber = index + 1;
@@ -40,7 +42,7 @@ const ScanPageCard = ({
   });
 
   return (
-    <Animated.View layout={LinearTransition.springify()} style={[styles.wrap, animatedStyle]}>
+    <Animated.View style={[styles.wrap, animatedStyle]} onLayout={onLayout}>
       <View style={styles.card}>
         <TouchableOpacity style={styles.left} onPress={onPress} activeOpacity={0.7}>
           <View style={styles.thumbWrap}>
@@ -97,8 +99,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.text.white,
     borderWidth: 1,
     borderColor: colors.gray[200],
-    borderRadius: 15,
-    padding: 10,
+    borderRadius: 16,
+    paddingVertical: 16,
+    paddingHorizontal: 14,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 6,
@@ -108,16 +111,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexShrink: 1,
     minWidth: 0,
-    gap: 12,
+    gap: 14,
   },
   thumbWrap: {
-    width: 32,
-    height: 46,
+    width: 38,
+    height: 52,
     flexShrink: 0,
   },
   thumb: {
-    width: 32,
-    height: 46,
+    width: 38,
+    height: 52,
     borderRadius: 1,
   },
   badge: {
@@ -143,18 +146,21 @@ const styles = StyleSheet.create({
   },
   pageLabel: {
     fontSize: 15,
+    lineHeight: 22,
     fontFamily: fonts.semiBold,
     color: colors.text.primary,
   },
   tapHint: {
     fontSize: 12,
+    lineHeight: 18,
     fontFamily: fonts.medium,
     color: colors.text.secondary,
   },
   right: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 15,
+    gap: 6,
+    marginLeft: 8,
     flexShrink: 0,
   },
   deleteBtn: {

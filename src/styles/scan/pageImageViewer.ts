@@ -39,6 +39,7 @@ export default StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
   },
   toggleButton: {
     marginTop: 0,

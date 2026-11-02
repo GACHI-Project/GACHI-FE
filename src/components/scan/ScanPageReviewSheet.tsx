@@ -13,6 +13,8 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import useModalClosed from '../../hooks/scan/useModalClosed';
 import { CapturedPage, MAX_PAGES } from '../../constants/scan';
 import ScanPageCard from './ScanPageCard';
 import { reorderArray } from './useDragReorder';
@@ -26,17 +28,16 @@ interface ScanPageReviewSheetProps {
   onPageTap: (index: number) => void;
   onContinue: () => void;
   onComplete: () => void;
+  onClosed: () => void;
+  // 배경 탭 · 뒤로가기 시 동작. 생략하면 onContinue
+  onDismiss?: () => void;
+  source?: 'camera' | 'gallery';
 }
 
 const SHEET_SLIDE_DISTANCE = 600;
-const ROW_HEIGHT = 66;
-const ROW_GAP = 10;
-const LIST_VERTICAL_PADDING = 2; // styles.listContent의 paddingVertical과 일치
-const SHEET_MAX_HEIGHT_RATIO = 0.8;
-const SHEET_PADDING_TOP = 14;
-const SHEET_GAP = 15;
-// sheet의 직계 자식이 [topChrome, list, buttonRow] 3개라 gap은 2번 적용됨
-const SHEET_GAP_COUNT = 2;
+// 카드 높이 측정 전 기본값. 실제 높이는 글자 크기에 따라 달라져 onLayout으로 측정
+const DEFAULT_ROW_HEIGHT = 86;
+const SHEET_MAX_HEIGHT_RATIO = 0.85;
 
 const ScanPageReviewSheet = ({
   visible,
@@ -46,34 +47,63 @@ const ScanPageReviewSheet = ({
   onPageTap,
   onContinue,
   onComplete,
+  onClosed,
+  onDismiss = onContinue,
+  source = 'camera',
 }: ScanPageReviewSheetProps) => {
   const { t } = useTranslation();
+  const labelPrefix = source === 'gallery' ? 'scan.reviewSheet.gallery' : 'scan.reviewSheet';
   const insets = useSafeAreaInsets();
-  const { height: windowHeight } = useWindowDimensions();
+  const { height: windowHeight, width: windowWidth, fontScale } = useWindowDimensions();
   const [show, setShow] = useState(false);
   const [scrollEnabled, setScrollEnabled] = useState(true);
   const [topChromeHeight, setTopChromeHeight] = useState(0);
   const [bottomChromeHeight, setBottomChromeHeight] = useState(0);
+  const [rowHeight, setRowHeight] = useState(DEFAULT_ROW_HEIGHT);
+  const [measuredContent, setMeasuredContent] = useState<{
+    height: number;
+    count: number;
+    width: number;
+    fontScale: number;
+  } | null>(null);
   const opacity = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(SHEET_SLIDE_DISTANCE)).current;
+  useModalClosed(show, onClosed);
 
   const handleTopChromeLayout = (e: LayoutChangeEvent) =>
     setTopChromeHeight(e.nativeEvent.layout.height);
   const handleBottomChromeLayout = (e: LayoutChangeEvent) =>
     setBottomChromeHeight(e.nativeEvent.layout.height);
+  const handleRowLayout = (e: LayoutChangeEvent) => {
+    const { height } = e.nativeEvent.layout;
+    if (height > 0) setRowHeight(height);
+  };
 
-  const listContentHeight =
-    pages.length * ROW_HEIGHT + Math.max(0, pages.length - 1) * ROW_GAP + LIST_VERTICAL_PADDING * 2;
-  const sheetPaddingBottom = insets.bottom + 14;
-  const maxSheetHeight = windowHeight * SHEET_MAX_HEIGHT_RATIO;
+  const estimatedContentHeight =
+    pages.length * rowHeight +
+    Math.max(0, pages.length - 1) * styles.listContent.gap +
+    styles.listContent.paddingVertical * 2;
+  const contentMeasurementMatches =
+    measuredContent?.count === pages.length &&
+    measuredContent.width === windowWidth &&
+    measuredContent.fontScale === fontScale;
+  const listContentHeight = contentMeasurementMatches
+    ? measuredContent.height
+    : estimatedContentHeight;
+  const sheetPaddingBottom = Math.max(insets.bottom, 16) + 12;
+  const maxSheetHeight = Math.min(
+    windowHeight * SHEET_MAX_HEIGHT_RATIO,
+    windowHeight - insets.top - 12
+  );
   const chromeHeight =
     topChromeHeight +
     bottomChromeHeight +
-    SHEET_GAP * SHEET_GAP_COUNT +
-    SHEET_PADDING_TOP +
+    styles.sheet.gap * 2 +
+    styles.sheet.paddingTop +
     sheetPaddingBottom;
   const maxListHeight = Math.max(0, maxSheetHeight - chromeHeight);
   const listHeight = Math.min(listContentHeight, maxListHeight);
+  const hasOverflow = listContentHeight > maxListHeight;
 
   useEffect(() => {
     if (visible) {
@@ -104,27 +134,35 @@ const ScanPageReviewSheet = ({
   };
 
   return (
-    <Modal visible={show} transparent animationType="none" onRequestClose={onContinue}>
-      <View style={styles.modalRoot}>
+    <Modal
+      visible={show}
+      transparent
+      animationType="none"
+      onRequestClose={onDismiss}
+      onDismiss={onClosed}
+    >
+      <GestureHandlerRootView style={styles.modalRoot} pointerEvents={visible ? 'auto' : 'none'}>
         <Animated.View
           style={[StyleSheet.absoluteFill, styles.backdrop, { opacity }]}
           pointerEvents="none"
         />
         <Pressable
           style={styles.backdropTap}
-          onPress={onContinue}
+          onPress={onDismiss}
           accessibilityRole="button"
-          accessibilityLabel={t('scan.reviewSheet.continueButton')}
+          accessibilityLabel={
+            source === 'gallery' ? t('common.close') : t('scan.reviewSheet.continueButton')
+          }
         />
         <Animated.View style={[styles.sheetWrap, { transform: [{ translateY }] }]}>
           <View style={[styles.sheet, { paddingBottom: sheetPaddingBottom }]}>
-            <View onLayout={handleTopChromeLayout}>
+            <View style={styles.topChrome} onLayout={handleTopChromeLayout}>
               <View style={styles.handleWrap}>
                 <View style={styles.handle} />
               </View>
 
               <View style={styles.headerRow}>
-                <Text style={styles.title}>{t('scan.reviewSheet.title')}</Text>
+                <Text style={styles.title}>{t(`${labelPrefix}.title`)}</Text>
                 <Text style={styles.count}>
                   {t('scan.reviewSheet.count', { count: pages.length, max: MAX_PAGES })}
                 </Text>
@@ -133,10 +171,16 @@ const ScanPageReviewSheet = ({
             </View>
 
             <ScrollView
-              style={{ height: listHeight }}
+              style={[styles.list, { height: listHeight }]}
               contentContainerStyle={styles.listContent}
-              scrollEnabled={scrollEnabled}
-              showsVerticalScrollIndicator={false}
+              onContentSizeChange={(_width, height) => {
+                setMeasuredContent({ height, count: pages.length, width: windowWidth, fontScale });
+              }}
+              scrollEnabled={scrollEnabled && hasOverflow}
+              showsVerticalScrollIndicator={hasOverflow}
+              bounces={false}
+              contentInsetAdjustmentBehavior="never"
+              automaticallyAdjustContentInsets={false}
             >
               {pages.map((page, index) => (
                 <ScanPageCard
@@ -144,11 +188,12 @@ const ScanPageReviewSheet = ({
                   page={page}
                   index={index}
                   itemCount={pages.length}
-                  rowHeight={ROW_HEIGHT + ROW_GAP}
+                  rowHeight={rowHeight + styles.listContent.gap}
                   onPress={() => onPageTap(index)}
                   onDelete={() => onDelete(page.id)}
                   onReorder={handleReorder}
                   onActiveChange={(active) => setScrollEnabled(!active)}
+                  onLayout={index === 0 ? handleRowLayout : undefined}
                 />
               ))}
             </ScrollView>
@@ -160,7 +205,7 @@ const ScanPageReviewSheet = ({
                 activeOpacity={0.8}
                 accessibilityRole="button"
               >
-                <Text style={styles.buttonOutlineText}>{t('scan.reviewSheet.continueButton')}</Text>
+                <Text style={styles.buttonOutlineText}>{t(`${labelPrefix}.continueButton`)}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[
@@ -173,12 +218,12 @@ const ScanPageReviewSheet = ({
                 activeOpacity={0.8}
                 accessibilityRole="button"
               >
-                <Text style={styles.buttonFilledText}>{t('scan.reviewSheet.completeButton')}</Text>
+                <Text style={styles.buttonFilledText}>{t(`${labelPrefix}.completeButton`)}</Text>
               </TouchableOpacity>
             </View>
           </View>
         </Animated.View>
-      </View>
+      </GestureHandlerRootView>
     </Modal>
   );
 };

@@ -8,12 +8,13 @@ import layout from '../../constants/layout';
 
 interface HeaderProps {
   title: string;
+  disabled?: boolean;
   onBack?: () => void;
   onHelp?: () => void;
   rightComponent?: React.ReactNode;
 }
 
-const Header = ({ title, onBack, onHelp, rightComponent }: HeaderProps) => {
+const Header = ({ title, onBack, onHelp, rightComponent, disabled = false }: HeaderProps) => {
   const { t } = useTranslation();
 
   const renderRight = () => {
@@ -25,6 +26,7 @@ const Header = ({ title, onBack, onHelp, rightComponent }: HeaderProps) => {
         <TouchableOpacity
           style={styles.iconButton}
           onPress={onHelp}
+          disabled={disabled}
           accessibilityRole="button"
           accessibilityLabel={t('common.help')}
         >
@@ -40,6 +42,7 @@ const Header = ({ title, onBack, onHelp, rightComponent }: HeaderProps) => {
       <TouchableOpacity
         style={styles.iconButton}
         onPress={onBack ?? (() => router.back())}
+        disabled={disabled}
         accessibilityRole="button"
         accessibilityLabel={t('common.back')}
       >

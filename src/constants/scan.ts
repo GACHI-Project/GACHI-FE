@@ -14,3 +14,11 @@ export interface CapturedPage {
   id: string;
   uri: string;
 }
+
+// 스캔 화면 간 전달하는 자녀 정보 라우트 파라미터 (expo-router 제약상 type으로 선언)
+export type ScanChildParams = {
+  childId: string;
+  childName: string;
+  childColor: string;
+  childGrade: string;
+};

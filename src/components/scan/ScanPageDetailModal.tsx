@@ -14,6 +14,8 @@ import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import useModalClosed from '../../hooks/scan/useModalClosed';
 import PinchZoomView from '../common/PinchZoomView';
 import colors from '../../constants/colors';
 import { CapturedPage, SCAN_FRAME_W, SCAN_FRAME_H } from '../../constants/scan';
@@ -25,9 +27,11 @@ interface ScanPageDetailModalProps {
   currentIndex: number;
   onIndexChange: (index: number) => void;
   onClose: () => void;
+  onClosed: () => void;
   onDelete: () => void;
   onRetake: () => void;
   onRotate: (pageId: string, newUri: string) => void;
+  source?: 'camera' | 'gallery';
 }
 
 const ScanPageDetailModal = ({
@@ -36,15 +40,18 @@ const ScanPageDetailModal = ({
   currentIndex,
   onIndexChange,
   onClose,
+  onClosed,
   onDelete,
   onRetake,
   onRotate,
+  source = 'camera',
 }: ScanPageDetailModalProps) => {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const scrollRef = useRef<ScrollView>(null);
   const [zoomed, setZoomed] = useState(false);
   const [rotating, setRotating] = useState(false);
+  useModalClosed(visible, onClosed);
 
   useEffect(() => {
     setZoomed(false);
@@ -81,13 +88,24 @@ const ScanPageDetailModal = ({
   };
 
   return (
-    <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
-      <View style={[styles.screen, { paddingTop: insets.top + 12 }]}>
+    <Modal
+      visible={visible}
+      animationType="slide"
+      onRequestClose={() => {
+        if (!rotating) onClose();
+      }}
+      onDismiss={onClosed}
+    >
+      <GestureHandlerRootView
+        style={[styles.screen, { paddingTop: insets.top + 12 }]}
+        pointerEvents={visible ? 'auto' : 'none'}
+      >
         <View style={styles.header}>
           <View style={[styles.headerSideSlot, styles.headerSideSlotLeft]}>
             <TouchableOpacity
               style={styles.backButton}
               onPress={onClose}
+              disabled={rotating}
               accessibilityRole="button"
               accessibilityLabel={t('common.back')}
             >
@@ -128,7 +146,7 @@ const ScanPageDetailModal = ({
                 onZoomChange={setZoomed}
                 style={styles.pageSlide}
               >
-                <Image source={{ uri: page.uri }} style={styles.pageImage} resizeMode="cover" />
+                <Image source={{ uri: page.uri }} style={styles.pageImage} resizeMode="contain" />
               </PinchZoomView>
             ))}
           </ScrollView>
@@ -192,6 +210,7 @@ const ScanPageDetailModal = ({
           <TouchableOpacity
             style={[styles.button, styles.buttonOutline]}
             onPress={onDelete}
+            disabled={rotating}
             activeOpacity={0.8}
             accessibilityRole="button"
           >
@@ -200,13 +219,16 @@ const ScanPageDetailModal = ({
           <TouchableOpacity
             style={[styles.button, styles.buttonFilled]}
             onPress={onRetake}
+            disabled={rotating}
             activeOpacity={0.8}
             accessibilityRole="button"
           >
-            <Text style={styles.buttonFilledText}>{t('scan.pageDetail.retake')}</Text>
+            <Text style={styles.buttonFilledText}>
+              {source === 'gallery' ? t('scan.pageDetail.reselect') : t('scan.pageDetail.retake')}
+            </Text>
           </TouchableOpacity>
         </View>
-      </View>
+      </GestureHandlerRootView>
     </Modal>
   );
 };

@@ -26,6 +26,8 @@ import {
   getCalendarPreviewSchedule,
 } from '../../../utils/calendarPreview';
 import { formatEventTime } from '../../../utils/calendarEventTime';
+import { getCalendarDday } from '../../../utils/calendarDday';
+import { getKstDate } from '../../../utils/calendarWeek';
 import type { EventState } from './EventPreviewCard';
 import ConfirmStep from './ConfirmStep';
 import SuccessStep from './SuccessStep';
@@ -33,11 +35,35 @@ import SuccessStep from './SuccessStep';
 interface Props {
   visible: boolean;
   onClose: () => void;
-  onConfirm: () => void;
+  onConfirm: (date?: string) => void;
   onDismiss: () => void;
   childName: string;
   newsletterId?: number;
 }
+
+const getClosestEventDate = (
+  previews: CalendarPreviewItem[],
+  eventStates: Record<string, EventState>
+): string | undefined => {
+  const today = getKstDate();
+  let closest: string | undefined;
+  let minDiff = Infinity;
+
+  previews.forEach((p) => {
+    const es = eventStates[p.tempEventId];
+    const schedule = es && getCalendarPreviewSchedule(es);
+    if (!schedule) return;
+    const diff = getCalendarDday(schedule.startAt, today);
+    if (diff === null) return;
+    const absDiff = Math.abs(diff);
+    if (absDiff < minDiff) {
+      minDiff = absDiff;
+      closest = schedule.startAt.slice(0, 10);
+    }
+  });
+
+  return closest;
+};
 
 const SHEET_HEIGHT = 560;
 
@@ -308,7 +334,7 @@ const SaveBottomSheet = ({
                   eventStates={eventStates}
                   childName={childName}
                   getDisplayDate={getDisplayDate}
-                  onConfirm={onConfirm}
+                  onConfirm={() => onConfirm(getClosestEventDate(previews, eventStates))}
                   onDismiss={onDismiss}
                 />
               ) : (

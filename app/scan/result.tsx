@@ -147,7 +147,11 @@ const ScanResultScreen = () => {
       <SaveBottomSheet
         visible={saveVisible}
         onClose={() => setSaveVisible(false)}
-        onConfirm={() => router.replace('/(tabs)/calendar')}
+        onConfirm={(date) =>
+          router.replace(
+            date ? { pathname: '/(tabs)/calendar', params: { date } } : '/(tabs)/calendar'
+          )
+        }
         onDismiss={() => router.replace('/(tabs)')}
         childName={displayChildName}
         newsletterId={newsletterId}

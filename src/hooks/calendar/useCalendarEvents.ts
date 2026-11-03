@@ -54,6 +54,7 @@ const useCalendarEvents = ({
   const [dailyEventsError, setDailyEventsError] = useState(false);
   const weeklyReqIdRef = useRef(0);
   const dailyReqIdRef = useRef(0);
+  const deletedEventIdsRef = useRef<Set<number>>(new Set());
   const weekReferenceDate = getWeeklyQueryDate(weekDates);
 
   useEffect(() => {
@@ -63,7 +64,18 @@ const useCalendarEvents = ({
     const reqId = weeklyReqIdRef.current;
     fetchWeeklyEvents(weekReferenceDate, selectedChildName)
       .then((data) => {
-        if (reqId === weeklyReqIdRef.current) setWeeklyData(data);
+        if (reqId !== weeklyReqIdRef.current) return;
+        if (deletedEventIdsRef.current.size === 0) {
+          setWeeklyData(data);
+          return;
+        }
+        setWeeklyData({
+          ...data,
+          days: data.days.map((day) => ({
+            ...day,
+            events: day.events.filter((e) => !deletedEventIdsRef.current.has(e.eventId)),
+          })),
+        });
       })
       .catch(() => {})
       .finally(() => {
@@ -210,6 +222,7 @@ const useCalendarEvents = ({
 
   const deleteEvent = async (eventId: number) => {
     await deleteCalendarEvent(eventId);
+    deletedEventIdsRef.current.add(eventId);
     setDayEvents((prev) => prev.filter((e) => e.eventId !== eventId));
     setWeeklyData((prev) =>
       prev

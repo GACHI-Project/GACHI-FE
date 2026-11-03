@@ -47,7 +47,7 @@ const TranslationOverlay = ({ blocks, renderedWidth, renderedHeight }: Translati
 
   useEffect(() => {
     setFontAdjust({});
-  }, [blocks]);
+  }, [blocks, renderedWidth, renderedHeight]);
 
   const handleTextLayout =
     (blockNo: number, boxHeight: number, lineHeight: number, currentFontSize: number) =>

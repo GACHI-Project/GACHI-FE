@@ -214,7 +214,10 @@ const CalendarScreen = () => {
   };
 
   const mapDeleteError = (error: unknown): string => {
-    if (error instanceof CalendarApiError && error.code === 'UNAUTHORIZED') {
+    if (
+      error instanceof CalendarApiError &&
+      (error.code === 'UNAUTHORIZED' || error.status === 401)
+    ) {
       return t('calendar.delete.error.unauthorized');
     }
     return t('calendar.delete.error.default');

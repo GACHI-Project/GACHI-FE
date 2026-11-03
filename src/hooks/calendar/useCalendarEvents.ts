@@ -1,5 +1,10 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { fetchWeeklyEvents, fetchDailyEvents, completeChecklist } from '../../api/calendar';
+import {
+  fetchWeeklyEvents,
+  fetchDailyEvents,
+  completeChecklist,
+  deleteCalendarEvent,
+} from '../../api/calendar';
 import type { CalendarEvent, WeeklyResult, HolidayItem, SchoolGroup } from '../../api/calendar';
 import { getWeeklyQueryDate, orderWeekDates } from '../../utils/calendarWeek';
 import {
@@ -203,6 +208,22 @@ const useCalendarEvents = ({
     }
   };
 
+  const deleteEvent = async (eventId: number) => {
+    await deleteCalendarEvent(eventId);
+    setDayEvents((prev) => prev.filter((e) => e.eventId !== eventId));
+    setWeeklyData((prev) =>
+      prev
+        ? {
+            ...prev,
+            days: prev.days.map((day) => ({
+              ...day,
+              events: day.events.filter((e) => e.eventId !== eventId),
+            })),
+          }
+        : prev
+    );
+  };
+
   return {
     weeklyData,
     dayEvents,
@@ -213,6 +234,7 @@ const useCalendarEvents = ({
     dailyEventsLoading,
     dailyEventsError,
     toggleCheck,
+    deleteEvent,
   };
 };
 

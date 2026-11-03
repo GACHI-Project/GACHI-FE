@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
-import { View, TouchableOpacity } from 'react-native';
+import { View, TouchableOpacity, Alert } from 'react-native';
 import { FontAwesome5, Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -7,9 +7,15 @@ import colors from '../../src/constants/colors';
 import styles from '../../src/components/calendar/styles';
 import Header from '../../src/components/common/Header';
 import ChildFilterBar from '../../src/components/common/ChildFilterBar';
+import ConfirmModal from '../../src/components/common/ConfirmModal';
 import WeekViewContent from '../../src/components/calendar/WeekViewContent';
 import MonthViewContent from '../../src/components/calendar/MonthViewContent';
-import { fetchSchoolSchedules, type HolidayItem, type SchoolGroup } from '../../src/api/calendar';
+import {
+  fetchSchoolSchedules,
+  CalendarApiError,
+  type HolidayItem,
+  type SchoolGroup,
+} from '../../src/api/calendar';
 import { fetchChildren as fetchChildrenApi } from '../../src/api/child';
 import { useChildrenStore } from '../../src/store/childrenStore';
 import useCalendarMarkers from '../../src/hooks/calendar/useCalendarMarkers';
@@ -33,6 +39,9 @@ const CalendarScreen = () => {
   });
   const [schoolGroups, setSchoolGroups] = useState<SchoolGroup[]>([]);
   const [commonHolidays, setCommonHolidays] = useState<HolidayItem[]>([]);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [deleteTargetId, setDeleteTargetId] = useState<number | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const { date: dateParam } = useLocalSearchParams<{ date?: string }>();
 
@@ -136,6 +145,7 @@ const CalendarScreen = () => {
     focusKey,
     commonHolidays,
     schoolGroups,
+    refreshKey,
   });
 
   const {
@@ -147,6 +157,7 @@ const CalendarScreen = () => {
     dailyEventsLoading,
     dailyEventsError,
     toggleCheck,
+    deleteEvent,
   } = useCalendarEvents({
     isWeekMode,
     weekDates,
@@ -202,6 +213,43 @@ const CalendarScreen = () => {
     });
   };
 
+  const mapDeleteError = (error: unknown): string => {
+    if (error instanceof CalendarApiError && error.code === 'UNAUTHORIZED') {
+      return t('calendar.delete.error.unauthorized');
+    }
+    return t('calendar.delete.error.default');
+  };
+
+  const handleRequestDelete = (eventId: number) => {
+    setDeleteTargetId(eventId);
+  };
+
+  const handleCancelDelete = () => {
+    if (isDeleting) return;
+    setDeleteTargetId(null);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (deleteTargetId === null || isDeleting) return;
+    const eventId = deleteTargetId;
+    setIsDeleting(true);
+    try {
+      await deleteEvent(eventId);
+      setExpandedIds((prev) => {
+        if (!prev.has(eventId)) return prev;
+        const next = new Set(prev);
+        next.delete(eventId);
+        return next;
+      });
+      setRefreshKey((k) => k + 1);
+      setDeleteTargetId(null);
+    } catch (error) {
+      Alert.alert(t('common.error'), mapDeleteError(error));
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.headerWrap}>
@@ -252,6 +300,7 @@ const CalendarScreen = () => {
           onScroll={handleScroll}
           onToggleExpand={toggleExpand}
           onToggleCheck={toggleCheck}
+          onDeleteRequest={handleRequestDelete}
         />
       ) : (
         <MonthViewContent
@@ -276,6 +325,7 @@ const CalendarScreen = () => {
           onScroll={handleScroll}
           onToggleExpand={toggleExpand}
           onToggleCheck={toggleCheck}
+          onDeleteRequest={handleRequestDelete}
         />
       )}
 
@@ -293,6 +343,19 @@ const CalendarScreen = () => {
           <Ionicons name="arrow-up" size={20} color={colors.text.white} />
         </TouchableOpacity>
       )}
+
+      <ConfirmModal
+        visible={deleteTargetId !== null}
+        onClose={handleCancelDelete}
+        icon={<Ionicons name="trash-outline" size={28} color={colors.primary[400]} />}
+        title={t('calendar.delete.confirmTitle')}
+        description={t('calendar.delete.confirmDesc')}
+        cancelText={t('common.close')}
+        onCancel={handleCancelDelete}
+        confirmText={t('calendar.delete.confirm')}
+        onConfirm={handleConfirmDelete}
+        confirmDisabled={isDeleting}
+      />
     </View>
   );
 };

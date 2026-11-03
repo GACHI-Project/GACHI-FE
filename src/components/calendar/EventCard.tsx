@@ -1,4 +1,6 @@
+import { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import Swipeable, { SwipeableMethods } from 'react-native-gesture-handler/ReanimatedSwipeable';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import colors from '../../constants/colors';
@@ -15,7 +17,13 @@ interface EventCardProps {
   isPast: boolean;
   onToggleExpand: () => void;
   onToggleCheck: (checklistId: number) => void;
+  onDeleteRequest: () => void;
 }
+
+const DELETE_BUTTON_WIDTH = 60;
+const CARD_RADIUS = calStyles.card.borderRadius ?? 0;
+
+let openSwipeable: SwipeableMethods | null = null;
 
 const EventCard = ({
   event,
@@ -24,8 +32,20 @@ const EventCard = ({
   isPast,
   onToggleExpand,
   onToggleCheck,
+  onDeleteRequest,
 }: EventCardProps) => {
   const { t } = useTranslation();
+  const swipeableRef = useRef<SwipeableMethods>(null);
+
+  useEffect(
+    () => () => {
+      if (openSwipeable === swipeableRef.current) {
+        openSwipeable = null;
+      }
+    },
+    []
+  );
+
   const checklistItems = event.checklists;
   const dDay = getCalendarDday(event.periodStartAt ?? event.startAt, today);
   const timeLabel = formatEventTime(event.periodStartAt ?? event.startAt, event.endAt, {
@@ -33,7 +53,7 @@ const EventCard = ({
     endAllDay: event.endAllDay,
     allDayLabel: t('scan.result.saveBottomSheet.fullDay'),
   });
-  return (
+  const cardContent = (
     <View style={[calStyles.card, isPast && styles.past]}>
       <View style={styles.content}>
         <View style={styles.titleRow}>
@@ -108,6 +128,47 @@ const EventCard = ({
       )}
     </View>
   );
+
+  if (expanded) {
+    return cardContent;
+  }
+
+  return (
+    <Swipeable
+      ref={swipeableRef}
+      renderRightActions={() => (
+        <TouchableOpacity
+          style={[
+            styles.deleteAction,
+            {
+              width: DELETE_BUTTON_WIDTH + CARD_RADIUS,
+              marginLeft: -CARD_RADIUS,
+              paddingLeft: CARD_RADIUS,
+              borderTopRightRadius: CARD_RADIUS,
+              borderBottomRightRadius: CARD_RADIUS,
+            },
+          ]}
+          onPress={() => {
+            swipeableRef.current?.close();
+            onDeleteRequest();
+          }}
+          accessibilityRole="button"
+          accessibilityLabel={t('calendar.delete.action')}
+        >
+          <Ionicons name="trash-outline" size={22} color={colors.text.white} />
+        </TouchableOpacity>
+      )}
+      overshootRight={false}
+      onSwipeableWillOpen={() => {
+        if (openSwipeable && openSwipeable !== swipeableRef.current) {
+          openSwipeable.close();
+        }
+        openSwipeable = swipeableRef.current;
+      }}
+    >
+      {cardContent}
+    </Swipeable>
+  );
 };
 
 export default EventCard;
@@ -157,5 +218,14 @@ const styles = StyleSheet.create({
   },
   past: {
     opacity: 0.6,
+  },
+  deleteAction: {
+    alignSelf: 'stretch',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 2,
+    minHeight: 44,
+    backgroundColor: colors.text.red,
   },
 });

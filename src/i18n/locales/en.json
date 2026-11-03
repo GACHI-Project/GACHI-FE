@@ -616,6 +616,16 @@
     },
     "schoolSchedule": {
       "holiday": "Holiday"
+    },
+    "delete": {
+      "action": "Delete",
+      "confirmTitle": "Delete this event?",
+      "confirmDesc": "Deleting it will also remove its linked checklist.",
+      "confirm": "Delete",
+      "error": {
+        "default": "Failed to delete the event. Please try again.",
+        "unauthorized": "You need to log in again."
+      }
     }
   },
   "document": {

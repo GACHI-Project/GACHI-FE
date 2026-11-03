@@ -47,7 +47,7 @@ const EventCard = ({
   );
 
   const checklistItems = event.checklists;
-  const dDay = getCalendarDday(event.periodStartAt ?? event.startAt, today);
+  const dDay = getCalendarDday(event.startAt, today);
   const timeLabel = formatEventTime(event.periodStartAt ?? event.startAt, event.endAt, {
     allDay: event.allDay,
     endAllDay: event.endAllDay,
@@ -89,14 +89,14 @@ const EventCard = ({
         </View>
         <View style={[calStyles.cardTags, styles.tagsRow]}>
           {event.childName && (
-            <View style={[calStyles.tag, calStyles.tagFixed, styles.childTag]}>
-              <Text
-                style={[calStyles.tagText, styles.childText]}
-                numberOfLines={1}
-                ellipsizeMode="tail"
-              >
-                {event.childName}
-              </Text>
+            <View style={[calStyles.tag, calStyles.tagFixed]}>
+              <Text style={calStyles.tagText}>{event.childName}</Text>
+            </View>
+          )}
+          {timeLabel && (
+            <View style={styles.timeTag}>
+              <Ionicons name="time-outline" size={13} color={colors.text.secondary} />
+              <Text style={calStyles.tagText}>{timeLabel}</Text>
             </View>
           )}
           <View style={[calStyles.tag, styles.newsletterTag]}>
@@ -104,18 +104,6 @@ const EventCard = ({
               {event.newsletterTitle}
             </Text>
           </View>
-          {timeLabel && (
-            <View style={styles.timeTag}>
-              <Ionicons name="time-outline" size={13} color={colors.text.secondary} />
-              <Text
-                style={[calStyles.tagText, styles.timeText]}
-                numberOfLines={1}
-                ellipsizeMode="tail"
-              >
-                {timeLabel}
-              </Text>
-            </View>
-          )}
         </View>
       </View>
 
@@ -192,29 +180,18 @@ const styles = StyleSheet.create({
   },
   newsletterTag: {
     flexGrow: 1,
-  },
-  childTag: {
-    flexShrink: 1,
-    minWidth: 0,
-  },
-  childText: {
     flexShrink: 1,
     minWidth: 0,
   },
   timeTag: {
     flexDirection: 'row',
     alignItems: 'center',
-    flexShrink: 1,
-    minWidth: 0,
+    flexShrink: 0,
     gap: 4,
     backgroundColor: colors.gray[100],
     borderRadius: 8,
     paddingHorizontal: 8,
     paddingVertical: 3,
-  },
-  timeText: {
-    flexShrink: 1,
-    minWidth: 0,
   },
   past: {
     opacity: 0.6,

@@ -625,6 +625,16 @@
     },
     "schoolSchedule": {
       "holiday": "法定节假日"
+    },
+    "delete": {
+      "action": "删除",
+      "confirmTitle": "要删除这个日程吗？",
+      "confirmDesc": "删除后，关联的待办清单也会一起被删除。",
+      "confirm": "删除",
+      "error": {
+        "default": "日程删除失败，请重试。",
+        "unauthorized": "需要重新登录。"
+      }
     }
   },
   "document": {

@@ -1,4 +1,6 @@
+import { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import Swipeable, { SwipeableMethods } from 'react-native-gesture-handler/ReanimatedSwipeable';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import colors from '../../constants/colors';
@@ -15,7 +17,13 @@ interface EventCardProps {
   isPast: boolean;
   onToggleExpand: () => void;
   onToggleCheck: (checklistId: number) => void;
+  onDeleteRequest: () => void;
 }
+
+const DELETE_BUTTON_WIDTH = 60;
+const CARD_RADIUS = calStyles.card.borderRadius ?? 0;
+
+let openSwipeable: SwipeableMethods | null = null;
 
 const EventCard = ({
   event,
@@ -24,16 +32,28 @@ const EventCard = ({
   isPast,
   onToggleExpand,
   onToggleCheck,
+  onDeleteRequest,
 }: EventCardProps) => {
   const { t } = useTranslation();
+  const swipeableRef = useRef<SwipeableMethods>(null);
+
+  useEffect(
+    () => () => {
+      if (openSwipeable === swipeableRef.current) {
+        openSwipeable = null;
+      }
+    },
+    []
+  );
+
   const checklistItems = event.checklists;
-  const dDay = getCalendarDday(event.periodStartAt ?? event.startAt, today);
+  const dDay = getCalendarDday(event.startAt, today);
   const timeLabel = formatEventTime(event.periodStartAt ?? event.startAt, event.endAt, {
     allDay: event.allDay,
     endAllDay: event.endAllDay,
     allDayLabel: t('scan.result.saveBottomSheet.fullDay'),
   });
-  return (
+  const cardContent = (
     <View style={[calStyles.card, isPast && styles.past]}>
       <View style={styles.content}>
         <View style={styles.titleRow}>
@@ -69,14 +89,14 @@ const EventCard = ({
         </View>
         <View style={[calStyles.cardTags, styles.tagsRow]}>
           {event.childName && (
-            <View style={[calStyles.tag, calStyles.tagFixed, styles.childTag]}>
-              <Text
-                style={[calStyles.tagText, styles.childText]}
-                numberOfLines={1}
-                ellipsizeMode="tail"
-              >
-                {event.childName}
-              </Text>
+            <View style={[calStyles.tag, calStyles.tagFixed]}>
+              <Text style={calStyles.tagText}>{event.childName}</Text>
+            </View>
+          )}
+          {timeLabel && (
+            <View style={styles.timeTag}>
+              <Ionicons name="time-outline" size={13} color={colors.text.secondary} />
+              <Text style={calStyles.tagText}>{timeLabel}</Text>
             </View>
           )}
           <View style={[calStyles.tag, styles.newsletterTag]}>
@@ -84,18 +104,6 @@ const EventCard = ({
               {event.newsletterTitle}
             </Text>
           </View>
-          {timeLabel && (
-            <View style={styles.timeTag}>
-              <Ionicons name="time-outline" size={13} color={colors.text.secondary} />
-              <Text
-                style={[calStyles.tagText, styles.timeText]}
-                numberOfLines={1}
-                ellipsizeMode="tail"
-              >
-                {timeLabel}
-              </Text>
-            </View>
-          )}
         </View>
       </View>
 
@@ -107,6 +115,47 @@ const EventCard = ({
         />
       )}
     </View>
+  );
+
+  if (expanded) {
+    return cardContent;
+  }
+
+  return (
+    <Swipeable
+      ref={swipeableRef}
+      renderRightActions={() => (
+        <TouchableOpacity
+          style={[
+            styles.deleteAction,
+            {
+              width: DELETE_BUTTON_WIDTH + CARD_RADIUS,
+              marginLeft: -CARD_RADIUS,
+              paddingLeft: CARD_RADIUS,
+              borderTopRightRadius: CARD_RADIUS,
+              borderBottomRightRadius: CARD_RADIUS,
+            },
+          ]}
+          onPress={() => {
+            swipeableRef.current?.close();
+            onDeleteRequest();
+          }}
+          accessibilityRole="button"
+          accessibilityLabel={t('calendar.delete.action')}
+        >
+          <Ionicons name="trash-outline" size={22} color={colors.text.white} />
+        </TouchableOpacity>
+      )}
+      overshootRight={false}
+      onSwipeableWillOpen={() => {
+        if (openSwipeable && openSwipeable !== swipeableRef.current) {
+          openSwipeable.close();
+        }
+        openSwipeable = swipeableRef.current;
+      }}
+    >
+      {cardContent}
+    </Swipeable>
   );
 };
 
@@ -131,31 +180,29 @@ const styles = StyleSheet.create({
   },
   newsletterTag: {
     flexGrow: 1,
-  },
-  childTag: {
-    flexShrink: 1,
-    minWidth: 0,
-  },
-  childText: {
     flexShrink: 1,
     minWidth: 0,
   },
   timeTag: {
     flexDirection: 'row',
     alignItems: 'center',
-    flexShrink: 1,
-    minWidth: 0,
+    flexShrink: 0,
     gap: 4,
     backgroundColor: colors.gray[100],
     borderRadius: 8,
     paddingHorizontal: 8,
     paddingVertical: 3,
   },
-  timeText: {
-    flexShrink: 1,
-    minWidth: 0,
-  },
   past: {
     opacity: 0.6,
+  },
+  deleteAction: {
+    alignSelf: 'stretch',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 2,
+    minHeight: 44,
+    backgroundColor: colors.text.red,
   },
 });

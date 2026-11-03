@@ -296,3 +296,12 @@ export const completeChecklist = async (
     throw wrapError(error);
   }
 };
+
+export const deleteCalendarEvent = async (eventId: number): Promise<void> => {
+  try {
+    const headers = await getAuthHeader();
+    await apiClient.delete(`/api/v1/calendars/events/${eventId}`, { headers });
+  } catch (error) {
+    throw wrapError(error);
+  }
+};

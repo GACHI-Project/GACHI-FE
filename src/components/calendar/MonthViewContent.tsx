@@ -33,6 +33,7 @@ interface Props {
   onScroll: (event: { nativeEvent: { contentOffset: { y: number } } }) => void;
   onToggleExpand: (id: number) => void;
   onToggleCheck: (eventId: number, checklistId: number) => void;
+  onDeleteRequest: (eventId: number) => void;
 }
 
 const MonthViewContent = ({
@@ -53,6 +54,7 @@ const MonthViewContent = ({
   onScroll,
   onToggleExpand,
   onToggleCheck,
+  onDeleteRequest,
 }: Props) => {
   const { t, i18n } = useTranslation();
   return (
@@ -112,6 +114,7 @@ const MonthViewContent = ({
                 isPast={selectedDate < today}
                 onToggleExpand={() => onToggleExpand(event.eventId)}
                 onToggleCheck={(checklistId) => onToggleCheck(event.eventId, checklistId)}
+                onDeleteRequest={() => onDeleteRequest(event.eventId)}
               />
             ))}
         </View>

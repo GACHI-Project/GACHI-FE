@@ -633,6 +633,16 @@
     },
     "schoolSchedule": {
       "holiday": "Ngày nghỉ"
+    },
+    "delete": {
+      "action": "Xóa",
+      "confirmTitle": "Xóa lịch này?",
+      "confirmDesc": "Khi xóa, danh sách việc cần làm liên kết cũng sẽ bị xóa.",
+      "confirm": "Xóa",
+      "error": {
+        "default": "Xóa lịch không thành công. Vui lòng thử lại.",
+        "unauthorized": "Bạn cần đăng nhập lại."
+      }
     }
   },
   "document": {

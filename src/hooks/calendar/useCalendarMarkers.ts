@@ -10,6 +10,7 @@ interface Params {
   focusKey: number;
   commonHolidays: HolidayItem[];
   schoolGroups: SchoolGroup[];
+  refreshKey: number;
 }
 
 const useCalendarMarkers = ({
@@ -19,6 +20,7 @@ const useCalendarMarkers = ({
   focusKey,
   commonHolidays,
   schoolGroups,
+  refreshKey,
 }: Params) => {
   const [monthlyMarkers, setMonthlyMarkers] = useState<MonthlyMarker[]>([]);
   const [markersLoading, setMarkersLoading] = useState(false);
@@ -38,7 +40,14 @@ const useCalendarMarkers = ({
         if (reqId === monthlyReqIdRef.current) setMarkersLoading(false);
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isWeekMode, calendarMonth.year, calendarMonth.month, selectedChildName, focusKey]);
+  }, [
+    isWeekMode,
+    calendarMonth.year,
+    calendarMonth.month,
+    selectedChildName,
+    focusKey,
+    refreshKey,
+  ]);
 
   const markedDatesMap = useMemo(() => {
     const map: Record<string, { dots: { key: string; color: string }[] }> = {};

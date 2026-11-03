@@ -1,31 +1,48 @@
-import { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { useState, useEffect } from 'react';
+import { View, Text, Image, TouchableOpacity, ScrollView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
+import * as WebBrowser from 'expo-web-browser';
 import { useTranslation } from 'react-i18next';
 import AuthInput from '../../src/components/auth/AuthInput';
 import { PrimaryButton } from '../../src/components/common/Button';
-import { login, AuthApiError } from '../../src/api/auth';
+import { login, AuthApiError, getKakaoAuthorizeUrl } from '../../src/api/auth';
 import { getMe } from '../../src/api/user';
 import { useUserStore } from '../../src/store/userStore';
+import { useRegisterStore } from '../../src/store/registerStore';
+import { useKakaoAuthStore } from '../../src/store/kakaoAuthStore';
 import i18n, { saveLanguage, SUPPORTED_LANGUAGES, SupportedLanguage } from '../../src/i18n';
 import { fromServerLanguageCode } from '../../src/types/language';
 import { registerDevicePushToken } from '../../src/utils/pushToken';
 import colors from '../../src/constants/colors';
-import fonts from '../../src/constants/fonts';
-import layout from '../../src/constants/layout';
+import KakaoIcon from '../../assets/social/kakao.png';
+import GoogleIcon from '../../assets/social/google.png';
+import styles from '../../src/styles/auth/login';
+
+const KAKAO_REDIRECT_URI = 'gachi://kakao-auth';
 
 const LoginScreen = () => {
   const { t } = useTranslation();
+  const { kakaoError } = useLocalSearchParams<{ kakaoError?: string }>();
   const [id, setId] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [stayLoggedIn, setStayLoggedIn] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [kakaoLoading, setKakaoLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | undefined>();
 
   const setName = useUserStore((s) => s.setName);
+
+  useEffect(() => {
+    if (!kakaoError) return;
+    if (kakaoError === 'network') {
+      setErrorMessage(t('common.networkError'));
+    } else {
+      setErrorMessage(t(`auth.login.error.${kakaoError}`));
+    }
+  }, [kakaoError, t]);
 
   const handleLogin = async () => {
     setLoading(true);
@@ -66,6 +83,23 @@ const LoginScreen = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleKakaoLogin = async () => {
+    setKakaoLoading(true);
+    setErrorMessage(undefined);
+    try {
+      useKakaoAuthStore.getState().setRememberMe(stayLoggedIn);
+      await WebBrowser.openAuthSessionAsync(getKakaoAuthorizeUrl(), KAKAO_REDIRECT_URI);
+    } catch {
+      setErrorMessage(t('common.networkError'));
+    } finally {
+      setKakaoLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = () => {
+    // TODO: 구글 로그인 API 연동 예정
   };
 
   return (
@@ -118,6 +152,30 @@ const LoginScreen = () => {
           disabled={!id || !password || loading}
         />
 
+        <View style={styles.dividerRow}>
+          <View style={styles.dividerLine} />
+          <Text style={styles.dividerText}>{t('auth.login.socialDivider')}</Text>
+          <View style={styles.dividerLine} />
+        </View>
+
+        <View style={styles.socialRow}>
+          <TouchableOpacity
+            style={styles.socialButton}
+            onPress={handleKakaoLogin}
+            disabled={kakaoLoading}
+            activeOpacity={0.8}
+          >
+            <Image source={KakaoIcon} style={styles.socialIcon} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.socialButton}
+            onPress={handleGoogleLogin}
+            activeOpacity={0.8}
+          >
+            <Image source={GoogleIcon} style={styles.socialIcon} />
+          </TouchableOpacity>
+        </View>
+
         <Text style={styles.forgotRow}>
           <Text style={styles.forgotText} onPress={() => router.push('/(auth)/find-id')}>
             {t('auth.login.forgotId')}
@@ -128,7 +186,12 @@ const LoginScreen = () => {
           </Text>
         </Text>
 
-        <TouchableOpacity onPress={() => router.push('/(auth)/register/language')}>
+        <TouchableOpacity
+          onPress={() => {
+            useRegisterStore.getState().reset();
+            router.push('/(auth)/register/language');
+          }}
+        >
           <Text style={styles.signUpText}>
             {t('auth.login.noAccount')}
             {'  '}
@@ -141,85 +204,3 @@ const LoginScreen = () => {
 };
 
 export default LoginScreen;
-
-const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: colors.primary[100],
-  },
-  contentContainer: {
-    flexGrow: 1,
-    justifyContent: 'flex-end',
-  },
-  gradient: {
-    minHeight: 180,
-    flex: 1,
-  },
-  container: {
-    backgroundColor: colors.text.white,
-    borderTopLeftRadius: 25,
-    borderTopRightRadius: 25,
-    paddingHorizontal: layout.screenPaddingHorizontal,
-    paddingTop: 40,
-    paddingBottom: 60,
-    gap: 18,
-  },
-  title: {
-    fontSize: 20,
-    fontFamily: fonts.bold,
-    color: colors.text.primary,
-    textAlign: 'center',
-  },
-  stayLoggedInRow: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    alignItems: 'center',
-    gap: 6,
-  },
-  checkbox: {
-    width: 15,
-    height: 15,
-    borderRadius: 3,
-    borderWidth: 1,
-    borderColor: colors.primary[300],
-    backgroundColor: colors.primary[0],
-  },
-  checkboxChecked: {
-    backgroundColor: colors.primary[400],
-    borderColor: colors.primary[400],
-  },
-  checkboxMark: {
-    color: colors.text.white,
-    fontSize: 9,
-    lineHeight: 12,
-    textAlign: 'center',
-  },
-  stayLoggedInText: {
-    fontSize: 12,
-    fontFamily: fonts.medium,
-    color: colors.text.secondary,
-  },
-  forgotRow: {
-    textAlign: 'center',
-  },
-  forgotText: {
-    fontSize: 14,
-    fontFamily: fonts.regular,
-    color: colors.text.primary,
-  },
-  signUpText: {
-    fontSize: 14,
-    fontFamily: fonts.regular,
-    color: colors.text.primary,
-    textAlign: 'center',
-  },
-  signUpLink: {
-    fontFamily: fonts.semiBold,
-  },
-  errorText: {
-    fontSize: 13,
-    fontFamily: fonts.medium,
-    color: colors.text.red,
-    textAlign: 'center',
-  },
-});

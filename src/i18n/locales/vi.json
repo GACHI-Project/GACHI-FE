@@ -37,6 +37,7 @@
       "loading": "Đang đăng nhập...",
       "forgotId": "Quên tên đăng nhập",
       "forgotPassword": "Quên mật khẩu",
+      "socialDivider": "Đăng nhập nhanh",
       "noAccount": "Bạn chưa có tài khoản?",
       "signUp": "Đăng ký",
       "error": {
@@ -51,6 +52,13 @@
         "title": "Vui lòng chọn ngôn ngữ bạn muốn sử dụng",
         "subtitle": "Chúng tôi sẽ dịch và giải thích thông báo từ trường học bằng ngôn ngữ bạn đã chọn",
         "settingsTip": "Bạn có thể thay đổi ngôn ngữ bất cứ lúc nào trong phần cài đặt"
+      },
+      "socialTerms": {
+        "title": "Vui lòng đồng ý với điều khoản\nđể sử dụng Gachi",
+        "all": "Đồng ý tất cả",
+        "ageRequired": "[Bắt buộc] Tôi từ 14 tuổi trở lên.",
+        "termsRequired": "[Bắt buộc] Đồng ý với điều khoản sử dụng",
+        "privacy": "[Bắt buộc] Chính sách quyền riêng tư"
       },
       "basic": {
         "title": "Tạo tài khoản mới",
@@ -144,7 +152,8 @@
         "subtitle": "Hãy cùng Gachi tìm hiểu dễ dàng hơn về cuộc sống học đường của con",
         "button": "Đi đến đăng nhập →",
         "noInfo": "Không có thông tin đăng ký. Vui lòng thử lại từ đầu.",
-        "error": "Đã xảy ra lỗi. Vui lòng thử lại."
+        "error": "Đã xảy ra lỗi. Vui lòng thử lại.",
+        "backToLogin": "Quay lại đăng nhập"
       }
     },
     "terms": {

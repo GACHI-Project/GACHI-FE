@@ -9,9 +9,10 @@ import { PrimaryButton } from '../../../src/components/common/Button';
 import colors from '../../../src/constants/colors';
 import fonts from '../../../src/constants/fonts';
 import layout from '../../../src/constants/layout';
-import { signup, login } from '../../../src/api/auth';
+import { signup, login, signupWithKakao } from '../../../src/api/auth';
 import { registerChild } from '../../../src/api/child';
 import { useRegisterStore } from '../../../src/store/registerStore';
+import { useKakaoAuthStore } from '../../../src/store/kakaoAuthStore';
 
 // ─── 메인 화면 ────────────────────────────────────────────────────────────────
 
@@ -32,6 +33,9 @@ const RegisterCompleteScreen = () => {
       phoneNumber,
       languageCode,
       notificationPreference,
+      authMethod,
+      signupToken,
+      socialTermsAgreed,
       children,
       signupDone,
       loginDone,
@@ -45,39 +49,60 @@ const RegisterCompleteScreen = () => {
     setStatus('loading');
     setErrorMessage('');
 
-    if (!loginId) {
+    if (authMethod === 'normal' && !loginId) {
+      setStatus('error');
+      setErrorMessage(t('auth.register.complete.noInfo'));
+      return;
+    }
+    if (authMethod === 'kakao' && !signupToken) {
       setStatus('error');
       setErrorMessage(t('auth.register.complete.noInfo'));
       return;
     }
 
     try {
-      if (!signupDone) {
-        await signup({
-          name,
-          email,
-          loginId,
-          password,
-          passwordConfirm: password,
-          phoneNumber,
-          consentAgreed: true,
-          languageCode,
-          notificationPreference,
-        });
-        setSignupDone(true);
-      }
-
-      if (!loginDone) {
-        const result = await login(loginId, password, false);
-        await SecureStore.setItemAsync('accessToken', result.accessToken);
-        await SecureStore.setItemAsync('refreshToken', result.refreshToken);
-        setLoginDone(true);
+      if (authMethod === 'kakao') {
+        if (!signupDone) {
+          const tokens = await signupWithKakao({
+            signupToken,
+            consentAgreed: socialTermsAgreed,
+            languageCode,
+            notificationPreference,
+            rememberMe: useKakaoAuthStore.getState().rememberMe,
+          });
+          await SecureStore.setItemAsync('accessToken', tokens.accessToken);
+          await SecureStore.setItemAsync('refreshToken', tokens.refreshToken);
+          setSignupDone(true);
+          setLoginDone(true);
+        }
       } else {
-        const stored = await SecureStore.getItemAsync('accessToken');
-        if (!stored) {
+        if (!signupDone) {
+          await signup({
+            name,
+            email,
+            loginId,
+            password,
+            passwordConfirm: password,
+            phoneNumber,
+            consentAgreed: true,
+            languageCode,
+            notificationPreference,
+          });
+          setSignupDone(true);
+        }
+
+        if (!loginDone) {
           const result = await login(loginId, password, false);
           await SecureStore.setItemAsync('accessToken', result.accessToken);
           await SecureStore.setItemAsync('refreshToken', result.refreshToken);
+          setLoginDone(true);
+        } else {
+          const stored = await SecureStore.getItemAsync('accessToken');
+          if (!stored) {
+            const result = await login(loginId, password, false);
+            await SecureStore.setItemAsync('accessToken', result.accessToken);
+            await SecureStore.setItemAsync('refreshToken', result.refreshToken);
+          }
         }
       }
 
@@ -119,6 +144,15 @@ const RegisterCompleteScreen = () => {
         <Text style={styles.errorText}>{errorMessage}</Text>
         <TouchableOpacity style={styles.retryButton} onPress={run} activeOpacity={0.7}>
           <Text style={styles.retryButtonText}>{t('common.retry')}</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => {
+            useRegisterStore.getState().reset();
+            router.replace('/(auth)/login');
+          }}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.backToLoginText}>{t('auth.register.complete.backToLogin')}</Text>
         </TouchableOpacity>
       </View>
     );
@@ -255,5 +289,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: fonts.semiBold,
     color: colors.text.white,
+  },
+  backToLoginText: {
+    fontSize: 14,
+    fontFamily: fonts.semiBold,
+    color: colors.primary[500],
+    textAlign: 'center',
   },
 });

@@ -26,7 +26,11 @@ const LANGUAGE_OPTIONS: LanguageOption[] = [
 const RegisterLanguageScreen = () => {
   const { t, i18n } = useTranslation();
   const setLanguageCode = useRegisterStore((s) => s.setLanguageCode);
+  const authMethod = useRegisterStore((s) => s.authMethod);
   const [selected, setSelected] = useState<LanguageType>('ko');
+
+  const nextRoute =
+    authMethod === 'kakao' ? '/(auth)/register/social-terms' : '/(auth)/register/basic';
 
   return (
     <View style={styles.container}>
@@ -72,13 +76,10 @@ const RegisterLanguageScreen = () => {
               setLanguageCode(toServerLanguageCode(selected));
               await saveLanguage(selected);
               await i18n.changeLanguage(selected);
-              router.push('/(auth)/register/basic');
+              router.push(nextRoute);
             }}
           />
-          <SecondaryButton
-            label={t('common.later')}
-            onPress={() => router.push('/(auth)/register/basic')}
-          />
+          <SecondaryButton label={t('common.later')} onPress={() => router.push(nextRoute)} />
         </View>
       </ScrollView>
     </View>

@@ -37,6 +37,7 @@
       "loading": "Logging in...",
       "forgotId": "Find ID",
       "forgotPassword": "Forgot Password?",
+      "socialDivider": "Quick Login",
       "noAccount": "Don't have an account?",
       "signUp": "Sign Up",
       "error": {
@@ -51,6 +52,13 @@
         "title": "Select your language",
         "subtitle": "We'll translate school notices and explain them in your selected language",
         "settingsTip": "You can change the language at any time in Settings"
+      },
+      "socialTerms": {
+        "title": "Please agree to the terms\nto use GACHI",
+        "all": "Agree to All",
+        "ageRequired": "[Required] I am 14 years of age or older",
+        "termsRequired": "[Required] Agree to the Terms of Service",
+        "privacy": "[Required] Privacy Policy"
       },
       "basic": {
         "title": "Create New Account",
@@ -136,7 +144,8 @@
         "subtitle": "GACHI will help you navigate your child’s school life more easily",
         "button": "Go to Login →",
         "noInfo": "No registration info found. Please start over.",
-        "error": "An error occurred. Please try again."
+        "error": "An error occurred. Please try again.",
+        "backToLogin": "Back to Login"
       }
     },
     "terms": {

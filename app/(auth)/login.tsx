@@ -4,7 +4,11 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import * as WebBrowser from 'expo-web-browser';
-import { GoogleSignin } from '@react-native-google-signin/google-signin';
+import {
+  GoogleSignin,
+  isErrorWithCode,
+  statusCodes,
+} from '@react-native-google-signin/google-signin';
 import { useTranslation } from 'react-i18next';
 import AuthInput from '../../src/components/auth/AuthInput';
 import { PrimaryButton } from '../../src/components/common/Button';
@@ -121,6 +125,11 @@ const LoginScreen = () => {
     setGoogleLoading(true);
     setErrorMessage(undefined);
     try {
+      if (!process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID) {
+        setErrorMessage(t('auth.login.error.generic'));
+        return;
+      }
+
       await GoogleSignin.hasPlayServices();
       const response = await GoogleSignin.signIn();
       if (response.type === 'cancelled') {
@@ -158,6 +167,10 @@ const LoginScreen = () => {
         } else if (error.code === 'AUTH4293') {
           setErrorMessage(t('auth.login.error.tooManyAttempts'));
         } else {
+          setErrorMessage(t('auth.login.error.generic'));
+        }
+      } else if (isErrorWithCode(error)) {
+        if (error.code !== statusCodes.SIGN_IN_CANCELLED) {
           setErrorMessage(t('auth.login.error.generic'));
         }
       } else {

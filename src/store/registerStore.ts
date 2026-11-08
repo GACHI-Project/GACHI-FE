@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { ChildPayload } from '../api/child';
 import { ServerNotificationPreference } from '../types/notification';
 
-export type AuthMethod = 'normal' | 'kakao';
+export type AuthMethod = 'normal' | 'kakao' | 'google';
 
 interface RegisterState {
   loginId: string;

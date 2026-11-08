@@ -9,10 +9,11 @@ import { PrimaryButton } from '../../../src/components/common/Button';
 import colors from '../../../src/constants/colors';
 import fonts from '../../../src/constants/fonts';
 import layout from '../../../src/constants/layout';
-import { signup, login, signupWithKakao } from '../../../src/api/auth';
+import { signup, login, signupWithKakao, signupWithGoogle } from '../../../src/api/auth';
 import { registerChild } from '../../../src/api/child';
 import { useRegisterStore } from '../../../src/store/registerStore';
 import { useKakaoAuthStore } from '../../../src/store/kakaoAuthStore';
+import { useGoogleAuthStore } from '../../../src/store/googleAuthStore';
 
 // ─── 메인 화면 ────────────────────────────────────────────────────────────────
 
@@ -54,7 +55,7 @@ const RegisterCompleteScreen = () => {
       setErrorMessage(t('auth.register.complete.noInfo'));
       return;
     }
-    if (authMethod === 'kakao' && !signupToken) {
+    if ((authMethod === 'kakao' || authMethod === 'google') && !signupToken) {
       setStatus('error');
       setErrorMessage(t('auth.register.complete.noInfo'));
       return;
@@ -69,6 +70,20 @@ const RegisterCompleteScreen = () => {
             languageCode,
             notificationPreference,
             rememberMe: useKakaoAuthStore.getState().rememberMe,
+          });
+          await SecureStore.setItemAsync('accessToken', tokens.accessToken);
+          await SecureStore.setItemAsync('refreshToken', tokens.refreshToken);
+          setSignupDone(true);
+          setLoginDone(true);
+        }
+      } else if (authMethod === 'google') {
+        if (!signupDone) {
+          const tokens = await signupWithGoogle({
+            signupToken,
+            consentAgreed: socialTermsAgreed,
+            languageCode,
+            notificationPreference,
+            rememberMe: useGoogleAuthStore.getState().rememberMe,
           });
           await SecureStore.setItemAsync('accessToken', tokens.accessToken);
           await SecureStore.setItemAsync('refreshToken', tokens.refreshToken);

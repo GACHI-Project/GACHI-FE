@@ -649,6 +649,8 @@
     "title": "我的页面",
     "edit": "编辑",
     "joinDate": "注册日期 {{date}}",
+    "googleAccountAccessibility": "使用 Google 登录",
+    "kakaoAccountAccessibility": "使用 Kakao 登录",
     "languageChange": {
       "title": "更改语言",
       "warning": "更改语言后，应用中的所有文字以及之后扫描文件的翻译语言都会一起改变。",

@@ -22,6 +22,8 @@ import ChildEditSheet from '../../src/components/profile/ChildEditSheet';
 import useProfileData from '../../src/hooks/profile/useProfileData';
 import useChildMutations from '../../src/hooks/profile/useChildMutations';
 import { formatYearMonth } from '../../src/utils/date';
+import GoogleIcon from '../../assets/social/google.png';
+import KakaoIcon from '../../assets/social/kakao.png';
 
 const LANGUAGE_NAMES: Record<string, string> = {
   ko: '한국어',
@@ -43,6 +45,33 @@ const ProfileScreen = () => {
   const { userInfo, children, isLoading } = useProfileData();
   const { saveChild, removeChild } = useChildMutations();
 
+  let idBadge = null;
+  if (userInfo?.passwordLoginAvailable && userInfo.loginId) {
+    idBadge = (
+      <View style={styles.idBadge}>
+        <Text style={styles.idBadgeText}>{userInfo.loginId}</Text>
+      </View>
+    );
+  } else if (userInfo?.googleLinked) {
+    idBadge = (
+      <Image
+        source={GoogleIcon}
+        style={styles.socialBadgeIcon}
+        accessible
+        accessibilityLabel={t('profile.googleAccountAccessibility')}
+      />
+    );
+  } else if (userInfo?.kakaoLinked) {
+    idBadge = (
+      <Image
+        source={KakaoIcon}
+        style={styles.socialBadgeIcon}
+        accessible
+        accessibilityLabel={t('profile.kakaoAccountAccessibility')}
+      />
+    );
+  }
+
   return (
     <View style={styles.container}>
       <Header title={t('profile.title')} onHelp={() => {}} />
@@ -53,9 +82,7 @@ const ProfileScreen = () => {
           <View style={styles.profileInfo}>
             <Text style={styles.profileName}>{userInfo?.name ?? ''}</Text>
             <View style={styles.profileSubRow}>
-              <View style={styles.idBadge}>
-                <Text style={styles.idBadgeText}>{userInfo?.loginId ?? ''}</Text>
-              </View>
+              {idBadge}
               <Text style={styles.joinDate}>
                 {t('profile.joinDate', {
                   date: userInfo ? formatYearMonth(userInfo.createdAt) : '',

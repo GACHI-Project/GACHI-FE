@@ -40,6 +40,9 @@ export interface UserInfo {
   notificationEnabled: boolean;
   notificationPreference: string;
   createdAt: string;
+  kakaoLinked: boolean;
+  googleLinked: boolean;
+  passwordLoginAvailable: boolean;
 }
 
 export const fetchMyInfo = async (): Promise<UserInfo> => {

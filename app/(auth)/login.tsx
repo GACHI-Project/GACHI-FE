@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import axios from 'axios';
 import { View, Text, Image, TouchableOpacity, ScrollView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -169,6 +170,8 @@ const LoginScreen = () => {
         } else {
           setErrorMessage(t('auth.login.error.generic'));
         }
+      } else if (axios.isAxiosError(error)) {
+        setErrorMessage(t('common.networkError'));
       } else if (isErrorWithCode(error)) {
         if (error.code !== statusCodes.SIGN_IN_CANCELLED) {
           setErrorMessage(t('auth.login.error.generic'));

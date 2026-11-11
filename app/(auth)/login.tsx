@@ -2,12 +2,16 @@ import { useState, useEffect } from 'react';
 import { View, Text, Image, TouchableOpacity, ScrollView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
-import * as SecureStore from 'expo-secure-store';
 import * as WebBrowser from 'expo-web-browser';
 import { useTranslation } from 'react-i18next';
 import AuthInput from '../../src/components/auth/AuthInput';
 import { PrimaryButton } from '../../src/components/common/Button';
-import { login, AuthApiError, getKakaoAuthorizeUrl } from '../../src/api/auth';
+import { login, AuthApiError, getKakaoAuthorizeUrl, saveAuthTokens } from '../../src/api/auth';
+import {
+  getSessionVersion,
+  isCurrentSession,
+  assertCurrentSession,
+} from '../../src/utils/authSession';
 import { getMe } from '../../src/api/user';
 import { useUserStore } from '../../src/store/userStore';
 import { useRegisterStore } from '../../src/store/registerStore';
@@ -45,15 +49,16 @@ const LoginScreen = () => {
   }, [kakaoError, t]);
 
   const handleLogin = async () => {
+    const version = getSessionVersion();
     setLoading(true);
     setErrorMessage(undefined);
     try {
       const result = await login(id, password, stayLoggedIn);
-      await SecureStore.setItemAsync('accessToken', result.accessToken);
-      await SecureStore.setItemAsync('refreshToken', result.refreshToken);
+      await saveAuthTokens(result, version);
 
       try {
         const me = await getMe();
+        assertCurrentSession(version);
         setName(me.name);
         const lang = fromServerLanguageCode(me.languageCode) as SupportedLanguage;
         if (SUPPORTED_LANGUAGES.includes(lang)) {
@@ -64,9 +69,11 @@ const LoginScreen = () => {
         /* language sync failure should not block login */
       }
 
+      assertCurrentSession(version);
       router.replace('/(tabs)');
       registerDevicePushToken().catch(() => {});
     } catch (error) {
+      if (!isCurrentSession(version)) return;
       if (error instanceof AuthApiError) {
         if (error.code === 'AUTH4011') {
           setErrorMessage(t('auth.login.error.invalidCredentials'));

@@ -1,9 +1,13 @@
 import { useEffect, useRef } from 'react';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
-import * as SecureStore from 'expo-secure-store';
 import * as WebBrowser from 'expo-web-browser';
-import { completeKakaoLogin, AuthApiError } from '../../src/api/auth';
+import { completeKakaoLogin, AuthApiError, saveAuthTokens } from '../../src/api/auth';
+import {
+  getSessionVersion,
+  isCurrentSession,
+  assertCurrentSession,
+} from '../../src/utils/authSession';
 import { getMe } from '../../src/api/user';
 import { useUserStore } from '../../src/store/userStore';
 import { useRegisterStore } from '../../src/store/registerStore';
@@ -42,6 +46,7 @@ const KakaoAuthBounceScreen = () => {
     }
 
     const complete = async () => {
+      const version = getSessionVersion();
       if (!ticket) {
         replaceToLoginWithError('generic');
         return;
@@ -51,13 +56,14 @@ const KakaoAuthBounceScreen = () => {
 
       try {
         const res = await completeKakaoLogin(ticket, rememberMe);
+        assertCurrentSession(version);
 
         if (res.status === 'LOGIN_SUCCESS' && res.tokens) {
-          await SecureStore.setItemAsync('accessToken', res.tokens.accessToken);
-          await SecureStore.setItemAsync('refreshToken', res.tokens.refreshToken);
+          await saveAuthTokens(res.tokens, version);
 
           try {
             const me = await getMe();
+            assertCurrentSession(version);
             setName(me.name);
             const lang = fromServerLanguageCode(me.languageCode) as SupportedLanguage;
             if (SUPPORTED_LANGUAGES.includes(lang)) {
@@ -68,6 +74,7 @@ const KakaoAuthBounceScreen = () => {
             /* language sync failure should not block login */
           }
 
+          assertCurrentSession(version);
           router.replace('/(tabs)');
           registerDevicePushToken().catch(() => {});
         } else if (res.signupToken) {
@@ -81,6 +88,7 @@ const KakaoAuthBounceScreen = () => {
           replaceToLoginWithError('generic');
         }
       } catch (error) {
+        if (!isCurrentSession(version)) return;
         if (error instanceof AuthApiError) {
           if (error.code === 'AUTH4011') {
             replaceToLoginWithError('invalidCredentials');

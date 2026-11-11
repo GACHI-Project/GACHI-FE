@@ -8,6 +8,7 @@ import {
 } from '../../api/notifications';
 import { fetchChildren, type ChildInfo } from '../../api/calendar';
 import { useNotificationStore } from '../../store/notificationStore';
+import { withCurrentSession } from '../../utils/authSession';
 
 const useNotificationList = () => {
   const { setUnreadCount } = useNotificationStore();
@@ -26,6 +27,7 @@ const useNotificationList = () => {
   }, [notifications]);
 
   const loadInitial = useCallback(() => {
+    const setSessionUnreadCount = withCurrentSession(setUnreadCount);
     setIsLoading(true);
     setLoadError(false);
     Promise.all([fetchNotifications({ size: 20 }), fetchChildren()])
@@ -34,7 +36,7 @@ const useNotificationList = () => {
         setCursor(notifResult.nextCursor);
         setHasNext(notifResult.hasNext);
         setChildren(childrenResult);
-        setUnreadCount(notifResult.notifications.filter((n) => !n.read).length);
+        setSessionUnreadCount(notifResult.notifications.filter((n) => !n.read).length);
       })
       .catch(() => setLoadError(true))
       .finally(() => setIsLoading(false));
@@ -63,26 +65,28 @@ const useNotificationList = () => {
 
   const markAsRead = useCallback(
     (id: number) => {
+      const setSessionUnreadCount = withCurrentSession(setUnreadCount);
       const target = notificationsRef.current.find((n) => n.id === id);
       if (!target || target.read) return;
       const originalUnreadCount = notificationsRef.current.filter((n) => !n.read).length;
       setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
-      setUnreadCount(Math.max(0, originalUnreadCount - 1));
+      setSessionUnreadCount(Math.max(0, originalUnreadCount - 1));
       markNotificationRead(id).catch(() => {
         setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: false } : n)));
-        setUnreadCount(originalUnreadCount);
+        setSessionUnreadCount(originalUnreadCount);
       });
     },
     [setUnreadCount]
   );
 
   const handleMarkAllRead = useCallback(() => {
+    const setSessionUnreadCount = withCurrentSession(setUnreadCount);
     const snapshot = notificationsRef.current;
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-    setUnreadCount(0);
+    setSessionUnreadCount(0);
     markAllNotificationsRead().catch(() => {
       setNotifications(snapshot);
-      setUnreadCount(snapshot.filter((n) => !n.read).length);
+      setSessionUnreadCount(snapshot.filter((n) => !n.read).length);
     });
   }, [setUnreadCount]);
 

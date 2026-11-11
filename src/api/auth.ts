@@ -1,6 +1,7 @@
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 import { router } from 'expo-router';
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { ServerNotificationPreference } from '../types/notification';
 
 export class AuthApiError extends Error {
@@ -90,7 +91,8 @@ apiClient.interceptors.response.use(
 );
 
 export const clearSession = async (): Promise<void> => {
-  // 각 삭제를 독립 실행해 하나가 실패해도 나머지 삭제와 화면 이동을 보장
+  GoogleSignin.signOut().catch(() => {});
+
   await Promise.allSettled([
     SecureStore.deleteItemAsync('accessToken'),
     SecureStore.deleteItemAsync('refreshToken'),
@@ -340,6 +342,45 @@ export const signupWithKakao = async (payload: {
 }): Promise<KakaoTokens> => {
   try {
     const response = await apiClient.post('/api/v1/auth/kakao/signup', payload);
+    return response.data.result;
+  } catch (error) {
+    throw wrapError(error);
+  }
+};
+
+export interface GoogleCompleteResult {
+  status: 'LOGIN_SUCCESS' | 'SIGNUP_REQUIRED' | 'LINK_REQUIRED';
+  tokens?: LoginResult;
+  signupToken?: string;
+  linkToken?: string;
+  email?: string;
+  nickname?: string;
+}
+
+export const completeGoogleLogin = async (
+  idToken: string,
+  rememberMe: boolean
+): Promise<GoogleCompleteResult> => {
+  try {
+    const response = await apiClient.post('/api/v1/auth/google/complete', {
+      idToken,
+      rememberMe,
+    });
+    return response.data.result;
+  } catch (error) {
+    throw wrapError(error);
+  }
+};
+
+export const signupWithGoogle = async (payload: {
+  signupToken: string;
+  consentAgreed: boolean;
+  languageCode: string;
+  notificationPreference: ServerNotificationPreference;
+  rememberMe: boolean;
+}): Promise<LoginResult> => {
+  try {
+    const response = await apiClient.post('/api/v1/auth/google/signup', payload);
     return response.data.result;
   } catch (error) {
     throw wrapError(error);

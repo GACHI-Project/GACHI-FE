@@ -649,6 +649,8 @@
     "title": "마이페이지",
     "edit": "편집",
     "joinDate": "가입일 {{date}}",
+    "googleAccountAccessibility": "Google 계정으로 로그인",
+    "kakaoAccountAccessibility": "카카오 계정으로 로그인",
     "languageChange": {
       "title": "언어 변경",
       "warning": "언어를 변경하면 앱의 모든 텍스트와 이후 스캔되는 문서의 번역 언어가 함께 변경돼요.",

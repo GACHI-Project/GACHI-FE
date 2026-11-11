@@ -1,6 +1,7 @@
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 import { router } from 'expo-router';
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { ServerNotificationPreference } from '../types/notification';
 
 export class AuthApiError extends Error {
@@ -90,7 +91,8 @@ apiClient.interceptors.response.use(
 );
 
 export const clearSession = async (): Promise<void> => {
-  // 각 삭제를 독립 실행해 하나가 실패해도 나머지 삭제와 화면 이동을 보장
+  GoogleSignin.signOut().catch(() => {});
+
   await Promise.allSettled([
     SecureStore.deleteItemAsync('accessToken'),
     SecureStore.deleteItemAsync('refreshToken'),

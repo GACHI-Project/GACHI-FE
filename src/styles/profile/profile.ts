@@ -59,6 +59,11 @@ const styles = StyleSheet.create({
     fontFamily: fonts.regular,
     color: colors.text.secondary,
   },
+  socialBadgeIcon: {
+    width: 20,
+    height: 20,
+    resizeMode: 'contain',
+  },
   joinDate: {
     fontSize: 12,
     fontFamily: fonts.regular,

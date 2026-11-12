@@ -657,6 +657,8 @@
     "title": "Trang cá nhân",
     "edit": "Chỉnh sửa",
     "joinDate": "Ngày tham gia {{date}}",
+    "googleAccountAccessibility": "Đăng nhập bằng Google",
+    "kakaoAccountAccessibility": "Đăng nhập bằng Kakao",
     "languageChange": {
       "title": "Thay đổi ngôn ngữ",
       "warning": "Khi thay đổi ngôn ngữ, tất cả văn bản trong ứng dụng và ngôn ngữ dịch của các tài liệu được quét sau đó cũng sẽ thay đổi theo.",

@@ -649,6 +649,8 @@
     "title": "My Page",
     "edit": "Edit",
     "joinDate": "Joined {{date}}",
+    "googleAccountAccessibility": "Signed in with Google",
+    "kakaoAccountAccessibility": "Signed in with Kakao",
     "languageChange": {
       "title": "Change Language",
       "warning": "Changing the language will update both the app's display language and the language used to translate documents you scan.",

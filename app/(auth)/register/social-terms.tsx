@@ -71,7 +71,7 @@ const RegisterSocialTermsScreen = () => {
     privacy: false,
   });
 
-  const isValidEntry = authMethod === 'kakao' && !!signupToken;
+  const isValidEntry = (authMethod === 'kakao' || authMethod === 'google') && !!signupToken;
 
   useEffect(() => {
     if (!isValidEntry) {

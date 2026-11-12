@@ -30,7 +30,9 @@ const RegisterLanguageScreen = () => {
   const [selected, setSelected] = useState<LanguageType>('ko');
 
   const nextRoute =
-    authMethod === 'kakao' ? '/(auth)/register/social-terms' : '/(auth)/register/basic';
+    authMethod === 'kakao' || authMethod === 'google'
+      ? '/(auth)/register/social-terms'
+      : '/(auth)/register/basic';
 
   return (
     <View style={styles.container}>

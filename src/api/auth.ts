@@ -1,12 +1,14 @@
 import axios, { type InternalAxiosRequestConfig } from 'axios';
 import * as SecureStore from 'expo-secure-store';
 import { router } from 'expo-router';
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { ServerNotificationPreference } from '../types/notification';
 import { useUserStore } from '../store/userStore';
 import { useChildrenStore } from '../store/childrenStore';
 import { useNotificationStore } from '../store/notificationStore';
 import { useRegisterStore } from '../store/registerStore';
 import { useKakaoAuthStore } from '../store/kakaoAuthStore';
+import { useGoogleAuthStore } from '../store/googleAuthStore';
 import {
   getSessionVersion,
   isCurrentSession,
@@ -149,9 +151,13 @@ export const clearSession = (): Promise<void> => {
   useNotificationStore.getState().reset();
   useRegisterStore.getState().reset();
   useKakaoAuthStore.getState().reset();
+  useGoogleAuthStore.getState().reset();
 
   clearingSession = tokenWrite
     .then(async () => {
+      Promise.resolve()
+        .then(() => GoogleSignin.signOut())
+        .catch(() => {});
       // 진행 중이던 토큰 저장이 끝난 뒤 삭제해 이전 토큰이 다시 남지 않게 한다.
       await Promise.allSettled([
         SecureStore.deleteItemAsync('accessToken'),
@@ -408,6 +414,45 @@ export const signupWithKakao = async (payload: {
 }): Promise<KakaoTokens> => {
   try {
     const response = await apiClient.post('/api/v1/auth/kakao/signup', payload);
+    return response.data.result;
+  } catch (error) {
+    throw wrapError(error);
+  }
+};
+
+export interface GoogleCompleteResult {
+  status: 'LOGIN_SUCCESS' | 'SIGNUP_REQUIRED' | 'LINK_REQUIRED';
+  tokens?: LoginResult;
+  signupToken?: string;
+  linkToken?: string;
+  email?: string;
+  nickname?: string;
+}
+
+export const completeGoogleLogin = async (
+  idToken: string,
+  rememberMe: boolean
+): Promise<GoogleCompleteResult> => {
+  try {
+    const response = await apiClient.post('/api/v1/auth/google/complete', {
+      idToken,
+      rememberMe,
+    });
+    return response.data.result;
+  } catch (error) {
+    throw wrapError(error);
+  }
+};
+
+export const signupWithGoogle = async (payload: {
+  signupToken: string;
+  consentAgreed: boolean;
+  languageCode: string;
+  notificationPreference: ServerNotificationPreference;
+  rememberMe: boolean;
+}): Promise<LoginResult> => {
+  try {
+    const response = await apiClient.post('/api/v1/auth/google/signup', payload);
     return response.data.result;
   } catch (error) {
     throw wrapError(error);

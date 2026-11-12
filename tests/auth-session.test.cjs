@@ -42,6 +42,7 @@ const setup = (options = {}) => {
   const deletions = [];
   const navigations = [];
   const refreshCalls = [];
+  let googleSignOutCalls = 0;
   const requests = [];
   const storage = {
     getItemAsync: async (key) =>
@@ -91,6 +92,16 @@ const setup = (options = {}) => {
         AbortController,
         require: (name) => {
           if (name === 'axios') return http;
+          if (name === '@react-native-google-signin/google-signin') {
+            return {
+              GoogleSignin: {
+                signOut: () => {
+                  googleSignOutCalls += 1;
+                  return options.signOut ? options.signOut() : Promise.resolve();
+                },
+              },
+            };
+          }
           if (name === 'expo-secure-store') return storage;
           if (name === 'expo-router')
             return { router: { replace: (route) => navigations.push(route) } };
@@ -110,6 +121,7 @@ const setup = (options = {}) => {
   const notifications = load('src/store/notificationStore.ts').useNotificationStore;
   const registration = load('src/store/registerStore.ts').useRegisterStore;
   const kakao = load('src/store/kakaoAuthStore.ts').useKakaoAuthStore;
+  const google = load('src/store/googleAuthStore.ts').useGoogleAuthStore;
   const request = () =>
     auth.apiClient.get('/private', { headers: { Authorization: 'Bearer old-access' } });
   return {
@@ -120,6 +132,8 @@ const setup = (options = {}) => {
     notifications,
     registration,
     kakao,
+    google,
+    getGoogleSignOutCalls: () => googleSignOutCalls,
     values,
     deletions,
     navigations,
@@ -209,6 +223,7 @@ test('clearSession resets all account stores even if one token deletion fails', 
   app.notifications.getState().setUnreadCount(5);
   app.registration.getState().setSignupToken('previous-signup');
   app.kakao.getState().setRememberMe(true);
+  app.google.getState().setRememberMe(true);
   const first = app.auth.clearSession();
   const second = app.auth.clearSession();
   assert.equal(first, second);
@@ -218,6 +233,8 @@ test('clearSession resets all account stores even if one token deletion fails', 
   assert.equal(app.notifications.getState().unreadCount, 0);
   assert.equal(app.registration.getState().signupToken, '');
   assert.equal(app.kakao.getState().rememberMe, false);
+  assert.equal(app.google.getState().rememberMe, false);
+  assert.equal(app.getGoogleSignOutCalls(), 1);
   assert.deepEqual(app.deletions.sort(), ['accessToken', 'refreshToken']);
   assert.equal(app.navigations.length, 1);
 });
@@ -289,4 +306,20 @@ test('a delayed logout completion cannot clear a newer session', async () => {
   await logout;
   assert.equal(app.values.get('accessToken'), refreshed.accessToken);
   assert.equal(app.navigations.length, 1);
+});
+
+['synchronous', 'asynchronous'].forEach((failure) => {
+  test(`Google SDK ${failure} sign-out failure does not prevent session cleanup`, async () => {
+    const app = setup({
+      signOut: () => {
+        if (failure === 'synchronous') throw new Error('SDK unavailable');
+        return Promise.reject(new Error('SDK sign-out failed'));
+      },
+    });
+    await app.auth.clearSession();
+    await flush();
+    assert.equal(app.getGoogleSignOutCalls(), 1);
+    assert.equal(app.values.size, 0);
+    assert.equal(app.navigations.length, 1);
+  });
 });

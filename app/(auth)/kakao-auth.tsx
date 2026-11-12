@@ -68,6 +68,7 @@ const KakaoAuthBounceScreen = () => {
             const lang = fromServerLanguageCode(me.languageCode) as SupportedLanguage;
             if (SUPPORTED_LANGUAGES.includes(lang)) {
               await saveLanguage(lang);
+              assertCurrentSession(version);
               await i18n.changeLanguage(lang);
             }
           } catch {

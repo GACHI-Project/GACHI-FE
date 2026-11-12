@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import { router, useFocusEffect } from 'expo-router';
 import { useUserStore } from '../../src/store/userStore';
-import { fetchUnreadCount } from '../../src/api/notifications';
+import { refreshUnreadCount } from '../../src/utils/unreadCount';
 import { useNotificationStore } from '../../src/store/notificationStore';
 import TaskCard from '../../src/components/home/TaskCard';
 // import ScanBanner from '../../src/components/home/ScanBanner';
@@ -43,14 +43,12 @@ const HomeScreen = () => {
   const name = useUserStore((s) => s.name);
   const greetingText = useMemo(() => getGreetingByTime(t), [t]);
 
-  const { unreadCount, setUnreadCount } = useNotificationStore();
+  const unreadCount = useNotificationStore((state) => state.unreadCount);
 
   useFocusEffect(
     useCallback(() => {
-      fetchUnreadCount()
-        .then(setUnreadCount)
-        .catch(() => {});
-    }, [setUnreadCount])
+      void refreshUnreadCount().catch(() => {});
+    }, [])
   );
 
   return (

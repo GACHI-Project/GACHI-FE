@@ -7,8 +7,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import * as Font from 'expo-font';
 import * as Notifications from 'expo-notifications';
 import { initI18n } from '../src/i18n';
-import { useNotificationStore } from '../src/store/notificationStore';
-import { fetchUnreadCount } from '../src/api/notifications';
+import { refreshUnreadCount } from '../src/utils/unreadCount';
 import colors from '../src/constants/colors';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -42,7 +41,6 @@ const FONTS = {
 
 const RootLayout = () => {
   const [ready, setReady] = useState(false);
-  const { setUnreadCount } = useNotificationStore();
 
   useEffect(() => {
     Promise.all([Font.loadAsync(FONTS), initI18n()]).finally(() => {
@@ -53,9 +51,7 @@ const RootLayout = () => {
 
   useEffect(() => {
     const syncUnreadCount = () => {
-      fetchUnreadCount()
-        .then(setUnreadCount)
-        .catch(() => {});
+      void refreshUnreadCount().catch(() => {});
     };
     const receivedSub = Notifications.addNotificationReceivedListener(syncUnreadCount);
     const responseSub = Notifications.addNotificationResponseReceivedListener(syncUnreadCount);
@@ -63,7 +59,7 @@ const RootLayout = () => {
       receivedSub.remove();
       responseSub.remove();
     };
-  }, [setUnreadCount]);
+  }, []);
 
   if (!ready) return null;
 

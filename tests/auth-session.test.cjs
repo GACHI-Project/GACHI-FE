@@ -7,6 +7,7 @@ const { test } = require('node:test');
 const axios = require('axios');
 const ts = require('typescript');
 const zustand = require('zustand');
+const { hookHarness, queuedApi } = require('./helpers/hookHarness.cjs');
 
 const deferred = () => {
   let resolve;
@@ -53,6 +54,7 @@ const setup = (options = {}) => {
     },
     deleteItemAsync: async (key) => {
       deletions.push(key);
+      if (options.beforeDelete) await options.beforeDelete(key, deletions);
       if (options.failDelete === key) throw new Error('Storage deletion failed');
       values.delete(key);
     },
@@ -127,6 +129,7 @@ const setup = (options = {}) => {
   return {
     auth,
     session,
+    load,
     user,
     children,
     notifications,
@@ -227,7 +230,9 @@ test('clearSession resets all account stores even if one token deletion fails', 
   const first = app.auth.clearSession();
   const second = app.auth.clearSession();
   assert.equal(first, second);
-  await first;
+  const cleanup = await first;
+  assert.equal(cleanup.success, false);
+  assert.deepEqual(Array.from(cleanup.failedTokenKeys), ['accessToken']);
   assert.equal(app.user.getState().name, '');
   assert.equal(app.children.getState().children.length, 0);
   assert.equal(app.notifications.getState().unreadCount, 0);
@@ -235,7 +240,7 @@ test('clearSession resets all account stores even if one token deletion fails', 
   assert.equal(app.kakao.getState().rememberMe, false);
   assert.equal(app.google.getState().rememberMe, false);
   assert.equal(app.getGoogleSignOutCalls(), 1);
-  assert.deepEqual(app.deletions.sort(), ['accessToken', 'refreshToken']);
+  assert.deepEqual(app.deletions.sort(), ['accessToken', 'accessToken', 'refreshToken']);
   assert.equal(app.navigations.length, 1);
 });
 
@@ -322,4 +327,317 @@ test('a delayed logout completion cannot clear a newer session', async () => {
     assert.equal(app.values.size, 0);
     assert.equal(app.navigations.length, 1);
   });
+});
+
+const childPayload = {
+  name: 'Previous child',
+  schoolName: 'School',
+  schoolCode: 'school',
+  officeCode: 'office',
+  grade: 1,
+  colorCode: '#ffffff',
+  className: '1',
+};
+
+const authenticatedOperations = [
+  ['child registration', 'src/api/child.ts', (api) => api.registerChild(childPayload)],
+  ['child batch registration', 'src/api/child.ts', (api) => api.registerChildren([childPayload])],
+  ['child update', 'src/api/child.ts', (api) => api.updateChild(1, childPayload)],
+  ['child deletion', 'src/api/child.ts', (api) => api.deleteChild(1)],
+  ['calendar update', 'src/api/calendar.ts', (api) => api.completeChecklist(1, true)],
+  [
+    'chat message',
+    'src/api/chat.ts',
+    (api) => api.sendChatMessage({ sessionId: null, message: 'old' }),
+  ],
+  ['checklist update', 'src/api/checklist.ts', (api) => api.toggleChecklistItem(1, true)],
+  ['newsletter detail', 'src/api/newsletter.ts', (api) => api.getNewsletterDetail(1)],
+  ['notification read', 'src/api/notifications.ts', (api) => api.markNotificationRead(1)],
+  ['school guide lookup', 'src/api/schoolGuide.ts', (api) => api.getSchoolGuideCategories()],
+  ['account withdrawal', 'src/api/user.ts', (api) => api.withdrawUser('password')],
+];
+
+authenticatedOperations.forEach(([name, filename, operation]) => {
+  test(`${name} cannot switch accounts during token lookup`, async () => {
+    const read = deferred();
+    const app = setup({ getItem: () => read.promise });
+    const pending = Promise.allSettled([operation(app.load(filename))]);
+    await flush();
+    await app.auth.clearSession();
+    await app.auth.saveAuthTokens(refreshed, app.session.getSessionVersion());
+    read.resolve(refreshed.accessToken);
+    assertAllRejected(await pending);
+    assert.equal(app.requests.length, 0);
+    assert.equal(app.refreshCalls.length, 0);
+    assert.equal(app.values.get('accessToken'), refreshed.accessToken);
+    assert.equal(app.navigations.length, 1);
+  });
+});
+
+test('a stale signup session is rejected before child token lookup', async () => {
+  let reads = 0;
+  const app = setup({
+    getItem: () => {
+      reads += 1;
+      return refreshed.accessToken;
+    },
+  });
+  const version = app.session.getSessionVersion();
+  await app.auth.clearSession();
+  await app.auth.saveAuthTokens(refreshed, app.session.getSessionVersion());
+  await assert.rejects(app.load('src/api/child.ts').registerChild(childPayload, version));
+  assert.equal(reads, 0);
+  assert.equal(app.requests.length, 0);
+});
+
+test('request dispatch preserves the session captured before token lookup', async () => {
+  const app = setup();
+  const config = await app.auth.getAuthRequestConfig(() => new Error('Unauthorized'));
+  await app.auth.clearSession();
+  await app.auth.saveAuthTokens(refreshed, app.session.getSessionVersion());
+  await assert.rejects(app.auth.apiClient.post('/api/v1/children', childPayload, config));
+  assert.equal(app.requests.length, 0);
+  assert.equal(app.refreshCalls.length, 0);
+});
+
+['accessToken', 'refreshToken'].forEach((blockedKey) => {
+  test(`logout cannot switch accounts while reading ${blockedKey}`, async () => {
+    const read = deferred();
+    const app = setup({
+      getItem: (key, values) => (key === blockedKey ? read.promise : values.get(key)),
+    });
+    const pending = app.auth.logout();
+    await flush();
+    await app.auth.clearSession();
+    await app.auth.saveAuthTokens(refreshed, app.session.getSessionVersion());
+    read.resolve(refreshed[blockedKey]);
+    await pending;
+    assert.equal(app.requests.length, 0);
+    assert.equal(app.values.get('accessToken'), refreshed.accessToken);
+    assert.equal(app.navigations.length, 1);
+  });
+});
+
+test('cleanup retries only the token that failed and reports successful recovery', async () => {
+  const app = setup({
+    beforeDelete: (key, attempts) => {
+      if (key === 'accessToken' && attempts.filter((value) => value === key).length === 1) {
+        throw new Error('Temporary storage error');
+      }
+    },
+  });
+  const result = await app.auth.clearSession();
+  assert.equal(result.success, true);
+  assert.equal(result.failedTokenKeys.length, 0);
+  assert.equal(app.deletions.filter((key) => key === 'accessToken').length, 2);
+  assert.equal(app.deletions.filter((key) => key === 'refreshToken').length, 1);
+  assert.equal(app.values.size, 0);
+  assert.equal(app.navigations.length, 1);
+});
+
+test('logout reports permanent deletion failures and blocks leftover credentials', async () => {
+  const app = setup({
+    failDelete: 'accessToken',
+    adapter: (config) => success(config, { result: {} }),
+  });
+  const result = await app.auth.logout();
+  assert.equal(result.success, false);
+  assert.deepEqual(Array.from(result.failedTokenKeys), ['accessToken']);
+  assert.equal(app.values.get('accessToken'), tokens.accessToken);
+  await assert.rejects(app.load('src/api/child.ts').registerChild(childPayload));
+  await assert.rejects(app.request());
+  assert.equal(app.requests.length, 1);
+  assert.equal(app.refreshCalls.length, 0);
+  await app.auth.saveAuthTokens(refreshed, app.session.getSessionVersion());
+  await app.load('src/api/child.ts').registerChild(childPayload);
+  assert.equal(app.requests.length, 2);
+  assert.equal(app.requests[1].headers.Authorization, `Bearer ${refreshed.accessToken}`);
+});
+
+const notificationSetup = async () => {
+  const app = setup();
+  const fetch = queuedApi();
+  const children = queuedApi();
+  const read = queuedApi();
+  const readAll = queuedApi();
+  const runner = hookHarness('src/hooks/notifications/useNotificationList.ts', {
+    '../../api/notifications': {
+      fetchNotifications: fetch.request,
+      markNotificationRead: read.request,
+      markAllNotificationsRead: readAll.request,
+    },
+    '../../api/calendar': { fetchChildren: children.request },
+    '../../store/notificationStore': {
+      useNotificationStore: () => ({ setUnreadCount: app.notifications.getState().setUnreadCount }),
+    },
+    '../../utils/authSession': app.session,
+  });
+  const page = (id, isRead = false) => ({
+    notifications: [{ id, read: isRead }],
+    nextCursor: id,
+    hasNext: true,
+  });
+  runner.render();
+  fetch.calls[0].resolve(page(1));
+  children.calls[0].resolve([]);
+  await runner.flush();
+  const loadNewSession = async (id, isRead = false) => {
+    await app.auth.clearSession();
+    await app.auth.saveAuthTokens(refreshed, app.session.getSessionVersion());
+    runner.result.loadInitial();
+    fetch.calls[fetch.calls.length - 1].resolve(page(id, isRead));
+    children.calls[children.calls.length - 1].resolve([]);
+    await runner.flush();
+  };
+  return { app, runner, fetch, children, read, readAll, page, loadNewSession };
+};
+
+test('old notification initialization cannot overwrite the next session list', async () => {
+  const state = await notificationSetup();
+  state.runner.result.loadInitial();
+  await state.loadNewSession(2);
+  state.fetch.calls[1].resolve(state.page(1));
+  state.children.calls[1].resolve([]);
+  await state.runner.flush();
+  assert.deepEqual(
+    Array.from(state.runner.result.notifications, (item) => item.id),
+    [2]
+  );
+});
+
+test('old notification pagination cannot append to the next session list', async () => {
+  const state = await notificationSetup();
+  const more = state.runner.result.loadMore();
+  await state.loadNewSession(2);
+  state.fetch.calls[1].resolve(state.page(99));
+  await more;
+  await state.runner.flush();
+  assert.deepEqual(
+    Array.from(state.runner.result.notifications, (item) => item.id),
+    [2]
+  );
+});
+
+test('old single-read rollback cannot undo a newer session read state', async () => {
+  const state = await notificationSetup();
+  state.runner.result.markAsRead(1);
+  await state.loadNewSession(1, true);
+  state.read.calls[0].reject(new Error('Previous session request failed'));
+  await state.runner.flush();
+  assert.equal(state.runner.result.notifications[0].read, true);
+  assert.equal(state.app.notifications.getState().unreadCount, 0);
+});
+
+test('old read-all rollback cannot restore a previous session snapshot', async () => {
+  const state = await notificationSetup();
+  state.runner.result.handleMarkAllRead();
+  await state.loadNewSession(2);
+  state.readAll.calls[0].reject(new Error('Previous session request failed'));
+  await state.runner.flush();
+  assert.deepEqual(
+    Array.from(state.runner.result.notifications, (item) => item.id),
+    [2]
+  );
+  assert.equal(state.app.notifications.getState().unreadCount, 1);
+});
+
+// Isolate the actual screen callback without loading native UI modules.
+const loadScreenCallback = (file, name, globals) => {
+  const filename = path.resolve(__dirname, '..', file);
+  const source = ts.createSourceFile(
+    filename,
+    fs.readFileSync(filename, 'utf8'),
+    ts.ScriptTarget.ES2020,
+    true,
+    ts.ScriptKind.TSX
+  );
+  let initializer;
+  const visit = (node) => {
+    if (ts.isVariableDeclaration(node) && node.name.getText(source) === name) {
+      initializer = node.initializer;
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(source);
+  assert.ok(initializer, `${name} must exist in ${file}`);
+  const { outputText } = ts.transpileModule(`exports.callback = ${initializer.getText(source)};`, {
+    compilerOptions: { target: ts.ScriptTarget.ES2020, module: ts.ModuleKind.CommonJS },
+  });
+  const exports = {};
+  vm.runInNewContext(outputText, { exports, ...globals }, { filename });
+  return exports.callback;
+};
+
+[
+  ['normal and Google login', 'app/(auth)/login.tsx', 'finishLogin'],
+  ['Kakao login', 'app/(auth)/kakao-auth.tsx', 'complete'],
+].forEach(([name, filename, callbackName]) => {
+  test(`${name} cannot change the next session language after a delayed save`, async () => {
+    const app = setup();
+    const savedLanguage = deferred();
+    const languages = [];
+    const routes = [];
+    let saves = 0;
+    const callback = loadScreenCallback(filename, callbackName, {
+      ...app.session,
+      AuthApiError: app.auth.AuthApiError,
+      saveAuthTokens: app.auth.saveAuthTokens,
+      ticket: 'old-ticket',
+      useKakaoAuthStore: app.kakao,
+      completeKakaoLogin: async () => ({ status: 'LOGIN_SUCCESS', tokens }),
+      getMe: async () => ({ name: 'Previous user', languageCode: 'VI' }),
+      setName: app.user.getState().setName,
+      fromServerLanguageCode: () => 'vi',
+      SUPPORTED_LANGUAGES: ['ko', 'vi'],
+      saveLanguage: () => {
+        saves += 1;
+        return savedLanguage.promise;
+      },
+      i18n: {
+        changeLanguage: async (language) => {
+          languages.push(language);
+        },
+      },
+      router: {
+        replace: (route) => {
+          routes.push(route);
+        },
+      },
+      registerDevicePushToken: async () => {},
+      replaceToLoginWithError: () => {},
+    });
+    const pending = Promise.allSettled([callback(tokens, app.session.getSessionVersion())]);
+    await flush();
+    assert.equal(saves, 1);
+    await app.auth.clearSession();
+    await app.auth.saveAuthTokens(refreshed, app.session.getSessionVersion());
+    languages.push('ko');
+    savedLanguage.resolve();
+    await pending;
+    assert.deepEqual(languages, ['ko']);
+    assert.equal(routes.length, 0);
+  });
+});
+
+test('an old non-401 error is cancelled instead of triggering another account workflow', async () => {
+  const response = deferred();
+  const app = setup({
+    adapter: async (config) => {
+      await response.promise;
+      throw new axios.AxiosError('Expired workflow', 'ERR_BAD_REQUEST', config, undefined, {
+        ...success(config, { code: 'CHAT4003' }),
+        status: 400,
+      });
+    },
+  });
+  const pending = Promise.allSettled([app.request()]);
+  await flush();
+  await app.auth.clearSession();
+  await app.auth.saveAuthTokens(refreshed, app.session.getSessionVersion());
+  response.resolve();
+  const [result] = await pending;
+  assert.equal(result.status, 'rejected');
+  assert.equal(axios.isCancel(result.reason), true);
+  assert.equal(app.refreshCalls.length, 0);
+  assert.equal(app.values.get('accessToken'), refreshed.accessToken);
 });

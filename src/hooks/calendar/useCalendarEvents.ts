@@ -59,6 +59,7 @@ const useCalendarEvents = ({
   const eventQueryDate = isWeekMode ? weekReferenceDate : selectedDate;
   const mutationScopeRef = useRef<object | null>(null);
   const pendingChecklistIdsRef = useRef(new Set<number>());
+  const weeklyQueryRef = useRef<{ date: string; childName: string | undefined } | null>(null);
 
   useEffect(() => {
     mutationScopeRef.current = {};
@@ -70,7 +71,15 @@ const useCalendarEvents = ({
   useEffect(() => {
     if (!isWeekMode) return undefined;
     let cancelled = false;
-    setWeeklyData(null);
+    const previousQuery = weeklyQueryRef.current;
+    if (
+      !previousQuery ||
+      previousQuery.date !== weekReferenceDate ||
+      previousQuery.childName !== selectedChildName
+    ) {
+      setWeeklyData(null);
+    }
+    weeklyQueryRef.current = { date: weekReferenceDate, childName: selectedChildName };
     setWeekEventsLoading(true);
     weeklyReqIdRef.current += 1;
     const reqId = weeklyReqIdRef.current;

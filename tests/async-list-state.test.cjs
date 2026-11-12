@@ -411,3 +411,23 @@ test('an old daily fetch cannot resurrect a successfully deleted event', async (
   await app.runner.flush();
   assert.equal(app.runner.result.dayEvents.length, 0);
 });
+
+test('failed same-query weekly refresh retains existing events', async () => {
+  const app = await calendarSetup(true);
+  const previous = app.runner.result.weeklyData;
+  app.runner.render({ ...app.params, focusKey: 1 });
+  app.source.calls[1].reject(new Error('Refresh failed'));
+  await app.runner.flush();
+  assert.equal(app.runner.result.weeklyData, previous);
+  assert.equal(app.runner.result.weekEventsLoading, false);
+});
+
+test('failed weekly date change cannot display the previous week events', async () => {
+  const app = await calendarSetup(true);
+  app.runner.render({ ...app.params, weekDates: ['2026-11-19'] });
+  assert.equal(app.source.calls[1].args[0], '2026-11-19');
+  app.source.calls[1].reject(new Error('New week failed'));
+  await app.runner.flush();
+  assert.equal(app.runner.result.weeklyData, null);
+  assert.equal(app.runner.result.weekEventsLoading, false);
+});

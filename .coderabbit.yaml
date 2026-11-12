@@ -1,5 +1,8 @@
 # yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
 language: 'ko-KR'
+tone_instructions: >-
+  문제의 발생 조건과 영향을 근거와 함께 설명해 주세요.
+  확인된 문제와 추가 확인이 필요한 사항을 구분해 주세요.
 
 reviews:
   profile: 'chill'
@@ -8,8 +11,9 @@ reviews:
   high_level_summary: true
   review_status: true
   review_details: true
+  collapse_walkthrough: true
 
-  poem: true
+  poem: false
 
   pre_merge_checks:
     docstrings:
@@ -19,8 +23,8 @@ reviews:
     enabled: true
     drafts: false
     base_branches:
-      - 'develop'
-      - 'main'
+      - '^develop$'
+      - '^main$'
 
 chat:
   auto_reply: true

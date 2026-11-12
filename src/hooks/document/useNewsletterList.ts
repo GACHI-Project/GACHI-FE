@@ -2,84 +2,136 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useFocusEffect } from 'expo-router';
 import { fetchNewsletters, type NewsletterItem } from '../../api/newsletter';
 
+interface ListRequest {
+  childName: string | undefined;
+  search: string | undefined;
+  page: number;
+  loadedCount: number;
+  totalCount: number;
+  loading: boolean;
+  loadingMore: boolean;
+}
+
 const useNewsletterList = (selectedChildName: string | undefined, searchQuery: string) => {
   const [newsletters, setNewsletters] = useState<NewsletterItem[]>([]);
   const [totalCount, setTotalCount] = useState(0);
-  const [page, setPage] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const search = searchQuery.trim() || undefined;
 
   const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const isMountedRef = useRef(false);
-  const isLoadingMoreRef = useRef(false);
-  const selectedChildNameRef = useRef(selectedChildName);
-  const searchQueryRef = useRef(searchQuery);
-  const loadReqIdRef = useRef(0);
+  const hasFocusedRef = useRef(false);
+  const focusedRef = useRef(false);
+  const queryRef = useRef({ childName: selectedChildName, search });
+  const activeRequestRef = useRef<ListRequest | null>(null);
+  const lastLoadedRef = useRef<ListRequest | null>(null);
 
-  useEffect(() => {
-    selectedChildNameRef.current = selectedChildName;
-  }, [selectedChildName]);
-
-  useEffect(() => {
-    searchQueryRef.current = searchQuery;
-  }, [searchQuery]);
-
-  const loadNewsletters = async (childName?: string, search?: string) => {
-    loadReqIdRef.current += 1;
-    const reqId = loadReqIdRef.current;
+  const loadNewsletters = useCallback(async () => {
+    if (!focusedRef.current) return;
+    const previous = lastLoadedRef.current;
+    const request: ListRequest = {
+      ...queryRef.current,
+      page: previous?.page ?? 0,
+      loadedCount: previous?.loadedCount ?? 0,
+      totalCount: previous?.totalCount ?? 0,
+      loading: true,
+      loadingMore: false,
+    };
+    activeRequestRef.current = request;
     setIsLoading(true);
-    setPage(0);
+    setIsLoadingMore(false);
     try {
-      const result = await fetchNewsletters({ childName, search, page: 0 });
-      if (reqId !== loadReqIdRef.current) return;
+      const result = await fetchNewsletters({
+        childName: request.childName,
+        search: request.search,
+        page: 0,
+      });
+      if (activeRequestRef.current !== request) return;
+      request.page = 0;
+      request.loadedCount = result.newsletters.length;
+      request.totalCount = result.totalCount;
+      lastLoadedRef.current = request;
       setNewsletters(result.newsletters);
       setTotalCount(result.totalCount);
     } catch {
-      // 목록 조회 실패 시 목록 유지
+      // Preserve the current list when reloading the same query fails.
     } finally {
-      if (reqId === loadReqIdRef.current) setIsLoading(false);
+      if (activeRequestRef.current === request) {
+        request.loading = false;
+        setIsLoading(false);
+      }
     }
-  };
+  }, []);
 
-  const loadMore = async () => {
-    if (isLoadingMoreRef.current || isLoading || newsletters.length >= totalCount) return;
-    isLoadingMoreRef.current = true;
+  const loadMore = useCallback(async () => {
+    const request = activeRequestRef.current;
+    if (
+      !request ||
+      request.loading ||
+      request.loadingMore ||
+      request.loadedCount >= request.totalCount
+    )
+      return;
+
+    request.loadingMore = true;
     setIsLoadingMore(true);
-    const nextPage = page + 1;
+    const nextPage = request.page + 1;
     try {
       const result = await fetchNewsletters({
-        childName: selectedChildNameRef.current,
-        search: searchQueryRef.current.trim() || undefined,
+        childName: request.childName,
+        search: request.search,
         page: nextPage,
       });
+      if (activeRequestRef.current !== request) return;
+      request.page = nextPage;
+      request.loadedCount += result.newsletters.length;
+      request.totalCount = result.totalCount;
+      lastLoadedRef.current = request;
       setNewsletters((prev) => [...prev, ...result.newsletters]);
-      setPage(nextPage);
+      setTotalCount(result.totalCount);
     } catch {
-      // 추가 목록 조회 실패
+      // A failed page can be retried without advancing pagination.
     } finally {
-      isLoadingMoreRef.current = false;
-      setIsLoadingMore(false);
+      if (activeRequestRef.current === request) {
+        request.loadingMore = false;
+        setIsLoadingMore(false);
+      }
     }
-  };
+  }, []);
 
   useEffect(() => {
-    if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+    queryRef.current = { childName: selectedChildName, search };
+    lastLoadedRef.current = null;
+    // Invalidate the previous query before the debounce timer fires.
+    activeRequestRef.current = null;
+    setNewsletters([]);
+    setTotalCount(0);
+    setIsLoading(true);
+    setIsLoadingMore(false);
     searchDebounceRef.current = setTimeout(() => {
-      loadNewsletters(selectedChildName, searchQuery.trim() || undefined);
+      searchDebounceRef.current = null;
+      void loadNewsletters();
     }, 500);
     return () => {
       if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+      activeRequestRef.current = null;
     };
-  }, [searchQuery, selectedChildName]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [selectedChildName, search, loadNewsletters]);
 
   useFocusEffect(
     useCallback(() => {
-      if (!isMountedRef.current) {
-        isMountedRef.current = true;
-        return;
+      focusedRef.current = true;
+      if (hasFocusedRef.current) {
+        if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+        void loadNewsletters();
       }
-      loadNewsletters(selectedChildNameRef.current, searchQueryRef.current.trim() || undefined);
-    }, []) // eslint-disable-line react-hooks/exhaustive-deps
+      hasFocusedRef.current = true;
+      return () => {
+        focusedRef.current = false;
+        if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+        activeRequestRef.current = null;
+      };
+    }, [loadNewsletters])
   );
 
   return { newsletters, totalCount, isLoading, isLoadingMore, loadMore };

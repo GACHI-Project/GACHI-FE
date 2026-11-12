@@ -56,15 +56,36 @@ const useCalendarEvents = ({
   const dailyReqIdRef = useRef(0);
   const deletedEventIdsRef = useRef<Set<number>>(new Set());
   const weekReferenceDate = getWeeklyQueryDate(weekDates);
+  const eventQueryDate = isWeekMode ? weekReferenceDate : selectedDate;
+  const mutationScopeRef = useRef<object | null>(null);
+  const pendingChecklistIdsRef = useRef(new Set<number>());
+  const weeklyQueryRef = useRef<{ date: string; childName: string | undefined } | null>(null);
 
   useEffect(() => {
-    if (!isWeekMode) return;
+    mutationScopeRef.current = {};
+    return () => {
+      mutationScopeRef.current = null;
+    };
+  }, [isWeekMode, eventQueryDate, selectedChildName, focusKey]);
+
+  useEffect(() => {
+    if (!isWeekMode) return undefined;
+    let cancelled = false;
+    const previousQuery = weeklyQueryRef.current;
+    if (
+      !previousQuery ||
+      previousQuery.date !== weekReferenceDate ||
+      previousQuery.childName !== selectedChildName
+    ) {
+      setWeeklyData(null);
+    }
+    weeklyQueryRef.current = { date: weekReferenceDate, childName: selectedChildName };
     setWeekEventsLoading(true);
     weeklyReqIdRef.current += 1;
     const reqId = weeklyReqIdRef.current;
     fetchWeeklyEvents(weekReferenceDate, selectedChildName)
       .then((data) => {
-        if (reqId !== weeklyReqIdRef.current) return;
+        if (cancelled || reqId !== weeklyReqIdRef.current) return;
         if (deletedEventIdsRef.current.size === 0) {
           setWeeklyData(data);
           return;
@@ -79,8 +100,11 @@ const useCalendarEvents = ({
       })
       .catch(() => {})
       .finally(() => {
-        if (reqId === weeklyReqIdRef.current) setWeekEventsLoading(false);
+        if (!cancelled && reqId === weeklyReqIdRef.current) setWeekEventsLoading(false);
       });
+    return () => {
+      cancelled = true;
+    };
   }, [isWeekMode, weekReferenceDate, selectedChildName, focusKey]);
 
   useEffect(() => {
@@ -93,7 +117,11 @@ const useCalendarEvents = ({
     const reqId = dailyReqIdRef.current;
     fetchDailyEvents(selectedDate, selectedChildName)
       .then((result) => {
-        if (!cancelled && reqId === dailyReqIdRef.current) setDayEvents(result.events);
+        if (!cancelled && reqId === dailyReqIdRef.current) {
+          setDayEvents(
+            result.events.filter((event) => !deletedEventIdsRef.current.has(event.eventId))
+          );
+        }
       })
       .catch(() => {
         if (!cancelled && reqId === dailyReqIdRef.current) setDailyEventsError(true);
@@ -176,47 +204,49 @@ const useCalendarEvents = ({
   }, [weeklyData, weekDates, weekReferenceDate, commonHolidays, schoolGroups, selectedChildId]);
 
   const toggleCheck = async (eventId: number, checklistId: number) => {
-    let currentIsCompleted: boolean | undefined;
-    const inDay = dayEvents.find((e) => e.eventId === eventId);
-    if (inDay) {
-      currentIsCompleted = inDay.checklists.find((c) => c.checklistId === checklistId)?.isCompleted;
-    }
-    if (currentIsCompleted === undefined && weeklyData) {
-      const inWeek = weeklyData.days
-        .flatMap((day) => day.events)
-        .find((e) => e.eventId === eventId);
-      currentIsCompleted = inWeek?.checklists.find(
-        (c) => c.checklistId === checklistId
-      )?.isCompleted;
-    }
-    if (currentIsCompleted === undefined) return;
+    const scope = mutationScopeRef.current;
+    if (!scope || pendingChecklistIdsRef.current.has(checklistId)) return;
+    const events = isWeekMode ? weeklyData?.days.flatMap((day) => day.events) : dayEvents;
+    const target = events
+      ?.find((event) => event.eventId === eventId)
+      ?.checklists.find((item) => item.checklistId === checklistId);
+    if (!target) return;
 
-    const applyToggle = (events: CalendarEvent[]) =>
-      events.map((e) =>
-        e.eventId !== eventId
-          ? e
+    pendingChecklistIdsRef.current.add(checklistId);
+    const dayRequestId = dailyReqIdRef.current;
+    const weekRequestId = weeklyReqIdRef.current;
+    const updateEvents = (list: CalendarEvent[], value: boolean) =>
+      list.map((event) =>
+        event.eventId !== eventId
+          ? event
           : {
-              ...e,
-              checklists: e.checklists.map((c) =>
-                c.checklistId === checklistId ? { ...c, isCompleted: !c.isCompleted } : c
+              ...event,
+              checklists: event.checklists.map((item) =>
+                item.checklistId === checklistId ? { ...item, isCompleted: value } : item
               ),
             }
       );
-    const applyToWeekly = (prev: WeeklyResult | null) =>
-      prev
-        ? { ...prev, days: prev.days.map((day) => ({ ...day, events: applyToggle(day.events) })) }
-        : prev;
+    const updateDay = (value: boolean) => setDayEvents((prev) => updateEvents(prev, value));
+    const updateWeek = (value: boolean) =>
+      setWeeklyData((prev) =>
+        prev
+          ? {
+              ...prev,
+              days: prev.days.map((day) => ({ ...day, events: updateEvents(day.events, value) })),
+            }
+          : prev
+      );
 
-    const daySnapshot = dayEvents;
-    const weekSnapshot = weeklyData;
-    setDayEvents(applyToggle);
-    setWeeklyData(applyToWeekly);
-
+    updateDay(!target.isCompleted);
+    updateWeek(!target.isCompleted);
     try {
-      await completeChecklist(checklistId, !currentIsCompleted);
+      await completeChecklist(checklistId, !target.isCompleted);
     } catch {
-      setDayEvents(daySnapshot);
-      setWeeklyData(weekSnapshot);
+      if (mutationScopeRef.current !== scope) return;
+      if (dayRequestId === dailyReqIdRef.current) updateDay(target.isCompleted);
+      if (weekRequestId === weeklyReqIdRef.current) updateWeek(target.isCompleted);
+    } finally {
+      pendingChecklistIdsRef.current.delete(checklistId);
     }
   };
 

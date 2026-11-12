@@ -133,7 +133,7 @@ const RegisterCompleteScreen = () => {
       await children.slice(registeredChildrenCount).reduce(async (prev, child) => {
         await prev;
         assertCurrentSession(version);
-        await registerChild(child);
+        await registerChild(child, version);
         assertCurrentSession(version);
         incrementRegisteredChildrenCount();
       }, Promise.resolve());

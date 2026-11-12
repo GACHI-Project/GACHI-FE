@@ -1,6 +1,5 @@
 import axios from 'axios';
-import * as SecureStore from 'expo-secure-store';
-import { apiClient } from './auth';
+import { apiClient, getAuthRequestConfig } from './auth';
 
 export class ChecklistApiError extends Error {
   constructor(
@@ -22,11 +21,11 @@ const wrapError = (error: unknown): Error => {
   return error instanceof Error ? error : new Error(String(error));
 };
 
-const getAuthHeader = async () => {
-  const token = await SecureStore.getItemAsync('accessToken');
-  if (!token) throw new ChecklistApiError('UNAUTHORIZED', '로그인이 필요합니다.');
-  return { Authorization: `Bearer ${token}` };
-};
+const getAuthConfig = (version?: number) =>
+  getAuthRequestConfig(
+    () => new ChecklistApiError('UNAUTHORIZED', '로그인이 필요합니다.'),
+    version
+  );
 
 export interface TodayChecklistItem {
   checklistId: number;
@@ -38,10 +37,10 @@ export interface TodayChecklistItem {
 
 export const getTodayChecklists = async (): Promise<TodayChecklistItem[]> => {
   try {
-    const headers = await getAuthHeader();
+    const config = await getAuthConfig();
     const response = await apiClient.get<{ result: { checklists: TodayChecklistItem[] } }>(
       '/api/v1/checklists/today',
-      { headers }
+      config
     );
     return response.data.result.checklists ?? [];
   } catch (error) {
@@ -54,12 +53,8 @@ export const toggleChecklistItem = async (
   isCompleted: boolean
 ): Promise<void> => {
   try {
-    const headers = await getAuthHeader();
-    await apiClient.patch(
-      `/api/v1/checklists/${checklistId}/complete`,
-      { isCompleted },
-      { headers }
-    );
+    const config = await getAuthConfig();
+    await apiClient.patch(`/api/v1/checklists/${checklistId}/complete`, { isCompleted }, config);
   } catch (error) {
     throw wrapError(error);
   }
@@ -67,8 +62,8 @@ export const toggleChecklistItem = async (
 
 export const deleteChecklistItem = async (checklistId: number): Promise<void> => {
   try {
-    const headers = await getAuthHeader();
-    await apiClient.delete(`/api/v1/checklists/${checklistId}`, { headers });
+    const config = await getAuthConfig();
+    await apiClient.delete(`/api/v1/checklists/${checklistId}`, config);
   } catch (error) {
     throw wrapError(error);
   }

@@ -1,4 +1,4 @@
-import axios, { type InternalAxiosRequestConfig } from 'axios';
+import axios, { type AxiosRequestConfig, type InternalAxiosRequestConfig } from 'axios';
 import * as SecureStore from 'expo-secure-store';
 import { router } from 'expo-router';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
@@ -14,6 +14,8 @@ import {
   isCurrentSession,
   invalidateSession,
   assertCurrentSession,
+  assertSessionAuthenticated,
+  markSessionAuthenticated,
 } from '../utils/authSession';
 
 export class AuthApiError extends Error {
@@ -42,9 +44,30 @@ export const apiClient = axios.create({
   timeout: 10000,
 });
 
-type SessionRequestConfig = InternalAxiosRequestConfig & {
+type InternalSessionRequestConfig = InternalAxiosRequestConfig & {
   retried?: boolean;
   sessionVersion?: number;
+};
+
+export type SessionRequestConfig = AxiosRequestConfig & { sessionVersion: number };
+
+type AuthTokenKey = 'accessToken' | 'refreshToken';
+export interface SessionCleanupResult {
+  success: boolean;
+  failedTokenKeys: AuthTokenKey[];
+}
+const AUTH_TOKEN_KEYS: AuthTokenKey[] = ['accessToken', 'refreshToken'];
+
+// Capture the session before token lookup, and carry it through dispatch/retries.
+export const getAuthRequestConfig = async (
+  createUnauthorizedError: () => Error,
+  version = getSessionVersion()
+): Promise<SessionRequestConfig> => {
+  assertSessionAuthenticated(version);
+  const token = await SecureStore.getItemAsync('accessToken');
+  assertSessionAuthenticated(version);
+  if (!token) throw createUnauthorizedError();
+  return { headers: { Authorization: `Bearer ${token}` }, sessionVersion: version };
 };
 
 let refreshTask: {
@@ -52,7 +75,7 @@ let refreshTask: {
   controller: AbortController;
   promise: Promise<string>;
 } | null = null;
-let clearingSession: Promise<void> | null = null;
+let clearingSession: Promise<SessionCleanupResult> | null = null;
 let tokenWrite: Promise<void> = Promise.resolve();
 
 export const saveAuthTokens = (
@@ -65,7 +88,7 @@ export const saveAuthTokens = (
     await SecureStore.setItemAsync('accessToken', tokens.accessToken);
     assertCurrentSession(version);
     await SecureStore.setItemAsync('refreshToken', tokens.refreshToken);
-    assertCurrentSession(version);
+    markSessionAuthenticated(version);
   });
   tokenWrite = write.catch(() => {});
   return write;
@@ -105,21 +128,26 @@ const refreshAccessToken = (version: number): Promise<string> => {
 };
 
 apiClient.interceptors.request.use((config) => {
-  const request = config as SessionRequestConfig;
+  const request = config as InternalSessionRequestConfig;
   request.sessionVersion ??= getSessionVersion();
   assertCurrentSession(request.sessionVersion);
+  if (request.headers.Authorization) assertSessionAuthenticated(request.sessionVersion);
   if (clearingSession) throw new axios.CanceledError('Session is being cleared');
   return request;
 });
 
 apiClient.interceptors.response.use(
   (response) => {
-    const request = response.config as SessionRequestConfig;
+    const request = response.config as InternalSessionRequestConfig;
     assertCurrentSession(request.sessionVersion!);
     return response;
   },
   async (error) => {
-    const originalRequest = error.config as SessionRequestConfig | undefined;
+    const originalRequest = error.config as InternalSessionRequestConfig | undefined;
+
+    if (originalRequest?.sessionVersion !== undefined) {
+      assertCurrentSession(originalRequest.sessionVersion);
+    }
 
     if (
       !originalRequest ||
@@ -140,7 +168,7 @@ apiClient.interceptors.response.use(
   }
 );
 
-export const clearSession = (): Promise<void> => {
+export const clearSession = (): Promise<SessionCleanupResult> => {
   if (clearingSession) return clearingSession;
 
   invalidateSession();
@@ -159,11 +187,16 @@ export const clearSession = (): Promise<void> => {
         .then(() => GoogleSignin.signOut())
         .catch(() => {});
       // 진행 중이던 토큰 저장이 끝난 뒤 삭제해 이전 토큰이 다시 남지 않게 한다.
-      await Promise.allSettled([
-        SecureStore.deleteItemAsync('accessToken'),
-        SecureStore.deleteItemAsync('refreshToken'),
-      ]);
+      const results = await Promise.allSettled(
+        AUTH_TOKEN_KEYS.map(async (key) => SecureStore.deleteItemAsync(key))
+      );
+      const failedKeys = AUTH_TOKEN_KEYS.filter((_, index) => results[index].status === 'rejected');
+      const retries = await Promise.allSettled(
+        failedKeys.map(async (key) => SecureStore.deleteItemAsync(key))
+      );
+      const failedTokenKeys = failedKeys.filter((_, index) => retries[index].status === 'rejected');
       router.replace('/(auth)/login');
+      return { success: failedTokenKeys.length === 0, failedTokenKeys };
     })
     .finally(() => {
       clearingSession = null;
@@ -171,23 +204,25 @@ export const clearSession = (): Promise<void> => {
   return clearingSession;
 };
 
-export const logout = async (): Promise<void> => {
+export const logout = async (): Promise<SessionCleanupResult | undefined> => {
   const version = getSessionVersion();
   try {
     const accessToken = await SecureStore.getItemAsync('accessToken');
+    assertCurrentSession(version);
     const refreshToken = await SecureStore.getItemAsync('refreshToken');
+    assertCurrentSession(version);
     if (accessToken) {
-      await apiClient.post(
-        '/api/v1/auth/logout',
-        { refreshToken },
-        { headers: { Authorization: `Bearer ${accessToken}` } }
-      );
+      const config: SessionRequestConfig = {
+        headers: { Authorization: `Bearer ${accessToken}` },
+        sessionVersion: version,
+      };
+      await apiClient.post('/api/v1/auth/logout', { refreshToken }, config);
     }
   } catch {
     // API 실패해도 로컬 토큰 삭제 후 로그인으로 이동
-  } finally {
-    if (isCurrentSession(version)) await clearSession();
   }
+  if (isCurrentSession(version)) return clearSession();
+  return undefined;
 };
 
 export const checkLoginId = async (loginId: string): Promise<{ available: boolean }> => {

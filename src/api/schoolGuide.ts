@@ -1,6 +1,5 @@
 import axios from 'axios';
-import * as SecureStore from 'expo-secure-store';
-import { apiClient } from './auth';
+import { apiClient, getAuthRequestConfig } from './auth';
 
 export class SchoolGuideApiError extends Error {
   constructor(
@@ -22,11 +21,11 @@ const wrapError = (error: unknown): Error => {
   return error instanceof Error ? error : new Error(String(error));
 };
 
-const getAuthHeader = async () => {
-  const token = await SecureStore.getItemAsync('accessToken');
-  if (!token) throw new SchoolGuideApiError('UNAUTHORIZED', '로그인이 필요합니다.');
-  return { Authorization: `Bearer ${token}` };
-};
+const getAuthConfig = (version?: number) =>
+  getAuthRequestConfig(
+    () => new SchoolGuideApiError('UNAUTHORIZED', '로그인이 필요합니다.'),
+    version
+  );
 
 export type SchoolGuideCategoryEnum =
   | 'DOCUMENTS'
@@ -67,10 +66,10 @@ export interface SchoolGuideFaqDetail {
 
 export const getSchoolGuideCategories = async (): Promise<SchoolGuideCategory[]> => {
   try {
-    const headers = await getAuthHeader();
+    const config = await getAuthConfig();
     const response = await apiClient.get<{ result: { categories: SchoolGuideCategory[] } }>(
       '/api/v1/school-guide/categories',
-      { headers }
+      config
     );
     return response.data.result?.categories ?? [];
   } catch (error) {
@@ -80,10 +79,10 @@ export const getSchoolGuideCategories = async (): Promise<SchoolGuideCategory[]>
 
 export const getPopularFaqs = async (): Promise<PopularFaq[]> => {
   try {
-    const headers = await getAuthHeader();
+    const config = await getAuthConfig();
     const response = await apiClient.get<{ result: { items: PopularFaq[] } }>(
       '/api/v1/school-guide/faqs/popular',
-      { headers }
+      config
     );
     return response.data.result?.items ?? [];
   } catch (error) {
@@ -105,10 +104,10 @@ export const getSchoolGuideFaqs = async (
         'category와 search는 동시에 전달할 수 없습니다.'
       );
     }
-    const headers = await getAuthHeader();
+    const config = await getAuthConfig();
     const response = await apiClient.get<{ result: { items: SchoolGuideFaqItem[] } }>(
       '/api/v1/school-guide/faqs',
-      { headers, params }
+      { ...config, params }
     );
     return response.data.result?.items ?? [];
   } catch (error) {
@@ -118,10 +117,10 @@ export const getSchoolGuideFaqs = async (
 
 export const getSchoolGuideFaqDetail = async (faqId: number): Promise<SchoolGuideFaqDetail> => {
   try {
-    const headers = await getAuthHeader();
+    const config = await getAuthConfig();
     const response = await apiClient.get<{ result: SchoolGuideFaqDetail }>(
       `/api/v1/school-guide/faqs/${faqId}`,
-      { headers }
+      config
     );
     return response.data.result;
   } catch (error) {

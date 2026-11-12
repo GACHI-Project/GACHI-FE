@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { ChildPayload } from '../api/child';
+import type { ChildPayload } from '../api/child';
 import { ServerNotificationPreference } from '../types/notification';
 
 export type AuthMethod = 'normal' | 'kakao' | 'google';

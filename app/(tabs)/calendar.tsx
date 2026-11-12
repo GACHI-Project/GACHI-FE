@@ -18,6 +18,7 @@ import {
 } from '../../src/api/calendar';
 import { fetchChildren as fetchChildrenApi } from '../../src/api/child';
 import { useChildrenStore } from '../../src/store/childrenStore';
+import { withCurrentSession } from '../../src/utils/authSession';
 import useCalendarMarkers from '../../src/hooks/calendar/useCalendarMarkers';
 import useCalendarEvents from '../../src/hooks/calendar/useCalendarEvents';
 import { getKstDate } from '../../src/utils/calendarWeek';
@@ -61,12 +62,12 @@ const CalendarScreen = () => {
       if (!hasFocusedOnceRef.current) {
         hasFocusedOnceRef.current = true;
         fetchChildrenApi()
-          .then(setStoreChildren)
+          .then(withCurrentSession(setStoreChildren))
           .catch(() => {});
         return;
       }
       fetchChildrenApi()
-        .then(setStoreChildren)
+        .then(withCurrentSession(setStoreChildren))
         .catch(() => {});
       setFocusKey((k) => k + 1);
     }, [setStoreChildren])

@@ -1,8 +1,22 @@
-import axios from 'axios';
+import axios, { type AxiosRequestConfig, type InternalAxiosRequestConfig } from 'axios';
 import * as SecureStore from 'expo-secure-store';
 import { router } from 'expo-router';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { ServerNotificationPreference } from '../types/notification';
+import { useUserStore } from '../store/userStore';
+import { useChildrenStore } from '../store/childrenStore';
+import { useNotificationStore } from '../store/notificationStore';
+import { useRegisterStore } from '../store/registerStore';
+import { useKakaoAuthStore } from '../store/kakaoAuthStore';
+import { useGoogleAuthStore } from '../store/googleAuthStore';
+import {
+  getSessionVersion,
+  isCurrentSession,
+  invalidateSession,
+  assertCurrentSession,
+  assertSessionAuthenticated,
+  markSessionAuthenticated,
+} from '../utils/authSession';
 
 export class AuthApiError extends Error {
   constructor(
@@ -30,92 +44,185 @@ export const apiClient = axios.create({
   timeout: 10000,
 });
 
-let isRefreshing = false;
-let failedQueue: Array<{ resolve: (token: string) => void; reject: (error: unknown) => void }> = [];
-
-const processQueue = (error: unknown, token: string | null = null) => {
-  failedQueue.forEach(({ resolve, reject }) => {
-    if (error) reject(error);
-    else resolve(token!);
-  });
-  failedQueue = [];
+type InternalSessionRequestConfig = InternalAxiosRequestConfig & {
+  retried?: boolean;
+  sessionVersion?: number;
 };
 
-apiClient.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    const originalRequest = error.config as typeof error.config & { retried?: boolean };
+export type SessionRequestConfig = AxiosRequestConfig & { sessionVersion: number };
 
-    if (error.response?.status !== 401 || originalRequest.retried) {
-      return Promise.reject(error);
-    }
+type AuthTokenKey = 'accessToken' | 'refreshToken';
+export interface SessionCleanupResult {
+  success: boolean;
+  failedTokenKeys: AuthTokenKey[];
+}
+const AUTH_TOKEN_KEYS: AuthTokenKey[] = ['accessToken', 'refreshToken'];
 
-    if (isRefreshing) {
-      return new Promise<string>((resolve, reject) => {
-        failedQueue.push({ resolve, reject });
-      }).then((token) => {
-        originalRequest.retried = true;
-        originalRequest.headers.Authorization = `Bearer ${token}`;
-        return apiClient(originalRequest);
-      });
-    }
+// Capture the session before token lookup, and carry it through dispatch/retries.
+export const getAuthRequestConfig = async (
+  createUnauthorizedError: () => Error,
+  version = getSessionVersion()
+): Promise<SessionRequestConfig> => {
+  assertSessionAuthenticated(version);
+  const token = await SecureStore.getItemAsync('accessToken');
+  assertSessionAuthenticated(version);
+  if (!token) throw createUnauthorizedError();
+  return { headers: { Authorization: `Bearer ${token}` }, sessionVersion: version };
+};
 
-    originalRequest.retried = true;
-    isRefreshing = true;
+let refreshTask: {
+  version: number;
+  controller: AbortController;
+  promise: Promise<string>;
+} | null = null;
+let clearingSession: Promise<SessionCleanupResult> | null = null;
+let tokenWrite: Promise<void> = Promise.resolve();
 
+export const saveAuthTokens = (
+  tokens: { accessToken: string; refreshToken: string },
+  version: number
+): Promise<void> => {
+  const write = tokenWrite.then(async () => {
+    assertCurrentSession(version);
+    if (clearingSession) throw new axios.CanceledError('Session is being cleared');
+    await SecureStore.setItemAsync('accessToken', tokens.accessToken);
+    assertCurrentSession(version);
+    await SecureStore.setItemAsync('refreshToken', tokens.refreshToken);
+    markSessionAuthenticated(version);
+  });
+  tokenWrite = write.catch(() => {});
+  return write;
+};
+
+const refreshAccessToken = (version: number): Promise<string> => {
+  if (refreshTask?.version === version) return refreshTask.promise;
+
+  const controller = new AbortController();
+  const promise = (async () => {
     try {
       const storedRefresh = await SecureStore.getItemAsync('refreshToken');
-      if (!storedRefresh) return Promise.reject(error);
+      assertCurrentSession(version);
+      if (!storedRefresh) throw new AuthApiError('UNAUTHORIZED', '로그인이 필요합니다.');
 
       const { data } = await axios.post(
         `${apiClient.defaults.baseURL}/api/v1/auth/reissue`,
         { refreshToken: storedRefresh },
-        { headers: { 'Content-Type': 'application/json' } }
+        {
+          headers: { 'Content-Type': 'application/json' },
+          timeout: apiClient.defaults.timeout,
+          signal: controller.signal,
+        }
       );
-      const { accessToken, refreshToken: newRefresh } = data.result;
-
-      await SecureStore.setItemAsync('accessToken', accessToken);
-      await SecureStore.setItemAsync('refreshToken', newRefresh);
-
-      processQueue(null, accessToken);
-      originalRequest.headers.Authorization = `Bearer ${accessToken}`;
-      return apiClient(originalRequest);
-    } catch (refreshError) {
-      processQueue(refreshError, null);
-      await clearSession();
-      return Promise.reject(refreshError);
+      await saveAuthTokens(data.result, version);
+      return data.result.accessToken;
+    } catch (error) {
+      // 이전 세션의 늦은 실패로 새 세션을 종료하지 않는다.
+      if (isCurrentSession(version)) await clearSession();
+      throw error;
     } finally {
-      isRefreshing = false;
+      if (refreshTask?.controller === controller) refreshTask = null;
     }
+  })();
+  refreshTask = { version, controller, promise };
+  return promise;
+};
+
+apiClient.interceptors.request.use((config) => {
+  const request = config as InternalSessionRequestConfig;
+  request.sessionVersion ??= getSessionVersion();
+  assertCurrentSession(request.sessionVersion);
+  if (request.headers.Authorization) assertSessionAuthenticated(request.sessionVersion);
+  if (clearingSession) throw new axios.CanceledError('Session is being cleared');
+  return request;
+});
+
+apiClient.interceptors.response.use(
+  (response) => {
+    const request = response.config as InternalSessionRequestConfig;
+    assertCurrentSession(request.sessionVersion!);
+    return response;
+  },
+  async (error) => {
+    const originalRequest = error.config as InternalSessionRequestConfig | undefined;
+
+    if (originalRequest?.sessionVersion !== undefined) {
+      assertCurrentSession(originalRequest.sessionVersion);
+    }
+
+    if (
+      !originalRequest ||
+      error.response?.status !== 401 ||
+      originalRequest.retried ||
+      !originalRequest.headers.Authorization
+    ) {
+      return Promise.reject(error);
+    }
+
+    const version = originalRequest.sessionVersion!;
+    assertCurrentSession(version);
+    originalRequest.retried = true;
+    const token = await refreshAccessToken(version);
+    assertCurrentSession(version);
+    originalRequest.headers.Authorization = `Bearer ${token}`;
+    return apiClient(originalRequest);
   }
 );
 
-export const clearSession = async (): Promise<void> => {
-  GoogleSignin.signOut().catch(() => {});
+export const clearSession = (): Promise<SessionCleanupResult> => {
+  if (clearingSession) return clearingSession;
 
-  await Promise.allSettled([
-    SecureStore.deleteItemAsync('accessToken'),
-    SecureStore.deleteItemAsync('refreshToken'),
-  ]);
-  router.replace('/(auth)/login');
+  invalidateSession();
+  refreshTask?.controller.abort();
+  refreshTask = null;
+  useUserStore.getState().reset();
+  useChildrenStore.getState().reset();
+  useNotificationStore.getState().reset();
+  useRegisterStore.getState().reset();
+  useKakaoAuthStore.getState().reset();
+  useGoogleAuthStore.getState().reset();
+
+  clearingSession = tokenWrite
+    .then(async () => {
+      Promise.resolve()
+        .then(() => GoogleSignin.signOut())
+        .catch(() => {});
+      // 진행 중이던 토큰 저장이 끝난 뒤 삭제해 이전 토큰이 다시 남지 않게 한다.
+      const results = await Promise.allSettled(
+        AUTH_TOKEN_KEYS.map(async (key) => SecureStore.deleteItemAsync(key))
+      );
+      const failedKeys = AUTH_TOKEN_KEYS.filter((_, index) => results[index].status === 'rejected');
+      const retries = await Promise.allSettled(
+        failedKeys.map(async (key) => SecureStore.deleteItemAsync(key))
+      );
+      const failedTokenKeys = failedKeys.filter((_, index) => retries[index].status === 'rejected');
+      router.replace('/(auth)/login');
+      return { success: failedTokenKeys.length === 0, failedTokenKeys };
+    })
+    .finally(() => {
+      clearingSession = null;
+    });
+  return clearingSession;
 };
 
-export const logout = async (): Promise<void> => {
+export const logout = async (): Promise<SessionCleanupResult | undefined> => {
+  const version = getSessionVersion();
   try {
     const accessToken = await SecureStore.getItemAsync('accessToken');
+    assertCurrentSession(version);
     const refreshToken = await SecureStore.getItemAsync('refreshToken');
+    assertCurrentSession(version);
     if (accessToken) {
-      await apiClient.post(
-        '/api/v1/auth/logout',
-        { refreshToken },
-        { headers: { Authorization: `Bearer ${accessToken}` } }
-      );
+      const config: SessionRequestConfig = {
+        headers: { Authorization: `Bearer ${accessToken}` },
+        sessionVersion: version,
+      };
+      await apiClient.post('/api/v1/auth/logout', { refreshToken }, config);
     }
   } catch {
     // API 실패해도 로컬 토큰 삭제 후 로그인으로 이동
-  } finally {
-    await clearSession();
   }
+  if (isCurrentSession(version)) return clearSession();
+  return undefined;
 };
 
 export const checkLoginId = async (loginId: string): Promise<{ available: boolean }> => {

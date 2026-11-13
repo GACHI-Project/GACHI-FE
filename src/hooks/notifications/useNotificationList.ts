@@ -141,6 +141,30 @@ const useNotificationList = () => {
     }
   }, [loadPage, updateNotifications]);
 
+  // A failed write may still have committed on the server, and the total is refetched after it.
+  // Refetch the rows already shown so their read flags match that total without reloading pages.
+  const resyncLoadedReads = useCallback(() => {
+    const request = activeRequestRef.current;
+    const size = notificationsRef.current.length;
+    // An initial load in flight already retries because the write bumped the read version.
+    if (!mountedRef.current || !request || request.loading || size === 0) return;
+    loadPage({ size }, request, (result) => {
+      const readItems = new Map(
+        result.notifications.filter((item) => item.read).map((item) => [item.id, item])
+      );
+      if (readItems.size === 0) return;
+      // Read flags only move from unread to read, so never restore an unread flag here.
+      updateNotifications((current) =>
+        current.map((item) => {
+          const fresh = readItems.get(item.id);
+          return !item.read && fresh ? { ...item, read: true, readAt: fresh.readAt } : item;
+        })
+      );
+    }).catch(() => {
+      // Keep the current rows; the next focus reloads the list.
+    });
+  }, [loadPage, updateNotifications]);
+
   const markAsRead = useCallback(
     async (id: number) => {
       const target = notificationsRef.current.find((item) => item.id === id);
@@ -153,10 +177,11 @@ const useNotificationList = () => {
           );
         }
       } catch {
-        // No optimistic count or row update needs to be rolled back on failure.
+        // No optimistic update to roll back, but the write may have committed.
+        resyncLoadedReads();
       }
     },
-    [updateNotifications]
+    [updateNotifications, resyncLoadedReads]
   );
 
   const handleMarkAllRead = useCallback(async () => {
@@ -169,9 +194,10 @@ const useNotificationList = () => {
         );
       }
     } catch {
-      // Preserve rows, pages and successful individual reads on failure.
+      // Preserve rows, pages and successful individual reads, then resync possibly committed reads.
+      resyncLoadedReads();
     }
-  }, [updateNotifications]);
+  }, [updateNotifications, resyncLoadedReads]);
 
   return {
     notifications,

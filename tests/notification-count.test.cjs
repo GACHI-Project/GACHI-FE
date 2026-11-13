@@ -75,6 +75,12 @@ const setup = () => {
 const total = (s) => s.store.getState().unreadCount;
 const flags = (s) => Array.from(s.hook.result.notifications, (notification) => notification.read);
 const ids = (s) => Array.from(s.hook.result.notifications, (notification) => notification.id);
+// Finds the most recent matching page request, since earlier ones may share the same params.
+const pageCall = (s, match) => {
+  const call = [...s.pages.calls].reverse().find((candidate) => match(candidate.args[0] ?? {}));
+  assert.ok(call, 'expected a matching page request');
+  return call;
+};
 
 test('first page of 20 read notifications retains five unread notifications on older pages', async () => {
   const s = setup();
@@ -439,13 +445,77 @@ test('a page waiting on a failed read refetches without discarding other rows', 
   s.reads.calls[0].reject(new Error('failed'));
   await read;
   await s.hook.flush();
-  assert.equal(s.pages.calls.length, 3);
-  s.pages.calls[2].resolve(page([item(2)]));
+  // The page retry and the resync of displayed rows are both issued after the failure.
+  assert.equal(s.pages.calls.length, 4);
+  pageCall(s, (params) => params.cursor === 1).resolve(page([item(2)]));
+  pageCall(s, (params) => params.cursor === undefined && params.size === 1).resolve(
+    page([item(1)], 1)
+  );
   await more;
   await s.hook.flush();
   assert.deepEqual(ids(s), [1, 2]);
   assert.deepEqual(flags(s), [false, false]);
   assert.equal(total(s), 5);
+});
+
+test('a lost single read response resyncs displayed rows without resetting pagination', async () => {
+  const s = setup();
+  await s.start([item(1), item(2)], 5, 2);
+  const read = s.hook.result.markAsRead(1);
+  s.reads.calls[0].reject(new Error('response lost after commit'));
+  await read;
+  await s.hook.flush();
+  assert.equal(s.pages.calls.length, 2);
+  assert.deepEqual({ ...s.pages.calls[1].args[0] }, { size: 2 });
+  s.pages.calls[1].resolve(page([item(1, true), item(2)], 2));
+  s.counts.calls[1].resolve(4);
+  await s.hook.flush();
+  assert.deepEqual(flags(s), [true, false]);
+  assert.equal(total(s), 4);
+  const more = s.hook.result.loadMore();
+  assert.equal(s.pages.calls[2].args[0].cursor, 2);
+  s.pages.calls[2].resolve(page([item(3)]));
+  await more;
+  await s.hook.flush();
+  assert.deepEqual(ids(s), [1, 2, 3]);
+});
+
+test('a lost read-all response resyncs only the read flags of loaded rows', async () => {
+  const s = setup();
+  await s.start([item(1), item(2)], 5, 2);
+  const more = s.hook.result.loadMore();
+  s.pages.calls[1].resolve(page([item(3)]));
+  await more;
+  await s.hook.flush();
+  const all = s.hook.result.handleMarkAllRead();
+  s.allReads.calls[0].reject(new Error('response lost after commit'));
+  await all;
+  await s.hook.flush();
+  assert.deepEqual({ ...s.pages.calls[2].args[0] }, { size: 3 });
+  // A new arrival shifts the window; it is not inserted and the row outside the window keeps its flag.
+  s.pages.calls[2].resolve(page([item(4), item(1, true), item(2, true)], 2));
+  s.counts.calls[1].resolve(0);
+  await s.hook.flush();
+  assert.deepEqual(ids(s), [1, 2, 3]);
+  assert.deepEqual(flags(s), [true, true, false]);
+  assert.equal(total(s), 0);
+});
+
+test('resync after a failed read never restores an unread flag', async () => {
+  const s = setup();
+  await s.start([item(1), item(2)], 5);
+  const success = s.hook.result.markAsRead(2);
+  s.reads.calls[0].resolve(1);
+  await success;
+  await s.hook.flush();
+  s.counts.calls[1].resolve(4);
+  const failure = s.hook.result.markAsRead(1);
+  s.reads.calls[1].reject(new Error('failed'));
+  await failure;
+  await s.hook.flush();
+  s.pages.calls[1].resolve(page([item(1), item(2)]));
+  await s.hook.flush();
+  assert.deepEqual(flags(s), [false, true]);
 });
 
 test('single reads from a remounted screen share the pending request and decrement only once', async () => {

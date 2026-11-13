@@ -448,7 +448,7 @@ test('a page waiting on a failed read refetches without discarding other rows', 
   // The page retry and the resync of displayed rows are both issued after the failure.
   assert.equal(s.pages.calls.length, 4);
   pageCall(s, (params) => params.cursor === 1).resolve(page([item(2)]));
-  pageCall(s, (params) => params.cursor === undefined && params.size === 1).resolve(
+  pageCall(s, (params) => params.cursor === undefined && params.size === 20).resolve(
     page([item(1)], 1)
   );
   await more;
@@ -466,7 +466,7 @@ test('a lost single read response resyncs displayed rows without resetting pagin
   await read;
   await s.hook.flush();
   assert.equal(s.pages.calls.length, 2);
-  assert.deepEqual({ ...s.pages.calls[1].args[0] }, { size: 2 });
+  assert.deepEqual({ ...s.pages.calls[1].args[0] }, { size: 20 });
   s.pages.calls[1].resolve(page([item(1, true), item(2)], 2));
   s.counts.calls[1].resolve(4);
   await s.hook.flush();
@@ -480,7 +480,7 @@ test('a lost single read response resyncs displayed rows without resetting pagin
   assert.deepEqual(ids(s), [1, 2, 3]);
 });
 
-test('a lost read-all response resyncs only the read flags of loaded rows', async () => {
+test('a lost read-all response follows cursors until every loaded row is resynced', async () => {
   const s = setup();
   await s.start([item(1), item(2)], 5, 2);
   const more = s.hook.result.loadMore();
@@ -491,14 +491,46 @@ test('a lost read-all response resyncs only the read flags of loaded rows', asyn
   s.allReads.calls[0].reject(new Error('response lost after commit'));
   await all;
   await s.hook.flush();
-  assert.deepEqual({ ...s.pages.calls[2].args[0] }, { size: 3 });
-  // A new arrival shifts the window; it is not inserted and the row outside the window keeps its flag.
+  assert.deepEqual({ ...s.pages.calls[2].args[0] }, { size: 20 });
+  // A new arrival shifts row 3 to the next page; it is not inserted into the loaded rows.
   s.pages.calls[2].resolve(page([item(4), item(1, true), item(2, true)], 2));
   s.counts.calls[1].resolve(0);
   await s.hook.flush();
-  assert.deepEqual(ids(s), [1, 2, 3]);
   assert.deepEqual(flags(s), [true, true, false]);
+  assert.deepEqual({ ...s.pages.calls[3].args[0] }, { cursor: 2, size: 20 });
+  s.pages.calls[3].resolve(page([item(3, true)]));
+  await s.hook.flush();
+  assert.equal(s.pages.calls.length, 4);
+  assert.deepEqual(ids(s), [1, 2, 3]);
+  assert.deepEqual(flags(s), [true, true, true]);
   assert.equal(total(s), 0);
+  // Resync cursors do not leak into the list: its last page still reports no next page.
+  const next = s.hook.result.loadMore();
+  assert.equal(s.pages.calls.length, 4);
+  await next;
+});
+
+test('a failed read resyncs applied rows while children are still loading', async () => {
+  const s = setup();
+  s.hook.render();
+  s.pages.calls[0].resolve(page([item(1), item(2)]));
+  s.counts.calls[0].resolve(5);
+  await s.hook.flush();
+  assert.equal(s.hook.result.isLoading, true);
+  const read = s.hook.result.markAsRead(1);
+  s.reads.calls[0].reject(new Error('response lost after commit'));
+  await read;
+  await s.hook.flush();
+  assert.equal(s.pages.calls.length, 2);
+  s.pages.calls[1].resolve(page([item(1, true), item(2)]));
+  s.counts.calls[1].resolve(4);
+  await s.hook.flush();
+  assert.deepEqual(flags(s), [true, false]);
+  s.children.calls[0].resolve([]);
+  await s.hook.flush();
+  assert.equal(s.hook.result.isLoading, false);
+  assert.deepEqual(flags(s), [true, false]);
+  assert.equal(total(s), 4);
 });
 
 test('resync after a failed read never restores an unread flag', async () => {

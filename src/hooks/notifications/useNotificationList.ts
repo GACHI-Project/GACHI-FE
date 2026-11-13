@@ -16,9 +16,13 @@ import {
   waitForNotificationReads,
 } from '../../utils/unreadCount';
 
+const PAGE_SIZE = 20;
+
 interface ListRequest {
   cursor: number | null;
   hasNext: boolean;
+  // Initial rows have been applied; loading can stay true while children are still loading.
+  pageLoaded: boolean;
   loading: boolean;
   loadingMore: boolean;
 }
@@ -78,6 +82,7 @@ const useNotificationList = () => {
     const request: ListRequest = {
       cursor: null,
       hasNext: false,
+      pageLoaded: false,
       loading: true,
       loadingMore: false,
     };
@@ -88,10 +93,11 @@ const useNotificationList = () => {
     void refreshUnreadCount().catch(() => {});
 
     Promise.all([
-      loadPage({ size: 20 }, request, (result) => {
+      loadPage({ size: PAGE_SIZE }, request, (result) => {
         updateNotifications(() => result.notifications);
         request.cursor = result.nextCursor;
         request.hasNext = result.hasNext;
+        request.pageLoaded = true;
       }),
       fetchChildren().then((result) => {
         if (activeRequestRef.current === request) setChildren(result);
@@ -123,14 +129,21 @@ const useNotificationList = () => {
     request.loadingMore = true;
     setIsFetchingMore(true);
     try {
-      await loadPage({ cursor: request.cursor ?? undefined, size: 20 }, request, (result) => {
-        updateNotifications((current) => {
-          const existingIds = new Set(current.map((item) => item.id));
-          return [...current, ...result.notifications.filter((item) => !existingIds.has(item.id))];
-        });
-        request.cursor = result.nextCursor;
-        request.hasNext = result.hasNext;
-      });
+      await loadPage(
+        { cursor: request.cursor ?? undefined, size: PAGE_SIZE },
+        request,
+        (result) => {
+          updateNotifications((current) => {
+            const existingIds = new Set(current.map((item) => item.id));
+            return [
+              ...current,
+              ...result.notifications.filter((item) => !existingIds.has(item.id)),
+            ];
+          });
+          request.cursor = result.nextCursor;
+          request.hasNext = result.hasNext;
+        }
+      );
     } catch {
       // The same cursor can be retried after a failed page request.
     } finally {
@@ -142,27 +155,42 @@ const useNotificationList = () => {
   }, [loadPage, updateNotifications]);
 
   // A failed write may still have committed on the server, and the total is refetched after it.
-  // Refetch the rows already shown so their read flags match that total without reloading pages.
-  const resyncLoadedReads = useCallback(() => {
+  // Recheck every loaded unread row so its read flag matches that total, without touching the
+  // list cursor. New arrivals can push loaded rows to later pages, so follow cursors until all
+  // loaded unread IDs have been seen.
+  const resyncLoadedReads = useCallback(async () => {
     const request = activeRequestRef.current;
-    const size = notificationsRef.current.length;
-    // An initial load in flight already retries because the write bumped the read version.
-    if (!mountedRef.current || !request || request.loading || size === 0) return;
-    loadPage({ size }, request, (result) => {
-      const readItems = new Map(
-        result.notifications.filter((item) => item.read).map((item) => [item.id, item])
-      );
-      if (readItems.size === 0) return;
-      // Read flags only move from unread to read, so never restore an unread flag here.
-      updateNotifications((current) =>
-        current.map((item) => {
-          const fresh = readItems.get(item.id);
-          return !item.read && fresh ? { ...item, read: true, readAt: fresh.readAt } : item;
-        })
-      );
-    }).catch(() => {
-      // Keep the current rows; the next focus reloads the list.
-    });
+    // An initial page in flight already retries because the write bumped the read version.
+    if (!mountedRef.current || !request || !request.pageLoaded) return;
+    const loaded = notificationsRef.current;
+    const pendingIds = new Set(loaded.filter((item) => !item.read).map((item) => item.id));
+    const size = Math.max(loaded.length, PAGE_SIZE);
+    let cursor: number | undefined;
+
+    while (pendingIds.size > 0) {
+      let result = null as NotificationsResult | null;
+      // eslint-disable-next-line no-await-in-loop -- each page depends on the previous cursor.
+      await loadPage(cursor === undefined ? { size } : { cursor, size }, request, (page) => {
+        result = page;
+      });
+      if (!result || activeRequestRef.current !== request) return;
+
+      const readItems = new Map<number, NotificationApiItem>();
+      result.notifications.forEach((item) => {
+        if (pendingIds.delete(item.id) && item.read) readItems.set(item.id, item);
+      });
+      if (readItems.size > 0) {
+        // Read flags only move from unread to read, so never restore an unread flag here.
+        updateNotifications((current) =>
+          current.map((item) => {
+            const fresh = readItems.get(item.id);
+            return !item.read && fresh ? { ...item, read: true, readAt: fresh.readAt } : item;
+          })
+        );
+      }
+      if (!result.hasNext || result.nextCursor === null) return;
+      cursor = result.nextCursor;
+    }
   }, [loadPage, updateNotifications]);
 
   const markAsRead = useCallback(
@@ -178,7 +206,8 @@ const useNotificationList = () => {
         }
       } catch {
         // No optimistic update to roll back, but the write may have committed.
-        resyncLoadedReads();
+        // Keep the current rows if the resync fails; the next focus reloads the list.
+        void resyncLoadedReads().catch(() => {});
       }
     },
     [updateNotifications, resyncLoadedReads]
@@ -195,7 +224,7 @@ const useNotificationList = () => {
       }
     } catch {
       // Preserve rows, pages and successful individual reads, then resync possibly committed reads.
-      resyncLoadedReads();
+      void resyncLoadedReads().catch(() => {});
     }
   }, [updateNotifications, resyncLoadedReads]);
 

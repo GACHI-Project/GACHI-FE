@@ -1,6 +1,5 @@
 import axios from 'axios';
-import * as SecureStore from 'expo-secure-store';
-import { apiClient } from './auth';
+import { apiClient, getAuthRequestConfig } from './auth';
 
 export class ChildApiError extends Error {
   constructor(
@@ -22,11 +21,8 @@ const wrapError = (error: unknown): Error => {
   return error instanceof Error ? error : new Error(String(error));
 };
 
-const getAuthHeader = async () => {
-  const token = await SecureStore.getItemAsync('accessToken');
-  if (!token) throw new ChildApiError('UNAUTHORIZED', '로그인이 필요합니다.');
-  return { Authorization: `Bearer ${token}` };
-};
+const getAuthConfig = (version?: number) =>
+  getAuthRequestConfig(() => new ChildApiError('UNAUTHORIZED', '로그인이 필요합니다.'), version);
 
 export interface ChildPayload {
   name: string;
@@ -50,12 +46,17 @@ export interface ChildResult {
   createdAt: string;
 }
 
-export const registerChild = async (child: ChildPayload): Promise<ChildResult> => {
+export const registerChild = async (
+  child: ChildPayload,
+  sessionVersion?: number
+): Promise<ChildResult> => {
   try {
-    const headers = await getAuthHeader();
-    const response = await apiClient.post<{ result: ChildResult }>('/api/v1/children', child, {
-      headers,
-    });
+    const config = await getAuthConfig(sessionVersion);
+    const response = await apiClient.post<{ result: ChildResult }>(
+      '/api/v1/children',
+      child,
+      config
+    );
     return response.data.result;
   } catch (error) {
     throw wrapError(error);
@@ -64,10 +65,10 @@ export const registerChild = async (child: ChildPayload): Promise<ChildResult> =
 
 export const registerChildren = async (children: ChildPayload[]): Promise<ChildResult[]> => {
   try {
-    const headers = await getAuthHeader();
+    const config = await getAuthConfig();
     const results = await Promise.all(
       children.map((child) =>
-        apiClient.post<{ result: ChildResult }>('/api/v1/children', child, { headers })
+        apiClient.post<{ result: ChildResult }>('/api/v1/children', child, config)
       )
     );
     return results.map((res) => res.data.result);
@@ -78,10 +79,8 @@ export const registerChildren = async (children: ChildPayload[]): Promise<ChildR
 
 export const getMyChildren = async (): Promise<ChildResult[]> => {
   try {
-    const headers = await getAuthHeader();
-    const response = await apiClient.get<{ result: ChildResult[] }>('/api/v1/children', {
-      headers,
-    });
+    const config = await getAuthConfig();
+    const response = await apiClient.get<{ result: ChildResult[] }>('/api/v1/children', config);
     return response.data.result ?? [];
   } catch (error) {
     throw wrapError(error);
@@ -104,8 +103,8 @@ export interface UpdateChildParams {
 
 export const updateChild = async (childId: number, params: UpdateChildParams): Promise<void> => {
   try {
-    const headers = await getAuthHeader();
-    await apiClient.patch(`/api/v1/children/${childId}`, params, { headers });
+    const config = await getAuthConfig();
+    await apiClient.patch(`/api/v1/children/${childId}`, params, config);
   } catch (error) {
     throw wrapError(error);
   }
@@ -113,8 +112,8 @@ export const updateChild = async (childId: number, params: UpdateChildParams): P
 
 export const deleteChild = async (childId: number): Promise<void> => {
   try {
-    const headers = await getAuthHeader();
-    await apiClient.delete(`/api/v1/children/${childId}`, { headers });
+    const config = await getAuthConfig();
+    await apiClient.delete(`/api/v1/children/${childId}`, config);
   } catch (error) {
     throw wrapError(error);
   }

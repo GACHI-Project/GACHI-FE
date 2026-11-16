@@ -12,7 +12,9 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "typecheck": "tsc --noEmit",
-    "test:notifications": "node --test tests/notification-count.test.cjs"
+    "test:notifications": "node --test tests/notification-count.test.cjs",
+    "test:lists": "node --test tests/async-list-state.test.cjs",
+    "test:auth": "node --test tests/auth-session.test.cjs"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.2",

@@ -1,5 +1,6 @@
 import { fetchUnreadCount } from '../api/notifications';
 import { useNotificationStore } from '../store/notificationStore';
+import { getSessionVersion, isCurrentSession } from './authSession';
 
 let requestVersion = 0;
 const pendingReads = new Map<number | 'all', Promise<void>>();
@@ -21,10 +22,12 @@ export const waitForNotificationReads = async (): Promise<void> => {
 export const refreshUnreadCount = async (): Promise<void> => {
   requestVersion += 1;
   const version = requestVersion;
+  const sessionVersion = getSessionVersion();
   if (pendingReads.size > 0) return;
 
   const count = await fetchUnreadCount();
-  if (version === requestVersion && pendingReads.size === 0) {
+  // A total from a previous session must not reappear after logout or in the next account.
+  if (version === requestVersion && pendingReads.size === 0 && isCurrentSession(sessionVersion)) {
     useNotificationStore.getState().setUnreadCount(count);
   }
 };
@@ -43,6 +46,7 @@ export const runNotificationRead = (
   }
   readVersion += 1;
   requestVersion += 1;
+  const sessionVersion = getSessionVersion();
   let operation: Promise<number>;
   try {
     operation = read();
@@ -52,7 +56,9 @@ export const runNotificationRead = (
   const request = operation
     .then((readCount) => {
       // readCount is the number changed by this write, not the remaining unread total.
-      useNotificationStore.getState().decreaseUnreadCount(readCount);
+      if (isCurrentSession(sessionVersion)) {
+        useNotificationStore.getState().decreaseUnreadCount(readCount);
+      }
     })
     .finally(() => {
       // A failed response does not prove the server did not commit the write.

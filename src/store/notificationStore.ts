@@ -4,6 +4,7 @@ interface NotificationStore {
   unreadCount: number;
   setUnreadCount: (count: number) => void;
   decreaseUnreadCount: (readCount: number) => void;
+  reset: () => void;
 }
 
 export const useNotificationStore = create<NotificationStore>((set) => ({
@@ -11,4 +12,5 @@ export const useNotificationStore = create<NotificationStore>((set) => ({
   setUnreadCount: (count) => set({ unreadCount: Math.max(0, count) }),
   decreaseUnreadCount: (readCount) =>
     set((state) => ({ unreadCount: Math.max(0, state.unreadCount - Math.max(0, readCount)) })),
+  reset: () => set({ unreadCount: 0 }),
 }));

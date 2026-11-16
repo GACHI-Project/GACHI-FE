@@ -1,6 +1,5 @@
 import axios from 'axios';
-import * as SecureStore from 'expo-secure-store';
-import { apiClient } from './auth';
+import { apiClient, getAuthRequestConfig } from './auth';
 
 export class NotificationApiError extends Error {
   constructor(
@@ -22,13 +21,11 @@ const wrapError = (error: unknown): Error => {
   return error instanceof Error ? error : new Error(String(error));
 };
 
-const getAuthHeader = async () => {
-  const token = await SecureStore.getItemAsync('accessToken');
-  if (!token) {
-    throw new NotificationApiError('UNAUTHORIZED', '로그인이 필요합니다.');
-  }
-  return { Authorization: `Bearer ${token}` };
-};
+const getAuthConfig = (version?: number) =>
+  getAuthRequestConfig(
+    () => new NotificationApiError('UNAUTHORIZED', '로그인이 필요합니다.'),
+    version
+  );
 
 export type NotificationType =
   | 'NEWSLETTER_ANALYSIS'
@@ -66,9 +63,9 @@ export const fetchNotifications = async (
   params: FetchNotificationsParams = {}
 ): Promise<NotificationsResult> => {
   try {
-    const headers = await getAuthHeader();
+    const config = await getAuthConfig();
     const { data } = await apiClient.get<{ result: NotificationsResult }>('/api/v1/notifications', {
-      headers,
+      ...config,
       params,
     });
     return data.result;
@@ -79,11 +76,11 @@ export const fetchNotifications = async (
 
 export const markNotificationRead = async (notificationId: number): Promise<number> => {
   try {
-    const headers = await getAuthHeader();
+    const config = await getAuthConfig();
     const { data } = await apiClient.patch<{ result: { readCount: number } }>(
       `/api/v1/notifications/${notificationId}/read`,
       undefined,
-      { headers }
+      config
     );
     return data.result.readCount;
   } catch (error) {
@@ -93,11 +90,11 @@ export const markNotificationRead = async (notificationId: number): Promise<numb
 
 export const markAllNotificationsRead = async (): Promise<number> => {
   try {
-    const headers = await getAuthHeader();
+    const config = await getAuthConfig();
     const { data } = await apiClient.patch<{ result: { readCount: number } }>(
       '/api/v1/notifications/read-all',
       undefined,
-      { headers }
+      config
     );
     return data.result.readCount;
   } catch (error) {
@@ -123,10 +120,10 @@ export interface PushTokenResult {
 
 export const fetchUnreadCount = async (): Promise<number> => {
   try {
-    const headers = await getAuthHeader();
+    const config = await getAuthConfig();
     const { data } = await apiClient.get<{ result: { unreadCount: number } }>(
       '/api/v1/notifications/unread-count',
-      { headers }
+      config
     );
     return data.result.unreadCount;
   } catch (error) {
@@ -138,11 +135,11 @@ export const registerPushToken = async (
   params: RegisterPushTokenParams
 ): Promise<PushTokenResult> => {
   try {
-    const headers = await getAuthHeader();
+    const config = await getAuthConfig();
     const { data } = await apiClient.post<{ result: PushTokenResult }>(
       '/api/v1/notifications/tokens',
       params,
-      { headers }
+      config
     );
     return data.result;
   } catch (error) {

@@ -1,6 +1,5 @@
 import axios from 'axios';
-import * as SecureStore from 'expo-secure-store';
-import { apiClient } from './auth';
+import { apiClient, getAuthRequestConfig } from './auth';
 
 export class UserApiError extends Error {
   constructor(
@@ -22,13 +21,8 @@ const wrapError = (error: unknown): Error => {
   return error instanceof Error ? error : new Error(String(error));
 };
 
-const getAuthHeader = async () => {
-  const token = await SecureStore.getItemAsync('accessToken');
-  if (!token) {
-    throw new UserApiError('UNAUTHORIZED', '로그인이 필요합니다.');
-  }
-  return { Authorization: `Bearer ${token}` };
-};
+const getAuthConfig = (version?: number) =>
+  getAuthRequestConfig(() => new UserApiError('UNAUTHORIZED', '로그인이 필요합니다.'), version);
 
 export interface UserInfo {
   userId: number;
@@ -47,8 +41,8 @@ export interface UserInfo {
 
 export const fetchMyInfo = async (): Promise<UserInfo> => {
   try {
-    const headers = await getAuthHeader();
-    const { data } = await apiClient.get<{ result: UserInfo }>('/api/v1/users/me', { headers });
+    const config = await getAuthConfig();
+    const { data } = await apiClient.get<{ result: UserInfo }>('/api/v1/users/me', config);
     return data.result;
   } catch (error) {
     throw wrapError(error);
@@ -59,8 +53,8 @@ export const getMe = async (): Promise<UserInfo> => fetchMyInfo();
 
 export const updateLanguage = async (languageCode: string): Promise<void> => {
   try {
-    const headers = await getAuthHeader();
-    await apiClient.patch('/api/v1/users/me/language', { languageCode }, { headers });
+    const config = await getAuthConfig();
+    await apiClient.patch('/api/v1/users/me/language', { languageCode }, config);
   } catch (error) {
     throw wrapError(error);
   }
@@ -73,11 +67,11 @@ export const sendEmailChangeCode = async (
   currentPassword: string
 ): Promise<{ codeTtlSeconds: number; resendCooldownSeconds: number }> => {
   try {
-    const headers = await getAuthHeader();
+    const config = await getAuthConfig();
     const { data } = await apiClient.post(
       '/api/v1/users/me/email/send',
       { email, currentPassword },
-      { headers }
+      config
     );
     return data.result;
   } catch (error) {
@@ -87,8 +81,8 @@ export const sendEmailChangeCode = async (
 
 export const verifyEmailChangeCode = async (email: string, code: string): Promise<void> => {
   try {
-    const headers = await getAuthHeader();
-    await apiClient.post('/api/v1/users/me/email/verify', { email, code }, { headers });
+    const config = await getAuthConfig();
+    await apiClient.post('/api/v1/users/me/email/verify', { email, code }, config);
   } catch (error) {
     throw wrapError(error);
   }
@@ -96,8 +90,8 @@ export const verifyEmailChangeCode = async (email: string, code: string): Promis
 
 export const changeEmail = async (email: string): Promise<void> => {
   try {
-    const headers = await getAuthHeader();
-    await apiClient.patch('/api/v1/users/me/email', { email }, { headers });
+    const config = await getAuthConfig();
+    await apiClient.patch('/api/v1/users/me/email', { email }, config);
   } catch (error) {
     throw wrapError(error);
   }
@@ -108,8 +102,8 @@ export const updateProfile = async (params: {
   phoneNumber?: string;
 }): Promise<void> => {
   try {
-    const headers = await getAuthHeader();
-    await apiClient.patch('/api/v1/users/me/profile', params, { headers });
+    const config = await getAuthConfig();
+    await apiClient.patch('/api/v1/users/me/profile', params, config);
   } catch (error) {
     throw wrapError(error);
   }
@@ -119,8 +113,8 @@ export const updateNotificationPreference = async (
   notificationPreference: NotificationPreference
 ): Promise<void> => {
   try {
-    const headers = await getAuthHeader();
-    await apiClient.patch('/api/v1/users/me/notification', { notificationPreference }, { headers });
+    const config = await getAuthConfig();
+    await apiClient.patch('/api/v1/users/me/notification', { notificationPreference }, config);
   } catch (error) {
     throw wrapError(error);
   }
@@ -129,9 +123,9 @@ export const updateNotificationPreference = async (
 export const withdrawUser = async (currentPassword: string): Promise<void> => {
   let responseData: { success?: boolean; code?: string; message?: string } | undefined;
   try {
-    const headers = await getAuthHeader();
+    const config = await getAuthConfig();
     const { data } = await apiClient.delete('/api/v1/users/me', {
-      headers,
+      ...config,
       data: { currentPassword },
     });
     responseData = data;
@@ -155,8 +149,8 @@ export interface ChangePasswordPayload {
 export const changePassword = async (payload: ChangePasswordPayload): Promise<void> => {
   let responseData: { success?: boolean; code?: string; message?: string } | undefined;
   try {
-    const headers = await getAuthHeader();
-    const { data } = await apiClient.patch('/api/v1/users/me/password', payload, { headers });
+    const config = await getAuthConfig();
+    const { data } = await apiClient.patch('/api/v1/users/me/password', payload, config);
     responseData = data;
   } catch (error) {
     throw wrapError(error);

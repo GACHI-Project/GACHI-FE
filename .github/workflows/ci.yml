@@ -42,5 +42,11 @@ jobs:
       - name: Notification count tests
         run: npm run test:notifications
 
+      - name: List state tests
+        run: npm run test:lists
+
+      - name: Auth session tests
+        run: npm run test:auth
+
       - name: Format check
         run: npm run format:check

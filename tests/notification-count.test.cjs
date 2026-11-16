@@ -5,6 +5,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 const test = require('node:test');
 const ts = require('typescript');
+const axios = require('axios');
 const { create } = require('zustand');
 const { hookHarness, queuedApi } = require('./helpers/hookHarness.cjs');
 
@@ -48,9 +49,11 @@ const setup = () => {
   const { useNotificationStore: store } = loadModule('src/store/notificationStore.ts', {
     zustand: { create },
   });
+  const session = loadModule('src/utils/authSession.ts', { axios });
   const counter = loadModule('src/utils/unreadCount.ts', {
     '../api/notifications': { fetchUnreadCount: counts.request },
     '../store/notificationStore': { useNotificationStore: store },
+    './authSession': session,
   });
   const makeHook = () =>
     hookHarness('src/hooks/notifications/useNotificationList.ts', {
@@ -61,6 +64,7 @@ const setup = () => {
       },
       '../../api/calendar': { fetchChildren: children.request },
       '../../utils/unreadCount': counter,
+      '../../utils/authSession': session,
     });
   const hook = makeHook();
   const start = async (notifications = [item(1), item(2)], count = 5, cursor = null) => {
@@ -70,7 +74,19 @@ const setup = () => {
     counts.calls[0].resolve(count);
     await hook.flush();
   };
-  return { hook, counts, pages, children, reads, allReads, store, counter, start, makeHook };
+  return {
+    hook,
+    counts,
+    pages,
+    children,
+    reads,
+    allReads,
+    store,
+    counter,
+    session,
+    start,
+    makeHook,
+  };
 };
 const total = (s) => s.store.getState().unreadCount;
 const flags = (s) => Array.from(s.hook.result.notifications, (notification) => notification.read);

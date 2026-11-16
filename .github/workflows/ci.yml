@@ -39,6 +39,9 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
+      - name: Notification count tests
+        run: npm run test:notifications
+
       - name: List state tests
         run: npm run test:lists
 

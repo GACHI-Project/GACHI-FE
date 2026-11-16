@@ -3,7 +3,6 @@ import axios from 'axios';
 import { View, Text, Image, TouchableOpacity, ScrollView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
-import * as SecureStore from 'expo-secure-store';
 import * as WebBrowser from 'expo-web-browser';
 import {
   GoogleSignin,
@@ -18,8 +17,14 @@ import {
   AuthApiError,
   getKakaoAuthorizeUrl,
   completeGoogleLogin,
+  saveAuthTokens,
   LoginResult,
 } from '../../src/api/auth';
+import {
+  getSessionVersion,
+  isCurrentSession,
+  assertCurrentSession,
+} from '../../src/utils/authSession';
 import { getMe } from '../../src/api/user';
 import { useUserStore } from '../../src/store/userStore';
 import { useRegisterStore } from '../../src/store/registerStore';
@@ -64,33 +69,37 @@ const LoginScreen = () => {
     }
   }, [kakaoError, t]);
 
-  const finishLogin = async (tokens: LoginResult) => {
-    await SecureStore.setItemAsync('accessToken', tokens.accessToken);
-    await SecureStore.setItemAsync('refreshToken', tokens.refreshToken);
+  const finishLogin = async (tokens: LoginResult, version: number) => {
+    await saveAuthTokens(tokens, version);
 
     try {
       const me = await getMe();
+      assertCurrentSession(version);
       setName(me.name);
       const lang = fromServerLanguageCode(me.languageCode) as SupportedLanguage;
       if (SUPPORTED_LANGUAGES.includes(lang)) {
         await saveLanguage(lang);
+        assertCurrentSession(version);
         await i18n.changeLanguage(lang);
       }
     } catch {
       /* language sync failure should not block login */
     }
 
+    assertCurrentSession(version);
     router.replace('/(tabs)');
     registerDevicePushToken().catch(() => {});
   };
 
   const handleLogin = async () => {
+    const version = getSessionVersion();
     setLoading(true);
     setErrorMessage(undefined);
     try {
       const result = await login(id, password, stayLoggedIn);
-      await finishLogin(result);
+      await finishLogin(result, version);
     } catch (error) {
+      if (!isCurrentSession(version)) return;
       if (error instanceof AuthApiError) {
         if (error.code === 'AUTH4011') {
           setErrorMessage(t('auth.login.error.invalidCredentials'));
@@ -123,6 +132,7 @@ const LoginScreen = () => {
   };
 
   const handleGoogleLogin = async () => {
+    const version = getSessionVersion();
     setGoogleLoading(true);
     setErrorMessage(undefined);
     try {
@@ -133,6 +143,7 @@ const LoginScreen = () => {
 
       await GoogleSignin.hasPlayServices();
       const response = await GoogleSignin.signIn();
+      assertCurrentSession(version);
       if (response.type === 'cancelled') {
         return;
       }
@@ -144,9 +155,10 @@ const LoginScreen = () => {
       }
 
       const res = await completeGoogleLogin(idToken, stayLoggedIn);
+      assertCurrentSession(version);
 
       if (res.status === 'LOGIN_SUCCESS' && res.tokens) {
-        await finishLogin(res.tokens);
+        await finishLogin(res.tokens, version);
       } else if (res.signupToken) {
         useGoogleAuthStore.getState().setRememberMe(stayLoggedIn);
         useRegisterStore.getState().reset();
@@ -160,6 +172,7 @@ const LoginScreen = () => {
         setErrorMessage(t('auth.login.error.generic'));
       }
     } catch (error) {
+      if (!isCurrentSession(version)) return;
       if (error instanceof AuthApiError) {
         if (error.code === 'AUTH4011') {
           setErrorMessage(t('auth.login.error.invalidCredentials'));

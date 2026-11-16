@@ -9,7 +9,18 @@ import { PrimaryButton } from '../../../src/components/common/Button';
 import colors from '../../../src/constants/colors';
 import fonts from '../../../src/constants/fonts';
 import layout from '../../../src/constants/layout';
-import { signup, login, signupWithKakao, signupWithGoogle } from '../../../src/api/auth';
+import {
+  signup,
+  login,
+  signupWithKakao,
+  signupWithGoogle,
+  saveAuthTokens,
+} from '../../../src/api/auth';
+import {
+  getSessionVersion,
+  isCurrentSession,
+  assertCurrentSession,
+} from '../../../src/utils/authSession';
 import { registerChild } from '../../../src/api/child';
 import { useRegisterStore } from '../../../src/store/registerStore';
 import { useKakaoAuthStore } from '../../../src/store/kakaoAuthStore';
@@ -26,6 +37,7 @@ const RegisterCompleteScreen = () => {
   const [errorMessage, setErrorMessage] = useState<string>('');
 
   const run = useCallback(async () => {
+    const version = getSessionVersion();
     const {
       loginId,
       password,
@@ -71,8 +83,7 @@ const RegisterCompleteScreen = () => {
             notificationPreference,
             rememberMe: useKakaoAuthStore.getState().rememberMe,
           });
-          await SecureStore.setItemAsync('accessToken', tokens.accessToken);
-          await SecureStore.setItemAsync('refreshToken', tokens.refreshToken);
+          await saveAuthTokens(tokens, version);
           setSignupDone(true);
           setLoginDone(true);
         }
@@ -85,8 +96,7 @@ const RegisterCompleteScreen = () => {
             notificationPreference,
             rememberMe: useGoogleAuthStore.getState().rememberMe,
           });
-          await SecureStore.setItemAsync('accessToken', tokens.accessToken);
-          await SecureStore.setItemAsync('refreshToken', tokens.refreshToken);
+          await saveAuthTokens(tokens, version);
           setSignupDone(true);
           setLoginDone(true);
         }
@@ -103,33 +113,36 @@ const RegisterCompleteScreen = () => {
             languageCode,
             notificationPreference,
           });
+          assertCurrentSession(version);
           setSignupDone(true);
         }
 
         if (!loginDone) {
           const result = await login(loginId, password, false);
-          await SecureStore.setItemAsync('accessToken', result.accessToken);
-          await SecureStore.setItemAsync('refreshToken', result.refreshToken);
+          await saveAuthTokens(result, version);
           setLoginDone(true);
         } else {
           const stored = await SecureStore.getItemAsync('accessToken');
           if (!stored) {
             const result = await login(loginId, password, false);
-            await SecureStore.setItemAsync('accessToken', result.accessToken);
-            await SecureStore.setItemAsync('refreshToken', result.refreshToken);
+            await saveAuthTokens(result, version);
           }
         }
       }
 
       await children.slice(registeredChildrenCount).reduce(async (prev, child) => {
         await prev;
-        await registerChild(child);
+        assertCurrentSession(version);
+        await registerChild(child, version);
+        assertCurrentSession(version);
         incrementRegisteredChildrenCount();
       }, Promise.resolve());
 
+      assertCurrentSession(version);
       setStatus('done');
       reset();
     } catch (error) {
+      if (!isCurrentSession(version)) return;
       setErrorMessage(error instanceof Error ? error.message : t('auth.register.complete.error'));
       setStatus('error');
     }

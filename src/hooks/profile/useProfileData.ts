@@ -3,6 +3,7 @@ import { useFocusEffect } from 'expo-router';
 import { fetchChildren } from '../../api/child';
 import { fetchMyInfo, type UserInfo } from '../../api/user';
 import { useChildrenStore } from '../../store/childrenStore';
+import { withCurrentSession } from '../../utils/authSession';
 
 const useProfileData = () => {
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
@@ -12,7 +13,7 @@ const useProfileData = () => {
   useEffect(() => {
     setIsLoading(true);
     fetchChildren()
-      .then(setChildren)
+      .then(withCurrentSession(setChildren))
       .catch(() => {})
       .finally(() => setIsLoading(false));
   }, [setChildren]);

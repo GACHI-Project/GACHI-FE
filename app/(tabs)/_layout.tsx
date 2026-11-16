@@ -6,6 +6,7 @@ import TabBar from '../../src/components/common/TabBar';
 import colors from '../../src/constants/colors';
 import { fetchChildren } from '../../src/api/child';
 import { useChildrenStore } from '../../src/store/childrenStore';
+import { withCurrentSession } from '../../src/utils/authSession';
 
 const renderTabBar = ({ state, descriptors, navigation, insets }: BottomTabBarProps) => (
   <TabBar state={state} descriptors={descriptors} navigation={navigation} insets={insets} />
@@ -16,7 +17,7 @@ const TabsLayout = () => {
 
   useEffect(() => {
     fetchChildren()
-      .then(setChildren)
+      .then(withCurrentSession(setChildren))
       .catch(() => {});
   }, [setChildren]);
 

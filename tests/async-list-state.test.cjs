@@ -210,6 +210,68 @@ const calendarSetup = async (weekly = false) => {
       [2, true],
     ]);
   });
+
+  test(`${weekly ? 'weekly' : 'daily'} stale refresh keeps a pending change and failure restores it`, async () => {
+    const app = await calendarSetup(weekly);
+    const toggle = app.runner.result.toggleCheck(10, 1);
+    app.runner.render({ ...app.params, focusKey: 1 });
+    app.source.calls[1].resolve(app.result([false, false]));
+    await app.runner.flush();
+    assert.deepEqual(itemValues(app.currentItems()), [
+      [1, true],
+      [2, false],
+    ]);
+    app.complete.calls[0].reject(new Error('Toggle failed'));
+    await toggle;
+    await app.runner.flush();
+    assert.deepEqual(itemValues(app.currentItems()), [
+      [1, false],
+      [2, false],
+    ]);
+  });
+
+  test(`${weekly ? 'weekly' : 'daily'} refresh started before a successful change keeps it`, async () => {
+    const app = await calendarSetup(weekly);
+    const toggle = app.runner.result.toggleCheck(10, 1);
+    app.runner.render({ ...app.params, focusKey: 1 });
+    app.complete.calls[0].resolve();
+    await toggle;
+    app.source.calls[1].resolve(app.result([false, false]));
+    await app.runner.flush();
+    assert.deepEqual(itemValues(app.currentItems()), [
+      [1, true],
+      [2, false],
+    ]);
+  });
+
+  test(`${weekly ? 'weekly' : 'daily'} refresh started after a successful change uses server state`, async () => {
+    const app = await calendarSetup(weekly);
+    const toggle = app.runner.result.toggleCheck(10, 1);
+    app.complete.calls[0].resolve();
+    await toggle;
+    app.runner.render({ ...app.params, focusKey: 1 });
+    app.source.calls[1].resolve(app.result([false, false]));
+    await app.runner.flush();
+    assert.deepEqual(itemValues(app.currentItems()), [
+      [1, false],
+      [2, false],
+    ]);
+  });
+});
+
+test('failed same-query weekly refresh still lets a failed checklist change roll back', async () => {
+  const app = await calendarSetup(true);
+  const toggle = app.runner.result.toggleCheck(10, 1);
+  app.runner.render({ ...app.params, focusKey: 1 });
+  app.source.calls[1].reject(new Error('Refresh failed'));
+  await app.runner.flush();
+  app.complete.calls[0].reject(new Error('Toggle failed'));
+  await toggle;
+  await app.runner.flush();
+  assert.deepEqual(itemValues(app.currentItems()), [
+    [1, false],
+    [2, false],
+  ]);
 });
 
 test('calendar checklist requests lock the same item until completion', async () => {

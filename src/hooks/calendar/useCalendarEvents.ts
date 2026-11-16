@@ -26,6 +26,44 @@ export type WeekDisplayGroup = {
   schoolSchedules: SchoolDisplayEntry[];
 };
 
+// 진행 중인 체크리스트 변경: 낙관적 값과 진행 중에 마지막으로 관측한 서버 값
+type PendingChecklist = { value: boolean; serverValue: boolean };
+// 성공한 체크리스트 변경: 이보다 먼저 시작된 조회 응답이 덮어쓰지 않도록 확정 순번을 기록
+type ConfirmedChecklist = { value: boolean; seq: number };
+
+type LocalChanges = {
+  deletedEventIds: Set<number>;
+  pendingChecklists: Map<number, PendingChecklist>;
+  confirmedChecklists: Map<number, ConfirmedChecklist>;
+};
+
+// 조회 응답에 삭제된 일정과, 진행 중이거나 조회 시작 이후 확정된 체크리스트 변경을 반영
+const applyLocalChanges = (
+  events: CalendarEvent[],
+  fetchSeq: number,
+  { deletedEventIds, pendingChecklists, confirmedChecklists }: LocalChanges
+) =>
+  events
+    .filter((event) => !deletedEventIds.has(event.eventId))
+    .map((event) => {
+      let changed = false;
+      const checklists = event.checklists.map((item) => {
+        const pending = pendingChecklists.get(item.checklistId);
+        let value = item.isCompleted;
+        if (pending) {
+          pending.serverValue = item.isCompleted;
+          value = pending.value;
+        } else {
+          const confirmed = confirmedChecklists.get(item.checklistId);
+          if (confirmed && confirmed.seq > fetchSeq) value = confirmed.value;
+        }
+        if (value === item.isCompleted) return item;
+        changed = true;
+        return { ...item, isCompleted: value };
+      });
+      return changed ? { ...event, checklists } : event;
+    });
+
 interface Params {
   isWeekMode: boolean;
   weekDates: string[];
@@ -54,19 +92,14 @@ const useCalendarEvents = ({
   const [dailyEventsError, setDailyEventsError] = useState(false);
   const weeklyReqIdRef = useRef(0);
   const dailyReqIdRef = useRef(0);
-  const deletedEventIdsRef = useRef<Set<number>>(new Set());
+  const localChangesRef = useRef<LocalChanges>({
+    deletedEventIds: new Set(),
+    pendingChecklists: new Map(),
+    confirmedChecklists: new Map(),
+  });
+  const checklistSeqRef = useRef(0);
   const weekReferenceDate = getWeeklyQueryDate(weekDates);
-  const eventQueryDate = isWeekMode ? weekReferenceDate : selectedDate;
-  const mutationScopeRef = useRef<object | null>(null);
-  const pendingChecklistIdsRef = useRef(new Set<number>());
   const weeklyQueryRef = useRef<{ date: string; childName: string | undefined } | null>(null);
-
-  useEffect(() => {
-    mutationScopeRef.current = {};
-    return () => {
-      mutationScopeRef.current = null;
-    };
-  }, [isWeekMode, eventQueryDate, selectedChildName, focusKey]);
 
   useEffect(() => {
     if (!isWeekMode) return undefined;
@@ -83,18 +116,15 @@ const useCalendarEvents = ({
     setWeekEventsLoading(true);
     weeklyReqIdRef.current += 1;
     const reqId = weeklyReqIdRef.current;
+    const fetchSeq = checklistSeqRef.current;
     fetchWeeklyEvents(weekReferenceDate, selectedChildName)
       .then((data) => {
         if (cancelled || reqId !== weeklyReqIdRef.current) return;
-        if (deletedEventIdsRef.current.size === 0) {
-          setWeeklyData(data);
-          return;
-        }
         setWeeklyData({
           ...data,
           days: data.days.map((day) => ({
             ...day,
-            events: day.events.filter((e) => !deletedEventIdsRef.current.has(e.eventId)),
+            events: applyLocalChanges(day.events, fetchSeq, localChangesRef.current),
           })),
         });
       })
@@ -115,12 +145,11 @@ const useCalendarEvents = ({
     setDailyEventsLoading(true);
     dailyReqIdRef.current += 1;
     const reqId = dailyReqIdRef.current;
+    const fetchSeq = checklistSeqRef.current;
     fetchDailyEvents(selectedDate, selectedChildName)
       .then((result) => {
         if (!cancelled && reqId === dailyReqIdRef.current) {
-          setDayEvents(
-            result.events.filter((event) => !deletedEventIdsRef.current.has(event.eventId))
-          );
+          setDayEvents(applyLocalChanges(result.events, fetchSeq, localChangesRef.current));
         }
       })
       .catch(() => {
@@ -204,17 +233,17 @@ const useCalendarEvents = ({
   }, [weeklyData, weekDates, weekReferenceDate, commonHolidays, schoolGroups, selectedChildId]);
 
   const toggleCheck = async (eventId: number, checklistId: number) => {
-    const scope = mutationScopeRef.current;
-    if (!scope || pendingChecklistIdsRef.current.has(checklistId)) return;
+    const { pendingChecklists, confirmedChecklists } = localChangesRef.current;
+    if (pendingChecklists.has(checklistId)) return;
     const events = isWeekMode ? weeklyData?.days.flatMap((day) => day.events) : dayEvents;
     const target = events
       ?.find((event) => event.eventId === eventId)
       ?.checklists.find((item) => item.checklistId === checklistId);
     if (!target) return;
 
-    pendingChecklistIdsRef.current.add(checklistId);
-    const dayRequestId = dailyReqIdRef.current;
-    const weekRequestId = weeklyReqIdRef.current;
+    const nextValue = !target.isCompleted;
+    const pending: PendingChecklist = { value: nextValue, serverValue: target.isCompleted };
+    pendingChecklists.set(checklistId, pending);
     const updateEvents = (list: CalendarEvent[], value: boolean) =>
       list.map((event) =>
         event.eventId !== eventId
@@ -237,22 +266,24 @@ const useCalendarEvents = ({
           : prev
       );
 
-    updateDay(!target.isCompleted);
-    updateWeek(!target.isCompleted);
+    updateDay(nextValue);
+    updateWeek(nextValue);
     try {
-      await completeChecklist(checklistId, !target.isCompleted);
+      await completeChecklist(checklistId, nextValue);
+      checklistSeqRef.current += 1;
+      confirmedChecklists.set(checklistId, { value: nextValue, seq: checklistSeqRef.current });
     } catch {
-      if (mutationScopeRef.current !== scope) return;
-      if (dayRequestId === dailyReqIdRef.current) updateDay(target.isCompleted);
-      if (weekRequestId === weeklyReqIdRef.current) updateWeek(target.isCompleted);
+      // 화면 요청이 바뀌었더라도 표시 중인 낙관적 값은 마지막으로 관측한 서버 값으로 되돌림
+      updateDay(pending.serverValue);
+      updateWeek(pending.serverValue);
     } finally {
-      pendingChecklistIdsRef.current.delete(checklistId);
+      pendingChecklists.delete(checklistId);
     }
   };
 
   const deleteEvent = async (eventId: number) => {
     await deleteCalendarEvent(eventId);
-    deletedEventIdsRef.current.add(eventId);
+    localChangesRef.current.deletedEventIds.add(eventId);
     setDayEvents((prev) => prev.filter((e) => e.eventId !== eventId));
     setWeeklyData((prev) =>
       prev

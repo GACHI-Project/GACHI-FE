@@ -39,6 +39,9 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
+      - name: List state tests
+        run: npm run test:lists
+
       - name: Auth session tests
         run: npm run test:auth
 

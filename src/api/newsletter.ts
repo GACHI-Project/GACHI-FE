@@ -1,6 +1,5 @@
 import axios from 'axios';
-import * as SecureStore from 'expo-secure-store';
-import { apiClient } from './auth';
+import { apiClient, getAuthRequestConfig } from './auth';
 
 export type NewsletterStatus = 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED' | 'PAUSED';
 
@@ -45,11 +44,11 @@ const wrapError = (error: unknown): Error => {
   return error instanceof Error ? error : new Error(String(error));
 };
 
-const getAuthHeader = async () => {
-  const token = await SecureStore.getItemAsync('accessToken');
-  if (!token) throw new NewsletterApiError('UNAUTHORIZED', '로그인이 필요합니다.');
-  return { Authorization: `Bearer ${token}` };
-};
+const getAuthConfig = (version?: number) =>
+  getAuthRequestConfig(
+    () => new NewsletterApiError('UNAUTHORIZED', '로그인이 필요합니다.'),
+    version
+  );
 
 interface RNFile {
   uri: string;
@@ -69,7 +68,7 @@ export const uploadNewsletter = async (
   childId?: number
 ): Promise<{ newsletterId: number; status: NewsletterStatus }> => {
   try {
-    const authHeaders = await getAuthHeader();
+    const config = await getAuthConfig();
     const formData = new FormData();
     photoUris.forEach((photoUri) => {
       const filename = photoUri.split('/').pop() ?? 'scan.jpg';
@@ -86,8 +85,9 @@ export const uploadNewsletter = async (
     const response = await apiClient.post<{
       result: { newsletterId: number; status: NewsletterStatus };
     }>('/api/v1/newsletters', formData, {
+      ...config,
       headers: {
-        ...authHeaders,
+        ...config.headers,
         'Content-Type': 'multipart/form-data',
       },
       params,
@@ -152,10 +152,10 @@ export const getNewsletterTranslation = async (
   newsletterId: number
 ): Promise<NewsletterTranslationResult> => {
   try {
-    const headers = await getAuthHeader();
+    const config = await getAuthConfig();
     const response = await apiClient.get<{ result: NewsletterTranslationResult }>(
       `/api/v1/newsletters/${newsletterId}/translation`,
-      { headers }
+      config
     );
     return response.data.result;
   } catch (error) {
@@ -180,12 +180,12 @@ export const getNewsletterChecklist = async (
   type?: ChecklistItemType
 ): Promise<ChecklistItem[]> => {
   try {
-    const headers = await getAuthHeader();
+    const config = await getAuthConfig();
     const params: Record<string, string> = {};
     if (type) params.type = type;
     const response = await apiClient.get<{ result: { items: ChecklistItem[] } }>(
       `/api/v1/newsletters/${newsletterId}/checklist`,
-      { headers, params }
+      { ...config, params }
     );
     return response.data.result.items;
   } catch (error) {
@@ -207,10 +207,10 @@ export interface NewsletterDetail {
 
 export const getNewsletterDetail = async (newsletterId: number): Promise<NewsletterDetail> => {
   try {
-    const headers = await getAuthHeader();
+    const config = await getAuthConfig();
     const response = await apiClient.get<{ result: NewsletterDetail }>(
       `/api/v1/newsletters/${newsletterId}`,
-      { headers }
+      config
     );
     return response.data.result;
   } catch (error) {
@@ -227,10 +227,10 @@ export const getNewsletterSummary = async (
   newsletterId: number
 ): Promise<NewsletterSummaryResult> => {
   try {
-    const headers = await getAuthHeader();
+    const config = await getAuthConfig();
     const response = await apiClient.get<{ result: NewsletterSummaryResult }>(
       `/api/v1/newsletters/${newsletterId}/summary`,
-      { headers }
+      config
     );
     return response.data.result;
   } catch (error) {
@@ -242,10 +242,10 @@ export const getNewsletterStatus = async (
   newsletterId: number
 ): Promise<NewsletterStatusResult> => {
   try {
-    const headers = await getAuthHeader();
+    const config = await getAuthConfig();
     const response = await apiClient.get<{ result: NewsletterStatusResult }>(
       `/api/v1/newsletters/${newsletterId}/status`,
-      { headers }
+      config
     );
     return response.data.result;
   } catch (error) {
@@ -260,11 +260,11 @@ export interface NewsletterResumeResult {
 
 export const resumeNewsletter = async (newsletterId: number): Promise<NewsletterResumeResult> => {
   try {
-    const headers = await getAuthHeader();
+    const config = await getAuthConfig();
     const response = await apiClient.post<{ result: NewsletterResumeResult }>(
       `/api/v1/newsletters/${newsletterId}/resume`,
       undefined,
-      { headers }
+      config
     );
     return response.data.result;
   } catch (error) {
@@ -274,11 +274,11 @@ export const resumeNewsletter = async (newsletterId: number): Promise<Newsletter
 
 export const retryAnalysis = async (newsletterId: number): Promise<NewsletterResumeResult> => {
   try {
-    const headers = await getAuthHeader();
+    const config = await getAuthConfig();
     const response = await apiClient.post<{ result: NewsletterResumeResult }>(
       `/api/v1/newsletters/${newsletterId}/analysis/retry`,
       undefined,
-      { headers }
+      config
     );
     return response.data.result;
   } catch (error) {
@@ -291,11 +291,11 @@ export const skipNewsletterPage = async (
   pageNo: number
 ): Promise<NewsletterResumeResult> => {
   try {
-    const headers = await getAuthHeader();
+    const config = await getAuthConfig();
     const response = await apiClient.post<{ result: NewsletterResumeResult }>(
       `/api/v1/newsletters/${newsletterId}/pages/${pageNo}/skip`,
       undefined,
-      { headers }
+      config
     );
     return response.data.result;
   } catch (error) {
@@ -317,10 +317,10 @@ export interface RecentNewsletterGroup {
 
 export const getRecentNewsletters = async (limit = 5): Promise<RecentNewsletterGroup[]> => {
   try {
-    const headers = await getAuthHeader();
+    const config = await getAuthConfig();
     const response = await apiClient.get<{ result: { groups: RecentNewsletterGroup[] } }>(
       '/api/v1/newsletters/recent',
-      { headers, params: { limit } }
+      { ...config, params: { limit } }
     );
     return response.data.result.groups ?? [];
   } catch (error) {
@@ -351,10 +351,10 @@ export interface ConversationTopic {
 
 export const getConversationTopics = async (newsletterId: number): Promise<ConversationTopic[]> => {
   try {
-    const headers = await getAuthHeader();
+    const config = await getAuthConfig();
     const response = await apiClient.get<{ result: { topics: ConversationTopic[] } }>(
       `/api/v1/newsletters/${newsletterId}/conversation-topics`,
-      { headers }
+      config
     );
     return response.data.result.topics ?? [];
   } catch (error) {
@@ -371,10 +371,10 @@ export interface CulturalGuide {
 
 export const getCulturalGuides = async (newsletterId: number): Promise<CulturalGuide[]> => {
   try {
-    const headers = await getAuthHeader();
+    const config = await getAuthConfig();
     const response = await apiClient.get<{ result: { guides: CulturalGuide[] } }>(
       `/api/v1/newsletters/${newsletterId}/cultural-guides`,
-      { headers }
+      config
     );
     return response.data.result.guides ?? [];
   } catch (error) {
@@ -389,14 +389,14 @@ export const fetchNewsletters = async (params: {
   sort?: 'recent' | 'oldest';
 }): Promise<NewsletterListResult> => {
   try {
-    const headers = await getAuthHeader();
+    const config = await getAuthConfig();
     const queryParams: Record<string, string | number> = {};
     if (params.childName) queryParams.childName = params.childName;
     if (params.search) queryParams.search = params.search;
     if (params.page !== undefined) queryParams.page = params.page;
     if (params.sort) queryParams.sort = params.sort;
     const response = await apiClient.get<{ result: NewsletterListResult }>('/api/v1/newsletters', {
-      headers,
+      ...config,
       params: queryParams,
     });
     return response.data.result;

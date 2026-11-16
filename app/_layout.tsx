@@ -9,6 +9,7 @@ import * as Notifications from 'expo-notifications';
 import { initI18n } from '../src/i18n';
 import { useNotificationStore } from '../src/store/notificationStore';
 import { fetchUnreadCount } from '../src/api/notifications';
+import { withCurrentSession } from '../src/utils/authSession';
 import colors from '../src/constants/colors';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -54,7 +55,7 @@ const RootLayout = () => {
   useEffect(() => {
     const syncUnreadCount = () => {
       fetchUnreadCount()
-        .then(setUnreadCount)
+        .then(withCurrentSession(setUnreadCount))
         .catch(() => {});
     };
     const receivedSub = Notifications.addNotificationReceivedListener(syncUnreadCount);

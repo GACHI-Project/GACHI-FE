@@ -1,6 +1,5 @@
 import axios from 'axios';
-import * as SecureStore from 'expo-secure-store';
-import { apiClient } from './auth';
+import { apiClient, getAuthRequestConfig } from './auth';
 
 export class ChatApiError extends Error {
   constructor(
@@ -22,13 +21,8 @@ const wrapError = (error: unknown): Error => {
   return error instanceof Error ? error : new Error(String(error));
 };
 
-const getAuthHeader = async () => {
-  const token = await SecureStore.getItemAsync('accessToken');
-  if (!token) {
-    throw new ChatApiError('UNAUTHORIZED', '로그인이 필요합니다.');
-  }
-  return { Authorization: `Bearer ${token}` };
-};
+const getAuthConfig = (version?: number) =>
+  getAuthRequestConfig(() => new ChatApiError('UNAUTHORIZED', '로그인이 필요합니다.'), version);
 
 export interface SendMessageParams {
   sessionId: string | null;
@@ -45,7 +39,7 @@ export interface ChatResponse {
 
 export const sendChatMessage = async (params: SendMessageParams): Promise<ChatResponse> => {
   try {
-    const headers = await getAuthHeader();
+    const config = await getAuthConfig();
     const { data } = await apiClient.post<{ result: ChatResponse }>(
       '/api/v1/chat/messages',
       {
@@ -56,7 +50,7 @@ export const sendChatMessage = async (params: SendMessageParams): Promise<ChatRe
           Number.isInteger(params.newsletterId) &&
           params.newsletterId > 0 && { newsletterId: params.newsletterId }),
       },
-      { headers }
+      config
     );
     return data.result;
   } catch (error) {

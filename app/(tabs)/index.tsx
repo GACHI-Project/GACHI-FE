@@ -9,6 +9,7 @@ import { router, useFocusEffect } from 'expo-router';
 import { useUserStore } from '../../src/store/userStore';
 import { fetchUnreadCount } from '../../src/api/notifications';
 import { useNotificationStore } from '../../src/store/notificationStore';
+import { withCurrentSession } from '../../src/utils/authSession';
 import TaskCard from '../../src/components/home/TaskCard';
 // import ScanBanner from '../../src/components/home/ScanBanner';
 import FeatureSection from '../../src/components/home/FeatureSection';
@@ -48,7 +49,7 @@ const HomeScreen = () => {
   useFocusEffect(
     useCallback(() => {
       fetchUnreadCount()
-        .then(setUnreadCount)
+        .then(withCurrentSession(setUnreadCount))
         .catch(() => {});
     }, [setUnreadCount])
   );

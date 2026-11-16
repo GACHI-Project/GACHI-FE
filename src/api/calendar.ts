@@ -1,6 +1,5 @@
 import axios from 'axios';
-import * as SecureStore from 'expo-secure-store';
-import { apiClient } from './auth';
+import { apiClient, getAuthRequestConfig } from './auth';
 
 export class CalendarApiError extends Error {
   constructor(
@@ -24,13 +23,8 @@ const wrapError = (error: unknown): Error => {
   return error instanceof Error ? error : new Error(String(error));
 };
 
-const getAuthHeader = async () => {
-  const token = await SecureStore.getItemAsync('accessToken');
-  if (!token) {
-    throw new CalendarApiError('UNAUTHORIZED', '로그인이 필요합니다.');
-  }
-  return { Authorization: `Bearer ${token}` };
-};
+const getAuthConfig = (version?: number) =>
+  getAuthRequestConfig(() => new CalendarApiError('UNAUTHORIZED', '로그인이 필요합니다.'), version);
 
 export interface CalendarChecklist {
   checklistId: number;
@@ -84,8 +78,8 @@ export interface MonthlyMarker {
 
 export const fetchChildren = async (): Promise<ChildInfo[]> => {
   try {
-    const headers = await getAuthHeader();
-    const response = await apiClient.get<{ result: ChildInfo[] }>('/api/v1/children', { headers });
+    const config = await getAuthConfig();
+    const response = await apiClient.get<{ result: ChildInfo[] }>('/api/v1/children', config);
     return response.data.result ?? [];
   } catch (error) {
     throw wrapError(error);
@@ -98,12 +92,12 @@ export const fetchMonthlyMarkers = async (
   childName?: string
 ): Promise<MonthlyMarker[]> => {
   try {
-    const headers = await getAuthHeader();
+    const config = await getAuthConfig();
     const params: Record<string, unknown> = { year, month };
     if (childName) params.childName = childName;
     const response = await apiClient.get<{ result: { markedDates: MonthlyMarker[] } }>(
       '/api/v1/calendars/monthly',
-      { headers, params }
+      { ...config, params }
     );
     return response.data.result?.markedDates ?? [];
   } catch (error) {
@@ -113,11 +107,11 @@ export const fetchMonthlyMarkers = async (
 
 export const fetchDailyEvents = async (date: string, childName?: string): Promise<DailyResult> => {
   try {
-    const headers = await getAuthHeader();
+    const config = await getAuthConfig();
     const params: Record<string, unknown> = { date };
     if (childName) params.childName = childName;
     const response = await apiClient.get<{ result: DailyResult }>('/api/v1/calendars/daily', {
-      headers,
+      ...config,
       params,
     });
     return response.data.result ?? { date, events: [] };
@@ -131,11 +125,11 @@ export const fetchWeeklyEvents = async (
   childName?: string
 ): Promise<WeeklyResult> => {
   try {
-    const headers = await getAuthHeader();
+    const config = await getAuthConfig();
     const params: Record<string, unknown> = { date };
     if (childName) params.childName = childName;
     const response = await apiClient.get<{ result: WeeklyResult }>('/api/v1/calendars/weekly', {
-      headers,
+      ...config,
       params,
     });
     return (
@@ -166,10 +160,10 @@ export interface CalendarPreviewItem {
 
 export const getCalendarPreview = async (newsletterId: number): Promise<CalendarPreviewItem[]> => {
   try {
-    const headers = await getAuthHeader();
+    const config = await getAuthConfig();
     const response = await apiClient.get<{ result: { events: CalendarPreviewItem[] } }>(
       `/api/v1/newsletters/${newsletterId}/calendar/preview`,
-      { headers }
+      config
     );
     return response.data.result?.events ?? [];
   } catch (error) {
@@ -187,12 +181,8 @@ export const patchCalendarPreviewDates = async (
   events: CalendarDatePatchEvent[]
 ): Promise<void> => {
   try {
-    const headers = await getAuthHeader();
-    await apiClient.patch(
-      `/api/v1/newsletters/${newsletterId}/calendar/dates`,
-      { events },
-      { headers }
-    );
+    const config = await getAuthConfig();
+    await apiClient.patch(`/api/v1/newsletters/${newsletterId}/calendar/dates`, { events }, config);
   } catch (error) {
     throw wrapError(error);
   }
@@ -210,11 +200,11 @@ export const postCalendarEvents = async (
   events: CalendarPostEvent[]
 ): Promise<{ registeredCount: number }> => {
   try {
-    const headers = await getAuthHeader();
+    const config = await getAuthConfig();
     const response = await apiClient.post<{ result: { registeredCount: number } }>(
       `/api/v1/newsletters/${newsletterId}/calendar`,
       { events },
-      { headers }
+      config
     );
     return response.data.result;
   } catch (error) {
@@ -268,10 +258,10 @@ export const fetchSchoolSchedules = async (
   toDate: string
 ): Promise<SchoolScheduleResult> => {
   try {
-    const headers = await getAuthHeader();
+    const config = await getAuthConfig();
     const response = await apiClient.get<{ result: SchoolScheduleResult }>(
       '/api/v1/calendars/school-schedules',
-      { headers, params: { fromDate, toDate } }
+      { ...config, params: { fromDate, toDate } }
     );
     return response.data.result;
   } catch (error) {
@@ -286,12 +276,8 @@ export const completeChecklist = async (
   isCompleted: boolean
 ): Promise<void> => {
   try {
-    const headers = await getAuthHeader();
-    await apiClient.patch(
-      `/api/v1/checklists/${checklistId}/complete`,
-      { isCompleted },
-      { headers }
-    );
+    const config = await getAuthConfig();
+    await apiClient.patch(`/api/v1/checklists/${checklistId}/complete`, { isCompleted }, config);
   } catch (error) {
     throw wrapError(error);
   }
@@ -299,8 +285,8 @@ export const completeChecklist = async (
 
 export const deleteCalendarEvent = async (eventId: number): Promise<void> => {
   try {
-    const headers = await getAuthHeader();
-    await apiClient.delete(`/api/v1/calendars/events/${eventId}`, { headers });
+    const config = await getAuthConfig();
+    await apiClient.delete(`/api/v1/calendars/events/${eventId}`, config);
   } catch (error) {
     throw wrapError(error);
   }

@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { View, Text, Image, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, Image, TouchableOpacity, ScrollView, TextInput, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
@@ -9,15 +9,19 @@ import {
   isErrorWithCode,
   statusCodes,
 } from '@react-native-google-signin/google-signin';
+import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import AuthInput from '../../src/components/auth/AuthInput';
 import { PrimaryButton } from '../../src/components/common/Button';
+import ConfirmModal from '../../src/components/common/ConfirmModal';
 import {
   login,
   AuthApiError,
   getKakaoAuthorizeUrl,
   completeGoogleLogin,
   saveAuthTokens,
+  linkGoogle,
+  linkKakao,
   LoginResult,
 } from '../../src/api/auth';
 import {
@@ -30,19 +34,21 @@ import { useUserStore } from '../../src/store/userStore';
 import { useRegisterStore } from '../../src/store/registerStore';
 import { useKakaoAuthStore } from '../../src/store/kakaoAuthStore';
 import { useGoogleAuthStore } from '../../src/store/googleAuthStore';
+import { useSocialLinkStore, type PendingLink } from '../../src/store/socialLinkStore';
 import i18n, { saveLanguage, SUPPORTED_LANGUAGES, SupportedLanguage } from '../../src/i18n';
 import { fromServerLanguageCode } from '../../src/types/language';
 import { registerDevicePushToken } from '../../src/utils/pushToken';
+import { maskEmail } from '../../src/utils/mask';
+import { KAKAO_REDIRECT_URI } from '../../src/constants/socialAuth';
 import colors from '../../src/constants/colors';
 import KakaoIcon from '../../assets/social/kakao.png';
 import GoogleIcon from '../../assets/social/google.png';
 import styles from '../../src/styles/auth/login';
 
-const KAKAO_REDIRECT_URI = 'gachi://kakao-auth';
-
 const LoginScreen = () => {
   const { t } = useTranslation();
   const { kakaoError } = useLocalSearchParams<{ kakaoError?: string }>();
+  const idInputRef = useRef<TextInput>(null);
   const [id, setId] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -51,17 +57,32 @@ const LoginScreen = () => {
   const [kakaoLoading, setKakaoLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | undefined>();
+  const [linkHint, setLinkHint] = useState<string | undefined>();
+  const [linkRequiredVisible, setLinkRequiredVisible] = useState(false);
 
   const isAnyLoginInProgress = loading || kakaoLoading || googleLoading;
 
   const setName = useUserStore((s) => s.setName);
+  const pendingLink = useSocialLinkStore((s) => s.pendingLink);
 
   useEffect(() => {
     GoogleSignin.configure({ webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ?? '' });
   }, []);
 
+  useEffect(
+    () => () => {
+      // 로그인 화면을 벗어나면 보류 중인 계정 연결 요청은 폐기
+      useSocialLinkStore.getState().clearPendingLink();
+    },
+    []
+  );
+
   useEffect(() => {
     if (!kakaoError) return;
+    if (kakaoError === 'linkRequired') {
+      setLinkRequiredVisible(true);
+      return;
+    }
     if (kakaoError === 'network') {
       setErrorMessage(t('common.networkError'));
     } else {
@@ -69,9 +90,7 @@ const LoginScreen = () => {
     }
   }, [kakaoError, t]);
 
-  const finishLogin = async (tokens: LoginResult, version: number) => {
-    await saveAuthTokens(tokens, version);
-
+  const completeNavigation = async (version: number) => {
     try {
       const me = await getMe();
       assertCurrentSession(version);
@@ -91,13 +110,46 @@ const LoginScreen = () => {
     registerDevicePushToken().catch(() => {});
   };
 
+  const finishLogin = async (tokens: LoginResult, version: number) => {
+    await saveAuthTokens(tokens, version);
+    await completeNavigation(version);
+  };
+
+  const attemptPendingLink = async (pending: PendingLink, version: number) => {
+    try {
+      const linked =
+        pending.provider === 'kakao'
+          ? await linkKakao(pending.linkToken, pending.rememberMe, version)
+          : await linkGoogle(pending.linkToken, pending.rememberMe, version);
+      assertCurrentSession(version);
+      await saveAuthTokens(linked, version);
+    } catch (error) {
+      if (!isCurrentSession(version)) return;
+      let messageKey = 'auth.login.linkModal.resultGeneric';
+      // TODO: 백엔드 에러 코드 확정되면 status 대신 code 기준으로 교체
+      if (error instanceof AuthApiError && error.status === 403) {
+        messageKey = 'auth.login.linkModal.resultMismatch';
+      } else if (error instanceof AuthApiError && error.status === 409) {
+        messageKey = 'auth.login.linkModal.resultAlready';
+      }
+      Alert.alert(t('profile.accountLink.sectionTitle'), t(messageKey));
+    } finally {
+      useSocialLinkStore.getState().clearPendingLink();
+      setLinkHint(undefined);
+    }
+  };
+
   const handleLogin = async () => {
     const version = getSessionVersion();
     setLoading(true);
     setErrorMessage(undefined);
     try {
       const result = await login(id, password, stayLoggedIn);
-      await finishLogin(result, version);
+      await saveAuthTokens(result, version);
+      if (pendingLink) {
+        await attemptPendingLink(pendingLink, version);
+      }
+      await completeNavigation(version);
     } catch (error) {
       if (!isCurrentSession(version)) return;
       if (error instanceof AuthApiError) {
@@ -119,9 +171,11 @@ const LoginScreen = () => {
   };
 
   const handleKakaoLogin = async () => {
+    useSocialLinkStore.getState().clearPendingLink();
     setKakaoLoading(true);
     setErrorMessage(undefined);
     try {
+      useKakaoAuthStore.getState().setMode('login');
       useKakaoAuthStore.getState().setRememberMe(stayLoggedIn);
       await WebBrowser.openAuthSessionAsync(getKakaoAuthorizeUrl(), KAKAO_REDIRECT_URI);
     } catch {
@@ -132,6 +186,7 @@ const LoginScreen = () => {
   };
 
   const handleGoogleLogin = async () => {
+    useSocialLinkStore.getState().clearPendingLink();
     const version = getSessionVersion();
     setGoogleLoading(true);
     setErrorMessage(undefined);
@@ -166,8 +221,13 @@ const LoginScreen = () => {
         useRegisterStore.getState().setSignupToken(res.signupToken);
         router.push('/(auth)/register/language');
       } else if (res.linkToken) {
-        // TODO: 계정 연동(linkToken) 플로우는 별도 작업에서 구현 예정
-        setErrorMessage(t('auth.login.error.generic'));
+        useSocialLinkStore.getState().setPendingLink({
+          provider: 'google',
+          linkToken: res.linkToken,
+          rememberMe: stayLoggedIn,
+          email: res.email,
+        });
+        setLinkRequiredVisible(true);
       } else {
         setErrorMessage(t('auth.login.error.generic'));
       }
@@ -209,6 +269,7 @@ const LoginScreen = () => {
         <Text style={styles.title}>{t('auth.login.title')}</Text>
 
         <AuthInput
+          ref={idInputRef}
           label="ID"
           value={id}
           onChangeText={setId}
@@ -224,6 +285,8 @@ const LoginScreen = () => {
           secureTextEntry={!showPassword}
           onToggleSecure={() => setShowPassword((prev) => !prev)}
         />
+
+        {linkHint && <Text style={styles.linkHintText}>{linkHint}</Text>}
 
         <View style={styles.stayLoggedInRow}>
           <TouchableOpacity
@@ -295,6 +358,34 @@ const LoginScreen = () => {
           </Text>
         </TouchableOpacity>
       </View>
+
+      <ConfirmModal
+        visible={linkRequiredVisible}
+        onClose={() => setLinkRequiredVisible(false)}
+        icon={<Ionicons name="link-outline" size={24} color={colors.primary[500]} />}
+        title={t('auth.login.linkModal.title')}
+        description={t('auth.login.linkModal.description', {
+          email: pendingLink?.email ? maskEmail(pendingLink.email) : '',
+          provider: pendingLink ? t(`profile.accountLink.${pendingLink.provider}`) : '',
+        })}
+        cancelText={t('auth.login.linkModal.cancel')}
+        onCancel={() => {
+          useSocialLinkStore.getState().clearPendingLink();
+          setLinkRequiredVisible(false);
+        }}
+        confirmText={t('auth.login.linkModal.confirm')}
+        onConfirm={() => {
+          setLinkRequiredVisible(false);
+          if (pendingLink) {
+            setLinkHint(
+              t('auth.login.linkModal.hint', {
+                provider: t(`profile.accountLink.${pendingLink.provider}`),
+              })
+            );
+          }
+          idInputRef.current?.focus();
+        }}
+      />
     </ScrollView>
   );
 };

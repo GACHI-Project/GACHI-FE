@@ -9,6 +9,7 @@ import { useNotificationStore } from '../store/notificationStore';
 import { useRegisterStore } from '../store/registerStore';
 import { useKakaoAuthStore } from '../store/kakaoAuthStore';
 import { useGoogleAuthStore } from '../store/googleAuthStore';
+import { useSocialLinkStore } from '../store/socialLinkStore';
 import {
   getSessionVersion,
   isCurrentSession,
@@ -21,7 +22,8 @@ import {
 export class AuthApiError extends Error {
   constructor(
     public readonly code: string,
-    message: string
+    message: string,
+    public readonly status?: number
   ) {
     super(message);
     this.name = 'AuthApiError';
@@ -29,10 +31,11 @@ export class AuthApiError extends Error {
 }
 
 const wrapError = (error: unknown): Error => {
-  if (axios.isAxiosError(error) && error.response?.data?.code) {
+  if (axios.isAxiosError(error) && error.response) {
     return new AuthApiError(
-      error.response.data.code,
-      error.response.data.message ?? '알 수 없는 오류'
+      error.response.data?.code ?? 'UNKNOWN',
+      error.response.data?.message ?? '알 수 없는 오류',
+      error.response.status
     );
   }
   return error instanceof Error ? error : new Error(String(error));
@@ -180,6 +183,7 @@ export const clearSession = (): Promise<SessionCleanupResult> => {
   useRegisterStore.getState().reset();
   useKakaoAuthStore.getState().reset();
   useGoogleAuthStore.getState().reset();
+  useSocialLinkStore.getState().reset();
 
   clearingSession = tokenWrite
     .then(async () => {
@@ -489,6 +493,62 @@ export const signupWithGoogle = async (payload: {
   try {
     const response = await apiClient.post('/api/v1/auth/google/signup', payload);
     return response.data.result;
+  } catch (error) {
+    throw wrapError(error);
+  }
+};
+
+const createUnauthorizedError = () => new AuthApiError('UNAUTHORIZED', '로그인이 필요합니다.');
+
+export const linkGoogle = async (
+  linkToken: string,
+  rememberMe: boolean,
+  version: number
+): Promise<LoginResult> => {
+  try {
+    const config = await getAuthRequestConfig(createUnauthorizedError, version);
+    const response = await apiClient.post(
+      '/api/v1/auth/google/link',
+      { linkToken, rememberMe },
+      config
+    );
+    return response.data.result;
+  } catch (error) {
+    throw wrapError(error);
+  }
+};
+
+export const linkKakao = async (
+  linkToken: string,
+  rememberMe: boolean,
+  version: number
+): Promise<LoginResult> => {
+  try {
+    const config = await getAuthRequestConfig(createUnauthorizedError, version);
+    const response = await apiClient.post(
+      '/api/v1/auth/kakao/link',
+      { linkToken, rememberMe },
+      config
+    );
+    return response.data.result;
+  } catch (error) {
+    throw wrapError(error);
+  }
+};
+
+export const unlinkGoogle = async (version: number): Promise<void> => {
+  try {
+    const config = await getAuthRequestConfig(createUnauthorizedError, version);
+    await apiClient.delete('/api/v1/auth/google/link', config);
+  } catch (error) {
+    throw wrapError(error);
+  }
+};
+
+export const unlinkKakao = async (version: number): Promise<void> => {
+  try {
+    const config = await getAuthRequestConfig(createUnauthorizedError, version);
+    await apiClient.delete('/api/v1/auth/kakao/link', config);
   } catch (error) {
     throw wrapError(error);
   }

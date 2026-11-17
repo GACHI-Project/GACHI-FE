@@ -45,6 +45,16 @@
         "withdrawnAccount": "Tài khoản này đã bị xóa",
         "tooManyAttempts": "Bạn đã thử đăng nhập quá nhiều lần. Vui lòng thử lại sau",
         "generic": "Đã xảy ra lỗi khi đăng nhập. Vui lòng thử lại."
+      },
+      "linkModal": {
+        "title": "Email này đã được đăng ký",
+        "description": "Đã có tài khoản đăng ký với {{email}}. Bạn có muốn liên kết tài khoản {{provider}} với tài khoản hiện có không? Đăng nhập bằng tài khoản hiện có sẽ liên kết chúng.",
+        "cancel": "Không",
+        "confirm": "Liên kết",
+        "hint": "Để liên kết tài khoản {{provider}}, vui lòng đăng nhập bằng tên đăng nhập và mật khẩu hiện có.",
+        "resultMismatch": "Không thể liên kết vì email khác với tài khoản đã đăng ký.",
+        "resultAlready": "Không thể liên kết vì đã được liên kết với một tài khoản khác.",
+        "resultGeneric": "Liên kết thất bại do quá thời gian. Vui lòng thử lại ở Trang cá nhân."
       }
     },
     "register": {
@@ -684,6 +694,28 @@
     "notification": "Cài đặt thông báo",
     "notificationOn": "Bật",
     "notificationOff": "Tắt",
+    "accountLink": {
+      "sectionTitle": "Liên kết tài khoản",
+      "kakao": "Kakao",
+      "google": "Google",
+      "connected": "Đã liên kết",
+      "notConnected": "Chưa liên kết",
+      "connect": "Liên kết",
+      "disconnect": "Hủy liên kết",
+      "hint": "Bạn chỉ có thể liên kết tài khoản có cùng email đã đăng ký.",
+      "hintSocialOnly": "Tài khoản không có tên đăng nhập và mật khẩu không thể hủy liên kết.",
+      "alreadyLinkedOther": "Tài khoản này đã được liên kết với một tài khoản khác.",
+      "linkFailedGeneric": "Liên kết thất bại. Vui lòng thử lại sau.",
+      "disconnectModal": {
+        "title": "Hủy liên kết {{provider}}?",
+        "description": "Nếu hủy liên kết, bạn sẽ không thể đăng nhập bằng {{provider}}. Bạn vẫn có thể đăng nhập bằng tên đăng nhập và mật khẩu.",
+        "confirm": "Hủy liên kết"
+      },
+      "mismatchModal": {
+        "title": "Không thể liên kết",
+        "description": "Đây là tài khoản {{provider}} với email khác so với email đã đăng ký. Vui lòng chọn tài khoản có cùng email."
+      }
+    },
     "etc": "Khác",
     "inquiry": "Liên hệ hỗ trợ",
     "privacy": "Chính sách quyền riêng tư",

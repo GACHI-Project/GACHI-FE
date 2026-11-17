@@ -1,3 +1,4 @@
+import { forwardRef } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import colors from '../../constants/colors';
@@ -15,47 +16,53 @@ interface AuthInputProps {
   autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
 }
 
-const AuthInput = ({
-  label,
-  value,
-  onChangeText,
-  iconName,
-  secureTextEntry = false,
-  onToggleSecure,
-  onClear,
-  keyboardType = 'default',
-  autoCapitalize = 'none',
-}: AuthInputProps) => (
-  <View style={styles.container}>
-    <Ionicons name={iconName} size={20} color={colors.primary[300]} />
-    <View style={styles.divider} />
-    <View style={styles.inputWrapper}>
-      <Text style={styles.label}>{label}</Text>
-      <TextInput
-        style={styles.input}
-        value={value}
-        onChangeText={onChangeText}
-        secureTextEntry={secureTextEntry}
-        keyboardType={keyboardType}
-        autoCapitalize={autoCapitalize}
-        placeholderTextColor={colors.gray[300]}
-      />
-    </View>
-    {onClear && value.length > 0 && (
-      <TouchableOpacity onPress={onClear}>
-        <Ionicons name="close-circle" size={20} color={colors.gray[300]} />
-      </TouchableOpacity>
-    )}
-    {onToggleSecure && (
-      <TouchableOpacity onPress={onToggleSecure}>
-        <Ionicons
-          name={secureTextEntry ? 'eye-off-outline' : 'eye-outline'}
-          size={20}
-          color={colors.gray[300]}
+const AuthInput = forwardRef<TextInput, AuthInputProps>(
+  (
+    {
+      label,
+      value,
+      onChangeText,
+      iconName,
+      secureTextEntry = false,
+      onToggleSecure,
+      onClear,
+      keyboardType = 'default',
+      autoCapitalize = 'none',
+    },
+    ref
+  ) => (
+    <View style={styles.container}>
+      <Ionicons name={iconName} size={20} color={colors.primary[300]} />
+      <View style={styles.divider} />
+      <View style={styles.inputWrapper}>
+        <Text style={styles.label}>{label}</Text>
+        <TextInput
+          ref={ref}
+          style={styles.input}
+          value={value}
+          onChangeText={onChangeText}
+          secureTextEntry={secureTextEntry}
+          keyboardType={keyboardType}
+          autoCapitalize={autoCapitalize}
+          placeholderTextColor={colors.gray[300]}
         />
-      </TouchableOpacity>
-    )}
-  </View>
+      </View>
+      {onClear && value.length > 0 && (
+        <TouchableOpacity onPress={onClear}>
+          <Ionicons name="close-circle" size={20} color={colors.gray[300]} />
+        </TouchableOpacity>
+      )}
+      {onToggleSecure && (
+        <TouchableOpacity onPress={onToggleSecure}>
+          <Ionicons
+            name={secureTextEntry ? 'eye-off-outline' : 'eye-outline'}
+            size={20}
+            color={colors.gray[300]}
+          />
+        </TouchableOpacity>
+      )}
+    </View>
+  )
 );
 
 export default AuthInput;

@@ -22,11 +22,12 @@ interface Props {
   description: string;
   warning?: string;
   extraContent?: ReactNode;
-  cancelText: string;
-  onCancel: () => void;
+  cancelText?: string;
+  onCancel?: () => void;
   confirmText: string;
   onConfirm: () => void;
   confirmDisabled?: boolean;
+  danger?: boolean;
 }
 
 const ConfirmModal = ({
@@ -43,7 +44,10 @@ const ConfirmModal = ({
   confirmText,
   onConfirm,
   confirmDisabled = false,
+  danger = false,
 }: Props) => {
+  const singleAction = !cancelText || !onCancel;
+
   const cardContent = (
     <View style={styles.card}>
       <View style={[styles.iconBox, { backgroundColor: iconBg }]}>{icon}</View>
@@ -57,17 +61,31 @@ const ConfirmModal = ({
       ) : null}
       {extraContent ? <View style={styles.extraContent}>{extraContent}</View> : null}
       <View style={styles.btnRow}>
-        <TouchableOpacity style={styles.cancelBtn} onPress={onCancel} activeOpacity={0.8}>
-          <Text style={styles.cancelBtnText}>{cancelText}</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.confirmBtn, confirmDisabled && styles.confirmBtnDisabled]}
-          onPress={onConfirm}
-          disabled={confirmDisabled}
-          activeOpacity={confirmDisabled ? 1 : 0.8}
-        >
-          <Text style={styles.confirmBtnText}>{confirmText}</Text>
-        </TouchableOpacity>
+        {singleAction ? (
+          <TouchableOpacity style={styles.cancelBtn} onPress={onConfirm} activeOpacity={0.8}>
+            <Text style={styles.cancelBtnText}>{confirmText}</Text>
+          </TouchableOpacity>
+        ) : (
+          <>
+            <TouchableOpacity style={styles.cancelBtn} onPress={onCancel} activeOpacity={0.8}>
+              <Text style={styles.cancelBtnText}>{cancelText}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.confirmBtn,
+                danger && styles.confirmBtnDanger,
+                confirmDisabled && styles.confirmBtnDisabled,
+              ]}
+              onPress={onConfirm}
+              disabled={confirmDisabled}
+              activeOpacity={confirmDisabled ? 1 : 0.8}
+            >
+              <Text style={[styles.confirmBtnText, danger && styles.confirmBtnDangerText]}>
+                {confirmText}
+              </Text>
+            </TouchableOpacity>
+          </>
+        )}
       </View>
     </View>
   );
@@ -180,5 +198,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: fonts.semiBold,
     color: colors.gray[200],
+  },
+  confirmBtnDanger: {
+    backgroundColor: 'rgba(229, 57, 53, 0.12)',
+    borderColor: colors.text.red,
+  },
+  confirmBtnDangerText: {
+    color: colors.text.red,
   },
 });

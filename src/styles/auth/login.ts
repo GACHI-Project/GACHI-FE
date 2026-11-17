@@ -83,6 +83,12 @@ const styles = StyleSheet.create({
     color: colors.text.red,
     textAlign: 'center',
   },
+  linkHintText: {
+    fontSize: 13,
+    fontFamily: fonts.medium,
+    color: colors.primary[500],
+    textAlign: 'center',
+  },
   dividerRow: {
     flexDirection: 'row',
     alignItems: 'center',

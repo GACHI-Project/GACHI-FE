@@ -8,7 +8,7 @@ import {
   isCurrentSession,
   assertCurrentSession,
 } from '../../src/utils/authSession';
-import { attemptPendingLink } from '../../src/utils/pendingLink';
+import { attemptPendingLink, mapLinkError } from '../../src/utils/pendingLink';
 import { getMe } from '../../src/api/user';
 import { useUserStore } from '../../src/store/userStore';
 import { useRegisterStore } from '../../src/store/registerStore';
@@ -73,14 +73,7 @@ const KakaoAuthBounceScreen = () => {
             replaceToEditWithResult('success');
           } catch (error) {
             if (!isCurrentSession(version)) return;
-            // TODO: 백엔드 에러 코드 확정되면 status 대신 code 기준으로 교체
-            if (error instanceof AuthApiError && error.status === 403) {
-              replaceToEditWithResult('mismatch');
-            } else if (error instanceof AuthApiError && error.status === 409) {
-              replaceToEditWithResult('alreadyLinked');
-            } else {
-              replaceToEditWithResult('error');
-            }
+            replaceToEditWithResult(mapLinkError(error));
           }
         } else if (res.signupToken) {
           replaceToEditWithResult('mismatch');

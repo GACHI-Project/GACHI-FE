@@ -27,7 +27,6 @@ interface Props {
   confirmText: string;
   onConfirm: () => void;
   confirmDisabled?: boolean;
-  danger?: boolean;
 }
 
 const ConfirmModal = ({
@@ -44,7 +43,6 @@ const ConfirmModal = ({
   confirmText,
   onConfirm,
   confirmDisabled = false,
-  danger = false,
 }: Props) => {
   const singleAction = !cancelText || !onCancel;
 
@@ -71,18 +69,12 @@ const ConfirmModal = ({
               <Text style={styles.cancelBtnText}>{cancelText}</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[
-                styles.confirmBtn,
-                danger && styles.confirmBtnDanger,
-                confirmDisabled && styles.confirmBtnDisabled,
-              ]}
+              style={[styles.confirmBtn, confirmDisabled && styles.confirmBtnDisabled]}
               onPress={onConfirm}
               disabled={confirmDisabled}
               activeOpacity={confirmDisabled ? 1 : 0.8}
             >
-              <Text style={[styles.confirmBtnText, danger && styles.confirmBtnDangerText]}>
-                {confirmText}
-              </Text>
+              <Text style={styles.confirmBtnText}>{confirmText}</Text>
             </TouchableOpacity>
           </>
         )}
@@ -198,12 +190,5 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: fonts.semiBold,
     color: colors.gray[200],
-  },
-  confirmBtnDanger: {
-    backgroundColor: 'rgba(229, 57, 53, 0.12)',
-    borderColor: colors.text.red,
-  },
-  confirmBtnDangerText: {
-    color: colors.text.red,
   },
 });

@@ -34,7 +34,6 @@ import {
 } from '../../src/api/user';
 import {
   clearSession,
-  AuthApiError,
   getKakaoAuthorizeUrl,
   completeGoogleLogin,
   linkGoogle,
@@ -47,6 +46,7 @@ import {
   isCurrentSession,
   assertCurrentSession,
 } from '../../src/utils/authSession';
+import { mapLinkError } from '../../src/utils/pendingLink';
 import { phoneNumberSchema } from '../../src/validation/auth';
 import { useKakaoAuthStore } from '../../src/store/kakaoAuthStore';
 import { KAKAO_REDIRECT_URI } from '../../src/constants/socialAuth';
@@ -321,10 +321,10 @@ const ProfileEditScreen = () => {
       }
     } catch (error) {
       if (!isCurrentSession(version)) return;
-      // TODO: 백엔드 에러 코드 확정되면 status 대신 code 기준으로 교체
-      if (error instanceof AuthApiError && error.status === 403) {
+      const linkError = mapLinkError(error);
+      if (linkError === 'mismatch') {
         setMismatchTarget('google');
-      } else if (error instanceof AuthApiError && error.status === 409) {
+      } else if (linkError === 'alreadyLinked') {
         Alert.alert(
           t('profile.accountLink.sectionTitle'),
           t('profile.accountLink.alreadyLinkedOther')
@@ -375,7 +375,6 @@ const ProfileEditScreen = () => {
       loadUserInfo();
     } catch {
       if (!isCurrentSession(version)) return;
-      // TODO: 에러 코드 확정되면 상태별 안내 세분화
       Alert.alert(t('common.error'), t('common.networkError'));
     } finally {
       setProcessingProvider(null);

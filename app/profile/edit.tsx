@@ -232,13 +232,15 @@ const ProfileEditScreen = () => {
     setWithdrawError(undefined);
   };
 
+  const passwordRequiredToWithdraw = userInfo?.passwordLoginAvailable ?? true;
+
   const handleWithdraw = async () => {
-    if (withdrawing || withdrawPassword.length === 0) return;
+    if (withdrawing || (passwordRequiredToWithdraw && withdrawPassword.length === 0)) return;
 
     setWithdrawing(true);
     setWithdrawError(undefined);
     try {
-      await withdrawUser(withdrawPassword);
+      await withdrawUser(passwordRequiredToWithdraw ? withdrawPassword : undefined);
       setWithdrawModalVisible(false);
       setWithdrawPassword('');
       setShowWithdrawPassword(false);
@@ -388,7 +390,13 @@ const ProfileEditScreen = () => {
           cancelText={t('profile.editProfile.withdrawKeep')}
           onCancel={closeWithdrawModal}
           confirmText={t('profile.editProfile.withdrawContinue')}
-          onConfirm={() => setWithdrawStep('password')}
+          onConfirm={() => {
+            if (passwordRequiredToWithdraw) {
+              setWithdrawStep('password');
+            } else {
+              handleWithdraw();
+            }
+          }}
         />
       )}
     </View>

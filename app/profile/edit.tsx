@@ -202,6 +202,7 @@ const ProfileEditScreen = () => {
   const [editSheetVisible, setEditSheetVisible] = useState(false);
   const [editSheetFocus, setEditSheetFocus] = useState<'name' | 'phone'>('name');
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
+  const [blockedModalVisible, setBlockedModalVisible] = useState(false);
 
   const loadUserInfo = useCallback(() => {
     fetchMyInfo()
@@ -257,6 +258,11 @@ const ProfileEditScreen = () => {
   };
 
   const isWithdrawPasswordStep = withdrawStep === 'password';
+  const isSocialOnly = userInfo !== null && userInfo.passwordLoginAvailable === false;
+
+  const handleBlockedPress = () => {
+    setBlockedModalVisible(true);
+  };
 
   const openSheet = (focus: 'name' | 'phone') => {
     setEditSheetFocus(focus);
@@ -304,12 +310,14 @@ const ProfileEditScreen = () => {
           <View style={styles.divider} />
           <TouchableOpacity
             style={styles.row}
-            onPress={() => router.push('/profile/email')}
+            onPress={isSocialOnly ? handleBlockedPress : () => router.push('/profile/email')}
             activeOpacity={0.7}
           >
             <Text style={styles.rowLabel}>{t('profile.editProfile.email')}</Text>
             <Text style={styles.rowValue}>{userInfo?.email ?? ''}</Text>
-            <Ionicons name="chevron-forward" size={16} color={colors.text.secondary} />
+            {!isSocialOnly && (
+              <Ionicons name="chevron-forward" size={16} color={colors.text.secondary} />
+            )}
           </TouchableOpacity>
         </View>
 
@@ -317,11 +325,13 @@ const ProfileEditScreen = () => {
         <View style={styles.card}>
           <TouchableOpacity
             style={styles.row}
-            onPress={() => router.push('/profile/password')}
+            onPress={isSocialOnly ? handleBlockedPress : () => router.push('/profile/password')}
             activeOpacity={0.7}
           >
             <Text style={styles.rowLabel}>{t('profile.editProfile.changePassword.title')}</Text>
-            <Ionicons name="chevron-forward" size={16} color={colors.text.secondary} />
+            {!isSocialOnly && (
+              <Ionicons name="chevron-forward" size={16} color={colors.text.secondary} />
+            )}
           </TouchableOpacity>
         </View>
 
@@ -391,6 +401,15 @@ const ProfileEditScreen = () => {
           onConfirm={() => setWithdrawStep('password')}
         />
       )}
+
+      <ConfirmModal
+        visible={blockedModalVisible}
+        onClose={() => setBlockedModalVisible(false)}
+        icon={<Ionicons name="information-circle" size={26} color={colors.primary[500]} />}
+        title={t('profile.editProfile.socialOnlyBlocked')}
+        confirmText={t('common.confirm')}
+        onConfirm={() => setBlockedModalVisible(false)}
+      />
     </View>
   );
 };

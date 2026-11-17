@@ -345,7 +345,10 @@ const LoginScreen = () => {
 
       <ConfirmModal
         visible={linkRequiredVisible}
-        onClose={() => setLinkRequiredVisible(false)}
+        onClose={() => {
+          useSocialLinkStore.getState().clearPendingLink();
+          setLinkRequiredVisible(false);
+        }}
         icon={<Ionicons name="link-outline" size={24} color={colors.primary[500]} />}
         title={t('auth.login.linkModal.title')}
         description={t('auth.login.linkModal.description', {

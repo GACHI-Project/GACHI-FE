@@ -251,10 +251,18 @@ const ProfileEditScreen = () => {
   const [processingProvider, setProcessingProvider] = useState<SocialProvider | null>(null);
   const { kakaoLinkResult } = useLocalSearchParams<{ kakaoLinkResult?: string }>();
 
+  const userInfoRequestIdRef = useRef(0);
+
   const loadUserInfo = useCallback(() => {
+    userInfoRequestIdRef.current += 1;
+    const requestId = userInfoRequestIdRef.current;
     fetchMyInfo()
-      .then(setUserInfo)
+      .then((info) => {
+        if (userInfoRequestIdRef.current !== requestId) return;
+        setUserInfo(info);
+      })
       .catch(() => {
+        if (userInfoRequestIdRef.current !== requestId) return;
         Alert.alert(t('common.error'), t('common.networkError'));
       });
     // t is used only in the error callback — re-fetching on language change is undesirable
@@ -285,6 +293,7 @@ const ProfileEditScreen = () => {
   }, [kakaoLinkResult, loadUserInfo, t]);
 
   const handleConnectGoogle = async () => {
+    if (processingProvider !== null) return;
     const version = getSessionVersion();
     setProcessingProvider('google');
     try {
@@ -340,11 +349,12 @@ const ProfileEditScreen = () => {
         Alert.alert(t('common.error'), t('common.networkError'));
       }
     } finally {
-      setProcessingProvider(null);
+      setProcessingProvider((current) => (current === 'google' ? null : current));
     }
   };
 
   const handleConnectKakao = async () => {
+    if (processingProvider !== null) return;
     setProcessingProvider('kakao');
     try {
       useKakaoAuthStore.getState().setMode('link');
@@ -353,14 +363,14 @@ const ProfileEditScreen = () => {
     } catch {
       Alert.alert(t('common.error'), t('common.networkError'));
     } finally {
-      setProcessingProvider(null);
+      setProcessingProvider((current) => (current === 'kakao' ? null : current));
     }
   };
 
   const handleDisconnect = async () => {
     const provider = disconnectTarget;
     setDisconnectTarget(null);
-    if (!provider) return;
+    if (!provider || processingProvider !== null) return;
 
     const version = getSessionVersion();
     setProcessingProvider(provider);
@@ -377,7 +387,7 @@ const ProfileEditScreen = () => {
       if (!isCurrentSession(version)) return;
       Alert.alert(t('common.error'), t('common.networkError'));
     } finally {
-      setProcessingProvider(null);
+      setProcessingProvider((current) => (current === provider ? null : current));
     }
   };
 
@@ -519,7 +529,7 @@ const ProfileEditScreen = () => {
                     onPress={() =>
                       provider.key === 'kakao' ? handleConnectKakao() : handleConnectGoogle()
                     }
-                    disabled={isProcessing}
+                    disabled={processingProvider !== null}
                     activeOpacity={0.8}
                   >
                     <Text style={linkStyles.connectBtnText}>
@@ -535,7 +545,7 @@ const ProfileEditScreen = () => {
                       isProcessing && linkStyles.actionBtnDisabled,
                     ]}
                     onPress={() => setDisconnectTarget(provider.key)}
-                    disabled={isProcessing}
+                    disabled={processingProvider !== null}
                     activeOpacity={0.8}
                   >
                     <Text style={linkStyles.disconnectBtnText}>

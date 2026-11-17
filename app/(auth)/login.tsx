@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { View, Text, Image, TouchableOpacity, ScrollView, TextInput, Alert } from 'react-native';
+import { View, Text, Image, TouchableOpacity, ScrollView, TextInput } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
@@ -20,21 +20,19 @@ import {
   getKakaoAuthorizeUrl,
   completeGoogleLogin,
   saveAuthTokens,
-  linkGoogle,
-  linkKakao,
-  LoginResult,
 } from '../../src/api/auth';
 import {
   getSessionVersion,
   isCurrentSession,
   assertCurrentSession,
 } from '../../src/utils/authSession';
+import { attemptPendingLink } from '../../src/utils/pendingLink';
 import { getMe } from '../../src/api/user';
 import { useUserStore } from '../../src/store/userStore';
 import { useRegisterStore } from '../../src/store/registerStore';
 import { useKakaoAuthStore } from '../../src/store/kakaoAuthStore';
 import { useGoogleAuthStore } from '../../src/store/googleAuthStore';
-import { useSocialLinkStore, type PendingLink } from '../../src/store/socialLinkStore';
+import { useSocialLinkStore } from '../../src/store/socialLinkStore';
 import i18n, { saveLanguage, SUPPORTED_LANGUAGES, SupportedLanguage } from '../../src/i18n';
 import { fromServerLanguageCode } from '../../src/types/language';
 import { registerDevicePushToken } from '../../src/utils/pushToken';
@@ -110,35 +108,6 @@ const LoginScreen = () => {
     registerDevicePushToken().catch(() => {});
   };
 
-  const finishLogin = async (tokens: LoginResult, version: number) => {
-    await saveAuthTokens(tokens, version);
-    await completeNavigation(version);
-  };
-
-  const attemptPendingLink = async (pending: PendingLink, version: number) => {
-    try {
-      const linked =
-        pending.provider === 'kakao'
-          ? await linkKakao(pending.linkToken, pending.rememberMe, version)
-          : await linkGoogle(pending.linkToken, pending.rememberMe, version);
-      assertCurrentSession(version);
-      await saveAuthTokens(linked, version);
-    } catch (error) {
-      if (!isCurrentSession(version)) return;
-      let messageKey = 'auth.login.linkModal.resultGeneric';
-      // TODO: 백엔드 에러 코드 확정되면 status 대신 code 기준으로 교체
-      if (error instanceof AuthApiError && error.status === 403) {
-        messageKey = 'auth.login.linkModal.resultMismatch';
-      } else if (error instanceof AuthApiError && error.status === 409) {
-        messageKey = 'auth.login.linkModal.resultAlready';
-      }
-      Alert.alert(t('profile.accountLink.sectionTitle'), t(messageKey));
-    } finally {
-      useSocialLinkStore.getState().clearPendingLink();
-      setLinkHint(undefined);
-    }
-  };
-
   const handleLogin = async () => {
     const version = getSessionVersion();
     setLoading(true);
@@ -146,8 +115,10 @@ const LoginScreen = () => {
     try {
       const result = await login(id, password, stayLoggedIn);
       await saveAuthTokens(result, version);
-      if (pendingLink) {
-        await attemptPendingLink(pendingLink, version);
+      const pending = useSocialLinkStore.getState().pendingLink;
+      if (pending) {
+        await attemptPendingLink(pending, version);
+        setLinkHint(undefined);
       }
       await completeNavigation(version);
     } catch (error) {
@@ -171,7 +142,9 @@ const LoginScreen = () => {
   };
 
   const handleKakaoLogin = async () => {
-    useSocialLinkStore.getState().clearPendingLink();
+    if (useSocialLinkStore.getState().pendingLink?.provider === 'kakao') {
+      useSocialLinkStore.getState().clearPendingLink();
+    }
     setKakaoLoading(true);
     setErrorMessage(undefined);
     try {
@@ -186,7 +159,9 @@ const LoginScreen = () => {
   };
 
   const handleGoogleLogin = async () => {
-    useSocialLinkStore.getState().clearPendingLink();
+    if (useSocialLinkStore.getState().pendingLink?.provider === 'google') {
+      useSocialLinkStore.getState().clearPendingLink();
+    }
     const version = getSessionVersion();
     setGoogleLoading(true);
     setErrorMessage(undefined);
@@ -213,8 +188,17 @@ const LoginScreen = () => {
       assertCurrentSession(version);
 
       if (res.status === 'LOGIN_SUCCESS' && res.tokens) {
-        await finishLogin(res.tokens, version);
+        await saveAuthTokens(res.tokens, version);
+
+        const pending = useSocialLinkStore.getState().pendingLink;
+        if (pending && pending.provider !== 'google') {
+          await attemptPendingLink(pending, version);
+        }
+        assertCurrentSession(version);
+
+        await completeNavigation(version);
       } else if (res.signupToken) {
+        useSocialLinkStore.getState().clearPendingLink();
         useGoogleAuthStore.getState().setRememberMe(stayLoggedIn);
         useRegisterStore.getState().reset();
         useRegisterStore.getState().setAuthMethod('google');

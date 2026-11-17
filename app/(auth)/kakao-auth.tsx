@@ -8,6 +8,7 @@ import {
   isCurrentSession,
   assertCurrentSession,
 } from '../../src/utils/authSession';
+import { attemptPendingLink } from '../../src/utils/pendingLink';
 import { getMe } from '../../src/api/user';
 import { useUserStore } from '../../src/store/userStore';
 import { useRegisterStore } from '../../src/store/registerStore';
@@ -102,6 +103,12 @@ const KakaoAuthBounceScreen = () => {
         if (res.status === 'LOGIN_SUCCESS' && res.tokens) {
           await saveAuthTokens(res.tokens, version);
 
+          const pending = useSocialLinkStore.getState().pendingLink;
+          if (pending && pending.provider !== 'kakao') {
+            await attemptPendingLink(pending, version);
+          }
+          assertCurrentSession(version);
+
           try {
             const me = await getMe();
             assertCurrentSession(version);
@@ -120,6 +127,7 @@ const KakaoAuthBounceScreen = () => {
           router.replace('/(tabs)');
           registerDevicePushToken().catch(() => {});
         } else if (res.signupToken) {
+          useSocialLinkStore.getState().clearPendingLink();
           useRegisterStore.getState().reset();
           setAuthMethod('kakao');
           setSignupToken(res.signupToken);

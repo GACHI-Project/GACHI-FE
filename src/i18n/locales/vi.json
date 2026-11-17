@@ -51,7 +51,7 @@
         "description": "Đã có tài khoản đăng ký với {{email}}. Bạn có muốn liên kết tài khoản {{provider}} với tài khoản hiện có không? Đăng nhập bằng tài khoản hiện có sẽ liên kết chúng.",
         "cancel": "Không",
         "confirm": "Liên kết",
-        "hint": "Để liên kết tài khoản {{provider}}, vui lòng đăng nhập bằng tên đăng nhập và mật khẩu hiện có.",
+        "hint": "Để liên kết tài khoản {{provider}}, vui lòng đăng nhập bằng tài khoản hiện có.",
         "resultMismatch": "Không thể liên kết vì email khác với tài khoản đã đăng ký.",
         "resultAlready": "Không thể liên kết vì đã được liên kết với một tài khoản khác.",
         "resultGeneric": "Liên kết thất bại do quá thời gian. Vui lòng thử lại ở Trang cá nhân."

@@ -51,7 +51,7 @@
         "description": "An account already exists for {{email}}. Would you like to connect your {{provider}} account to it? Logging in with your existing account will connect them.",
         "cancel": "No",
         "confirm": "Connect",
-        "hint": "To connect your {{provider}} account, log in with your existing ID and password.",
+        "hint": "To connect your {{provider}} account, log in with your existing account.",
         "resultMismatch": "Couldn't connect because the email is different from your account.",
         "resultAlready": "Couldn't connect because it's already linked to another account.",
         "resultGeneric": "Connection failed due to a timeout. Please try again from My Page."

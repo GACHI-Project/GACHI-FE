@@ -51,7 +51,7 @@
         "description": "已存在使用{{email}}注册的账号。是否要将{{provider}}账号关联到该账号？使用现有账号登录即可完成关联。",
         "cancel": "不用了",
         "confirm": "关联",
-        "hint": "要关联{{provider}}账号，请使用现有用户名和密码登录。",
+        "hint": "要关联{{provider}}账号，请使用现有账号登录。",
         "resultMismatch": "由于邮箱与注册账号不同，未能关联。",
         "resultAlready": "由于已关联其他账号，未能关联。",
         "resultGeneric": "关联超时失败，请在我的页面重新关联。"

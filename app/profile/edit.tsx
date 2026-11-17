@@ -232,24 +232,35 @@ const ProfileEditScreen = () => {
     setWithdrawError(undefined);
   };
 
+  const passwordLoginAvailable = userInfo?.passwordLoginAvailable;
+  const isPasswordInfoLoaded = passwordLoginAvailable !== undefined;
+
   const handleWithdraw = async () => {
-    if (withdrawing || withdrawPassword.length === 0) return;
+    if (withdrawing || (passwordLoginAvailable && withdrawPassword.length === 0)) return;
 
     setWithdrawing(true);
     setWithdrawError(undefined);
     try {
-      await withdrawUser(withdrawPassword);
+      await withdrawUser(passwordLoginAvailable ? withdrawPassword : undefined);
       setWithdrawModalVisible(false);
       setWithdrawPassword('');
       setShowWithdrawPassword(false);
       await clearSession();
     } catch (e) {
-      if (e instanceof UserApiError && e.code === 'AUTH4011') {
-        setWithdrawError(t('profile.editProfile.withdrawWrongPassword'));
+      if (passwordLoginAvailable) {
+        // 비밀번호 확인 단계 — 아래 FormField의 validationMessage로 표시됨
+        if (e instanceof UserApiError && e.code === 'AUTH4011') {
+          setWithdrawError(t('profile.editProfile.withdrawWrongPassword'));
+        } else if (e instanceof UserApiError && e.code === 'UNAUTHORIZED') {
+          await clearSession();
+        } else {
+          setWithdrawError(t('profile.editProfile.withdrawFailed'));
+        }
       } else if (e instanceof UserApiError && e.code === 'UNAUTHORIZED') {
         await clearSession();
       } else {
-        setWithdrawError(t('profile.editProfile.withdrawFailed'));
+        // 비밀번호 입력 단계 자체가 없어 에러를 표시할 자리가 없으므로 Alert로 안내
+        Alert.alert(t('common.error'), t('profile.editProfile.withdrawFailed'));
       }
     } finally {
       setWithdrawing(false);
@@ -388,7 +399,15 @@ const ProfileEditScreen = () => {
           cancelText={t('profile.editProfile.withdrawKeep')}
           onCancel={closeWithdrawModal}
           confirmText={t('profile.editProfile.withdrawContinue')}
-          onConfirm={() => setWithdrawStep('password')}
+          confirmDisabled={!isPasswordInfoLoaded}
+          onConfirm={() => {
+            if (!isPasswordInfoLoaded) return;
+            if (passwordLoginAvailable) {
+              setWithdrawStep('password');
+            } else {
+              handleWithdraw();
+            }
+          }}
         />
       )}
     </View>

@@ -120,13 +120,13 @@ export const updateNotificationPreference = async (
   }
 };
 
-export const withdrawUser = async (currentPassword: string): Promise<void> => {
+export const withdrawUser = async (currentPassword?: string): Promise<void> => {
   let responseData: { success?: boolean; code?: string; message?: string } | undefined;
   try {
     const config = await getAuthConfig();
     const { data } = await apiClient.delete('/api/v1/users/me', {
       ...config,
-      data: { currentPassword },
+      ...(currentPassword ? { data: { currentPassword } } : {}),
     });
     responseData = data;
   } catch (error) {

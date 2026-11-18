@@ -1,8 +1,12 @@
 import { useEffect, useState } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import type { TextLayoutEvent } from 'react-native/Libraries/Types/CoreEventTypes';
+import { View, Text, StyleSheet, useWindowDimensions, type TextLayoutEvent } from 'react-native';
 import colors from '../../../constants/colors';
 import { OverlayBlock } from '../../../api/newsletter';
+import {
+  estimateOverlayFontSize,
+  MIN_OVERLAY_FONT_SIZE,
+  OVERLAY_LINE_HEIGHT_RATIO,
+} from '../../../utils/translationOverlay';
 
 interface TranslationOverlayProps {
   blocks: OverlayBlock[];
@@ -10,51 +14,30 @@ interface TranslationOverlayProps {
   renderedHeight: number;
 }
 
-const MAX_FONT_SIZE = 24;
-const MIN_FONT_SIZE = 4;
 const FONT_STEP = 0.5;
-const LINE_HEIGHT_RATIO = 1.2;
-const WRAP_SLACK = 1.1;
-const CJK_CHAR_WIDTH_RATIO = 1.0;
-const DEFAULT_CHAR_WIDTH_RATIO = 0.55;
-const CJK_REGEX = /[぀-ヿ㐀-䶿一-鿿가-힣豈-﫿]/;
-
-const estimateTextWidth = (text: string, fontSize: number): number =>
-  Array.from(text).reduce(
-    (width, ch) =>
-      width +
-      (CJK_REGEX.test(ch) ? fontSize * CJK_CHAR_WIDTH_RATIO : fontSize * DEFAULT_CHAR_WIDTH_RATIO),
-    0
-  );
-
-// 박스 크기(dp)와 텍스트로부터 다 채울 수 있는 가장 큰 폰트 크기를 추정한다.
-const estimateFontSize = (text: string, boxWidth: number, boxHeight: number): number => {
-  const steps = Math.round((MAX_FONT_SIZE - MIN_FONT_SIZE) / FONT_STEP);
-  for (let i = 0; i <= steps; i += 1) {
-    const fontSize = MAX_FONT_SIZE - i * FONT_STEP;
-    const totalWidth = estimateTextWidth(text, fontSize) * WRAP_SLACK;
-    const neededLines = Math.max(1, Math.ceil(totalWidth / boxWidth));
-    const neededHeight = neededLines * fontSize * LINE_HEIGHT_RATIO;
-    if (neededHeight <= boxHeight) {
-      return fontSize;
-    }
-  }
-  return MIN_FONT_SIZE;
-};
 
 const TranslationOverlay = ({ blocks, renderedWidth, renderedHeight }: TranslationOverlayProps) => {
+  const { fontScale } = useWindowDimensions();
   const [fontAdjust, setFontAdjust] = useState<Record<number, number>>({});
 
   useEffect(() => {
     setFontAdjust({});
-  }, [blocks, renderedWidth, renderedHeight]);
+  }, [blocks, renderedWidth, renderedHeight, fontScale]);
 
   const handleTextLayout =
-    (blockNo: number, boxHeight: number, lineHeight: number, currentFontSize: number) =>
+    (blockNo: number, boxHeight: number, baseFontSize: number, currentFontSize: number) =>
     (e: TextLayoutEvent) => {
-      const linesCount = e.nativeEvent.lines.length;
-      if (linesCount * lineHeight > boxHeight && currentFontSize > MIN_FONT_SIZE) {
-        setFontAdjust((prev) => ({ ...prev, [blockNo]: (prev[blockNo] ?? 0) + FONT_STEP }));
+      const textHeight = e.nativeEvent.lines.reduce(
+        (bottom, line) => Math.max(bottom, line.y + line.height),
+        0
+      );
+      if (textHeight > boxHeight && currentFontSize > MIN_OVERLAY_FONT_SIZE) {
+        const nextAdjustment =
+          baseFontSize - Math.max(MIN_OVERLAY_FONT_SIZE, currentFontSize - FONT_STEP);
+        setFontAdjust((prev) => {
+          if ((prev[blockNo] ?? 0) >= nextAdjustment) return prev;
+          return { ...prev, [blockNo]: nextAdjustment };
+        });
       }
     };
 
@@ -66,10 +49,10 @@ const TranslationOverlay = ({ blocks, renderedWidth, renderedHeight }: Translati
           const boxWidth = block.box.width * renderedWidth;
           const boxHeight = block.box.height * renderedHeight;
           const text = block.translatedText!;
-          const baseFontSize = estimateFontSize(text, boxWidth, boxHeight);
+          const baseFontSize = estimateOverlayFontSize(text, boxWidth, boxHeight, fontScale);
           const adjust = fontAdjust[block.blockNo] ?? 0;
-          const fontSize = Math.max(MIN_FONT_SIZE, baseFontSize - adjust);
-          const lineHeight = fontSize * LINE_HEIGHT_RATIO;
+          const fontSize = Math.max(MIN_OVERLAY_FONT_SIZE, baseFontSize - adjust);
+          const lineHeight = fontSize * OVERLAY_LINE_HEIGHT_RATIO;
 
           return (
             <View
@@ -86,7 +69,7 @@ const TranslationOverlay = ({ blocks, renderedWidth, renderedHeight }: Translati
             >
               <Text
                 style={[styles.text, { fontSize, lineHeight }]}
-                onTextLayout={handleTextLayout(block.blockNo, boxHeight, lineHeight, fontSize)}
+                onTextLayout={handleTextLayout(block.blockNo, boxHeight, baseFontSize, fontSize)}
               >
                 {text}
               </Text>

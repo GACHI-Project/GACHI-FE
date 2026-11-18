@@ -17,6 +17,11 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
     gap: 10,
   },
+  docInfoScroll: {
+    maxHeight: '35%',
+    flexGrow: 0,
+    flexShrink: 1,
+  },
   docTitle: {
     fontSize: 20,
     fontFamily: fonts.bold,
@@ -25,6 +30,7 @@ const styles = StyleSheet.create({
   },
   metaRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
     gap: 10,
   },
@@ -33,6 +39,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 4,
     flexShrink: 1,
+    maxWidth: '100%',
   },
   metaText: {
     flexShrink: 1,
@@ -58,9 +65,12 @@ const styles = StyleSheet.create({
   tabBar: {
     flexDirection: 'row',
     paddingHorizontal: layout.screenPaddingHorizontal,
+    alignItems: 'stretch',
   },
   tab: {
     flex: 1,
+    paddingHorizontal: 4,
+    justifyContent: 'center',
     alignItems: 'center',
     paddingBottom: 15,
     position: 'relative',
@@ -121,6 +131,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 6,
     paddingVertical: 16,
+    paddingHorizontal: 12,
     borderRadius: 14,
     borderWidth: 1,
     borderColor: colors.gray[200],
@@ -135,6 +146,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
   },
   chatBtnText: {
+    textAlign: 'center',
     flexShrink: 1,
     fontSize: 15,
     fontFamily: fonts.semiBold,
@@ -147,6 +159,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 6,
     paddingVertical: 16,
+    paddingHorizontal: 12,
     borderRadius: 14,
     backgroundColor: colors.primary[400],
     shadowColor: colors.gray[300],
@@ -156,6 +169,7 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   saveBtnText: {
+    textAlign: 'center',
     flexShrink: 1,
     fontSize: 15,
     fontFamily: fonts.bold,

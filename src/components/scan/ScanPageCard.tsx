@@ -57,9 +57,7 @@ const ScanPageCard = ({
             <Text style={styles.pageLabel} numberOfLines={1}>
               {t('scan.reviewSheet.pageLabel', { number: pageNumber })}
             </Text>
-            <Text style={styles.tapHint} numberOfLines={1}>
-              {t('scan.reviewSheet.tapHint')}
-            </Text>
+            <Text style={styles.tapHint}>{t('scan.reviewSheet.tapHint')}</Text>
           </View>
         </TouchableOpacity>
         <View style={styles.right}>

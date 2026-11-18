@@ -509,7 +509,10 @@
           "closeAccessibility": "关闭",
           "pageIndicator": "第 {{current}} / {{total}} 页",
           "showOriginal": "查看原文",
-          "showTranslation": "查看译文"
+          "showTranslation": "查看译文",
+          "readText": "阅读完整译文",
+          "viewImage": "查看文档图片",
+          "overflowHint": "图片中未完整显示的文字可通过完整译文查看。"
         },
         "error": {
           "notFound": "找不到该家庭通知书的信息。",

@@ -17,22 +17,18 @@ const ScanDocInfo = ({ loading, title, date, childName, childGrade }: Props) => 
       <ActivityIndicator size="small" color={colors.primary[400]} />
     ) : (
       <>
-        <Text style={styles.docTitle} numberOfLines={2}>
-          {title}
-        </Text>
+        <Text style={styles.docTitle}>{title}</Text>
         <View style={styles.metaRow}>
           {date ? (
             <View style={styles.metaItem}>
               <Ionicons name="calendar" size={13} color={colors.text.secondary} />
-              <Text style={styles.metaText} numberOfLines={1}>
-                {date}
-              </Text>
+              <Text style={styles.metaText}>{date}</Text>
             </View>
           ) : null}
           {childName || childGrade ? (
             <View style={styles.metaItem}>
               <Ionicons name="school" size={13} color={colors.text.secondary} />
-              <Text style={styles.metaText} numberOfLines={1}>
+              <Text style={styles.metaText}>
                 {childName}
                 {childName && childGrade ? ' · ' : ''}
                 {childGrade ?? ''}

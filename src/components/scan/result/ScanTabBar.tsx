@@ -22,10 +22,7 @@ const ScanTabBar = ({ activeTab, onTabChange }: Props) => {
           accessibilityRole="tab"
           accessibilityState={{ selected: activeTab === tab }}
         >
-          <Text
-            style={[styles.tabLabel, activeTab === tab && styles.tabLabelActive]}
-            numberOfLines={1}
-          >
+          <Text style={[styles.tabLabel, activeTab === tab && styles.tabLabelActive]}>
             {t(`scan.result.tabs.${tab}`)}
           </Text>
           {activeTab === tab && <View style={styles.tabUnderline} />}

@@ -517,7 +517,10 @@
           "closeAccessibility": "Đóng",
           "pageIndicator": "Trang {{current}} / {{total}}",
           "showOriginal": "Xem bản gốc",
-          "showTranslation": "Xem bản dịch"
+          "showTranslation": "Xem bản dịch",
+          "readText": "Đọc toàn bộ bản dịch",
+          "viewImage": "Xem hình ảnh tài liệu",
+          "overflowHint": "Đọc toàn bộ bản dịch để xem phần văn bản không hiển thị hết trong ảnh."
         },
         "error": {
           "notFound": "Không tìm thấy thông tin thông báo.",

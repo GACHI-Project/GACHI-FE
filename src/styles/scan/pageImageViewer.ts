@@ -41,7 +41,31 @@ export default StyleSheet.create({
     justifyContent: 'center',
     overflow: 'hidden',
   },
-  toggleButton: {
-    marginTop: 0,
+  footer: {
+    gap: 10,
+  },
+  footerScroll: {
+    maxHeight: '45%',
+    flexGrow: 0,
+    flexShrink: 1,
+  },
+  textScroll: {
+    flex: 1,
+    width: '100%',
+  },
+  textContent: {
+    paddingVertical: 16,
+  },
+  translationText: {
+    fontSize: 16,
+    lineHeight: 26,
+    fontFamily: fonts.regular,
+    color: colors.text.primary,
+  },
+  overflowHint: {
+    fontSize: 12,
+    fontFamily: fonts.regular,
+    color: colors.text.secondary,
+    textAlign: 'center',
   },
 });

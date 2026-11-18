@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   TouchableOpacity,
   Alert,
+  ScrollView,
 } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -15,6 +16,7 @@ import { useTranslation } from 'react-i18next';
 import Header from '../../src/components/common/Header';
 import ScanHelpModal from '../../src/components/scan/ScanHelpModal';
 import ScanStepIndicator from '../../src/components/scan/ScanStepIndicator';
+import useResponsiveLayout from '../../src/hooks/useResponsiveLayout';
 import {
   uploadNewsletter,
   getNewsletterStatus,
@@ -57,6 +59,8 @@ const ScanLoadingScreen = () => {
   const resumeNewsletterId = resumeNewsletterIdParam ? Number(resumeNewsletterIdParam) : undefined;
 
   const insets = useSafeAreaInsets();
+  const { height, isCompact } = useResponsiveLayout();
+  const frameStyle = { height: Math.min(height * 0.4, SCAN_FRAME_H), flex: 0 };
   const progress = useRef(new Animated.Value(0)).current;
   const scanLine = useRef(new Animated.Value(0)).current;
 
@@ -338,7 +342,7 @@ const ScanLoadingScreen = () => {
 
   const scanLineY = scanLine.interpolate({
     inputRange: [0, 1],
-    outputRange: [0, SCAN_FRAME_H],
+    outputRange: [0, frameStyle.height],
   });
 
   const showPageCount =
@@ -383,12 +387,12 @@ const ScanLoadingScreen = () => {
   }
 
   return (
-    <View style={[styles.screen, { paddingBottom: insets.bottom }]}>
+    <ScrollView style={styles.screen} contentContainerStyle={{ paddingBottom: insets.bottom + 16 }}>
       <Header title={t('scan.title')} onHelp={() => setHelpVisible(true)} />
       <ScanStepIndicator currentStep={isComplete ? 4 : 3} />
 
       {isComplete ? (
-        <Animated.View style={[styles.completionFrame, { opacity: frameOpacity }]}>
+        <Animated.View style={[styles.completionFrame, frameStyle, { opacity: frameOpacity }]}>
           <Animated.View style={{ transform: [{ scale: glowPulse }] }}>
             <Animated.View style={[styles.glowCircle, { transform: [{ scale: checkmarkScale }] }]}>
               <Ionicons name="checkmark" size={44} color={colors.text.white} />
@@ -404,7 +408,7 @@ const ScanLoadingScreen = () => {
           </Animated.Text>
         </Animated.View>
       ) : (
-        <View style={styles.imageWrapper}>
+        <View style={[styles.imageWrapper, frameStyle]}>
           {displayUri ? (
             <Image source={{ uri: displayUri }} style={styles.image} resizeMode="cover" />
           ) : (
@@ -418,11 +422,9 @@ const ScanLoadingScreen = () => {
         <View style={styles.statusRow}>
           {statusIcon}
           <View style={styles.statusTexts}>
-            <Text style={styles.statusTitle} numberOfLines={pausedInfo || showPageCount ? 2 : 1}>
-              {statusTitle}
-            </Text>
+            <Text style={styles.statusTitle}>{statusTitle}</Text>
             {!isComplete && (
-              <Text style={styles.statusSubtitle} numberOfLines={2}>
+              <Text style={styles.statusSubtitle}>
                 {pausedInfo ? pausedDescription : t('scan.loading.analyzing')}
               </Text>
             )}
@@ -483,11 +485,12 @@ const ScanLoadingScreen = () => {
       )}
 
       {pausedInfo && (showRetry || showSkip) && (
-        <View style={styles.pausedButtonRow}>
+        <View style={[styles.pausedButtonRow, isCompact && styles.buttonsStacked]}>
           {showSkip && (
             <TouchableOpacity
               style={[
                 styles.pausedButton,
+                isCompact && styles.buttonFullWidth,
                 showRetry ? styles.pausedButtonOutline : styles.pausedButtonFilled,
                 actionLoading && styles.pausedButtonDisabled,
               ]}
@@ -517,6 +520,7 @@ const ScanLoadingScreen = () => {
             <TouchableOpacity
               style={[
                 styles.pausedButton,
+                isCompact && styles.buttonFullWidth,
                 styles.pausedButtonFilled,
                 actionLoading && styles.pausedButtonDisabled,
               ]}
@@ -539,7 +543,7 @@ const ScanLoadingScreen = () => {
       )}
 
       <ScanHelpModal visible={helpVisible} onClose={() => setHelpVisible(false)} />
-    </View>
+    </ScrollView>
   );
 };
 

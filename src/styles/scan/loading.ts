@@ -66,6 +66,8 @@ const styles = StyleSheet.create({
     elevation: 20,
   },
   completionText: {
+    textAlign: 'center',
+    paddingHorizontal: 16,
     fontSize: 20,
     fontFamily: fonts.bold,
     color: colors.text.white,
@@ -89,9 +91,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: 12,
+    flexWrap: 'wrap',
   },
   statusTexts: {
     flex: 1,
+    minWidth: 140,
   },
   statusTitle: {
     fontSize: 15,
@@ -110,6 +114,7 @@ const styles = StyleSheet.create({
     color: colors.primary[400],
   },
   doneIcon: {
+    flexShrink: 0,
     width: 44,
     height: 44,
     borderRadius: 22,
@@ -118,6 +123,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   pausedIcon: {
+    flexShrink: 0,
     width: 40,
     height: 40,
     alignItems: 'center',
@@ -149,11 +155,13 @@ const styles = StyleSheet.create({
   },
   nextBtn: {
     paddingVertical: 18,
+    paddingHorizontal: 16,
     borderRadius: 16,
     backgroundColor: colors.primary[400],
     alignItems: 'center',
   },
   nextBtnText: {
+    textAlign: 'center',
     fontSize: 16,
     fontFamily: fonts.bold,
     color: colors.text.white,
@@ -165,9 +173,17 @@ const styles = StyleSheet.create({
     marginTop: 16,
     marginBottom: 16,
   },
+  buttonsStacked: {
+    flexDirection: 'column',
+  },
+  buttonFullWidth: {
+    flex: 0,
+    width: '100%',
+  },
   pausedButton: {
     flex: 1,
     paddingVertical: 18,
+    paddingHorizontal: 14,
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
@@ -178,6 +194,7 @@ const styles = StyleSheet.create({
     borderColor: colors.primary[400],
   },
   pausedButtonOutlineText: {
+    textAlign: 'center',
     fontSize: 16,
     fontFamily: fonts.bold,
     color: colors.primary[400],
@@ -186,6 +203,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary[400],
   },
   pausedButtonFilledText: {
+    textAlign: 'center',
     fontSize: 16,
     fontFamily: fonts.bold,
     color: colors.text.white,

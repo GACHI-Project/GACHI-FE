@@ -17,8 +17,9 @@ import { useTranslation } from 'react-i18next';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import useModalClosed from '../../hooks/scan/useModalClosed';
 import PinchZoomView from '../common/PinchZoomView';
+import useResponsiveLayout from '../../hooks/useResponsiveLayout';
 import colors from '../../constants/colors';
-import { CapturedPage, SCAN_FRAME_W, SCAN_FRAME_H } from '../../constants/scan';
+import { CapturedPage } from '../../constants/scan';
 import styles from '../../styles/scan/pageDetail';
 
 interface ScanPageDetailModalProps {
@@ -48,6 +49,9 @@ const ScanPageDetailModal = ({
 }: ScanPageDetailModalProps) => {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const { width, height } = useResponsiveLayout();
+  const frameWidth = width - 40;
+  const frameSize = { width: frameWidth, height: Math.min(frameWidth * 1.35, height * 0.5) };
   const scrollRef = useRef<ScrollView>(null);
   const [zoomed, setZoomed] = useState(false);
   const [rotating, setRotating] = useState(false);
@@ -55,11 +59,11 @@ const ScanPageDetailModal = ({
 
   useEffect(() => {
     setZoomed(false);
-    scrollRef.current?.scrollTo({ x: currentIndex * SCAN_FRAME_W, animated: false });
-  }, [currentIndex, visible]);
+    scrollRef.current?.scrollTo({ x: currentIndex * frameWidth, animated: false });
+  }, [currentIndex, visible, frameWidth]);
 
   const handleMomentumScrollEnd = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const index = Math.round(event.nativeEvent.contentOffset.x / SCAN_FRAME_W);
+    const index = Math.round(event.nativeEvent.contentOffset.x / frameWidth);
     if (index !== currentIndex && index >= 0 && index < pages.length) {
       onIndexChange(index);
     }
@@ -100,134 +104,145 @@ const ScanPageDetailModal = ({
         style={[styles.screen, { paddingTop: insets.top + 12 }]}
         pointerEvents={visible ? 'auto' : 'none'}
       >
-        <View style={styles.header}>
-          <View style={[styles.headerSideSlot, styles.headerSideSlotLeft]}>
-            <TouchableOpacity
-              style={styles.backButton}
-              onPress={onClose}
-              disabled={rotating}
-              accessibilityRole="button"
-              accessibilityLabel={t('common.back')}
-            >
-              <Ionicons name="arrow-back" size={16} color={colors.gray[300]} />
-            </TouchableOpacity>
+        <ScrollView
+          style={styles.content}
+          contentContainerStyle={styles.scrollContent}
+          scrollEnabled={!zoomed}
+          nestedScrollEnabled
+        >
+          <View style={styles.header}>
+            <View style={[styles.headerSideSlot, styles.headerSideSlotLeft]}>
+              <TouchableOpacity
+                style={styles.backButton}
+                onPress={onClose}
+                disabled={rotating}
+                accessibilityRole="button"
+                accessibilityLabel={t('common.back')}
+              >
+                <Ionicons name="arrow-back" size={16} color={colors.gray[300]} />
+              </TouchableOpacity>
+            </View>
+            <Text style={styles.headerTitle}>
+              {t('scan.pageDetail.pageIndicator', {
+                current: currentIndex + 1,
+                total: pages.length,
+              })}
+            </Text>
+            <View style={[styles.headerSideSlot, styles.headerSideSlotRight]}>
+              <TouchableOpacity
+                style={styles.rotateButton}
+                onPress={handleRotate}
+                disabled={rotating}
+                accessibilityRole="button"
+                accessibilityLabel={t('scan.pageDetail.rotateAccessibility')}
+              >
+                <Ionicons name="refresh-outline" size={16} color={colors.gray[300]} />
+                <Text style={styles.rotateButtonText}>{t('scan.pageDetail.rotate')}</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-          <Text style={styles.headerTitle} numberOfLines={1}>
-            {t('scan.pageDetail.pageIndicator', { current: currentIndex + 1, total: pages.length })}
-          </Text>
-          <View style={[styles.headerSideSlot, styles.headerSideSlotRight]}>
-            <TouchableOpacity
-              style={styles.rotateButton}
-              onPress={handleRotate}
-              disabled={rotating}
-              accessibilityRole="button"
-              accessibilityLabel={t('scan.pageDetail.rotateAccessibility')}
-            >
-              <Ionicons name="refresh-outline" size={16} color={colors.gray[300]} />
-              <Text style={styles.rotateButtonText}>{t('scan.pageDetail.rotate')}</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
 
-        <View style={styles.frameWrapper}>
+          <View style={[styles.frameWrapper, frameSize]}>
+            <ScrollView
+              ref={scrollRef}
+              horizontal
+              pagingEnabled
+              scrollEnabled={!zoomed}
+              showsHorizontalScrollIndicator={false}
+              onMomentumScrollEnd={handleMomentumScrollEnd}
+              style={frameSize}
+              nestedScrollEnabled
+            >
+              {pages.map((page, index) => (
+                <PinchZoomView
+                  key={`${page.id}-${frameWidth}`}
+                  active={index === currentIndex}
+                  onZoomChange={setZoomed}
+                  style={frameSize}
+                >
+                  <Image source={{ uri: page.uri }} style={styles.pageImage} resizeMode="contain" />
+                </PinchZoomView>
+              ))}
+            </ScrollView>
+
+            {currentIndex > 0 && (
+              <TouchableOpacity
+                style={[styles.arrowButton, styles.arrowLeft]}
+                onPress={() => goTo(currentIndex - 1)}
+                accessibilityRole="button"
+                accessibilityLabel={t('scan.pageDetail.prevAccessibility')}
+              >
+                <Ionicons name="chevron-back" size={22} color={colors.text.white} />
+              </TouchableOpacity>
+            )}
+            {currentIndex < pages.length - 1 && (
+              <TouchableOpacity
+                style={[styles.arrowButton, styles.arrowRight]}
+                onPress={() => goTo(currentIndex + 1)}
+                accessibilityRole="button"
+                accessibilityLabel={t('scan.pageDetail.nextAccessibility')}
+              >
+                <Ionicons name="chevron-forward" size={22} color={colors.text.white} />
+              </TouchableOpacity>
+            )}
+
+            <View style={styles.zoomChip}>
+              <Text style={styles.zoomChipText}>{t('scan.pageDetail.zoomHint')}</Text>
+            </View>
+          </View>
+
+          <Text style={styles.swipeHint}>{t('scan.pageDetail.swipeHint')}</Text>
+
           <ScrollView
-            ref={scrollRef}
             horizontal
-            pagingEnabled
-            scrollEnabled={!zoomed}
+            style={styles.thumbStrip}
             showsHorizontalScrollIndicator={false}
-            onMomentumScrollEnd={handleMomentumScrollEnd}
-            style={{ width: SCAN_FRAME_W, height: SCAN_FRAME_H }}
+            contentContainerStyle={styles.thumbRow}
           >
             {pages.map((page, index) => (
-              <PinchZoomView
+              <TouchableOpacity
                 key={page.id}
-                active={index === currentIndex}
-                onZoomChange={setZoomed}
-                style={styles.pageSlide}
+                onPress={() => goTo(index)}
+                accessibilityRole="button"
+                accessibilityLabel={t('scan.pageDetail.thumbnailAccessibility', {
+                  number: index + 1,
+                })}
               >
-                <Image source={{ uri: page.uri }} style={styles.pageImage} resizeMode="contain" />
-              </PinchZoomView>
+                <View style={[styles.thumbWrap, index === currentIndex && styles.thumbWrapActive]}>
+                  <Image source={{ uri: page.uri }} style={styles.thumbImage} />
+                  <View style={styles.thumbBadge}>
+                    <Text style={styles.thumbBadgeText} allowFontScaling={false}>
+                      {index + 1}
+                    </Text>
+                  </View>
+                </View>
+              </TouchableOpacity>
             ))}
           </ScrollView>
 
-          {currentIndex > 0 && (
+          <View style={[styles.buttonRow, { paddingBottom: insets.bottom + 10 }]}>
             <TouchableOpacity
-              style={[styles.arrowButton, styles.arrowLeft]}
-              onPress={() => goTo(currentIndex - 1)}
+              style={[styles.button, styles.buttonOutline]}
+              onPress={onDelete}
+              disabled={rotating}
+              activeOpacity={0.8}
               accessibilityRole="button"
-              accessibilityLabel={t('scan.pageDetail.prevAccessibility')}
             >
-              <Ionicons name="chevron-back" size={22} color={colors.text.white} />
+              <Text style={styles.buttonOutlineText}>{t('scan.pageDetail.delete')}</Text>
             </TouchableOpacity>
-          )}
-          {currentIndex < pages.length - 1 && (
             <TouchableOpacity
-              style={[styles.arrowButton, styles.arrowRight]}
-              onPress={() => goTo(currentIndex + 1)}
+              style={[styles.button, styles.buttonFilled]}
+              onPress={onRetake}
+              disabled={rotating}
+              activeOpacity={0.8}
               accessibilityRole="button"
-              accessibilityLabel={t('scan.pageDetail.nextAccessibility')}
             >
-              <Ionicons name="chevron-forward" size={22} color={colors.text.white} />
+              <Text style={styles.buttonFilledText}>
+                {source === 'gallery' ? t('scan.pageDetail.reselect') : t('scan.pageDetail.retake')}
+              </Text>
             </TouchableOpacity>
-          )}
-
-          <View style={styles.zoomChip}>
-            <Text style={styles.zoomChipText}>{t('scan.pageDetail.zoomHint')}</Text>
           </View>
-        </View>
-
-        <Text style={styles.swipeHint}>{t('scan.pageDetail.swipeHint')}</Text>
-
-        <ScrollView
-          horizontal
-          style={styles.thumbStrip}
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.thumbRow}
-        >
-          {pages.map((page, index) => (
-            <TouchableOpacity
-              key={page.id}
-              onPress={() => goTo(index)}
-              accessibilityRole="button"
-              accessibilityLabel={t('scan.pageDetail.thumbnailAccessibility', {
-                number: index + 1,
-              })}
-            >
-              <View style={[styles.thumbWrap, index === currentIndex && styles.thumbWrapActive]}>
-                <Image source={{ uri: page.uri }} style={styles.thumbImage} />
-                <View style={styles.thumbBadge}>
-                  <Text style={styles.thumbBadgeText} allowFontScaling={false}>
-                    {index + 1}
-                  </Text>
-                </View>
-              </View>
-            </TouchableOpacity>
-          ))}
         </ScrollView>
-
-        <View style={[styles.buttonRow, { paddingBottom: insets.bottom + 10 }]}>
-          <TouchableOpacity
-            style={[styles.button, styles.buttonOutline]}
-            onPress={onDelete}
-            disabled={rotating}
-            activeOpacity={0.8}
-            accessibilityRole="button"
-          >
-            <Text style={styles.buttonOutlineText}>{t('scan.pageDetail.delete')}</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.button, styles.buttonFilled]}
-            onPress={onRetake}
-            disabled={rotating}
-            activeOpacity={0.8}
-            accessibilityRole="button"
-          >
-            <Text style={styles.buttonFilledText}>
-              {source === 'gallery' ? t('scan.pageDetail.reselect') : t('scan.pageDetail.retake')}
-            </Text>
-          </TouchableOpacity>
-        </View>
       </GestureHandlerRootView>
     </Modal>
   );

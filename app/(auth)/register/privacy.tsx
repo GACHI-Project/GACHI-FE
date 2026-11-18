@@ -82,13 +82,16 @@ const styles = StyleSheet.create({
     borderTopColor: colors.gray[100],
   },
   button: {
-    height: 52,
+    minHeight: 52,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
     borderRadius: 14,
     backgroundColor: colors.primary[400],
     alignItems: 'center',
     justifyContent: 'center',
   },
   buttonText: {
+    textAlign: 'center',
     color: colors.text.white,
     fontSize: 16,
     fontFamily: fonts.bold,

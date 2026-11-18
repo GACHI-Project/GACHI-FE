@@ -276,7 +276,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.text.white,
   },
   submitBtn: {
-    height: 55,
+    minHeight: 55,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
     borderRadius: 12,
     backgroundColor: colors.primary[400],
     alignItems: 'center',
@@ -286,6 +288,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.gray[200],
   },
   submitBtnText: {
+    textAlign: 'center',
     fontSize: 16,
     fontFamily: fonts.bold,
     color: colors.text.white,

@@ -48,6 +48,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   searchPlaceholder: {
+    flex: 1,
     fontSize: 14,
     fontFamily: fonts.medium,
     color: colors.gray[200],

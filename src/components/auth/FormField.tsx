@@ -2,6 +2,7 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-nativ
 import { Ionicons } from '@expo/vector-icons';
 import colors from '../../constants/colors';
 import fonts from '../../constants/fonts';
+import useResponsiveLayout from '../../hooks/useResponsiveLayout';
 
 interface RightButton {
   label: string;
@@ -43,59 +44,72 @@ const FormField = ({
   validationMessage,
   validationState,
   bottomElement,
-}: FormFieldProps) => (
-  <View style={styles.wrapper}>
-    <Text style={styles.label}>{label}</Text>
-    <View style={styles.row}>
-      <View style={[styles.inputContainer, !editable && styles.inputDisabled]}>
-        <TextInput
-          style={styles.input}
-          value={value}
-          onChangeText={onChangeText}
-          placeholder={placeholder}
-          placeholderTextColor={colors.gray[200]}
-          keyboardType={keyboardType}
-          autoCapitalize={autoCapitalize}
-          secureTextEntry={secureTextEntry}
-          editable={editable}
-          autoFocus={autoFocus}
-        />
-        {rightIcon && (
-          <TouchableOpacity onPress={onRightIconPress} hitSlop={8}>
-            <Ionicons name={rightIcon} size={20} color={colors.gray[300]} />
+}: FormFieldProps) => {
+  const { isCompact } = useResponsiveLayout();
+  return (
+    <View style={styles.wrapper}>
+      <Text style={styles.label}>{label}</Text>
+      <View style={[styles.row, isCompact && styles.stackedRow]}>
+        <View
+          style={[
+            styles.inputContainer,
+            isCompact && styles.fullWidth,
+            !editable && styles.inputDisabled,
+          ]}
+        >
+          <TextInput
+            style={styles.input}
+            value={value}
+            onChangeText={onChangeText}
+            placeholder={placeholder}
+            placeholderTextColor={colors.gray[200]}
+            keyboardType={keyboardType}
+            autoCapitalize={autoCapitalize}
+            secureTextEntry={secureTextEntry}
+            editable={editable}
+            autoFocus={autoFocus}
+          />
+          {rightIcon && (
+            <TouchableOpacity onPress={onRightIconPress} hitSlop={8}>
+              <Ionicons name={rightIcon} size={20} color={colors.gray[300]} />
+            </TouchableOpacity>
+          )}
+        </View>
+        {rightButton && (
+          <TouchableOpacity
+            style={[
+              styles.button,
+              isCompact && styles.fullWidth,
+              rightButton.disabled && styles.buttonDisabled,
+            ]}
+            onPress={rightButton.onPress}
+            disabled={rightButton.disabled}
+          >
+            <Text style={styles.buttonText}>{rightButton.label}</Text>
           </TouchableOpacity>
         )}
       </View>
-      {rightButton && (
-        <TouchableOpacity
-          style={[styles.button, rightButton.disabled && styles.buttonDisabled]}
-          onPress={rightButton.onPress}
-          disabled={rightButton.disabled}
-        >
-          <Text style={styles.buttonText}>{rightButton.label}</Text>
-        </TouchableOpacity>
+      {bottomElement}
+      {validationMessage && (
+        <View style={styles.validationRow}>
+          <Ionicons
+            name={validationState === 'success' ? 'checkmark' : 'close'}
+            size={12}
+            color={validationState === 'success' ? colors.primary[500] : colors.text.red}
+          />
+          <Text
+            style={[
+              styles.validationText,
+              validationState === 'success' ? styles.success : styles.error,
+            ]}
+          >
+            {validationMessage}
+          </Text>
+        </View>
       )}
     </View>
-    {bottomElement}
-    {validationMessage && (
-      <View style={styles.validationRow}>
-        <Ionicons
-          name={validationState === 'success' ? 'checkmark' : 'close'}
-          size={12}
-          color={validationState === 'success' ? colors.primary[500] : colors.text.red}
-        />
-        <Text
-          style={[
-            styles.validationText,
-            validationState === 'success' ? styles.success : styles.error,
-          ]}
-        >
-          {validationMessage}
-        </Text>
-      </View>
-    )}
-  </View>
-);
+  );
+};
 
 export default FormField;
 
@@ -112,11 +126,21 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 8,
   },
+  stackedRow: {
+    flexDirection: 'column',
+  },
+  fullWidth: {
+    flex: 0,
+    width: '100%',
+    maxWidth: '100%',
+  },
   inputContainer: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    height: 52,
+    minHeight: 52,
+    paddingVertical: 12,
+    minWidth: 0,
     borderWidth: 1,
     borderColor: colors.gray[200],
     borderRadius: 8,
@@ -135,7 +159,9 @@ const styles = StyleSheet.create({
     padding: 0,
   },
   button: {
-    height: 52,
+    minHeight: 52,
+    maxWidth: '45%',
+    paddingVertical: 12,
     paddingHorizontal: 16,
     borderRadius: 8,
     backgroundColor: colors.primary[400],
@@ -146,16 +172,18 @@ const styles = StyleSheet.create({
     backgroundColor: colors.gray[200],
   },
   buttonText: {
+    textAlign: 'center',
     fontSize: 14,
     fontFamily: fonts.semiBold,
     color: colors.text.white,
   },
   validationRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: 4,
   },
   validationText: {
+    flex: 1,
     fontSize: 12,
     fontFamily: fonts.regular,
   },

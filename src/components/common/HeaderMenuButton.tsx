@@ -99,9 +99,11 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 8,
     minWidth: 160,
+    maxWidth: '85%',
   },
   menuItem: {
-    height: 40,
+    minHeight: 40,
+    paddingVertical: 10,
     paddingHorizontal: 16,
     justifyContent: 'center',
   },

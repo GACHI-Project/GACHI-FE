@@ -24,6 +24,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
   },
   title: {
+    flex: 1,
     fontSize: 24,
     fontFamily: fonts.bold,
     color: colors.text.primary,

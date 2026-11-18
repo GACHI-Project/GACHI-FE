@@ -1,5 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ActivityIndicator,
+  TouchableOpacity,
+  ScrollView,
+} from 'react-native';
 import { router } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import Svg, { Circle, Defs, RadialGradient, Stop } from 'react-native-svg';
@@ -188,7 +195,7 @@ const RegisterCompleteScreen = () => {
 
   return (
     <View style={styles.container}>
-      <View style={styles.content}>
+      <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.outerCircleWrapper}>
           <Svg width={150} height={150} style={StyleSheet.absoluteFill}>
             <Defs>
@@ -218,7 +225,7 @@ const RegisterCompleteScreen = () => {
             onPress={() => router.replace('/(auth)/login')}
           />
         </View>
-      </View>
+      </ScrollView>
 
       {/* 컨페티 */}
       <ConfettiCannon
@@ -254,7 +261,8 @@ const styles = StyleSheet.create({
     gap: 20,
   },
   content: {
-    flex: 1,
+    flexGrow: 1,
+    paddingVertical: 32,
     justifyContent: 'center',
     alignItems: 'center',
     gap: 32,
@@ -280,11 +288,14 @@ const styles = StyleSheet.create({
     lineHeight: 72,
   },
   textSection: {
+    alignSelf: 'stretch',
+    paddingHorizontal: layout.screenPaddingHorizontal,
     alignItems: 'center',
     gap: 10,
     marginBottom: 8,
   },
   title: {
+    textAlign: 'center',
     fontSize: 26,
     fontFamily: fonts.semiBold,
     color: colors.text.primary,

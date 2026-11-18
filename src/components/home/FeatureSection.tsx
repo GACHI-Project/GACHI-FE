@@ -1,4 +1,12 @@
-import { View, Text, Image, TouchableOpacity, ImageSourcePropType } from 'react-native';
+import { useState } from 'react';
+import {
+  View,
+  Text,
+  Image,
+  TouchableOpacity,
+  ImageSourcePropType,
+  LayoutChangeEvent,
+} from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
@@ -6,8 +14,11 @@ import { useTranslation } from 'react-i18next';
 import colors from '../../constants/colors';
 import styles from './featureSection.styles';
 
+type FeatureId = 'ai' | 'guide';
+type FeatureTextPart = 'title' | 'button';
+
 interface FeatureCardBase {
-  id: string;
+  id: FeatureId;
   image: ImageSourcePropType;
   buttonColor: string;
   buttonTextColor: string;
@@ -32,10 +43,32 @@ const FEATURE_CARD_BASES: FeatureCardBase[] = [
 ];
 
 const FeatureSection = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const [textHeights, setTextHeights] = useState<
+    Partial<Record<FeatureId, Partial<Record<FeatureTextPart, number>>>>
+  >({});
+  const recordTextHeight = (id: FeatureId, part: FeatureTextPart) => (event: LayoutChangeEvent) => {
+    const { height } = event.nativeEvent.layout;
+    setTextHeights((previous) => {
+      if (previous[id]?.[part] === height) return previous;
+      return { ...previous, [id]: { ...previous[id], [part]: height } };
+    });
+  };
+  const titleHeight = Math.max(
+    0,
+    ...FEATURE_CARD_BASES.map(({ id }) => textHeights[id]?.title ?? 0)
+  );
+  const buttonHeight = Math.max(
+    styles.cardButton.minHeight,
+    ...FEATURE_CARD_BASES.map(
+      ({ id }) => (textHeights[id]?.button ?? 0) + styles.cardButton.paddingVertical * 2
+    )
+  );
   const featureCards = FEATURE_CARD_BASES.map((base) => ({
     ...base,
-    title: t(`home.features.${base.id}.title`, { returnObjects: true }) as string[],
+    title: (t(`home.features.${base.id}.title`, { returnObjects: true }) as string[]).join(
+      base.id === 'guide' && i18n.language.startsWith('ko') ? '\n' : ' '
+    ),
     desc: t(`home.features.${base.id}.desc`),
     buttonLabel: t(`home.features.${base.id}.button`),
   }));
@@ -51,16 +84,22 @@ const FeatureSection = () => {
             </LinearGradient>
             <View style={styles.cardBottom}>
               <View style={styles.cardTexts}>
-                {card.title.map((line) => (
-                  <Text key={line} style={styles.cardTitle} numberOfLines={1}>
-                    {line}
+                <View style={[styles.titleBlock, { minHeight: titleHeight }]}>
+                  <Text style={styles.cardTitle} onLayout={recordTextHeight(card.id, 'title')}>
+                    {card.title}
                   </Text>
-                ))}
+                </View>
                 <Text style={styles.cardDesc}>{card.desc}</Text>
               </View>
               <TouchableOpacity
-                style={[styles.cardButton, { backgroundColor: card.buttonColor }]}
+                style={[
+                  styles.cardButton,
+                  { backgroundColor: card.buttonColor, minHeight: buttonHeight },
+                ]}
                 activeOpacity={0.8}
+                accessibilityRole="button"
+                accessibilityLabel={card.buttonLabel}
+                hitSlop={{ top: 9, bottom: 9, left: 4, right: 4 }}
                 onPress={() => {
                   if (card.id === 'ai') router.push('/chat');
                   else if (card.id === 'guide') router.push('/guide');
@@ -73,7 +112,7 @@ const FeatureSection = () => {
                 />
                 <Text
                   style={[styles.cardButtonText, { color: card.buttonTextColor }]}
-                  numberOfLines={1}
+                  onLayout={recordTextHeight(card.id, 'button')}
                 >
                   {card.buttonLabel}
                 </Text>

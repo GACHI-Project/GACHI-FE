@@ -40,9 +40,7 @@ const TimetableCard = ({ cardWidth, items, timetables, loading, fontScale }: Pro
                 {t('mealTimetable.timetable.period', { period: p.period })}
               </Text>
             </View>
-            <Text style={styles.periodSubject} numberOfLines={1}>
-              {p.subject}
-            </Text>
+            <Text style={styles.periodSubject}>{p.subject}</Text>
           </View>
         ))}
       </View>
@@ -51,7 +49,7 @@ const TimetableCard = ({ cardWidth, items, timetables, loading, fontScale }: Pro
 
   return (
     <View
-      style={styles.card}
+      style={[styles.card, { width: cardWidth }]}
       onTouchStart={() => {
         isPausedRef.current = true;
       }}
@@ -73,14 +71,12 @@ const TimetableCard = ({ cardWidth, items, timetables, loading, fontScale }: Pro
                 {t('mealTimetable.timetable.cardLabel')}
               </Text>
             )}
-            <Text style={styles.cardTitle} numberOfLines={1}>
-              {t('mealTimetable.timetable.cardTitle')}
-            </Text>
+            <Text style={styles.cardTitle}>{t('mealTimetable.timetable.cardTitle')}</Text>
           </View>
         </View>
         <View style={styles.childRow}>
           <View style={[styles.childDot, { backgroundColor: activeChild.colorCode }]} />
-          <Text style={styles.childText} numberOfLines={1}>
+          <Text style={styles.childText}>
             {activeChild.name} · {activeChild.schoolName}
           </Text>
         </View>

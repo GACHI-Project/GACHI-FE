@@ -10,9 +10,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    flexWrap: 'wrap',
+    gap: 8,
   },
   sectionTitle: {
     flex: 1,
+    minWidth: 120,
     fontSize: 18,
     fontFamily: fonts.semiBold,
     color: colors.text.primary,
@@ -32,7 +35,7 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   card: {
-    flex: 1,
+    flex: 0,
     borderRadius: 20,
     backgroundColor: colors.text.white,
     shadowColor: colors.gray[300],
@@ -61,6 +64,7 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   iconBox: {
+    flexShrink: 0,
     width: 44,
     height: 44,
     borderRadius: 12,
@@ -69,6 +73,7 @@ const styles = StyleSheet.create({
   },
   headerTexts: {
     flex: 1,
+    minWidth: 0,
     gap: 2,
   },
   cardLabel: {
@@ -128,6 +133,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: 8,
+    flexWrap: 'wrap',
   },
   periodBadge: {
     backgroundColor: colors.secondary[600],
@@ -147,6 +153,7 @@ const styles = StyleSheet.create({
     fontFamily: fonts.medium,
     color: colors.text.primary,
     flex: 1,
+    minWidth: 60,
   },
   divider: {
     height: 1,

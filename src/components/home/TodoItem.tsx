@@ -35,26 +35,18 @@ const TodoItem = memo(
             )}
           </TouchableOpacity>
           <View style={styles.todoContent}>
-            <Text style={[styles.todoTitle, isChecked && styles.todoTitleDone]} numberOfLines={2}>
+            <Text style={[styles.todoTitle, isChecked && styles.todoTitleDone]}>
               {item.content}
             </Text>
             <View style={styles.todoMeta}>
               <View style={[styles.childTag, { backgroundColor: childColor }]}>
-                <Text style={styles.childTagText} numberOfLines={1}>
-                  {item.childName}
-                </Text>
+                <Text style={styles.childTagText}>{item.childName}</Text>
               </View>
-              {item.detail ? (
-                <Text style={styles.todoDesc} numberOfLines={1}>
-                  {item.detail}
-                </Text>
-              ) : null}
+              {item.detail ? <Text style={styles.todoDesc}>{item.detail}</Text> : null}
             </View>
           </View>
           <View style={styles.todayBadge}>
-            <Text style={styles.todayText} numberOfLines={1}>
-              {t('home.taskCard.today')}
-            </Text>
+            <Text style={styles.todayText}>{t('home.taskCard.today')}</Text>
           </View>
         </View>
         {showDivider && <View style={styles.divider} />}

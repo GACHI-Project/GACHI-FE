@@ -67,9 +67,7 @@ const TimetableGrid = ({ loading, timetableByDay, periodCount }: Props) => {
                   isToday(day.date) && styles.todayCell,
                 ]}
               >
-                <Text style={styles.tableCellText} numberOfLines={2}>
-                  {p?.subject ?? ''}
-                </Text>
+                <Text style={styles.tableCellText}>{p?.subject ?? ''}</Text>
               </View>
             );
           })}

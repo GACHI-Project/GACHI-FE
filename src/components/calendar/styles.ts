@@ -132,7 +132,7 @@ export default StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: 8,
     paddingVertical: 3,
-    maxWidth: 220,
+    maxWidth: '100%',
     flexShrink: 1,
     minWidth: 0,
   },

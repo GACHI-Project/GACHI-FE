@@ -206,9 +206,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    flexWrap: 'wrap',
     marginBottom: 10,
   },
   timelineDateText: {
+    flexShrink: 1,
     fontSize: 15,
     fontFamily: fonts.semiBold,
     color: colors.text.secondary,
@@ -217,6 +219,7 @@ const styles = StyleSheet.create({
     color: colors.text.primary,
   },
   todayBadge: {
+    maxWidth: '100%',
     backgroundColor: colors.secondary[100],
     borderRadius: 8,
     paddingHorizontal: 8,

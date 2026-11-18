@@ -282,10 +282,10 @@
       "ai": {
         "title": ["Hỏi", "AI"],
         "desc": "Đặt câu hỏi ngay về nội dung khó hiểu. AI sẽ giải thích cả ngữ cảnh cho bạn.",
-        "button": "Bắt đầu trò chuyện"
+        "button": "Trò chuyện"
       },
       "guide": {
-        "title": ["Hướng dẫn cuộc sống", "học đường tại Hàn Quốc"],
+        "title": ["Học đường", "Hàn\u00a0Quốc"],
         "desc": "Tra cứu dễ dàng những điều hay nhầm lẫn trong cuộc sống học đường qua hỏi đáp.",
         "button": "Xem hướng dẫn"
       }

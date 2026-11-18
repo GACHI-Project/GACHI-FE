@@ -118,6 +118,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    flexWrap: 'wrap',
+    gap: 8,
   },
   date: {
     fontSize: 12,
@@ -128,6 +130,7 @@ const styles = StyleSheet.create({
     marginLeft: 2,
   },
   continueBadge: {
+    maxWidth: '100%',
     flexDirection: 'row',
     alignItems: 'center',
     gap: 3,
@@ -137,6 +140,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.secondary[100],
   },
   continueBadgeText: {
+    flexShrink: 1,
     fontSize: 11,
     fontFamily: fonts.semiBold,
     color: colors.secondary[600],

@@ -30,7 +30,8 @@ const MealTimetableWidget = () => {
   const { t } = useTranslation();
   const childItems = useChildrenStore((s) => s.children);
   const { width: screenWidth, fontScale } = useWindowDimensions();
-  const cardWidth = (screenWidth - HORIZONTAL_PADDING - CARD_GAP) / 2;
+  const [cardsWidth, setCardsWidth] = useState<number | null>(null);
+  const cardWidth = Math.max(0, ((cardsWidth ?? screenWidth - HORIZONTAL_PADDING) - CARD_GAP) / 2);
   const [today, setToday] = useState(getTodayStr);
 
   useEffect(() => {
@@ -92,7 +93,10 @@ const MealTimetableWidget = () => {
           </View>
         </TouchableOpacity>
       </View>
-      <View style={styles.cardsRow}>
+      <View
+        style={styles.cardsRow}
+        onLayout={(event) => setCardsWidth(event.nativeEvent.layout.width)}
+      >
         <MealCard
           cardWidth={cardWidth}
           items={childItems}

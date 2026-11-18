@@ -17,6 +17,7 @@ const styles = StyleSheet.create({
   },
   card: {
     flex: 1,
+    minWidth: 0,
     borderRadius: 20,
     overflow: 'hidden',
     shadowColor: colors.gray[300],
@@ -36,19 +37,24 @@ const styles = StyleSheet.create({
     height: '60%',
   },
   cardBottom: {
+    flexGrow: 1,
     backgroundColor: colors.text.white,
     paddingHorizontal: 15,
     paddingVertical: 20,
     gap: 15,
   },
   cardTexts: {
+    flexGrow: 1,
     gap: 8,
+  },
+  titleBlock: {
+    width: '100%',
   },
   cardTitle: {
     fontSize: 16,
     fontFamily: fonts.semiBold,
     color: colors.text.primary,
-    lineHeight: 18,
+    lineHeight: 24,
   },
   cardDesc: {
     fontSize: 12,
@@ -57,19 +63,23 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   cardButton: {
+    minHeight: 30,
+    alignSelf: 'flex-start',
+    maxWidth: '100%',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
+    gap: 4,
     borderRadius: 100,
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    alignSelf: 'flex-start',
+    paddingHorizontal: 8,
+    paddingVertical: 6,
   },
   cardButtonText: {
+    flexShrink: 1,
+    textAlign: 'center',
     fontSize: 12,
     fontFamily: fonts.semiBold,
-    lineHeight: 14,
+    lineHeight: 16,
   },
 });
 

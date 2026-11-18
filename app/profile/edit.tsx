@@ -258,7 +258,8 @@ const ProfileEditScreen = () => {
   };
 
   const isWithdrawPasswordStep = withdrawStep === 'password';
-  const isSocialOnly = userInfo !== null && userInfo.passwordLoginAvailable === false;
+  const canEditCredentials = userInfo?.passwordLoginAvailable === true;
+  const isSocialOnly = userInfo?.passwordLoginAvailable === false;
 
   const handleBlockedPress = () => {
     setBlockedModalVisible(true);
@@ -310,12 +311,18 @@ const ProfileEditScreen = () => {
           <View style={styles.divider} />
           <TouchableOpacity
             style={styles.row}
-            onPress={isSocialOnly ? handleBlockedPress : () => router.push('/profile/email')}
+            onPress={() => {
+              if (canEditCredentials) {
+                router.push('/profile/email');
+              } else if (isSocialOnly) {
+                handleBlockedPress();
+              }
+            }}
             activeOpacity={0.7}
           >
             <Text style={styles.rowLabel}>{t('profile.editProfile.email')}</Text>
             <Text style={styles.rowValue}>{userInfo?.email ?? ''}</Text>
-            {!isSocialOnly && (
+            {canEditCredentials && (
               <Ionicons name="chevron-forward" size={16} color={colors.text.secondary} />
             )}
           </TouchableOpacity>
@@ -325,11 +332,17 @@ const ProfileEditScreen = () => {
         <View style={styles.card}>
           <TouchableOpacity
             style={styles.row}
-            onPress={isSocialOnly ? handleBlockedPress : () => router.push('/profile/password')}
+            onPress={() => {
+              if (canEditCredentials) {
+                router.push('/profile/password');
+              } else if (isSocialOnly) {
+                handleBlockedPress();
+              }
+            }}
             activeOpacity={0.7}
           >
             <Text style={styles.rowLabel}>{t('profile.editProfile.changePassword.title')}</Text>
-            {!isSocialOnly && (
+            {canEditCredentials && (
               <Ionicons name="chevron-forward" size={16} color={colors.text.secondary} />
             )}
           </TouchableOpacity>

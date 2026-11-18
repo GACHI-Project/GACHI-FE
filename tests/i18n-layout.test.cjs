@@ -6,7 +6,7 @@ const vm = require('node:vm');
 const { test } = require('node:test');
 const ts = require('typescript');
 
-const createLoader = (mocks = {}) => {
+const createLoader = (mocks = {}, globals = {}) => {
   const cache = new Map();
   const load = (file) => {
     const filename = path.resolve(__dirname, '..', file);
@@ -21,6 +21,7 @@ const createLoader = (mocks = {}) => {
       },
     });
     vm.runInNewContext(outputText, {
+      ...globals,
       exports,
       require: (name) => {
         if (name in mocks) return mocks[name];
@@ -43,8 +44,22 @@ const collect = (tree, predicate) => {
   return [...(predicate(tree) ? [tree] : []), ...collect(tree.props?.children, predicate)];
 };
 
-// Execute viewer interactions and effects without replacing its production render logic.
-const createViewer = (language) => {
+class AnimatedValue {
+  constructor(value) {
+    this.value = value;
+  }
+
+  setValue(value) {
+    this.value = value;
+  }
+}
+
+// Keep render, layout effects (before paint) and passive effects as separate phases.
+const createViewer = (
+  language,
+  file = 'src/components/scan/result/PageImageViewerModal.tsx',
+  mocks = {}
+) => {
   const dimensions = { width: 320, height: 568, fontScale: 1.5 };
   const locale = JSON.parse(
     fs.readFileSync(path.resolve(__dirname, `../src/i18n/locales/${language}.json`), 'utf8')
@@ -54,11 +69,30 @@ const createViewer = (language) => {
   let cursor = 0;
   let dirty = false;
   let effects = [];
+  let layoutEffects = [];
+  const sameDependencies = (previous, next) =>
+    previous &&
+    next &&
+    previous.length === next.length &&
+    next.every((value, i) => Object.is(value, previous[i]));
+  const scheduleEffect = (queue, callback, dependencies) => {
+    const index = cursor;
+    cursor += 1;
+    const previous = cells[index];
+    if (!previous || !sameDependencies(previous.dependencies, dependencies)) {
+      const cell = { dependencies };
+      cells[index] = cell;
+      queue.push(() => {
+        previous?.cleanup?.();
+        cell.cleanup = callback();
+      });
+    }
+  };
   const react = {
     useState: (initial) => {
       const index = cursor;
       cursor += 1;
-      if (!(index in cells)) cells[index] = initial;
+      if (!(index in cells)) cells[index] = typeof initial === 'function' ? initial() : initial;
       return [
         cells[index],
         (update) => {
@@ -70,26 +104,25 @@ const createViewer = (language) => {
         },
       ];
     },
-    useEffect: (callback, dependencies) => {
+    useRef: (initial) => {
       const index = cursor;
       cursor += 1;
-      const previous = cells[index];
-      if (!previous || dependencies.some((value, i) => !Object.is(value, previous[i]))) {
-        cells[index] = dependencies;
-        effects.push(callback);
-      }
+      if (!(index in cells)) cells[index] = { current: initial };
+      return cells[index];
     },
+    useEffect: (callback, dependencies) => scheduleEffect(effects, callback, dependencies),
+    useLayoutEffect: (callback, dependencies) =>
+      scheduleEffect(layoutEffects, callback, dependencies),
   };
-  const jsx = (type, props) => ({ type, props });
+  const jsx = (type, props, key) => ({ type, props, key });
   const load = createLoader({
     react,
     'react/jsx-runtime': { jsx, jsxs: jsx },
     'react-native': {
       ...Object.fromEntries(
-        ['View', 'Text', 'Image', 'TouchableOpacity', 'Modal', 'ScrollView'].map((name) => [
-          name,
-          name,
-        ])
+        ['View', 'Text', 'Image', 'TouchableOpacity', 'Pressable', 'Modal', 'ScrollView'].map(
+          (name) => [name, name]
+        )
       ),
       StyleSheet: { create: (styles) => styles },
       useWindowDimensions: () => dimensions,
@@ -97,23 +130,36 @@ const createViewer = (language) => {
     'react-native-safe-area-context': { useSafeAreaInsets: () => ({ top: 24, bottom: 16 }) },
     'react-native-gesture-handler': { GestureHandlerRootView: 'GestureHandlerRootView' },
     '@expo/vector-icons': { Ionicons: 'Ionicons' },
-    'react-i18next': { useTranslation: () => ({ t: translate }) },
+    'react-i18next': { useTranslation: () => ({ t: translate, i18n: { language } }) },
     '../../common/PinchZoomView': { default: 'PinchZoomView' },
     '../../common/Button': { PrimaryButton: 'PrimaryButton', SecondaryButton: 'SecondaryButton' },
     './TranslationOverlay': { default: 'TranslationOverlay' },
+    ...mocks,
   });
-  const Component = load('src/components/scan/result/PageImageViewerModal.tsx').default;
+  const Component = load(file).default;
   let props;
   let tree;
+  let firstTree;
+  let paintedTrees;
   const render = (updates = {}) => {
     props = { ...props, ...updates };
     let renders = 0;
+    firstTree = undefined;
+    paintedTrees = [];
+    effects = [];
     do {
       cursor = 0;
       dirty = false;
-      effects = [];
+      layoutEffects = [];
       tree = Component(props);
-      effects.forEach((effect) => effect());
+      if (renders === 0) firstTree = tree;
+      layoutEffects.forEach((effect) => effect());
+      if (!dirty) {
+        paintedTrees.push(tree);
+        const pending = effects;
+        effects = [];
+        pending.forEach((effect) => effect());
+      }
       renders += 1;
       assert.ok(renders < 20, 'Viewer effects should settle');
     } while (dirty);
@@ -129,6 +175,12 @@ const createViewer = (language) => {
     render,
     press,
     dimensions,
+    get firstTree() {
+      return firstTree;
+    },
+    get paintedTrees() {
+      return paintedTrees;
+    },
     get tree() {
       return tree;
     },
@@ -173,15 +225,24 @@ test('block-only translation keeps every translated block in reading order witho
     const page = { pageNo: 1, imageUrl: 'image', blocks: [{ blockNo: 1, translatedText: text }] };
     viewer.render({ visible: true, page, totalPages: 2, onClose: () => {} });
     viewer.press(viewerKey('readText'));
-    const fullText = collect(
+    const textScroll = collect(
       viewer.tree,
+      (node) =>
+        node.type === 'ScrollView' &&
+        collect(node.props.children, (child) => child.props.selectable).length > 0
+    )[0];
+    assert.ok(textScroll, 'The full translation must be inside a ScrollView');
+    const fullText = collect(
+      textScroll,
       (node) => node.type === 'Text' && node.props.selectable
     )[0];
     assert.equal(fullText.props.children, text.trim());
     assert.equal(fullText.props.numberOfLines, undefined);
-    assert.ok(collect(viewer.tree, (node) => node.type === 'ScrollView').length);
     viewer.press(viewerKey('viewImage'));
     assert.equal(collect(viewer.tree, (node) => node.type === 'TranslationOverlay').length, 1);
+    const image = collect(viewer.tree, (node) => node.type === 'Image')[0];
+    assert.ok(image, 'Returning to image mode must restore the original image');
+    assert.equal(image.props.source.uri, page.imageUrl);
     assert.ok(estimateOverlayFontSize(text, 40, 12, 2) >= MIN_OVERLAY_FONT_SIZE);
   });
 });
@@ -190,7 +251,13 @@ test('viewer fits portrait images into the measured space left by translated con
   const viewer = createViewer('vi');
   viewer.render({
     visible: true,
-    page: { pageNo: 1, imageWidth: 100, imageHeight: 200, translatedText: 'Text' },
+    page: {
+      pageNo: 1,
+      imageUrl: 'image',
+      imageWidth: 100,
+      imageHeight: 200,
+      translatedText: 'Text',
+    },
     totalPages: 1,
   });
   const area = collect(viewer.tree, (node) => !!node.props.onLayout)[0];
@@ -199,23 +266,29 @@ test('viewer fits portrait images into the measured space left by translated con
   const image = collect(viewer.tree, (node) => node.type === 'PinchZoomView')[0];
   assert.equal(image.props.style.height, 100);
   assert.equal(image.props.style.width, 50);
+  assert.ok(image.props.style.width * image.props.maxZoom >= (viewer.dimensions.width - 40) * 3);
   viewer.dimensions.width = 240;
   area.props.onLayout({ nativeEvent: { layout: { height: 600 } } });
   viewer.render();
   const resized = collect(viewer.tree, (node) => node.type === 'PinchZoomView')[0];
   assert.equal(resized.props.style.width, 200);
   assert.equal(resized.props.style.height, 400);
+  assert.equal(resized.props.maxZoom, 3);
 });
 
 test('changing pages or reopening resets the viewer without showing the previous full translation', () => {
   const viewer = createViewer('en');
   viewer.render({
     visible: true,
-    page: { pageNo: 1, translatedText: 'Previous page' },
+    page: { pageNo: 1, imageUrl: 'first-image', translatedText: 'Previous page' },
     totalPages: 2,
   });
   viewer.press(viewerKey('readText'));
-  viewer.render({ page: { pageNo: 2, translatedText: 'Next page' } });
+  viewer.render({ page: { pageNo: 2, imageUrl: 'next-image', translatedText: 'Next page' } });
+  assert.equal(collect(viewer.firstTree, (node) => node.props.selectable).length, 1);
+  viewer.paintedTrees.forEach((tree) =>
+    assert.equal(collect(tree, (node) => node.props.selectable).length, 0)
+  );
   assert.equal(collect(viewer.tree, (node) => node.props.selectable).length, 0);
   viewer.press(viewerKey('readText'));
   assert.equal(
@@ -224,7 +297,60 @@ test('changing pages or reopening resets the viewer without showing the previous
   );
   viewer.render({ visible: false });
   viewer.render({ visible: true });
+  assert.equal(collect(viewer.firstTree, (node) => node.props.selectable).length, 1);
+  assert.ok(viewer.paintedTrees.length > 0);
+  viewer.paintedTrees.forEach((tree) =>
+    assert.equal(collect(tree, (node) => node.props.selectable).length, 0)
+  );
   assert.equal(collect(viewer.tree, (node) => node.props.selectable).length, 0);
+});
+
+test('a text-only page opens directly in full-text mode without an empty image action', () => {
+  const viewer = createViewer('en');
+  viewer.render({
+    visible: true,
+    page: { pageNo: 1, translatedText: 'Complete translation' },
+    totalPages: 1,
+  });
+  assert.equal(
+    collect(viewer.firstTree, (node) => node.props.selectable)[0].props.children,
+    'Complete translation'
+  );
+  assert.equal(
+    collect(viewer.tree, (node) => node.type === 'PrimaryButton' || node.type === 'SecondaryButton')
+      .length,
+    0
+  );
+  assert.equal(collect(viewer.tree, (node) => node.type === 'PinchZoomView').length, 0);
+});
+
+test('untranslated blocks do not offer an overlay action or a full-text hint', () => {
+  const viewer = createViewer('en');
+  const page = {
+    pageNo: 1,
+    imageUrl: 'image',
+    blocks: [{ blockNo: 1, originalText: 'Original', translatedText: '   ' }],
+  };
+  viewer.render({ visible: true, page, totalPages: 1 });
+  assert.equal(
+    collect(
+      viewer.tree,
+      (node) =>
+        node.type === 'TranslationOverlay' ||
+        node.type === 'SecondaryButton' ||
+        node.type === 'PrimaryButton'
+    ).length,
+    0
+  );
+  assert.equal(
+    collect(viewer.tree, (node) => node.type === 'Text' && typeof node.props.children === 'string')
+      .length,
+    1,
+    'Only the page heading is shown, without an unusable full-text hint'
+  );
+  viewer.render({ page: { ...page, translatedText: 'Page translation' } });
+  assert.equal(collect(viewer.tree, (node) => node.type === 'PrimaryButton').length, 1);
+  assert.equal(collect(viewer.tree, (node) => node.type === 'SecondaryButton').length, 0);
 });
 
 test('overlay font fitting accounts for system font scaling and retains a readable lower bound', () => {
@@ -242,58 +368,263 @@ test('overlay font fitting reserves a line for every explicit line break', () =>
   assert.equal(estimateOverlayFontSize('a\nb\nc', 200, 30, 1), MIN_OVERLAY_FONT_SIZE);
 });
 
+test('overlay geometry changes remount measured text and refit before painting', () => {
+  const overlay = createViewer('en', 'src/components/scan/result/TranslationOverlay.tsx');
+  overlay.render({
+    blocks: [
+      { blockNo: 1, translatedText: 'Short text', box: { x: 0, y: 0, width: 1, height: 1 } },
+    ],
+    renderedWidth: 200,
+    renderedHeight: 100,
+  });
+  let [text] = collect(overlay.tree, (node) => node.type === 'Text');
+  const { key } = text;
+  const initialFontSize = text.props.style[1].fontSize;
+  text.props.onTextLayout({ nativeEvent: { lines: [{ y: 0, height: 110 }] } });
+  overlay.render();
+  [text] = collect(overlay.tree, (node) => node.type === 'Text');
+  assert.ok(text.props.style[1].fontSize < initialFontSize);
+  assert.equal(text.key, key, 'Font fitting must not reset the native Text node');
+  overlay.render({ renderedHeight: 90 });
+  [text] = collect(overlay.tree, (node) => node.type === 'Text');
+  assert.notEqual(text.key, key, 'A resized box must force a new native text measurement');
+  text.props.onTextLayout({ nativeEvent: { lines: [{ y: 0, height: 100 }] } });
+  overlay.render();
+  assert.ok(
+    collect(overlay.tree, (node) => node.type === 'Text')[0].props.style[1].fontSize <
+      initialFontSize
+  );
+});
+
+test('all required social terms and the enabled next action share the scrollable body', () => {
+  const destinations = [];
+  const state = {
+    authMethod: 'google',
+    signupToken: 'signup',
+    setSocialTermsAgreed: (value) => {
+      state.agreed = value;
+    },
+  };
+  const screen = createViewer('vi', 'app/(auth)/register/social-terms.tsx', {
+    'expo-router': { router: { push: (route) => destinations.push(route) } },
+    '../../../src/store/registerStore': { useRegisterStore: (select) => select(state) },
+    '../../../src/components/common/StepHeader': { default: 'StepHeader' },
+    '../../../src/components/common/Button': { PrimaryButton: 'PrimaryButton' },
+  });
+  screen.dimensions.height = 320;
+  screen.dimensions.fontScale = 2;
+  screen.render();
+  const scroll = collect(screen.tree, (node) => node.type === 'ScrollView')[0];
+  const rows = collect(
+    scroll,
+    (node) => typeof node.type === 'function' && node.type.name === 'TermsRow'
+  );
+  assert.equal(rows.length, 3);
+  assert.equal(collect(scroll, (node) => node.type === 'PrimaryButton')[0].props.disabled, true);
+  rows.forEach((row) => row.props.onToggle());
+  screen.render();
+  const next = collect(screen.tree, (node) => node.type === 'PrimaryButton')[0];
+  assert.equal(next.props.disabled, false);
+  next.props.onPress();
+  assert.equal(state.agreed, true);
+  assert.deepEqual(destinations, ['/(auth)/register/child']);
+});
+
+test('header menu bounds its scrolling items to the available screen height', () => {
+  let selected;
+  const menuItems = Array.from({ length: 8 }, (_, index) => ({
+    label: `Long translated action ${index}`,
+    onPress: () => {
+      selected = index;
+    },
+  }));
+  const menu = createViewer('vi', 'src/components/common/HeaderMenuButton.tsx');
+  menu.dimensions.height = 320;
+  menu.render({ icon: 'menu', menuItems });
+  const trigger = collect(menu.tree, (node) => !!node.props.ref)[0];
+  trigger.props.ref.current = { measure: (callback) => callback(0, 0, 30, 30, 0, 500) };
+  trigger.props.onPress();
+  menu.render();
+  const scroll = collect(menu.tree, (node) => node.type === 'ScrollView')[0];
+  const bounds = scroll.props.style[1];
+  assert.ok(bounds.maxHeight > 0);
+  assert.ok(bounds.top + bounds.maxHeight <= menu.dimensions.height - 16);
+  const actions = collect(scroll, (node) => node.type === 'TouchableOpacity');
+  assert.equal(actions.length, 8);
+  actions[7].props.onPress();
+  menu.render();
+  assert.equal(selected, 7);
+  assert.equal(collect(menu.tree, (node) => node.type === 'Modal')[0].props.visible, false);
+});
+
+test('scan detail actions remain scrollable while image zoom disables the content pager', () => {
+  const invoked = [];
+  const detail = createViewer('en', 'src/components/scan/ScanPageDetailModal.tsx', {
+    'expo-image-manipulator': { manipulateAsync: () => {}, SaveFormat: { JPEG: 'jpeg' } },
+    '../../hooks/scan/useModalClosed': { default: () => {} },
+    '../common/PinchZoomView': { default: 'PinchZoomView' },
+  });
+  detail.render({
+    visible: true,
+    pages: [{ id: 'page-1', uri: 'image' }],
+    currentIndex: 0,
+    onClosed: () => {},
+    onDelete: () => invoked.push('delete'),
+    onRetake: () => invoked.push('retake'),
+  });
+  collect(detail.tree, (node) => node.type === 'PinchZoomView')[0].props.onZoomChange(true);
+  detail.render();
+  const disabled = collect(
+    detail.tree,
+    (node) => node.type === 'ScrollView' && node.props.scrollEnabled === false
+  );
+  assert.ok(disabled.length > 0);
+  // The footer must be outside every scroll region disabled by image zoom.
+  const footer = collect(
+    detail.tree,
+    (node) => node.type === 'ScrollView' && node.props.contentContainerStyle?.[0]?.paddingTop === 10
+  )[0];
+  assert.ok(footer);
+  assert.notEqual(footer.props.scrollEnabled, false);
+  assert.equal(collect(footer, (node) => node.type === 'TouchableOpacity').length, 2);
+  collect(footer, (node) => node.type === 'TouchableOpacity').forEach((action) =>
+    action.props.onPress()
+  );
+  assert.deepEqual(invoked, ['delete', 'retake']);
+  disabled.forEach((scroll) => assert.equal(collect(scroll, (node) => node === footer).length, 0));
+});
+
+test('wrapped scan rows share the tallest measured height and remeasure after resizing', () => {
+  const dimensions = { width: 320, height: 568, fontScale: 2 };
+  const animation = { start: () => {} };
+  const sheet = createViewer('vi', 'src/components/scan/ScanPageReviewSheet.tsx', {
+    'react-native': {
+      View: 'View',
+      Text: 'Text',
+      Modal: 'Modal',
+      Pressable: 'Pressable',
+      ScrollView: 'ScrollView',
+      TouchableOpacity: 'TouchableOpacity',
+      StyleSheet: { create: (styles) => styles },
+      useWindowDimensions: () => dimensions,
+      Dimensions: { get: () => dimensions },
+      Animated: {
+        Value: AnimatedValue,
+        View: 'AnimatedView',
+        timing: () => animation,
+        spring: () => animation,
+        parallel: () => animation,
+      },
+    },
+    '../../hooks/scan/useModalClosed': { default: () => {} },
+    './ScanPageCard': { default: 'ScanPageCard' },
+    './useDragReorder': { reorderArray: () => {} },
+  });
+  sheet.render({
+    visible: true,
+    pages: Array.from({ length: 10 }, (_, index) => ({ id: String(index), uri: 'image' })),
+    onClosed: () => {},
+  });
+  let rows = collect(sheet.tree, (node) => node.type === 'ScanPageCard');
+  rows[0].props.onLayout({ nativeEvent: { layout: { height: 100 } } });
+  rows[9].props.onLayout({ nativeEvent: { layout: { height: 160 } } });
+  sheet.render();
+  rows = collect(sheet.tree, (node) => node.type === 'ScanPageCard');
+  assert.equal(rows.length, 10);
+  rows.forEach((row) => {
+    assert.equal(row.props.minHeight, 160);
+    assert.ok(row.props.rowHeight > 160, 'Drag spacing must include the row gap');
+  });
+  const previousKey = rows[0].key;
+  dimensions.width = 600;
+  sheet.render();
+  rows = collect(sheet.tree, (node) => node.type === 'ScanPageCard');
+  assert.notEqual(rows[0].key, previousKey);
+  rows[0].props.onLayout({ nativeEvent: { layout: { height: 100 } } });
+  sheet.render();
+  collect(sheet.tree, (node) => node.type === 'ScanPageCard').forEach((row) =>
+    assert.equal(row.props.minHeight, 100)
+  );
+});
+
 test('home card selection stays valid during child removal and resizes without a stale offset', () => {
   const cells = [];
   let cursor = 0;
   let layoutEffects = [];
+  let passiveEffects = [];
+  let nextInterval = 0;
+  const intervals = new Map();
   const nextCell = (initial) => {
     const index = cursor;
     cursor += 1;
     if (!(index in cells)) cells[index] = initial;
     return index;
   };
-  class AnimatedValue {
-    constructor(value) {
-      this.value = value;
+  const scheduleEffect = (queue, callback, dependencies) => {
+    const index = nextCell(null);
+    const previous = cells[index];
+    if (
+      !previous ||
+      !dependencies ||
+      !previous.dependencies ||
+      dependencies.some((value, i) => !Object.is(value, previous.dependencies[i]))
+    ) {
+      const cell = { dependencies };
+      cells[index] = cell;
+      queue.push(() => {
+        previous?.cleanup?.();
+        cell.cleanup = callback();
+      });
     }
-
-    setValue(value) {
-      this.value = value;
-    }
-  }
-  const hookLoad = createLoader({
-    react: {
-      useState: (initial) => {
-        const index = nextCell(initial);
-        return [
-          cells[index],
-          (value) => {
-            cells[index] = value;
-          },
-        ];
+  };
+  const hookLoad = createLoader(
+    {
+      react: {
+        useState: (initial) => {
+          const index = nextCell(initial);
+          return [
+            cells[index],
+            (value) => {
+              cells[index] = value;
+            },
+          ];
+        },
+        useRef: (initial) => cells[nextCell({ current: initial })],
+        useCallback: (callback) => callback,
+        useEffect: (callback, dependencies) =>
+          scheduleEffect(passiveEffects, callback, dependencies),
+        useLayoutEffect: (callback, dependencies) =>
+          scheduleEffect(layoutEffects, callback, dependencies),
       },
-      useRef: (initial) => cells[nextCell({ current: initial })],
-      useCallback: (callback) => callback,
-      useEffect: () => {},
-      useLayoutEffect: (callback) => {
-        layoutEffects.push(callback);
+      'react-native': {
+        Animated: {
+          Value: AnimatedValue,
+          timing: (value, config) => ({ start: () => value.setValue(config.toValue) }),
+        },
+        Easing: { out: (value) => value, cubic: (value) => value },
+        PanResponder: { create: (handlers) => ({ panHandlers: handlers }) },
       },
     },
-    'react-native': {
-      Animated: {
-        Value: AnimatedValue,
-        timing: (value, config) => ({ start: () => value.setValue(config.toValue) }),
+    {
+      setInterval: (callback) => {
+        nextInterval += 1;
+        intervals.set(nextInterval, callback);
+        return nextInterval;
       },
-      Easing: { out: (value) => value, cubic: (value) => value },
-      PanResponder: { create: (handlers) => ({ panHandlers: handlers }) },
-    },
-  });
+      clearInterval: (id) => intervals.delete(id),
+    }
+  );
   const runHook = hookLoad('src/hooks/home/useSwipeableCard.ts').default;
-  const render = (count, width) => {
+  const render = (count, width, flushPassive = true) => {
     cursor = 0;
     layoutEffects = [];
     const result = runHook(count, width);
     layoutEffects.forEach((effect) => effect());
+    if (flushPassive) {
+      const pending = passiveEffects;
+      passiveEffects = [];
+      pending.forEach((effect) => effect());
+    }
     return result;
   };
   let card = render(3, 100);
@@ -302,9 +633,18 @@ test('home card selection stays valid during child removal and resizes without a
   card.panResponder.panHandlers.onPanResponderRelease(null, { dx: -60 });
   card = render(3, 100);
   assert.equal(card.activeIdx, 2);
-  card = render(1, 75);
+  const oldInterval = [...intervals.values()][0];
+  assert.ok(oldInterval);
+  card = render(1, 75, false);
   assert.equal(card.activeIdx, 0, 'The render must never index a removed child');
   assert.ok(card.translateX.value === 0);
+  oldInterval();
+  assert.ok(
+    card.translateX.value === 0,
+    'The old interval must use the latest item count before passive cleanup'
+  );
+  render(1, 75);
+  assert.equal(intervals.size, 0);
   card = render(3, 100);
   card.panResponder.panHandlers.onPanResponderRelease(null, { dx: -60 });
   card = render(3, 100);
@@ -448,6 +788,8 @@ test('home card selection stays valid during child removal and resizes without a
           widget,
           (node) => node.type === 'MealCard' || node.type === 'TimetableCard'
         );
+        assert.equal(cards.filter((card) => card.type === 'MealCard').length, 1);
+        assert.equal(cards.filter((card) => card.type === 'TimetableCard').length, 1);
         cards.forEach((card) => assert.equal(card.props.cardWidth, (width - 64 - 16) / 2));
       });
     });

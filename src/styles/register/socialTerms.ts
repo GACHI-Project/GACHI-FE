@@ -29,6 +29,7 @@ const styles = StyleSheet.create({
   },
   spacer: {
     flex: 1,
+    minHeight: 24,
   },
   termsCard: {
     gap: 14,
@@ -84,9 +85,7 @@ const styles = StyleSheet.create({
     color: colors.text.primary,
   },
   footer: {
-    paddingHorizontal: layout.screenPaddingHorizontal,
-    paddingTop: 12,
-    paddingBottom: layout.screenPaddingBottom,
+    paddingTop: 24,
   },
 });
 

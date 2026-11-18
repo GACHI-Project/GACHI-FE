@@ -1,5 +1,14 @@
 import { useRef, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Modal } from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Modal,
+  ScrollView,
+  useWindowDimensions,
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import colors from '../../constants/colors';
 import fonts from '../../constants/fonts';
@@ -16,9 +25,16 @@ interface HeaderMenuButtonProps {
 }
 
 const HeaderMenuButton = ({ icon, menuItems }: HeaderMenuButtonProps) => {
+  const { height: windowHeight } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const [visible, setVisible] = useState(false);
   const [menuTop, setMenuTop] = useState(0);
   const btnRef = useRef<React.ComponentRef<typeof TouchableOpacity>>(null);
+  const top = Math.min(
+    Math.max(menuTop, insets.top + 8),
+    Math.max(insets.top + 8, windowHeight - insets.bottom - 48)
+  );
+  const maxHeight = Math.max(1, windowHeight - insets.bottom - 8 - top);
 
   const handlePress = () => {
     btnRef.current?.measure(
@@ -51,7 +67,11 @@ const HeaderMenuButton = ({ icon, menuItems }: HeaderMenuButtonProps) => {
           activeOpacity={1}
           onPress={() => setVisible(false)}
         >
-          <View style={[styles.menu, { top: menuTop }]} onStartShouldSetResponder={() => true}>
+          <ScrollView
+            style={[styles.menu, { top, maxHeight }]}
+            keyboardShouldPersistTaps="handled"
+            nestedScrollEnabled
+          >
             {menuItems.map((item, index) => (
               <View key={item.label}>
                 <TouchableOpacity
@@ -67,7 +87,7 @@ const HeaderMenuButton = ({ icon, menuItems }: HeaderMenuButtonProps) => {
                 {index < menuItems.length - 1 && <View style={styles.menuDivider} />}
               </View>
             ))}
-          </View>
+          </ScrollView>
         </TouchableOpacity>
       </Modal>
     </>

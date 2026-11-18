@@ -122,6 +122,8 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   date: {
+    maxWidth: '100%',
+    flexShrink: 1,
     fontSize: 12,
     fontFamily: fonts.medium,
     color: colors.text.secondary,

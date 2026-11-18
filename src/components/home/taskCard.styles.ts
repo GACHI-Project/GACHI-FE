@@ -144,7 +144,7 @@ const styles = StyleSheet.create({
   },
   todoDesc: {
     flex: 1,
-    minWidth: 100,
+    minWidth: 0,
     fontSize: 14,
     fontFamily: fonts.medium,
     color: colors.text.secondary,

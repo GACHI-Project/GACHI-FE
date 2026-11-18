@@ -135,17 +135,17 @@ const RegisterSocialTermsScreen = () => {
             ))}
           </View>
         </View>
+        <View style={styles.footer}>
+          <PrimaryButton
+            label={t('common.next')}
+            onPress={() => {
+              setSocialTermsAgreed(requiredChecked);
+              router.push('/(auth)/register/child');
+            }}
+            disabled={!requiredChecked}
+          />
+        </View>
       </ScrollView>
-      <View style={styles.footer}>
-        <PrimaryButton
-          label={t('common.next')}
-          onPress={() => {
-            setSocialTermsAgreed(requiredChecked);
-            router.push('/(auth)/register/child');
-          }}
-          disabled={!requiredChecked}
-        />
-      </View>
     </View>
   );
 };

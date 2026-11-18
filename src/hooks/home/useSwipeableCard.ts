@@ -44,8 +44,9 @@ const useSwipeableCard = (itemCount: number, cardWidth: number) => {
   useEffect(() => {
     if (itemCount <= 1) return undefined;
     const interval = setInterval(() => {
-      if (!isPausedRef.current) {
-        const next = (activeIdxRef.current + 1) % itemCount;
+      const count = itemsLengthRef.current;
+      if (!isPausedRef.current && count > 1) {
+        const next = (activeIdxRef.current + 1) % count;
         slideToRef.current(next);
       }
     }, AUTO_INTERVAL);

@@ -14,7 +14,8 @@
     "typecheck": "tsc --noEmit",
     "test:notifications": "node --test tests/notification-count.test.cjs",
     "test:lists": "node --test tests/async-list-state.test.cjs",
-    "test:auth": "node --test tests/auth-session.test.cjs"
+    "test:auth": "node --test tests/auth-session.test.cjs",
+    "test:layout": "node --test tests/i18n-layout.test.cjs"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.2",

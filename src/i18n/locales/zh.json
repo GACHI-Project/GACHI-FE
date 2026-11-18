@@ -690,6 +690,7 @@
       "name": "姓名",
       "phone": "手机号码",
       "email": "邮箱",
+      "socialOnlyBlocked": "社交账号登录的账户无法修改邮箱或密码。",
       "securitySection": "安全",
       "sheetTitle": "编辑个人资料",
       "namePlaceholder": "请输入姓名",

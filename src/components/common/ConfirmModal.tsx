@@ -19,11 +19,11 @@ interface Props {
   icon: ReactNode;
   iconBg?: string;
   title: string;
-  description: string;
+  description?: string;
   warning?: string;
   extraContent?: ReactNode;
-  cancelText: string;
-  onCancel: () => void;
+  cancelText?: string;
+  onCancel?: () => void;
   confirmText: string;
   onConfirm: () => void;
   confirmDisabled?: boolean;
@@ -48,7 +48,7 @@ const ConfirmModal = ({
     <View style={styles.card}>
       <View style={[styles.iconBox, { backgroundColor: iconBg }]}>{icon}</View>
       <Text style={styles.title}>{title}</Text>
-      <Text style={styles.description}>{description}</Text>
+      {description ? <Text style={styles.description}>{description}</Text> : null}
       {warning ? (
         <View style={styles.warningBanner}>
           <Ionicons name="warning" size={15} color={colors.text.primary} />
@@ -57,16 +57,23 @@ const ConfirmModal = ({
       ) : null}
       {extraContent ? <View style={styles.extraContent}>{extraContent}</View> : null}
       <View style={styles.btnRow}>
-        <TouchableOpacity style={styles.cancelBtn} onPress={onCancel} activeOpacity={0.8}>
-          <Text style={styles.cancelBtnText}>{cancelText}</Text>
-        </TouchableOpacity>
+        {cancelText && onCancel && (
+          <TouchableOpacity style={styles.cancelBtn} onPress={onCancel} activeOpacity={0.8}>
+            <Text style={styles.cancelBtnText}>{cancelText}</Text>
+          </TouchableOpacity>
+        )}
         <TouchableOpacity
-          style={[styles.confirmBtn, confirmDisabled && styles.confirmBtnDisabled]}
+          style={[
+            cancelText && onCancel ? styles.confirmBtn : styles.cancelBtn,
+            confirmDisabled && styles.confirmBtnDisabled,
+          ]}
           onPress={onConfirm}
           disabled={confirmDisabled}
           activeOpacity={confirmDisabled ? 1 : 0.8}
         >
-          <Text style={styles.confirmBtnText}>{confirmText}</Text>
+          <Text style={cancelText && onCancel ? styles.confirmBtnText : styles.cancelBtnText}>
+            {confirmText}
+          </Text>
         </TouchableOpacity>
       </View>
     </View>

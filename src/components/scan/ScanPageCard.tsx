@@ -13,6 +13,7 @@ interface ScanPageCardProps {
   index: number;
   itemCount: number;
   rowHeight: number;
+  minHeight?: number;
   onPress: () => void;
   onDelete: () => void;
   onReorder: (from: number, to: number) => void;
@@ -25,6 +26,7 @@ const ScanPageCard = ({
   index,
   itemCount,
   rowHeight,
+  minHeight,
   onPress,
   onDelete,
   onReorder,
@@ -43,7 +45,7 @@ const ScanPageCard = ({
 
   return (
     <Animated.View style={[styles.wrap, animatedStyle]} onLayout={onLayout}>
-      <View style={styles.card}>
+      <View style={[styles.card, { minHeight }]}>
         <TouchableOpacity style={styles.left} onPress={onPress} activeOpacity={0.7}>
           <View style={styles.thumbWrap}>
             <Image source={{ uri: page.uri }} style={styles.thumb} />
@@ -54,7 +56,7 @@ const ScanPageCard = ({
             </View>
           </View>
           <View style={styles.texts}>
-            <Text style={styles.pageLabel} numberOfLines={1}>
+            <Text style={styles.pageLabel}>
               {t('scan.reviewSheet.pageLabel', { number: pageNumber })}
             </Text>
             <Text style={styles.tapHint}>{t('scan.reviewSheet.tapHint')}</Text>

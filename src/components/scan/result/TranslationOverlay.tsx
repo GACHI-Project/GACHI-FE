@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useLayoutEffect, useState } from 'react';
 import { View, Text, StyleSheet, useWindowDimensions, type TextLayoutEvent } from 'react-native';
 import colors from '../../../constants/colors';
 import { OverlayBlock } from '../../../api/newsletter';
@@ -20,7 +20,7 @@ const TranslationOverlay = ({ blocks, renderedWidth, renderedHeight }: Translati
   const { fontScale } = useWindowDimensions();
   const [fontAdjust, setFontAdjust] = useState<Record<number, number>>({});
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     setFontAdjust({});
   }, [blocks, renderedWidth, renderedHeight, fontScale]);
 
@@ -68,6 +68,7 @@ const TranslationOverlay = ({ blocks, renderedWidth, renderedHeight }: Translati
               ]}
             >
               <Text
+                key={JSON.stringify([boxWidth, boxHeight, fontScale, text])}
                 style={[styles.text, { fontSize, lineHeight }]}
                 onTextLayout={handleTextLayout(block.blockNo, boxHeight, baseFontSize, fontSize)}
               >

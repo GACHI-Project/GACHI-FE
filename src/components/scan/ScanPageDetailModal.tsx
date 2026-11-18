@@ -219,29 +219,32 @@ const ScanPageDetailModal = ({
               </TouchableOpacity>
             ))}
           </ScrollView>
-
-          <View style={[styles.buttonRow, { paddingBottom: insets.bottom + 10 }]}>
-            <TouchableOpacity
-              style={[styles.button, styles.buttonOutline]}
-              onPress={onDelete}
-              disabled={rotating}
-              activeOpacity={0.8}
-              accessibilityRole="button"
-            >
-              <Text style={styles.buttonOutlineText}>{t('scan.pageDetail.delete')}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.button, styles.buttonFilled]}
-              onPress={onRetake}
-              disabled={rotating}
-              activeOpacity={0.8}
-              accessibilityRole="button"
-            >
-              <Text style={styles.buttonFilledText}>
-                {source === 'gallery' ? t('scan.pageDetail.reselect') : t('scan.pageDetail.retake')}
-              </Text>
-            </TouchableOpacity>
-          </View>
+        </ScrollView>
+        <ScrollView
+          style={styles.actionsScroll}
+          contentContainerStyle={[styles.buttonRow, { paddingBottom: insets.bottom + 10 }]}
+          keyboardShouldPersistTaps="handled"
+        >
+          <TouchableOpacity
+            style={[styles.button, styles.buttonOutline]}
+            onPress={onDelete}
+            disabled={rotating}
+            activeOpacity={0.8}
+            accessibilityRole="button"
+          >
+            <Text style={styles.buttonOutlineText}>{t('scan.pageDetail.delete')}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.button, styles.buttonFilled]}
+            onPress={onRetake}
+            disabled={rotating}
+            activeOpacity={0.8}
+            accessibilityRole="button"
+          >
+            <Text style={styles.buttonFilledText}>
+              {source === 'gallery' ? t('scan.pageDetail.reselect') : t('scan.pageDetail.retake')}
+            </Text>
+          </TouchableOpacity>
         </ScrollView>
       </GestureHandlerRootView>
     </Modal>

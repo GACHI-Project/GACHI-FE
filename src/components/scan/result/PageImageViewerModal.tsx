@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useLayoutEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -29,6 +29,7 @@ interface PageImageViewerModalProps {
 }
 
 const DEFAULT_ASPECT_RATIO = 1.35;
+const DEFAULT_MAX_ZOOM = 3;
 
 const PageImageViewerModal = ({
   visible,
@@ -43,7 +44,7 @@ const PageImageViewerModal = ({
   const [textView, setTextView] = useState(false);
   const [imageAreaHeight, setImageAreaHeight] = useState(windowHeight * 0.5);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (visible) {
       setOverlayOn(true);
       setTextView(false);
@@ -52,8 +53,10 @@ const PageImageViewerModal = ({
 
   if (!page) return null;
 
-  const hasBlocks = !!page.blocks && page.blocks.length > 0;
+  const hasImage = !!page.imageUrl;
+  const hasTranslatedBlocks = !!page.blocks?.some((block) => !!block.translatedText?.trim());
   const translatedText = getPageTranslationText(page);
+  const showText = textView || !hasImage;
   const aspectRatio =
     page.imageWidth && page.imageHeight ? page.imageHeight / page.imageWidth : DEFAULT_ASPECT_RATIO;
   const renderedWidth = Math.max(
@@ -62,6 +65,10 @@ const PageImageViewerModal = ({
   );
   const renderedHeight = renderedWidth * aspectRatio;
   const imageSize = { width: renderedWidth, height: renderedHeight };
+  const maxZoom = Math.max(
+    DEFAULT_MAX_ZOOM,
+    (DEFAULT_MAX_ZOOM * (windowWidth - layout.screenPaddingHorizontal * 2)) / renderedWidth
+  );
 
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
@@ -91,18 +98,18 @@ const PageImageViewerModal = ({
           style={styles.imageArea}
           onLayout={(event) => setImageAreaHeight(event.nativeEvent.layout.height)}
         >
-          {textView ? (
+          {showText ? (
             <ScrollView style={styles.textScroll} contentContainerStyle={styles.textContent}>
               <Text selectable style={styles.translationText}>
                 {translatedText}
               </Text>
             </ScrollView>
           ) : (
-            <PinchZoomView active={visible && !textView} style={imageSize}>
+            <PinchZoomView active={visible && !showText} style={imageSize} maxZoom={maxZoom}>
               {page.imageUrl && (
                 <Image source={{ uri: page.imageUrl }} style={imageSize} resizeMode="contain" />
               )}
-              {overlayOn && hasBlocks && (
+              {overlayOn && hasTranslatedBlocks && (
                 <TranslationOverlay
                   blocks={page.blocks!}
                   renderedWidth={renderedWidth}
@@ -118,7 +125,7 @@ const PageImageViewerModal = ({
           contentContainerStyle={[styles.footer, { paddingBottom: insets.bottom + 16 }]}
           keyboardShouldPersistTaps="handled"
         >
-          {!!translatedText && (
+          {!!translatedText && hasImage && (
             <PrimaryButton
               label={t(
                 textView
@@ -128,7 +135,7 @@ const PageImageViewerModal = ({
               onPress={() => setTextView((value) => !value)}
             />
           )}
-          {hasBlocks && !textView && (
+          {hasImage && hasTranslatedBlocks && !showText && (
             <SecondaryButton
               label={
                 overlayOn
@@ -138,7 +145,7 @@ const PageImageViewerModal = ({
               onPress={() => setOverlayOn((v) => !v)}
             />
           )}
-          {hasBlocks && overlayOn && !textView && (
+          {hasImage && hasTranslatedBlocks && overlayOn && !showText && !!translatedText && (
             <Text style={styles.overflowHint}>{t('scan.result.fullDoc.viewer.overflowHint')}</Text>
           )}
         </ScrollView>

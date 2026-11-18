@@ -161,6 +161,11 @@ export default StyleSheet.create({
     gap: 16,
     paddingTop: 10,
   },
+  actionsScroll: {
+    flexGrow: 0,
+    flexShrink: 1,
+    maxHeight: '40%',
+  },
   button: {
     flex: 1,
     minHeight: 55,

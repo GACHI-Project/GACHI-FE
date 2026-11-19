@@ -240,7 +240,12 @@ test('clearSession resets all account stores even if one token deletion fails', 
   assert.equal(app.kakao.getState().rememberMe, false);
   assert.equal(app.google.getState().rememberMe, false);
   assert.equal(app.getGoogleSignOutCalls(), 1);
-  assert.deepEqual(app.deletions.sort(), ['accessToken', 'accessToken', 'refreshToken']);
+  assert.deepEqual(app.deletions.sort(), [
+    'accessToken',
+    'accessToken',
+    'refreshToken',
+    'rememberMe',
+  ]);
   assert.equal(app.navigations.length, 1);
 });
 
@@ -637,9 +642,21 @@ const loadScreenCallback = (file, name, globals) => {
 };
 
 [
-  ['normal and Google login', 'app/(auth)/login.tsx', 'finishLogin'],
-  ['Kakao login', 'app/(auth)/kakao-auth.tsx', 'complete'],
-].forEach(([name, filename, callbackName]) => {
+  {
+    name: 'normal and Google login',
+    filename: 'app/(auth)/login.tsx',
+    callbackName: 'completeNavigation',
+    // completeNavigation(version) no longer saves tokens itself — that now happens
+    // in the caller (handleLogin/handleGoogleLogin) before this is invoked.
+    invoke: (callback, version) => callback(version),
+  },
+  {
+    name: 'Kakao login',
+    filename: 'app/(auth)/kakao-auth.tsx',
+    callbackName: 'completeLogin',
+    invoke: (callback, version) => callback('old-ticket', false, version),
+  },
+].forEach(({ name, filename, callbackName, invoke }) => {
   test(`${name} cannot change the next session language after a delayed save`, async () => {
     const app = setup();
     const savedLanguage = deferred();
@@ -650,8 +667,11 @@ const loadScreenCallback = (file, name, globals) => {
       ...app.session,
       AuthApiError: app.auth.AuthApiError,
       saveAuthTokens: app.auth.saveAuthTokens,
+      saveRememberMe: async () => {},
       ticket: 'old-ticket',
       useKakaoAuthStore: app.kakao,
+      useSocialLinkStore: { getState: () => ({ pendingLink: null }) },
+      attemptPendingLink: async () => {},
       completeKakaoLogin: async () => ({ status: 'LOGIN_SUCCESS', tokens }),
       getMe: async () => ({ name: 'Previous user', languageCode: 'VI' }),
       setName: app.user.getState().setName,
@@ -674,7 +694,7 @@ const loadScreenCallback = (file, name, globals) => {
       registerDevicePushToken: async () => {},
       replaceToLoginWithError: () => {},
     });
-    const pending = Promise.allSettled([callback(tokens, app.session.getSessionVersion())]);
+    const pending = Promise.allSettled([invoke(callback, app.session.getSessionVersion())]);
     await flush();
     assert.equal(saves, 1);
     await app.auth.clearSession();

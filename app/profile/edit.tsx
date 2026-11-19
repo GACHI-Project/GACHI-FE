@@ -10,9 +10,16 @@ import {
   Animated,
   KeyboardAvoidingView,
   Alert,
+  type ImageSourcePropType,
 } from 'react-native';
 import { Ionicons, FontAwesome5 } from '@expo/vector-icons';
-import { router, useFocusEffect } from 'expo-router';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
+import * as WebBrowser from 'expo-web-browser';
+import {
+  GoogleSignin,
+  isErrorWithCode,
+  statusCodes,
+} from '@react-native-google-signin/google-signin';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Header from '../../src/components/common/Header';
@@ -25,11 +32,49 @@ import {
   UserInfo,
   UserApiError,
 } from '../../src/api/user';
-import { clearSession } from '../../src/api/auth';
+import {
+  clearSession,
+  getKakaoAuthorizeUrl,
+  completeGoogleLogin,
+  linkGoogle,
+  unlinkGoogle,
+  unlinkKakao,
+  saveAuthTokens,
+  getRememberMe,
+} from '../../src/api/auth';
+import {
+  getSessionVersion,
+  isCurrentSession,
+  assertCurrentSession,
+} from '../../src/utils/authSession';
+import { mapLinkError } from '../../src/utils/pendingLink';
 import { phoneNumberSchema } from '../../src/validation/auth';
+import { useKakaoAuthStore } from '../../src/store/kakaoAuthStore';
+import { KAKAO_REDIRECT_URI } from '../../src/constants/socialAuth';
 import colors from '../../src/constants/colors';
 import layout from '../../src/constants/layout';
 import styles from '../../src/styles/profile/profileEdit';
+import linkStyles from '../../src/styles/profile/accountLink';
+import KakaoIcon from '../../assets/social/kakao.png';
+import GoogleIcon from '../../assets/social/google.png';
+
+type SocialProvider = 'kakao' | 'google';
+
+interface SocialProviderMeta {
+  key: SocialProvider;
+  icon: ImageSourcePropType;
+  nameKey: string;
+}
+
+const SOCIAL_PROVIDERS: SocialProviderMeta[] = [
+  { key: 'kakao', icon: KakaoIcon, nameKey: 'profile.accountLink.kakao' },
+  { key: 'google', icon: GoogleIcon, nameKey: 'profile.accountLink.google' },
+];
+
+const isProviderLinked = (userInfo: UserInfo | null, provider: SocialProvider): boolean => {
+  if (!userInfo) return false;
+  return provider === 'kakao' ? userInfo.kakaoLinked : userInfo.googleLinked;
+};
 
 const formatPhoneNumber = (digits: string): string => {
   if (digits.length <= 3) return digits;
@@ -208,12 +253,24 @@ const ProfileEditScreen = () => {
   const [editSheetVisible, setEditSheetVisible] = useState(false);
   const [editSheetFocus, setEditSheetFocus] = useState<'name' | 'phone'>('name');
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
+  const [disconnectTarget, setDisconnectTarget] = useState<SocialProvider | null>(null);
+  const [mismatchTarget, setMismatchTarget] = useState<SocialProvider | null>(null);
+  const [processingProvider, setProcessingProvider] = useState<SocialProvider | null>(null);
   const [blockedModalVisible, setBlockedModalVisible] = useState(false);
+  const { kakaoLinkResult } = useLocalSearchParams<{ kakaoLinkResult?: string }>();
+
+  const userInfoRequestIdRef = useRef(0);
 
   const loadUserInfo = useCallback(() => {
+    userInfoRequestIdRef.current += 1;
+    const requestId = userInfoRequestIdRef.current;
     fetchMyInfo()
-      .then(setUserInfo)
+      .then((info) => {
+        if (userInfoRequestIdRef.current !== requestId) return;
+        setUserInfo(info);
+      })
       .catch(() => {
+        if (userInfoRequestIdRef.current !== requestId) return;
         Alert.alert(t('common.error'), t('common.networkError'));
       });
     // t is used only in the error callback — re-fetching on language change is undesirable
@@ -221,6 +278,128 @@ const ProfileEditScreen = () => {
   }, []);
 
   useFocusEffect(loadUserInfo);
+
+  useEffect(() => {
+    if (!kakaoLinkResult) return;
+
+    if (kakaoLinkResult === 'success') {
+      loadUserInfo();
+    } else if (kakaoLinkResult === 'mismatch') {
+      setMismatchTarget('kakao');
+    } else if (kakaoLinkResult === 'alreadyLinked') {
+      Alert.alert(
+        t('profile.accountLink.sectionTitle'),
+        t('profile.accountLink.alreadyLinkedOther')
+      );
+    } else {
+      Alert.alert(
+        t('profile.accountLink.sectionTitle'),
+        t('profile.accountLink.linkFailedGeneric')
+      );
+    }
+    router.setParams({ kakaoLinkResult: undefined });
+  }, [kakaoLinkResult, loadUserInfo, t]);
+
+  const handleConnectGoogle = async () => {
+    if (processingProvider !== null) return;
+    const version = getSessionVersion();
+    setProcessingProvider('google');
+    try {
+      const rememberMe = await getRememberMe();
+      await GoogleSignin.signOut().catch(() => {});
+      await GoogleSignin.hasPlayServices();
+      const response = await GoogleSignin.signIn();
+      assertCurrentSession(version);
+      if (response.type === 'cancelled') return;
+
+      const { idToken } = response.data;
+      if (!idToken) {
+        Alert.alert(
+          t('profile.accountLink.sectionTitle'),
+          t('profile.accountLink.linkFailedGeneric')
+        );
+        return;
+      }
+
+      const res = await completeGoogleLogin(idToken, rememberMe);
+      assertCurrentSession(version);
+
+      if (res.status === 'LINK_REQUIRED' && res.linkToken) {
+        const linked = await linkGoogle(res.linkToken, rememberMe, version);
+        assertCurrentSession(version);
+        await saveAuthTokens(linked, version);
+        loadUserInfo();
+      } else if (res.status === 'SIGNUP_REQUIRED') {
+        setMismatchTarget('google');
+      } else if (res.status === 'LOGIN_SUCCESS') {
+        Alert.alert(
+          t('profile.accountLink.sectionTitle'),
+          t('profile.accountLink.alreadyLinkedOther')
+        );
+      }
+    } catch (error) {
+      if (!isCurrentSession(version)) return;
+      const linkError = mapLinkError(error);
+      if (linkError === 'mismatch') {
+        setMismatchTarget('google');
+      } else if (linkError === 'alreadyLinked') {
+        Alert.alert(
+          t('profile.accountLink.sectionTitle'),
+          t('profile.accountLink.alreadyLinkedOther')
+        );
+      } else if (isErrorWithCode(error)) {
+        if (error.code !== statusCodes.SIGN_IN_CANCELLED) {
+          Alert.alert(
+            t('profile.accountLink.sectionTitle'),
+            t('profile.accountLink.linkFailedGeneric')
+          );
+        }
+      } else {
+        Alert.alert(t('common.error'), t('common.networkError'));
+      }
+    } finally {
+      setProcessingProvider((current) => (current === 'google' ? null : current));
+    }
+  };
+
+  const handleConnectKakao = async () => {
+    if (processingProvider !== null) return;
+    setProcessingProvider('kakao');
+    try {
+      const rememberMe = await getRememberMe();
+      useKakaoAuthStore.getState().setMode('link');
+      useKakaoAuthStore.getState().setRememberMe(rememberMe);
+      await WebBrowser.openAuthSessionAsync(getKakaoAuthorizeUrl(), KAKAO_REDIRECT_URI);
+    } catch {
+      Alert.alert(t('common.error'), t('common.networkError'));
+    } finally {
+      setProcessingProvider((current) => (current === 'kakao' ? null : current));
+    }
+  };
+
+  const handleDisconnect = async () => {
+    const provider = disconnectTarget;
+    setDisconnectTarget(null);
+    if (!provider || processingProvider !== null) return;
+
+    const version = getSessionVersion();
+    setProcessingProvider(provider);
+    try {
+      if (provider === 'kakao') {
+        await unlinkKakao(version);
+      } else {
+        await unlinkGoogle(version);
+        await GoogleSignin.signOut().catch(() => {});
+      }
+      assertCurrentSession(version);
+      loadUserInfo();
+    } catch {
+      if (!isCurrentSession(version)) return;
+      Alert.alert(t('common.error'), t('common.networkError'));
+    } finally {
+      setProcessingProvider((current) => (current === provider ? null : current));
+    }
+  };
 
   const openWithdrawModal = () => {
     setWithdrawStep('confirm');
@@ -345,6 +524,69 @@ const ProfileEditScreen = () => {
           </TouchableOpacity>
         </View>
 
+        <Text style={styles.sectionLabel}>{t('profile.accountLink.sectionTitle')}</Text>
+        <View style={styles.card}>
+          {SOCIAL_PROVIDERS.map((provider, index) => {
+            const isLast = index === SOCIAL_PROVIDERS.length - 1;
+            const connected = isProviderLinked(userInfo, provider.key);
+            const providerName = t(provider.nameKey);
+            const isProcessing = processingProvider === provider.key;
+
+            return (
+              <View key={provider.key} style={isLast ? linkStyles.rowLast : linkStyles.row}>
+                <Image source={provider.icon} style={linkStyles.providerIcon} />
+                <View style={linkStyles.info}>
+                  <Text style={linkStyles.providerName}>{providerName}</Text>
+                  <Text style={linkStyles.statusText}>
+                    {connected
+                      ? t('profile.accountLink.connected')
+                      : t('profile.accountLink.notConnected')}
+                  </Text>
+                </View>
+                {!connected && (
+                  <TouchableOpacity
+                    style={[
+                      linkStyles.actionBtn,
+                      linkStyles.connectBtn,
+                      isProcessing && linkStyles.actionBtnDisabled,
+                    ]}
+                    onPress={() =>
+                      provider.key === 'kakao' ? handleConnectKakao() : handleConnectGoogle()
+                    }
+                    disabled={processingProvider !== null}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={linkStyles.connectBtnText}>
+                      {t('profile.accountLink.connect')}
+                    </Text>
+                  </TouchableOpacity>
+                )}
+                {connected && userInfo?.passwordLoginAvailable && (
+                  <TouchableOpacity
+                    style={[
+                      linkStyles.actionBtn,
+                      linkStyles.disconnectBtn,
+                      isProcessing && linkStyles.actionBtnDisabled,
+                    ]}
+                    onPress={() => setDisconnectTarget(provider.key)}
+                    disabled={processingProvider !== null}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={linkStyles.disconnectBtnText}>
+                      {t('profile.accountLink.disconnect')}
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            );
+          })}
+        </View>
+        <Text style={linkStyles.hint}>
+          {userInfo?.passwordLoginAvailable
+            ? t('profile.accountLink.hint')
+            : t('profile.accountLink.hintSocialOnly')}
+        </Text>
+
         <Text style={styles.sectionLabel}>{t('profile.editProfile.securitySection')}</Text>
         <View style={styles.card}>
           <TouchableOpacity
@@ -439,6 +681,34 @@ const ProfileEditScreen = () => {
           }}
         />
       )}
+      <ConfirmModal
+        visible={disconnectTarget !== null}
+        onClose={() => setDisconnectTarget(null)}
+        icon={<FontAwesome5 name="unlink" size={20} color={colors.primary[500]} />}
+        iconBg={colors.primary[100]}
+        title={t('profile.accountLink.disconnectModal.title', {
+          provider: disconnectTarget ? t(`profile.accountLink.${disconnectTarget}`) : '',
+        })}
+        description={t('profile.accountLink.disconnectModal.description', {
+          provider: disconnectTarget ? t(`profile.accountLink.${disconnectTarget}`) : '',
+        })}
+        cancelText={t('common.cancel')}
+        onCancel={() => setDisconnectTarget(null)}
+        confirmText={t('profile.accountLink.disconnectModal.confirm')}
+        onConfirm={handleDisconnect}
+      />
+      <ConfirmModal
+        visible={mismatchTarget !== null}
+        onClose={() => setMismatchTarget(null)}
+        icon={<Ionicons name="alert-circle" size={24} color={colors.primary[500]} />}
+        iconBg={colors.primary[100]}
+        title={t('profile.accountLink.mismatchModal.title')}
+        description={t('profile.accountLink.mismatchModal.description', {
+          provider: mismatchTarget ? t(`profile.accountLink.${mismatchTarget}`) : '',
+        })}
+        confirmText={t('common.confirm')}
+        onConfirm={() => setMismatchTarget(null)}
+      />
 
       <ConfirmModal
         visible={blockedModalVisible}

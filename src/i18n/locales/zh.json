@@ -45,6 +45,16 @@
         "withdrawnAccount": "该账号已注销",
         "tooManyAttempts": "登录尝试次数过多，请稍后再试",
         "generic": "登录时出现错误，请重试。"
+      },
+      "linkModal": {
+        "title": "该邮箱已注册",
+        "description": "已存在使用{{email}}注册的账号。是否要将{{provider}}账号关联到该账号？使用现有账号登录即可完成关联。",
+        "cancel": "不用了",
+        "confirm": "关联",
+        "hint": "要关联{{provider}}账号，请使用现有账号登录。",
+        "resultMismatch": "由于邮箱与注册账号不同，未能关联。",
+        "resultAlready": "由于已关联其他账号，未能关联。",
+        "resultGeneric": "关联超时失败，请在我的页面重新关联。"
       }
     },
     "register": {
@@ -679,6 +689,28 @@
     "notification": "通知设置",
     "notificationOn": "已开启",
     "notificationOff": "已关闭",
+    "accountLink": {
+      "sectionTitle": "账号关联",
+      "kakao": "Kakao",
+      "google": "Google",
+      "connected": "已关联",
+      "notConnected": "未关联",
+      "connect": "关联",
+      "disconnect": "取消关联",
+      "hint": "只能关联与注册邮箱相同的账号。",
+      "hintSocialOnly": "没有用户名和密码的账号无法取消关联。",
+      "alreadyLinkedOther": "该账号已关联其他账号。",
+      "linkFailedGeneric": "关联失败，请稍后重试。",
+      "disconnectModal": {
+        "title": "要取消关联{{provider}}吗？",
+        "description": "取消关联后将无法使用{{provider}}登录。您仍可以使用用户名和密码登录。",
+        "confirm": "取消关联"
+      },
+      "mismatchModal": {
+        "title": "无法关联",
+        "description": "这是与注册邮箱不同的{{provider}}账号。请选择相同邮箱的账号。"
+      }
+    },
     "etc": "其他",
     "inquiry": "联系客服",
     "privacy": "隐私政策",

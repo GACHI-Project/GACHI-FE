@@ -45,6 +45,16 @@
         "withdrawnAccount": "This account has been deactivated",
         "tooManyAttempts": "Too many login attempts. Please try again later",
         "generic": "An error occurred during login. Please try again."
+      },
+      "linkModal": {
+        "title": "This email is already registered",
+        "description": "An account already exists for {{email}}. Would you like to connect your {{provider}} account to it? Logging in with your existing account will connect them.",
+        "cancel": "No",
+        "confirm": "Connect",
+        "hint": "To connect your {{provider}} account, log in with your existing account.",
+        "resultMismatch": "Couldn't connect because the email is different from your account.",
+        "resultAlready": "Couldn't connect because it's already linked to another account.",
+        "resultGeneric": "Connection failed due to a timeout. Please try again from My Page."
       }
     },
     "register": {
@@ -679,6 +689,28 @@
     "notification": "Notifications",
     "notificationOn": "On",
     "notificationOff": "Off",
+    "accountLink": {
+      "sectionTitle": "Linked Accounts",
+      "kakao": "Kakao",
+      "google": "Google",
+      "connected": "Connected",
+      "notConnected": "Not Connected",
+      "connect": "Connect",
+      "disconnect": "Disconnect",
+      "hint": "You can only connect an account using the same email you signed up with.",
+      "hintSocialOnly": "Accounts without an ID and password can't be disconnected.",
+      "alreadyLinkedOther": "This account is already connected to another account.",
+      "linkFailedGeneric": "Failed to connect. Please try again later.",
+      "disconnectModal": {
+        "title": "Disconnect {{provider}}?",
+        "description": "If you disconnect, you won't be able to log in with {{provider}}. You can still log in with your ID and password.",
+        "confirm": "Disconnect"
+      },
+      "mismatchModal": {
+        "title": "Can't connect this account",
+        "description": "This {{provider}} account uses a different email than the one you signed up with. Please choose an account with the same email."
+      }
+    },
     "etc": "Other",
     "inquiry": "Contact Us",
     "privacy": "Privacy Policy",

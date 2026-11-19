@@ -730,6 +730,7 @@
       "name": "Họ và tên",
       "phone": "Số điện thoại",
       "email": "Email",
+      "socialOnlyBlocked": "Tài khoản đăng nhập bằng mạng xã hội không thể thay đổi email hoặc mật khẩu.",
       "securitySection": "Bảo mật",
       "sheetTitle": "Chỉnh sửa hồ sơ",
       "namePlaceholder": "Nhập họ và tên",

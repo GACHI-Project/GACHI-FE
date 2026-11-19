@@ -722,6 +722,7 @@
       "name": "Name",
       "phone": "Phone",
       "email": "Email",
+      "socialOnlyBlocked": "Accounts signed in with a social login can't change their email or password.",
       "securitySection": "Security",
       "sheetTitle": "Edit Profile",
       "namePlaceholder": "Enter your name",

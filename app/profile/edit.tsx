@@ -250,6 +250,7 @@ const ProfileEditScreen = () => {
   const [disconnectTarget, setDisconnectTarget] = useState<SocialProvider | null>(null);
   const [mismatchTarget, setMismatchTarget] = useState<SocialProvider | null>(null);
   const [processingProvider, setProcessingProvider] = useState<SocialProvider | null>(null);
+  const [blockedModalVisible, setBlockedModalVisible] = useState(false);
   const { kakaoLinkResult } = useLocalSearchParams<{ kakaoLinkResult?: string }>();
 
   const userInfoRequestIdRef = useRef(0);
@@ -447,6 +448,12 @@ const ProfileEditScreen = () => {
   };
 
   const isWithdrawPasswordStep = withdrawStep === 'password';
+  const canEditCredentials = userInfo?.passwordLoginAvailable === true;
+  const isSocialOnly = userInfo?.passwordLoginAvailable === false;
+
+  const handleBlockedPress = () => {
+    setBlockedModalVisible(true);
+  };
 
   const openSheet = (focus: 'name' | 'phone') => {
     setEditSheetFocus(focus);
@@ -494,12 +501,20 @@ const ProfileEditScreen = () => {
           <View style={styles.divider} />
           <TouchableOpacity
             style={styles.row}
-            onPress={() => router.push('/profile/email')}
+            onPress={() => {
+              if (canEditCredentials) {
+                router.push('/profile/email');
+              } else if (isSocialOnly) {
+                handleBlockedPress();
+              }
+            }}
             activeOpacity={0.7}
           >
             <Text style={styles.rowLabel}>{t('profile.editProfile.email')}</Text>
             <Text style={styles.rowValue}>{userInfo?.email ?? ''}</Text>
-            <Ionicons name="chevron-forward" size={16} color={colors.text.secondary} />
+            {canEditCredentials && (
+              <Ionicons name="chevron-forward" size={16} color={colors.text.secondary} />
+            )}
           </TouchableOpacity>
         </View>
 
@@ -570,11 +585,19 @@ const ProfileEditScreen = () => {
         <View style={styles.card}>
           <TouchableOpacity
             style={styles.row}
-            onPress={() => router.push('/profile/password')}
+            onPress={() => {
+              if (canEditCredentials) {
+                router.push('/profile/password');
+              } else if (isSocialOnly) {
+                handleBlockedPress();
+              }
+            }}
             activeOpacity={0.7}
           >
             <Text style={styles.rowLabel}>{t('profile.editProfile.changePassword.title')}</Text>
-            <Ionicons name="chevron-forward" size={16} color={colors.text.secondary} />
+            {canEditCredentials && (
+              <Ionicons name="chevron-forward" size={16} color={colors.text.secondary} />
+            )}
           </TouchableOpacity>
         </View>
 
@@ -679,6 +702,15 @@ const ProfileEditScreen = () => {
         })}
         confirmText={t('common.confirm')}
         onConfirm={() => setMismatchTarget(null)}
+      />
+
+      <ConfirmModal
+        visible={blockedModalVisible}
+        onClose={() => setBlockedModalVisible(false)}
+        icon={<Ionicons name="information-circle" size={26} color={colors.primary[500]} />}
+        title={t('profile.editProfile.socialOnlyBlocked')}
+        confirmText={t('common.confirm')}
+        onConfirm={() => setBlockedModalVisible(false)}
       />
     </View>
   );

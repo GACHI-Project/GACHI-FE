@@ -1,12 +1,28 @@
 import axios from 'axios';
-import { apiClient } from './auth';
+import { apiClient, getAuthRequestConfig } from './auth';
+
+export class MealApiError extends Error {
+  constructor(
+    public readonly code: string,
+    message: string
+  ) {
+    super(message);
+    this.name = 'MealApiError';
+  }
+}
 
 const wrapError = (error: unknown): Error => {
   if (axios.isAxiosError(error) && error.response?.data?.code) {
-    return new Error(error.response.data.message ?? '알 수 없는 오류');
+    return new MealApiError(
+      error.response.data.code,
+      error.response.data.message ?? '알 수 없는 오류'
+    );
   }
   return error instanceof Error ? error : new Error(String(error));
 };
+
+const getAuthConfig = (version?: number) =>
+  getAuthRequestConfig(() => new MealApiError('UNAUTHORIZED', '로그인이 필요합니다.'), version);
 
 export interface MealMenu {
   name: string;
@@ -71,7 +87,9 @@ export const fetchSchoolMeals = async (
   toDate: string
 ): Promise<SchoolMealGroup[]> => {
   try {
+    const config = await getAuthConfig();
     const response = await apiClient.get('/api/v1/calendars/school-meals', {
+      ...config,
       params: { fromDate, toDate },
     });
     return response.data.result.schoolMeals ?? [];
@@ -126,7 +144,9 @@ export const fetchSchoolTimetables = async (
   toDate: string
 ): Promise<SchoolTimetableGroup[]> => {
   try {
+    const config = await getAuthConfig();
     const response = await apiClient.get('/api/v1/calendars/elementary-timetables', {
+      ...config,
       params: { fromDate, toDate },
     });
     return response.data.result.schoolTimetables ?? [];

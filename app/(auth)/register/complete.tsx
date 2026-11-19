@@ -15,6 +15,7 @@ import {
   signupWithKakao,
   signupWithGoogle,
   saveAuthTokens,
+  saveRememberMe,
 } from '../../../src/api/auth';
 import {
   getSessionVersion,
@@ -76,27 +77,31 @@ const RegisterCompleteScreen = () => {
     try {
       if (authMethod === 'kakao') {
         if (!signupDone) {
+          const { rememberMe } = useKakaoAuthStore.getState();
           const tokens = await signupWithKakao({
             signupToken,
             consentAgreed: socialTermsAgreed,
             languageCode,
             notificationPreference,
-            rememberMe: useKakaoAuthStore.getState().rememberMe,
+            rememberMe,
           });
           await saveAuthTokens(tokens, version);
+          await saveRememberMe(rememberMe, version);
           setSignupDone(true);
           setLoginDone(true);
         }
       } else if (authMethod === 'google') {
         if (!signupDone) {
+          const { rememberMe } = useGoogleAuthStore.getState();
           const tokens = await signupWithGoogle({
             signupToken,
             consentAgreed: socialTermsAgreed,
             languageCode,
             notificationPreference,
-            rememberMe: useGoogleAuthStore.getState().rememberMe,
+            rememberMe,
           });
           await saveAuthTokens(tokens, version);
+          await saveRememberMe(rememberMe, version);
           setSignupDone(true);
           setLoginDone(true);
         }

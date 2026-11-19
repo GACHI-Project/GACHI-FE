@@ -18,12 +18,16 @@ const LINK_ERROR_MESSAGE_KEYS: Record<LinkErrorResult, string> = {
   error: 'auth.login.linkModal.resultGeneric',
 };
 
-export const attemptPendingLink = async (pending: PendingLink, version: number): Promise<void> => {
+export const attemptPendingLink = async (
+  pending: PendingLink,
+  rememberMe: boolean,
+  version: number
+): Promise<void> => {
   try {
     const linked =
       pending.provider === 'kakao'
-        ? await linkKakao(pending.linkToken, pending.rememberMe, version)
-        : await linkGoogle(pending.linkToken, pending.rememberMe, version);
+        ? await linkKakao(pending.linkToken, rememberMe, version)
+        : await linkGoogle(pending.linkToken, rememberMe, version);
     assertCurrentSession(version);
     await saveAuthTokens(linked, version);
   } catch (error) {

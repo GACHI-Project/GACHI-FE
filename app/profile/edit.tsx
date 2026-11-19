@@ -40,6 +40,7 @@ import {
   unlinkGoogle,
   unlinkKakao,
   saveAuthTokens,
+  getRememberMe,
 } from '../../src/api/auth';
 import {
   getSessionVersion,
@@ -297,6 +298,7 @@ const ProfileEditScreen = () => {
     const version = getSessionVersion();
     setProcessingProvider('google');
     try {
+      const rememberMe = await getRememberMe();
       await GoogleSignin.signOut().catch(() => {});
       await GoogleSignin.hasPlayServices();
       const response = await GoogleSignin.signIn();
@@ -312,11 +314,11 @@ const ProfileEditScreen = () => {
         return;
       }
 
-      const res = await completeGoogleLogin(idToken, false);
+      const res = await completeGoogleLogin(idToken, rememberMe);
       assertCurrentSession(version);
 
       if (res.status === 'LINK_REQUIRED' && res.linkToken) {
-        const linked = await linkGoogle(res.linkToken, false, version);
+        const linked = await linkGoogle(res.linkToken, rememberMe, version);
         assertCurrentSession(version);
         await saveAuthTokens(linked, version);
         loadUserInfo();
@@ -357,8 +359,9 @@ const ProfileEditScreen = () => {
     if (processingProvider !== null) return;
     setProcessingProvider('kakao');
     try {
+      const rememberMe = await getRememberMe();
       useKakaoAuthStore.getState().setMode('link');
-      useKakaoAuthStore.getState().setRememberMe(false);
+      useKakaoAuthStore.getState().setRememberMe(rememberMe);
       await WebBrowser.openAuthSessionAsync(getKakaoAuthorizeUrl(), KAKAO_REDIRECT_URI);
     } catch {
       Alert.alert(t('common.error'), t('common.networkError'));

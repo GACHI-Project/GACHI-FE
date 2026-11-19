@@ -240,7 +240,12 @@ test('clearSession resets all account stores even if one token deletion fails', 
   assert.equal(app.kakao.getState().rememberMe, false);
   assert.equal(app.google.getState().rememberMe, false);
   assert.equal(app.getGoogleSignOutCalls(), 1);
-  assert.deepEqual(app.deletions.sort(), ['accessToken', 'accessToken', 'refreshToken']);
+  assert.deepEqual(app.deletions.sort(), [
+    'accessToken',
+    'accessToken',
+    'refreshToken',
+    'rememberMe',
+  ]);
   assert.equal(app.navigations.length, 1);
 });
 
@@ -662,6 +667,7 @@ const loadScreenCallback = (file, name, globals) => {
       ...app.session,
       AuthApiError: app.auth.AuthApiError,
       saveAuthTokens: app.auth.saveAuthTokens,
+      saveRememberMe: async () => {},
       ticket: 'old-ticket',
       useKakaoAuthStore: app.kakao,
       useSocialLinkStore: { getState: () => ({ pendingLink: null }) },

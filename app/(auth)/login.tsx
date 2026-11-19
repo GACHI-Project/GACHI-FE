@@ -20,6 +20,7 @@ import {
   getKakaoAuthorizeUrl,
   completeGoogleLogin,
   saveAuthTokens,
+  saveRememberMe,
 } from '../../src/api/auth';
 import {
   getSessionVersion,
@@ -115,9 +116,10 @@ const LoginScreen = () => {
     try {
       const result = await login(id, password, stayLoggedIn);
       await saveAuthTokens(result, version);
+      await saveRememberMe(stayLoggedIn, version);
       const pending = useSocialLinkStore.getState().pendingLink;
       if (pending) {
-        await attemptPendingLink(pending, version);
+        await attemptPendingLink(pending, stayLoggedIn, version);
         setLinkHint(undefined);
       }
       await completeNavigation(version);
@@ -189,10 +191,11 @@ const LoginScreen = () => {
 
       if (res.status === 'LOGIN_SUCCESS' && res.tokens) {
         await saveAuthTokens(res.tokens, version);
+        await saveRememberMe(stayLoggedIn, version);
 
         const pending = useSocialLinkStore.getState().pendingLink;
         if (pending && pending.provider !== 'google') {
-          await attemptPendingLink(pending, version);
+          await attemptPendingLink(pending, stayLoggedIn, version);
         }
         assertCurrentSession(version);
 

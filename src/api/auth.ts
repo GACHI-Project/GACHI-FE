@@ -81,6 +81,23 @@ let refreshTask: {
 let clearingSession: Promise<SessionCleanupResult> | null = null;
 let tokenWrite: Promise<void> = Promise.resolve();
 
+const REMEMBER_ME_KEY = 'rememberMe';
+
+export const saveRememberMe = (rememberMe: boolean, version: number): Promise<void> => {
+  const write = tokenWrite.then(async () => {
+    assertCurrentSession(version);
+    if (clearingSession) throw new axios.CanceledError('Session is being cleared');
+    await SecureStore.setItemAsync(REMEMBER_ME_KEY, rememberMe ? 'true' : 'false');
+  });
+  tokenWrite = write.catch(() => {});
+  return write;
+};
+
+export const getRememberMe = async (): Promise<boolean> => {
+  const value = await SecureStore.getItemAsync(REMEMBER_ME_KEY);
+  return value === 'true';
+};
+
 export const saveAuthTokens = (
   tokens: { accessToken: string; refreshToken: string },
   version: number
@@ -199,6 +216,7 @@ export const clearSession = (): Promise<SessionCleanupResult> => {
         failedKeys.map(async (key) => SecureStore.deleteItemAsync(key))
       );
       const failedTokenKeys = failedKeys.filter((_, index) => retries[index].status === 'rejected');
+      await SecureStore.deleteItemAsync(REMEMBER_ME_KEY).catch(() => {});
       router.replace('/(auth)/login');
       return { success: failedTokenKeys.length === 0, failedTokenKeys };
     })

@@ -2,7 +2,13 @@ import { useEffect, useRef } from 'react';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
-import { completeKakaoLogin, linkKakao, saveAuthTokens, AuthApiError } from '../../src/api/auth';
+import {
+  completeKakaoLogin,
+  linkKakao,
+  saveAuthTokens,
+  saveRememberMe,
+  AuthApiError,
+} from '../../src/api/auth';
 import {
   getSessionVersion,
   isCurrentSession,
@@ -95,10 +101,11 @@ const KakaoAuthBounceScreen = () => {
 
         if (res.status === 'LOGIN_SUCCESS' && res.tokens) {
           await saveAuthTokens(res.tokens, version);
+          await saveRememberMe(rememberMe, version);
 
           const pending = useSocialLinkStore.getState().pendingLink;
           if (pending && pending.provider !== 'kakao') {
-            await attemptPendingLink(pending, version);
+            await attemptPendingLink(pending, rememberMe, version);
           }
           assertCurrentSession(version);
 

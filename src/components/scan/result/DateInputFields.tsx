@@ -2,6 +2,7 @@ import { memo } from 'react';
 import { View, Text, TextInput } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import styles from './styles';
+import useResponsiveLayout from '../../../hooks/useResponsiveLayout';
 
 interface Props {
   year: string;
@@ -15,9 +16,12 @@ interface Props {
 const DateInputFields = memo(
   ({ year, month, day, onYearChange, onMonthChange, onDayChange }: Props) => {
     const { t } = useTranslation();
+    const { isCompact } = useResponsiveLayout();
+    const fieldStyle = [styles.dateInputWrap, isCompact && styles.dateInputFullWidth];
     return (
       <View style={styles.dateInputRow}>
-        <View style={styles.dateInputWrap}>
+        <View style={fieldStyle}>
+          <Text style={styles.dateUnit}>{t('scan.result.saveBottomSheet.year')}</Text>
           <TextInput
             style={styles.dateInput}
             value={year}
@@ -26,9 +30,9 @@ const DateInputFields = memo(
             maxLength={4}
             accessibilityLabel={t('scan.result.saveBottomSheet.yearLabel')}
           />
-          <Text style={styles.dateUnit}>{t('scan.result.saveBottomSheet.year')}</Text>
         </View>
-        <View style={styles.dateInputWrap}>
+        <View style={fieldStyle}>
+          <Text style={styles.dateUnit}>{t('scan.result.saveBottomSheet.month')}</Text>
           <TextInput
             style={styles.dateInput}
             value={month}
@@ -37,9 +41,9 @@ const DateInputFields = memo(
             maxLength={2}
             accessibilityLabel={t('scan.result.saveBottomSheet.monthLabel')}
           />
-          <Text style={styles.dateUnit}>{t('scan.result.saveBottomSheet.month')}</Text>
         </View>
-        <View style={styles.dateInputWrap}>
+        <View style={fieldStyle}>
+          <Text style={styles.dateUnit}>{t('scan.result.saveBottomSheet.day')}</Text>
           <TextInput
             style={styles.dateInput}
             value={day}
@@ -48,7 +52,6 @@ const DateInputFields = memo(
             maxLength={2}
             accessibilityLabel={t('scan.result.saveBottomSheet.dayLabel')}
           />
-          <Text style={styles.dateUnit}>{t('scan.result.saveBottomSheet.day')}</Text>
         </View>
       </View>
     );

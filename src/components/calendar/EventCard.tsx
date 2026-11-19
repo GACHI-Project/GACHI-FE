@@ -57,9 +57,7 @@ const EventCard = ({
     <View style={[calStyles.card, isPast && styles.past]}>
       <View style={styles.content}>
         <View style={styles.titleRow}>
-          <Text style={[calStyles.cardTitle, styles.title]} numberOfLines={1} ellipsizeMode="tail">
-            {event.title}
-          </Text>
+          <Text style={[calStyles.cardTitle, styles.title]}>{event.title}</Text>
           <View style={calStyles.cardRight}>
             {!isPast && dDay !== null && dDay >= 0 && (
               <View style={[calStyles.dDayBadge, dDay === 0 && calStyles.dDayBadgeUrgent]}>
@@ -96,13 +94,11 @@ const EventCard = ({
           {timeLabel && (
             <View style={styles.timeTag}>
               <Ionicons name="time-outline" size={13} color={colors.text.secondary} />
-              <Text style={calStyles.tagText}>{timeLabel}</Text>
+              <Text style={[calStyles.tagText, styles.timeText]}>{timeLabel}</Text>
             </View>
           )}
           <View style={[calStyles.tag, styles.newsletterTag]}>
-            <Text style={calStyles.tagText} numberOfLines={1} ellipsizeMode="tail">
-              {event.newsletterTitle}
-            </Text>
+            <Text style={calStyles.tagText}>{event.newsletterTitle}</Text>
           </View>
         </View>
       </View>
@@ -176,9 +172,10 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   tagsRow: {
-    flexWrap: 'nowrap',
+    flexWrap: 'wrap',
   },
   newsletterTag: {
+    flexBasis: '100%',
     flexGrow: 1,
     flexShrink: 1,
     minWidth: 0,
@@ -186,12 +183,16 @@ const styles = StyleSheet.create({
   timeTag: {
     flexDirection: 'row',
     alignItems: 'center',
-    flexShrink: 0,
+    flexShrink: 1,
+    maxWidth: '100%',
     gap: 4,
     backgroundColor: colors.gray[100],
     borderRadius: 8,
     paddingHorizontal: 8,
     paddingVertical: 3,
+  },
+  timeText: {
+    flexShrink: 1,
   },
   past: {
     opacity: 0.6,

@@ -22,9 +22,7 @@ const SchoolScheduleRow = ({ item, type, childNames }: SchoolScheduleRowProps) =
       <View style={calStyles.cardHeader}>
         {type === 'holiday' && <Ionicons name="flag" size={20} color={colors.gray[300]} />}
         {type === 'academic' && <Ionicons name="school" size={20} color={colors.gray[300]} />}
-        <Text style={[calStyles.cardLeft, calStyles.cardTitle]} numberOfLines={1}>
-          {item.eventName}
-        </Text>
+        <Text style={[calStyles.cardLeft, calStyles.cardTitle]}>{item.eventName}</Text>
         {(showHolidayTag || showChildTags) && (
           <View style={calStyles.cardTags}>
             {showHolidayTag && (
@@ -35,9 +33,7 @@ const SchoolScheduleRow = ({ item, type, childNames }: SchoolScheduleRowProps) =
             {showChildTags &&
               childNames!.map((name) => (
                 <View key={name} style={calStyles.tag}>
-                  <Text style={calStyles.tagText} numberOfLines={1}>
-                    {name}
-                  </Text>
+                  <Text style={calStyles.tagText}>{name}</Text>
                 </View>
               ))}
           </View>

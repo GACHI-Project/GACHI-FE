@@ -126,6 +126,8 @@ const styles = StyleSheet.create({
     color: colors.text.primary,
   },
   rowValue: {
+    flexShrink: 1,
+    maxWidth: '50%',
     fontSize: 14,
     fontFamily: fonts.medium,
     color: colors.text.secondary,
@@ -171,7 +173,9 @@ const styles = StyleSheet.create({
     color: colors.text.secondary,
   },
   addChildBtn: {
-    height: 44,
+    minHeight: 44,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
     borderRadius: 12,
     borderWidth: 1,
     borderColor: colors.primary[400],
@@ -182,12 +186,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   addChildText: {
+    textAlign: 'center',
     fontSize: 12,
     fontFamily: fonts.semiBold,
     color: colors.primary[400],
   },
   logoutBtn: {
-    height: 55,
+    minHeight: 55,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
     borderRadius: 12,
     backgroundColor: 'rgba(229, 57, 53, 0.2)',
     marginHorizontal: layout.screenPaddingHorizontal,
@@ -197,6 +204,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   logoutText: {
+    textAlign: 'center',
     fontSize: 16,
     fontFamily: fonts.semiBold,
     color: colors.text.red,

@@ -36,7 +36,11 @@ const NewsletterDetailScreen = () => {
     <View style={styles.screen}>
       <Header title={t('document.detail')} />
 
-      <View style={styles.docInfo}>
+      <ScrollView
+        style={styles.docInfoScroll}
+        contentContainerStyle={styles.docInfo}
+        nestedScrollEnabled
+      >
         {detailLoading ? (
           <ActivityIndicator size="small" color={colors.primary[400]} />
         ) : (
@@ -58,7 +62,7 @@ const NewsletterDetailScreen = () => {
             </View>
           </>
         )}
-      </View>
+      </ScrollView>
 
       <View style={styles.tabBar}>
         {tabs.map((tab) => (

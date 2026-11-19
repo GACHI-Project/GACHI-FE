@@ -20,6 +20,7 @@ const ScanTabBar = ({ activeTab, onTabChange }: Props) => {
           style={styles.tab}
           onPress={() => onTabChange(tab)}
           accessibilityRole="tab"
+          accessibilityLabel={t(`scan.result.tabs.${tab}`)}
           accessibilityState={{ selected: activeTab === tab }}
         >
           <Text

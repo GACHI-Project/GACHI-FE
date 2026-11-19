@@ -37,10 +37,10 @@ const FullDocPageSection = ({
         <PageThumbnail sourceType={sourceType} imageUrl={page.imageUrl} />
       </View>
       <View style={styles.headerTexts}>
-        <Text style={styles.pageLabel} numberOfLines={1}>
+        <Text style={styles.pageLabel}>
           {t('scan.result.fullDoc.pageLabel', { pageNo: page.pageNo })}
         </Text>
-        <Text style={styles.pageOf} numberOfLines={1}>
+        <Text style={styles.pageOf}>
           {t('scan.result.fullDoc.pageOf', { pageNo: page.pageNo, total: totalPages })}
         </Text>
       </View>

@@ -144,43 +144,49 @@ const ProfileEditSheet = ({
                 ]}
               >
                 <View style={styles.sheetHandle} />
-                <Text style={styles.sheetTitle}>{t('profile.editProfile.sheetTitle')}</Text>
-                <View style={styles.sheetFields}>
-                  <FormField
-                    label={t('profile.editProfile.name')}
-                    value={name}
-                    onChangeText={(v) => {
-                      setName(v);
-                      setNameError(
-                        v.trim().length === 0 ? t('profile.editProfile.nameRequired') : undefined
-                      );
-                    }}
-                    placeholder={t('profile.editProfile.namePlaceholder')}
-                    autoFocus={initialFocus === 'name'}
-                    validationMessage={nameError}
-                    validationState={nameError ? 'error' : undefined}
-                  />
-                  <FormField
-                    label={t('profile.editProfile.phone')}
-                    value={phone}
-                    onChangeText={handlePhoneChange}
-                    placeholder="010-0000-0000"
-                    keyboardType="phone-pad"
-                    autoFocus={initialFocus === 'phone'}
-                    validationMessage={phoneError ?? saveError}
-                    validationState={phoneError || saveError ? 'error' : undefined}
-                  />
-                </View>
-                <TouchableOpacity
-                  style={[styles.sheetSaveBtn, !canSave && styles.sheetSaveBtnDisabled]}
-                  onPress={handleSave}
-                  disabled={!canSave || saving}
-                  activeOpacity={0.8}
+                <ScrollView
+                  style={styles.sheetScroll}
+                  contentContainerStyle={styles.sheetContent}
+                  keyboardShouldPersistTaps="handled"
                 >
-                  <Text style={styles.sheetSaveBtnText}>
-                    {saving ? t('common.saving') : t('common.change')}
-                  </Text>
-                </TouchableOpacity>
+                  <Text style={styles.sheetTitle}>{t('profile.editProfile.sheetTitle')}</Text>
+                  <View style={styles.sheetFields}>
+                    <FormField
+                      label={t('profile.editProfile.name')}
+                      value={name}
+                      onChangeText={(v) => {
+                        setName(v);
+                        setNameError(
+                          v.trim().length === 0 ? t('profile.editProfile.nameRequired') : undefined
+                        );
+                      }}
+                      placeholder={t('profile.editProfile.namePlaceholder')}
+                      autoFocus={initialFocus === 'name'}
+                      validationMessage={nameError}
+                      validationState={nameError ? 'error' : undefined}
+                    />
+                    <FormField
+                      label={t('profile.editProfile.phone')}
+                      value={phone}
+                      onChangeText={handlePhoneChange}
+                      placeholder="010-0000-0000"
+                      keyboardType="phone-pad"
+                      autoFocus={initialFocus === 'phone'}
+                      validationMessage={phoneError ?? saveError}
+                      validationState={phoneError || saveError ? 'error' : undefined}
+                    />
+                  </View>
+                  <TouchableOpacity
+                    style={[styles.sheetSaveBtn, !canSave && styles.sheetSaveBtnDisabled]}
+                    onPress={handleSave}
+                    disabled={!canSave || saving}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.sheetSaveBtnText}>
+                      {saving ? t('common.saving') : t('common.change')}
+                    </Text>
+                  </TouchableOpacity>
+                </ScrollView>
               </Animated.View>
             </TouchableWithoutFeedback>
           </Animated.View>

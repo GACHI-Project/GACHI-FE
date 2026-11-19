@@ -10,10 +10,13 @@ const styles = StyleSheet.create({
     paddingTop: 60,
   },
   body: {
-    flex: 1,
+    flexGrow: 1,
     paddingHorizontal: layout.screenPaddingHorizontal,
     paddingTop: layout.screenPaddingTop,
     paddingBottom: layout.screenPaddingBottom,
+  },
+  scroll: {
+    flex: 1,
   },
   titleSection: {
     gap: 8,
@@ -26,6 +29,7 @@ const styles = StyleSheet.create({
   },
   spacer: {
     flex: 1,
+    minHeight: 24,
   },
   termsCard: {
     gap: 14,
@@ -36,6 +40,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   allAgreeText: {
+    flex: 1,
     fontSize: 16,
     fontFamily: fonts.bold,
     color: colors.text.primary,
@@ -48,6 +53,7 @@ const styles = StyleSheet.create({
     gap: 24,
   },
   checkCircle: {
+    flexShrink: 0,
     width: 22,
     height: 22,
     borderRadius: 11,
@@ -72,12 +78,14 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   termsRowLabel: {
+    flex: 1,
+    marginRight: 8,
     fontSize: 14,
     fontFamily: fonts.medium,
     color: colors.text.primary,
   },
   footer: {
-    marginTop: 24,
+    paddingTop: 24,
   },
 });
 

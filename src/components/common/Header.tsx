@@ -65,6 +65,7 @@ const styles = StyleSheet.create({
     paddingBottom: 32,
   },
   iconButton: {
+    flexShrink: 0,
     width: 30,
     height: 30,
     borderRadius: 15,
@@ -74,11 +75,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   title: {
+    flex: 1,
+    marginHorizontal: 12,
+    textAlign: 'center',
     fontSize: 18,
     fontFamily: fonts.semiBold,
     color: colors.text.primary,
   },
   iconSpacer: {
+    flexShrink: 0,
     width: 30,
     height: 30,
   },

@@ -188,9 +188,7 @@ const ScanGalleryReviewScreen = () => {
           activeOpacity={0.8}
           accessibilityRole="button"
         >
-          <Text style={styles.outlineBtnText} numberOfLines={1}>
-            {t('scan.reviewSheet.gallery.continueButton')}
-          </Text>
+          <Text style={styles.outlineBtnText}>{t('scan.reviewSheet.gallery.continueButton')}</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.filledBtn, pages.length === 0 && styles.filledBtnDisabled]}
@@ -199,9 +197,7 @@ const ScanGalleryReviewScreen = () => {
           activeOpacity={0.8}
           accessibilityRole="button"
         >
-          <Text style={styles.filledBtnText} numberOfLines={1}>
-            {t('scan.galleryReview.reviewButton')}
-          </Text>
+          <Text style={styles.filledBtnText}>{t('scan.galleryReview.reviewButton')}</Text>
         </TouchableOpacity>
       </View>
 
@@ -291,7 +287,7 @@ const styles = StyleSheet.create({
   },
   buttons: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'stretch',
     paddingHorizontal: layout.screenPaddingHorizontal,
     gap: 12,
     paddingTop: 16,
@@ -299,12 +295,15 @@ const styles = StyleSheet.create({
   outlineBtn: {
     flex: 1,
     paddingVertical: 18,
+    paddingHorizontal: 12,
+    justifyContent: 'center',
     borderRadius: 14,
     borderWidth: 1,
     borderColor: colors.gray[200],
     alignItems: 'center',
   },
   outlineBtnText: {
+    textAlign: 'center',
     fontSize: 15,
     fontFamily: fonts.semiBold,
     color: colors.text.secondary,
@@ -312,6 +311,8 @@ const styles = StyleSheet.create({
   filledBtn: {
     flex: 1,
     paddingVertical: 18,
+    paddingHorizontal: 12,
+    justifyContent: 'center',
     borderRadius: 14,
     backgroundColor: colors.primary[400],
     alignItems: 'center',
@@ -320,6 +321,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary[200],
   },
   filledBtnText: {
+    textAlign: 'center',
     fontSize: 15,
     fontFamily: fonts.bold,
     color: colors.text.white,

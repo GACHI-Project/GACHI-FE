@@ -174,12 +174,14 @@ const styles = StyleSheet.create({
   },
   dateInputRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 8,
   },
   dateInputWrap: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
+    maxWidth: '100%',
+    flexGrow: 1,
+    flexBasis: 72,
+    minWidth: 72,
     backgroundColor: colors.text.white,
     borderWidth: 1,
     borderColor: colors.gray[200],
@@ -189,13 +191,19 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   dateInput: {
-    flex: 1,
+    width: '100%',
+    textAlign: 'center',
     fontSize: 15,
     fontFamily: fonts.semiBold,
     color: colors.text.primary,
     padding: 0,
   },
+  dateInputFullWidth: {
+    flexBasis: '100%',
+    minWidth: 0,
+  },
   dateUnit: {
+    textAlign: 'center',
     fontSize: 13,
     fontFamily: fonts.medium,
     color: colors.text.secondary,

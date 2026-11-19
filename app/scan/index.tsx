@@ -158,10 +158,7 @@ const ScanChildSelectScreen = () => {
             >
               <Ionicons name="help" size={14} color={colors.text.white} />
             </View>
-            <Text
-              style={[styles.unknownText, selectedId === null && styles.unknownTextSelected]}
-              numberOfLines={1}
-            >
+            <Text style={[styles.unknownText, selectedId === null && styles.unknownTextSelected]}>
               {t('scan.select.unknown')}
             </Text>
           </TouchableOpacity>

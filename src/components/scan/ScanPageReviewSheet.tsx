@@ -51,7 +51,7 @@ const ScanPageReviewSheet = ({
   onDismiss = onContinue,
   source = 'camera',
 }: ScanPageReviewSheetProps) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const labelPrefix = source === 'gallery' ? 'scan.reviewSheet.gallery' : 'scan.reviewSheet';
   const insets = useSafeAreaInsets();
   const { height: windowHeight, width: windowWidth, fontScale } = useWindowDimensions();
@@ -59,12 +59,18 @@ const ScanPageReviewSheet = ({
   const [scrollEnabled, setScrollEnabled] = useState(true);
   const [topChromeHeight, setTopChromeHeight] = useState(0);
   const [bottomChromeHeight, setBottomChromeHeight] = useState(0);
-  const [rowHeight, setRowHeight] = useState(DEFAULT_ROW_HEIGHT);
+  const [measuredRow, setMeasuredRow] = useState<{
+    height: number;
+    key: string;
+  } | null>(null);
+  const rowLayoutKey = `${windowWidth}-${fontScale}-${i18n.language}`;
+  const rowHeight = measuredRow?.key === rowLayoutKey ? measuredRow.height : DEFAULT_ROW_HEIGHT;
   const [measuredContent, setMeasuredContent] = useState<{
     height: number;
     count: number;
     width: number;
     fontScale: number;
+    language: string;
   } | null>(null);
   const opacity = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(SHEET_SLIDE_DISTANCE)).current;
@@ -76,7 +82,12 @@ const ScanPageReviewSheet = ({
     setBottomChromeHeight(e.nativeEvent.layout.height);
   const handleRowLayout = (e: LayoutChangeEvent) => {
     const { height } = e.nativeEvent.layout;
-    if (height > 0) setRowHeight(height);
+    if (height > 0) {
+      setMeasuredRow((previous) => {
+        if (previous?.key === rowLayoutKey && previous.height >= height) return previous;
+        return { height, key: rowLayoutKey };
+      });
+    }
   };
 
   const estimatedContentHeight =
@@ -86,7 +97,8 @@ const ScanPageReviewSheet = ({
   const contentMeasurementMatches =
     measuredContent?.count === pages.length &&
     measuredContent.width === windowWidth &&
-    measuredContent.fontScale === fontScale;
+    measuredContent.fontScale === fontScale &&
+    measuredContent.language === i18n.language;
   const listContentHeight = contentMeasurementMatches
     ? measuredContent.height
     : estimatedContentHeight;
@@ -174,7 +186,13 @@ const ScanPageReviewSheet = ({
               style={[styles.list, { height: listHeight }]}
               contentContainerStyle={styles.listContent}
               onContentSizeChange={(_width, height) => {
-                setMeasuredContent({ height, count: pages.length, width: windowWidth, fontScale });
+                setMeasuredContent({
+                  height,
+                  count: pages.length,
+                  width: windowWidth,
+                  fontScale,
+                  language: i18n.language,
+                });
               }}
               scrollEnabled={scrollEnabled && hasOverflow}
               showsVerticalScrollIndicator={hasOverflow}
@@ -184,16 +202,17 @@ const ScanPageReviewSheet = ({
             >
               {pages.map((page, index) => (
                 <ScanPageCard
-                  key={page.id}
+                  key={`${page.id}-${rowLayoutKey}`}
                   page={page}
                   index={index}
                   itemCount={pages.length}
                   rowHeight={rowHeight + styles.listContent.gap}
+                  minHeight={rowHeight}
                   onPress={() => onPageTap(index)}
                   onDelete={() => onDelete(page.id)}
                   onReorder={handleReorder}
                   onActiveChange={(active) => setScrollEnabled(!active)}
-                  onLayout={index === 0 ? handleRowLayout : undefined}
+                  onLayout={handleRowLayout}
                 />
               ))}
             </ScrollView>

@@ -75,9 +75,7 @@ const ScanPreviewScreen = () => {
           accessibilityLabel={retakeLabel}
           accessibilityRole="button"
         >
-          <Text style={styles.retakeBtnText} numberOfLines={1}>
-            {retakeLabel}
-          </Text>
+          <Text style={styles.retakeBtnText}>{retakeLabel}</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.confirmBtn}
@@ -85,9 +83,7 @@ const ScanPreviewScreen = () => {
           activeOpacity={0.8}
           accessibilityRole="button"
         >
-          <Text style={styles.confirmBtnText} numberOfLines={1}>
-            {t('scan.preview.use')}
-          </Text>
+          <Text style={styles.confirmBtnText}>{t('scan.preview.use')}</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -136,7 +132,7 @@ const styles = StyleSheet.create({
   },
   buttons: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'stretch',
     paddingHorizontal: layout.screenPaddingHorizontal,
     gap: 12,
     paddingTop: 16,
@@ -144,12 +140,15 @@ const styles = StyleSheet.create({
   retakeBtn: {
     flex: 1,
     paddingVertical: 18,
+    paddingHorizontal: 12,
+    justifyContent: 'center',
     borderRadius: 14,
     borderWidth: 1,
     borderColor: colors.gray[200],
     alignItems: 'center',
   },
   retakeBtnText: {
+    textAlign: 'center',
     fontSize: 15,
     fontFamily: fonts.semiBold,
     color: colors.text.secondary,
@@ -157,11 +156,14 @@ const styles = StyleSheet.create({
   confirmBtn: {
     flex: 1,
     paddingVertical: 18,
+    paddingHorizontal: 12,
+    justifyContent: 'center',
     borderRadius: 14,
     backgroundColor: colors.primary[400],
     alignItems: 'center',
   },
   confirmBtnText: {
+    textAlign: 'center',
     fontSize: 15,
     fontFamily: fonts.bold,
     color: colors.text.white,

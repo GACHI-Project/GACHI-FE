@@ -205,7 +205,9 @@ const styles = StyleSheet.create({
   },
   saveBtn: {
     backgroundColor: colors.primary[400],
-    height: 50,
+    minHeight: 50,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
@@ -214,16 +216,20 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary[200],
   },
   saveBtnText: {
+    textAlign: 'center',
     fontSize: 16,
     fontFamily: fonts.bold,
     color: colors.text.white,
   },
   deleteBtn: {
-    height: 44,
+    minHeight: 44,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
   deleteBtnText: {
+    textAlign: 'center',
     fontSize: 13,
     fontFamily: fonts.medium,
     color: colors.text.red,

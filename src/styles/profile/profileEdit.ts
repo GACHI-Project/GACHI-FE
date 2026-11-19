@@ -55,12 +55,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   rowLabel: {
-    flex: 1,
+    flexGrow: 1,
+    flexBasis: 90,
     fontSize: 14,
     fontFamily: fonts.medium,
     color: colors.text.primary,
   },
   rowValue: {
+    flexShrink: 1,
+    maxWidth: '65%',
     fontSize: 14,
     fontFamily: fonts.medium,
     color: colors.text.primary,
@@ -72,7 +75,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#EEEEEE',
   },
   withdrawBtn: {
-    height: 55,
+    minHeight: 55,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
     borderRadius: 12,
     backgroundColor: 'rgba(229, 57, 53, 0.2)',
     marginHorizontal: layout.screenPaddingHorizontal,
@@ -82,6 +87,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   withdrawText: {
+    textAlign: 'center',
     fontSize: 16,
     fontFamily: fonts.semiBold,
     color: colors.text.red,
@@ -93,8 +99,10 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.2)',
     justifyContent: 'flex-end',
+    paddingTop: 24,
   },
   sheet: {
+    maxHeight: '100%',
     backgroundColor: colors.text.white,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
@@ -120,7 +128,9 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   sheetSaveBtn: {
-    height: 55,
+    minHeight: 55,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
     borderRadius: 12,
     backgroundColor: colors.primary[400],
     alignItems: 'center',
@@ -130,6 +140,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.gray[200],
   },
   sheetSaveBtnText: {
+    textAlign: 'center',
     fontSize: 16,
     fontFamily: fonts.bold,
     color: colors.text.white,
@@ -140,6 +151,13 @@ const styles = StyleSheet.create({
     color: colors.text.red,
     textAlign: 'center',
     marginBottom: 8,
+  },
+  sheetScroll: {
+    flexGrow: 0,
+    flexShrink: 1,
+  },
+  sheetContent: {
+    gap: 20,
   },
 });
 

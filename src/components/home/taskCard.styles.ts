@@ -15,11 +15,13 @@ const styles = StyleSheet.create({
   },
   summaryRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'flex-start',
     paddingHorizontal: 17,
     gap: 13,
   },
   dateBadge: {
+    flexShrink: 0,
     minWidth: 50,
     minHeight: 50,
     borderRadius: 10,
@@ -58,6 +60,9 @@ const styles = StyleSheet.create({
   },
   childCircles: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
+    flexBasis: '100%',
+    paddingLeft: 63,
   },
   childCircle: {
     width: 30,
@@ -85,6 +90,7 @@ const styles = StyleSheet.create({
     gap: 18,
   },
   checkbox: {
+    flexShrink: 0,
     width: 20,
     height: 20,
     borderRadius: 4,
@@ -123,6 +129,7 @@ const styles = StyleSheet.create({
     gap: 5,
   },
   childTag: {
+    maxWidth: '100%',
     paddingHorizontal: 8,
     paddingVertical: 3,
     minHeight: 20,
@@ -137,11 +144,14 @@ const styles = StyleSheet.create({
   },
   todoDesc: {
     flex: 1,
+    minWidth: 0,
     fontSize: 14,
     fontFamily: fonts.medium,
     color: colors.text.secondary,
   },
   todayBadge: {
+    maxWidth: '35%',
+    flexShrink: 0,
     minWidth: 42,
     minHeight: 22,
     borderRadius: 100,
@@ -152,6 +162,7 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
   },
   todayText: {
+    textAlign: 'center',
     fontSize: 12,
     fontFamily: fonts.semiBold,
     color: colors.text.white,

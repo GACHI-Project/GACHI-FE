@@ -5,7 +5,8 @@ const SLIDE_DURATION = 550;
 const AUTO_INTERVAL = 5000;
 
 const useSwipeableCard = (itemCount: number, cardWidth: number) => {
-  const [activeIdx, setActiveIdx] = useState(0);
+  const [selectedIdx, setSelectedIdx] = useState(0);
+  const activeIdx = Math.min(selectedIdx, Math.max(itemCount - 1, 0));
   const activeIdxRef = useRef(0);
   const isPausedRef = useRef(false);
   const translateX = useRef(new Animated.Value(0)).current;
@@ -13,7 +14,7 @@ const useSwipeableCard = (itemCount: number, cardWidth: number) => {
   const slideTo = useCallback(
     (idx: number) => {
       activeIdxRef.current = idx;
-      setActiveIdx(idx);
+      setSelectedIdx(idx);
       Animated.timing(translateX, {
         toValue: -idx * cardWidth,
         duration: SLIDE_DURATION,
@@ -31,12 +32,11 @@ const useSwipeableCard = (itemCount: number, cardWidth: number) => {
     itemsLengthRef.current = itemCount;
   });
 
-  useEffect(() => {
-    if (!itemCount) return;
-    const clamped = Math.min(activeIdxRef.current, itemCount - 1);
+  useLayoutEffect(() => {
+    const clamped = Math.min(activeIdxRef.current, Math.max(itemCount - 1, 0));
     if (clamped !== activeIdxRef.current) {
       activeIdxRef.current = clamped;
-      setActiveIdx(clamped);
+      setSelectedIdx(clamped);
     }
     translateX.setValue(-clamped * cardWidth);
   }, [itemCount, cardWidth, translateX]);
@@ -44,8 +44,9 @@ const useSwipeableCard = (itemCount: number, cardWidth: number) => {
   useEffect(() => {
     if (itemCount <= 1) return undefined;
     const interval = setInterval(() => {
-      if (!isPausedRef.current) {
-        const next = (activeIdxRef.current + 1) % itemCount;
+      const count = itemsLengthRef.current;
+      if (!isPausedRef.current && count > 1) {
+        const next = (activeIdxRef.current + 1) % count;
         slideToRef.current(next);
       }
     }, AUTO_INTERVAL);
@@ -57,6 +58,7 @@ const useSwipeableCard = (itemCount: number, cardWidth: number) => {
       onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dx) > 8 && Math.abs(g.dx) > Math.abs(g.dy),
       onPanResponderRelease: (_, g) => {
         const len = itemsLengthRef.current;
+        if (len <= 1) return;
         if (g.dx < -40) {
           slideToRef.current((activeIdxRef.current + 1) % len);
         } else if (g.dx > 40) {

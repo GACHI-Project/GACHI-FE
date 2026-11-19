@@ -157,27 +157,23 @@ const TaskCard = () => {
           </Text>
         </View>
         <View style={styles.summaryTexts}>
-          <Text style={styles.summaryTitle} numberOfLines={1}>
-            {summaryTitle}
-          </Text>
-          {!loading && !error && (
-            <Text style={styles.summaryDesc} numberOfLines={2}>
-              {summaryDesc}
-            </Text>
-          )}
+          <Text style={styles.summaryTitle}>{summaryTitle}</Text>
+          {!loading && !error && <Text style={styles.summaryDesc}>{summaryDesc}</Text>}
         </View>
-        <View style={styles.childCircles}>
-          {distinctChildNames.map((name, index) => (
-            <View
-              key={name}
-              style={[
-                styles.childCircle,
-                { backgroundColor: colorMap[name] ?? colors.primary[300] },
-                index > 0 && styles.childCircleOverlap,
-              ]}
-            />
-          ))}
-        </View>
+        {distinctChildNames.length > 0 && (
+          <View style={styles.childCircles}>
+            {distinctChildNames.map((name, index) => (
+              <View
+                key={name}
+                style={[
+                  styles.childCircle,
+                  { backgroundColor: colorMap[name] ?? colors.primary[300] },
+                  index > 0 && styles.childCircleOverlap,
+                ]}
+              />
+            ))}
+          </View>
+        )}
       </View>
 
       <View style={styles.divider} />

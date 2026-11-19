@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { View, Text, Pressable } from 'react-native';
+import { View, Text, Pressable, ScrollView } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
@@ -101,7 +101,7 @@ const RegisterSocialTermsScreen = () => {
     <View style={styles.container}>
       <StepHeader currentStep={2} totalStep={4} />
 
-      <View style={styles.body}>
+      <ScrollView style={styles.scroll} contentContainerStyle={styles.body}>
         <View style={styles.titleSection}>
           <Text style={styles.title}>{t('auth.register.socialTerms.title')}</Text>
         </View>
@@ -135,7 +135,6 @@ const RegisterSocialTermsScreen = () => {
             ))}
           </View>
         </View>
-
         <View style={styles.footer}>
           <PrimaryButton
             label={t('common.next')}
@@ -146,7 +145,7 @@ const RegisterSocialTermsScreen = () => {
             disabled={!requiredChecked}
           />
         </View>
-      </View>
+      </ScrollView>
     </View>
   );
 };

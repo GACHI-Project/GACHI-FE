@@ -37,9 +37,7 @@ const ScanCapturedStack = ({ pages, onPress, disabled = false }: ScanCapturedSta
         </View>
       </View>
       <View style={styles.linkRow}>
-        <Text style={styles.linkText} numberOfLines={1}>
-          {t('scan.camera.stackConfirmLink')}
-        </Text>
+        <Text style={styles.linkText}>{t('scan.camera.stackConfirmLink')}</Text>
         <Ionicons name="chevron-forward" size={10} color={colors.primary[600]} />
       </View>
     </TouchableOpacity>
@@ -104,11 +102,14 @@ const styles = StyleSheet.create({
     color: colors.text.white,
   },
   linkRow: {
+    alignSelf: 'stretch',
     flexDirection: 'row',
     alignItems: 'center',
     gap: 2,
   },
   linkText: {
+    flex: 1,
+    textAlign: 'center',
     fontSize: 9,
     fontFamily: fonts.semiBold,
     color: colors.primary[600],

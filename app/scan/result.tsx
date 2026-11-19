@@ -70,13 +70,15 @@ const ScanResultScreen = () => {
       />
 
       <View style={styles.content}>
-        <ScanDocInfo
-          loading={detailLoading}
-          title={displayTitle}
-          date={displayDate}
-          childName={displayChildName}
-          childGrade={childGrade}
-        />
+        <ScrollView style={styles.docInfoScroll} nestedScrollEnabled>
+          <ScanDocInfo
+            loading={detailLoading}
+            title={displayTitle}
+            date={displayDate}
+            childName={displayChildName}
+            childGrade={childGrade}
+          />
+        </ScrollView>
 
         <ScanTabBar activeTab={activeTab} onTabChange={setActiveTab} />
         <View style={styles.tabDivider} />
@@ -114,9 +116,7 @@ const ScanResultScreen = () => {
           <Text style={styles.btnIcon} allowFontScaling={false}>
             💬
           </Text>
-          <Text style={styles.chatBtnText} numberOfLines={1}>
-            {t('scan.result.chat')}
-          </Text>
+          <Text style={styles.chatBtnText}>{t('scan.result.chat')}</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.saveBtn}
@@ -128,9 +128,7 @@ const ScanResultScreen = () => {
           <Text style={styles.btnIcon} allowFontScaling={false}>
             💾
           </Text>
-          <Text style={styles.saveBtnText} numberOfLines={1}>
-            {t('scan.result.save')}
-          </Text>
+          <Text style={styles.saveBtnText}>{t('scan.result.save')}</Text>
         </TouchableOpacity>
       </View>
 

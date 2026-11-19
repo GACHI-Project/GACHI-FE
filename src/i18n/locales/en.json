@@ -509,7 +509,10 @@
           "closeAccessibility": "Close",
           "pageIndicator": "Page {{current}} / {{total}}",
           "showOriginal": "Show Original",
-          "showTranslation": "Show Translation"
+          "showTranslation": "Show Translation",
+          "readText": "Read Full Translation",
+          "viewImage": "View Document Image",
+          "overflowHint": "Read the full translation to see text that does not fit in the image."
         },
         "error": {
           "notFound": "School notice info not found.",

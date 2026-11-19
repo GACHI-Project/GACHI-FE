@@ -36,6 +36,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary[400],
     borderRadius: 14,
     paddingVertical: 18,
+    paddingHorizontal: 16,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -43,6 +44,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary[200],
   },
   primaryLabel: {
+    textAlign: 'center',
+    flexShrink: 1,
     color: colors.text.white,
     fontSize: 16,
     fontFamily: fonts.bold,
@@ -52,6 +55,7 @@ const styles = StyleSheet.create({
     borderColor: colors.gray[300],
     borderRadius: 14,
     paddingVertical: 18,
+    paddingHorizontal: 16,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors.text.white,
@@ -60,6 +64,8 @@ const styles = StyleSheet.create({
     borderColor: colors.gray[200],
   },
   secondaryLabel: {
+    textAlign: 'center',
+    flexShrink: 1,
     color: colors.gray[300],
     fontSize: 16,
     fontFamily: fonts.semiBold,

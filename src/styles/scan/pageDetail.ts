@@ -2,21 +2,26 @@ import { StyleSheet } from 'react-native';
 import colors from '../../constants/colors';
 import fonts from '../../constants/fonts';
 import layout from '../../constants/layout';
-import { SCAN_FRAME_W, SCAN_FRAME_H } from '../../constants/scan';
 
 export default StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: colors.text.white,
     paddingHorizontal: layout.screenPaddingHorizontal,
-    gap: 25,
+  },
+  content: {
+    flex: 1,
+  },
+  scrollContent: {
+    gap: 20,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   headerSideSlot: {
-    width: 100,
+    minWidth: 30,
+    maxWidth: '40%',
     flexShrink: 0,
   },
   headerSideSlotLeft: {
@@ -36,6 +41,7 @@ export default StyleSheet.create({
   },
   headerTitle: {
     flex: 1,
+    marginHorizontal: 8,
     textAlign: 'center',
     fontSize: 18,
     fontFamily: fonts.bold,
@@ -52,21 +58,16 @@ export default StyleSheet.create({
     paddingVertical: 6,
   },
   rotateButtonText: {
+    flexShrink: 1,
     fontSize: 14,
     fontFamily: fonts.regular,
     color: colors.gray[300],
   },
   frameWrapper: {
-    width: SCAN_FRAME_W,
-    height: SCAN_FRAME_H,
     alignSelf: 'center',
     borderRadius: 20,
     overflow: 'hidden',
     backgroundColor: colors.gray[100],
-  },
-  pageSlide: {
-    width: SCAN_FRAME_W,
-    height: SCAN_FRAME_H,
   },
   pageImage: {
     width: '100%',
@@ -90,6 +91,7 @@ export default StyleSheet.create({
     right: 13,
   },
   zoomChip: {
+    maxWidth: '90%',
     position: 'absolute',
     bottom: 20,
     alignSelf: 'center',
@@ -99,6 +101,7 @@ export default StyleSheet.create({
     paddingVertical: 5,
   },
   zoomChipText: {
+    textAlign: 'center',
     fontSize: 10,
     fontFamily: fonts.semiBold,
     color: colors.text.white,
@@ -158,9 +161,16 @@ export default StyleSheet.create({
     gap: 16,
     paddingTop: 10,
   },
+  actionsScroll: {
+    flexGrow: 0,
+    flexShrink: 1,
+    maxHeight: '40%',
+  },
   button: {
     flex: 1,
-    height: 55,
+    minHeight: 55,
+    paddingHorizontal: 12,
+    paddingVertical: 14,
     borderRadius: 15,
     alignItems: 'center',
     justifyContent: 'center',
@@ -171,6 +181,7 @@ export default StyleSheet.create({
     borderColor: colors.primary[400],
   },
   buttonOutlineText: {
+    textAlign: 'center',
     fontSize: 16,
     fontFamily: fonts.semiBold,
     color: colors.primary[400],
@@ -179,6 +190,7 @@ export default StyleSheet.create({
     backgroundColor: colors.primary[400],
   },
   buttonFilledText: {
+    textAlign: 'center',
     fontSize: 16,
     fontFamily: fonts.semiBold,
     color: colors.text.white,

@@ -36,7 +36,7 @@ const MealCard = ({ cardWidth, items, meals, loading, fontScale }: Props) => {
         {menus.map((menu) => (
           <View key={menu.name} style={styles.menuItem}>
             <View style={styles.menuBullet} />
-            <Text style={styles.menuName} numberOfLines={2}>
+            <Text style={styles.menuName}>
               {menu.name}
               {menu.allergyNums.length > 0 && (
                 <Text style={styles.allergyText}> ({menu.allergyNums.join('.')})</Text>
@@ -50,7 +50,7 @@ const MealCard = ({ cardWidth, items, meals, loading, fontScale }: Props) => {
 
   return (
     <View
-      style={styles.card}
+      style={[styles.card, { width: cardWidth }]}
       onTouchStart={() => {
         isPausedRef.current = true;
       }}
@@ -72,14 +72,12 @@ const MealCard = ({ cardWidth, items, meals, loading, fontScale }: Props) => {
                 {t('mealTimetable.meal.cardLabel')}
               </Text>
             )}
-            <Text style={styles.cardTitle} numberOfLines={1}>
-              {t('mealTimetable.meal.cardTitle')}
-            </Text>
+            <Text style={styles.cardTitle}>{t('mealTimetable.meal.cardTitle')}</Text>
           </View>
         </View>
         <View style={styles.childRow}>
           <View style={[styles.childDot, { backgroundColor: activeChild.colorCode }]} />
-          <Text style={styles.childText} numberOfLines={1}>
+          <Text style={styles.childText}>
             {activeChild.name} · {activeChild.schoolName}
           </Text>
         </View>

@@ -34,12 +34,8 @@ const OcrOriginalCollapse = ({ text, onCollapse }: OcrOriginalCollapseProps) => 
           <Ionicons name="document-text-outline" size={16} color={colors.gray[300]} />
         </View>
         <View style={styles.texts}>
-          <Text style={styles.title} numberOfLines={1}>
-            {t('scan.result.fullDoc.ocr.title')}
-          </Text>
-          <Text style={styles.subtitle} numberOfLines={1}>
-            {t('scan.result.fullDoc.ocr.subtitle')}
-          </Text>
+          <Text style={styles.title}>{t('scan.result.fullDoc.ocr.title')}</Text>
+          <Text style={styles.subtitle}>{t('scan.result.fullDoc.ocr.subtitle')}</Text>
         </View>
         <Ionicons
           name="chevron-down"

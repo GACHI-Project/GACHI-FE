@@ -1,30 +1,22 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
-import { router, useFocusEffect } from 'expo-router';
-import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback, useState } from 'react';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
-import StepHeader from '../../../src/components/common/StepHeader';
-import { PrimaryButton } from '../../../src/components/common/Button';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { z } from 'zod';
 import FormField from '../../../src/components/auth/FormField';
 import PasswordStrengthBar, { getStrength } from '../../../src/components/auth/PasswordStrengthBar';
 import TermsCheckbox from '../../../src/components/auth/TermsCheckbox';
-import {
-  checkLoginId,
-  checkPhoneNumber,
-  checkEmail,
-  sendEmailVerificationCode,
-  verifyEmailCode,
-  AuthApiError,
-} from '../../../src/api/auth';
-import { loginIdSchema, emailSchema, validatePassword } from '../../../src/validation/auth';
+import { PrimaryButton } from '../../../src/components/common/Button';
+import StepHeader from '../../../src/components/common/StepHeader';
 import colors from '../../../src/constants/colors';
 import fonts from '../../../src/constants/fonts';
 import layout from '../../../src/constants/layout';
+import useRegisterAvailability from '../../../src/hooks/auth/useRegisterAvailability';
+import useRegisterEmailVerification from '../../../src/hooks/auth/useRegisterEmailVerification';
 import { useRegisterStore } from '../../../src/store/registerStore';
-
-type ValidationState = 'success' | 'error' | undefined;
+import { emailSchema, loginIdSchema, validatePassword } from '../../../src/validation/auth';
 
 const formatTimer = (seconds: number) => {
   const m = Math.floor(seconds / 60)
@@ -106,7 +98,6 @@ const RegisterBasicScreen = () => {
   const {
     control,
     getValues,
-    watch,
     setValue,
     formState: { errors, isValid },
   } = useForm<FormValues>({
@@ -134,191 +125,32 @@ const RegisterBasicScreen = () => {
 
   const [showPassword, setShowPassword] = useState(false);
   const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
-  const [emailTimer, setEmailTimer] = useState<number | null>(null);
-  const [emailSent, setEmailSent] = useState(false);
-  const [verificationCode, setVerificationCode] = useState('');
+  const idCheck = useRegisterAvailability('id');
+  const phoneCheck = useRegisterAvailability('phone');
+  const emailVerification = useRegisterEmailVerification();
+  const {
+    emailTimer,
+    emailSent,
+    verificationCode,
+    emailValidation,
+    emailMessageKey,
+    emailChecking,
+    codeValidation,
+    codeMessageKey,
+    codeChecking,
+  } = emailVerification;
 
-  const [idValidation, setIdValidation] = useState<ValidationState>();
-  const [idMessage, setIdMessage] = useState<string | undefined>();
-  const [idChecking, setIdChecking] = useState(false);
-  const [phoneValidation, setPhoneValidation] = useState<ValidationState>();
-  const [phoneMessage, setPhoneMessage] = useState<string | undefined>();
-  const [phoneChecking, setPhoneChecking] = useState(false);
-  const [emailValidation, setEmailValidation] = useState<ValidationState>();
-  const [emailMessage, setEmailMessage] = useState<string | undefined>();
-  const [emailChecking, setEmailChecking] = useState(false);
-  const [codeValidation, setCodeValidation] = useState<ValidationState>();
-  const [codeMessage, setCodeMessage] = useState<string | undefined>();
-  const [codeChecking, setCodeChecking] = useState(false);
+  const [idValue, phoneValue, emailValue, passwordValue, passwordConfirmValue] = useWatch({
+    control,
+    name: ['id', 'phone', 'email', 'password', 'passwordConfirm'],
+  });
 
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const phoneDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(
-    () => () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-      if (phoneDebounceRef.current) clearTimeout(phoneDebounceRef.current);
-    },
-    []
-  );
-
-  const triggerIdApiCheck = (v: string) => {
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    setIdValidation(undefined);
-    setIdMessage(undefined);
-    setIdChecking(false);
-
-    if (!loginIdSchema.safeParse(v).success) return;
-
-    setIdChecking(true);
-    debounceRef.current = setTimeout(async () => {
-      try {
-        const { available } = await checkLoginId(v);
-        setIdValidation(available ? 'success' : 'error');
-        setIdMessage(
-          available
-            ? t('auth.register.basic.error.idAvailable')
-            : t('auth.register.basic.error.idTaken')
-        );
-      } catch {
-        setIdValidation('error');
-        setIdMessage(t('auth.register.basic.error.checkError'));
-      } finally {
-        setIdChecking(false);
-      }
-    }, 500);
-  };
-
-  const triggerPhoneApiCheck = (digits: string) => {
-    if (phoneDebounceRef.current) clearTimeout(phoneDebounceRef.current);
-    setPhoneValidation(undefined);
-    setPhoneMessage(undefined);
-    setPhoneChecking(false);
-
-    if (!/^01[0-9]{8,9}$/.test(digits)) return;
-
-    setPhoneChecking(true);
-    phoneDebounceRef.current = setTimeout(async () => {
-      try {
-        const { available } = await checkPhoneNumber(digits);
-        setPhoneValidation(available ? 'success' : 'error');
-        setPhoneMessage(
-          available
-            ? t('auth.register.basic.error.phoneAvailable')
-            : t('auth.register.basic.error.phoneTaken')
-        );
-      } catch {
-        setPhoneValidation('error');
-        setPhoneMessage(t('auth.register.basic.error.checkError'));
-      } finally {
-        setPhoneChecking(false);
-      }
-    }, 500);
-  };
-
-  const handleEmailVerify = async () => {
-    const email = getValues('email');
-    const emailResult = emailSchema.safeParse(email);
-    if (!emailResult.success) {
-      setEmailValidation('error');
-      setEmailMessage(emailResult.error.issues[0].message);
-      return;
-    }
-
-    setEmailChecking(true);
-    setEmailValidation(undefined);
-    setEmailMessage(undefined);
-
-    try {
-      const { available } = await checkEmail(email);
-      if (!available) {
-        setEmailValidation('error');
-        setEmailMessage(t('auth.register.basic.error.emailTaken'));
-        return;
-      }
-
-      const { codeTtlSeconds } = await sendEmailVerificationCode(email);
-
-      if (timerRef.current) clearInterval(timerRef.current);
-      setEmailValidation('success');
-      setEmailMessage(t('auth.register.basic.error.codeSent'));
-      setEmailSent(true);
-      setVerificationCode('');
-      setCodeValidation(undefined);
-      setCodeMessage(undefined);
-      setCodeChecking(false);
-      setEmailTimer(codeTtlSeconds - 1);
-      timerRef.current = setInterval(() => {
-        setEmailTimer((prev) => {
-          if (prev === null || prev <= 1) {
-            clearInterval(timerRef.current!);
-            timerRef.current = null;
-            return null;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    } catch {
-      setEmailValidation('error');
-      setEmailMessage(t('auth.register.basic.error.sendError'));
-    } finally {
-      setEmailChecking(false);
-    }
-  };
-
-  const handleCodeConfirm = async () => {
-    const email = getValues('email');
-    const code = verificationCode.trim();
-
-    if (!/^\d{6}$/.test(code)) {
-      setCodeValidation('error');
-      setCodeMessage(t('auth.register.basic.error.codeFormat'));
-      return;
-    }
-
-    setCodeChecking(true);
-    setCodeValidation(undefined);
-    setCodeMessage(undefined);
-
-    try {
-      await verifyEmailCode(email, code);
-
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-        timerRef.current = null;
-      }
-      setEmailTimer(null);
-      setCodeValidation('success');
-      setCodeMessage(t('auth.register.basic.error.emailVerified'));
-      setEmailValidation('success');
-      setEmailMessage(t('auth.register.basic.error.emailVerified'));
-    } catch (error) {
-      setCodeValidation('error');
-
-      if (error instanceof AuthApiError) {
-        if (error.code === 'COMMON4001') {
-          setCodeMessage(t('auth.register.basic.error.codeInvalid'));
-        } else if (error.code === 'AUTH4002') {
-          setCodeMessage(t('auth.register.basic.error.codeWrong'));
-        } else if (error.code === 'AUTH4003') {
-          setCodeMessage(t('auth.register.basic.error.codeExpired'));
-        } else if (error.code === 'AUTH4292') {
-          setCodeMessage(t('auth.register.basic.error.codeExceeded'));
-        } else {
-          setCodeMessage(t('auth.register.basic.error.verifyError'));
-        }
-      } else {
-        setCodeMessage(t('auth.register.basic.error.verifyError'));
-      }
-    } finally {
-      setCodeChecking(false);
-    }
-  };
-
-  const passwordValue = watch('password');
-  const passwordConfirmValue = watch('passwordConfirm');
+  const canContinue =
+    isValid &&
+    idCheck.isAvailable(idValue) &&
+    phoneCheck.isAvailable(phoneValue.replace(/-/g, '')) &&
+    emailVerification.isVerified(emailValue) &&
+    !emailChecking;
 
   return (
     <View style={styles.container}>
@@ -362,10 +194,12 @@ const RegisterBasicScreen = () => {
                 value={field.value}
                 onChangeText={(v) => {
                   field.onChange(v);
-                  triggerIdApiCheck(v);
+                  idCheck.check(v);
                 }}
-                validationState={errors.id ? 'error' : idValidation}
-                validationMessage={errors.id?.message ?? idMessage}
+                validationState={errors.id ? 'error' : idCheck.validation}
+                validationMessage={
+                  errors.id?.message ?? (idCheck.messageKey ? t(idCheck.messageKey) : undefined)
+                }
               />
             )}
           />
@@ -381,12 +215,15 @@ const RegisterBasicScreen = () => {
                   const digits = v.replace(/\D/g, '').slice(0, 11);
                   const formatted = formatPhoneNumber(digits);
                   field.onChange(formatted);
-                  triggerPhoneApiCheck(digits);
+                  phoneCheck.check(digits);
                 }}
                 keyboardType="phone-pad"
                 placeholder="010-0000-0000"
-                validationState={errors.phone ? 'error' : phoneValidation}
-                validationMessage={errors.phone?.message ?? phoneMessage}
+                validationState={errors.phone ? 'error' : phoneCheck.validation}
+                validationMessage={
+                  errors.phone?.message ??
+                  (phoneCheck.messageKey ? t(phoneCheck.messageKey) : undefined)
+                }
               />
             )}
           />
@@ -400,17 +237,7 @@ const RegisterBasicScreen = () => {
                 value={field.value}
                 onChangeText={(v) => {
                   field.onChange(v);
-                  if (timerRef.current) {
-                    clearInterval(timerRef.current);
-                    timerRef.current = null;
-                  }
-                  setEmailTimer(null);
-                  setEmailSent(false);
-                  setVerificationCode('');
-                  setCodeValidation(undefined);
-                  setCodeMessage(undefined);
-                  setEmailValidation(undefined);
-                  setEmailMessage(undefined);
+                  emailVerification.updateEmail(v);
                 }}
                 keyboardType="email-address"
                 rightButton={{
@@ -419,11 +246,13 @@ const RegisterBasicScreen = () => {
                     if (emailTimer !== null) return formatTimer(emailTimer);
                     return t('auth.register.basic.verify');
                   })(),
-                  onPress: handleEmailVerify,
+                  onPress: () => void emailVerification.send(getValues('email')),
                   disabled: emailChecking,
                 }}
                 validationState={errors.email ? 'error' : emailValidation}
-                validationMessage={errors.email?.message ?? emailMessage}
+                validationMessage={
+                  errors.email?.message ?? (emailMessageKey ? t(emailMessageKey) : undefined)
+                }
               />
             )}
           />
@@ -431,26 +260,24 @@ const RegisterBasicScreen = () => {
           {emailSent &&
             (() => {
               const isExpired = emailTimer === null && codeValidation !== 'success';
-              const codeState: ValidationState = isExpired ? 'error' : codeValidation;
+              const codeState = isExpired ? 'error' : codeValidation;
+              const translatedCodeMessage = codeMessageKey ? t(codeMessageKey) : undefined;
               const codeMsg = isExpired
                 ? t('auth.register.basic.error.codeExpiredDisplay')
-                : codeMessage;
+                : translatedCodeMessage;
 
               return (
                 <FormField
                   label={t('auth.register.basic.verificationCode')}
                   value={verificationCode}
                   onChangeText={(v) => {
-                    const digitsOnly = v.replace(/\D/g, '').slice(0, 6);
-                    setVerificationCode(digitsOnly);
-                    setCodeValidation(undefined);
-                    setCodeMessage(undefined);
+                    emailVerification.updateCode(v);
                   }}
                   keyboardType="number-pad"
                   rightButton={{
                     label: codeChecking ? t('auth.register.basic.verifying') : t('common.confirm'),
-                    onPress: handleCodeConfirm,
-                    disabled: codeChecking,
+                    onPress: () => void emailVerification.confirm(getValues('email')),
+                    disabled: codeChecking || emailChecking,
                   }}
                   validationState={codeState}
                   validationMessage={codeMsg}
@@ -521,7 +348,15 @@ const RegisterBasicScreen = () => {
         <PrimaryButton
           label={t('common.next')}
           onPress={() => {
+            if (!canContinue) return;
             const values = getValues();
+            if (
+              !idCheck.canSubmit(values.id) ||
+              !phoneCheck.canSubmit(values.phone.replace(/-/g, '')) ||
+              !emailVerification.canSubmit(values.email)
+            ) {
+              return;
+            }
             setBasicInfo({
               loginId: values.id,
               password: values.password,
@@ -531,15 +366,7 @@ const RegisterBasicScreen = () => {
             });
             router.push('/(auth)/register/child');
           }}
-          disabled={
-            !isValid ||
-            idChecking ||
-            idValidation !== 'success' ||
-            phoneChecking ||
-            phoneValidation !== 'success' ||
-            codeValidation !== 'success' ||
-            emailChecking
-          }
+          disabled={!canContinue}
         />
 
         <TouchableOpacity onPress={() => router.push('/(auth)/login')}>

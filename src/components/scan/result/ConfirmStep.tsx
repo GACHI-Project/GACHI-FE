@@ -7,6 +7,7 @@ import type { EventState } from './EventPreviewCard';
 import type { CalendarPreviewItem } from '../../../api/calendar';
 import styles from './styles';
 import colors from '../../../constants/colors';
+import QueryNotice from '../../common/QueryNotice';
 
 const STYLE_FLEX_1 = { flex: 1 } as const;
 const STYLE_FLEX_2 = { flex: 2 } as const;
@@ -15,6 +16,8 @@ interface Props {
   hasAnyMissingDate: boolean;
   previewLoading: boolean;
   previewError: string | null;
+  previewRefreshError?: string | null;
+  onRetryPreview?: () => void;
   previews: CalendarPreviewItem[];
   eventStates: Record<string, EventState>;
   childName: string;
@@ -31,6 +34,8 @@ const ConfirmStep = ({
   hasAnyMissingDate,
   previewLoading,
   previewError,
+  previewRefreshError,
+  onRetryPreview,
   previews,
   eventStates,
   childName,
@@ -81,6 +86,9 @@ const ConfirmStep = ({
         )}
         {!previewLoading && previewError && (
           <Text style={localStyles.errorText}>{previewError}</Text>
+        )}
+        {previewRefreshError && (
+          <QueryNotice message={previewRefreshError} onRetry={onRetryPreview} />
         )}
         {!previewLoading && !previewError && previews.length === 0 && (
           <Text style={localStyles.errorText}>{t('scan.result.saveBottomSheet.noEvents')}</Text>

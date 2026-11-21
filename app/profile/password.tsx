@@ -1,24 +1,28 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { router } from 'expo-router';
+import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Header from '../../src/components/common/Header';
+import { changePassword as changePasswordApi, UserApiError } from '../../src/api/user';
 import FormField from '../../src/components/auth/FormField';
 import PasswordStrengthBar, { getStrength } from '../../src/components/auth/PasswordStrengthBar';
 import { PrimaryButton } from '../../src/components/common/Button';
-import { validatePassword } from '../../src/validation/auth';
-import { fetchMyInfo, UserInfo, changePassword, UserApiError } from '../../src/api/user';
+import Header from '../../src/components/common/Header';
 import colors from '../../src/constants/colors';
 import fonts from '../../src/constants/fonts';
 import layout from '../../src/constants/layout';
+import { useApiMutation } from '../../src/query/hooks';
+import { useProfileQuery } from '../../src/query/resources';
+import { validatePassword } from '../../src/validation/auth';
 
 const MIN_PASSWORD_STRENGTH = 2;
 
 const ProfilePasswordScreen = () => {
+  const changePassword = useApiMutation(changePasswordApi, ['profile']);
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
-  const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
+  const profileQuery = useProfileQuery();
+  const userInfo = profileQuery.data ?? null;
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -27,26 +31,12 @@ const ProfilePasswordScreen = () => {
   const [showConfirm, setShowConfirm] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [currentPasswordError, setCurrentPasswordError] = useState<string | undefined>(undefined);
-  const [userInfoFetchFailed, setUserInfoFetchFailed] = useState(false);
+  const userInfoFetchFailed = profileQuery.isError;
   const isSubmitting = useRef(false);
 
-  const loadUserInfo = useCallback(async () => {
-    setUserInfoFetchFailed(false);
-    try {
-      const info = await fetchMyInfo();
-      setUserInfo(info);
-    } catch (error) {
-      if (error instanceof UserApiError && error.code === 'UNAUTHORIZED') {
-        router.replace('/(auth)/login');
-        return;
-      }
-      setUserInfoFetchFailed(true);
-    }
-  }, []);
-
-  useEffect(() => {
-    loadUserInfo();
-  }, [loadUserInfo]);
+  const loadUserInfo = () => {
+    void profileQuery.refetch();
+  };
 
   const newPasswordError = (() => {
     if (!newPassword) return undefined;

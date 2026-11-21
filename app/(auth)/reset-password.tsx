@@ -1,17 +1,19 @@
-import { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
-import { router, useLocalSearchParams } from 'expo-router';
-import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
+import { router, useLocalSearchParams } from 'expo-router';
+import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { resetPassword as resetPasswordApi } from '../../src/api/auth';
 import FormField from '../../src/components/auth/FormField';
 import PasswordStrengthBar, { getStrength } from '../../src/components/auth/PasswordStrengthBar';
 import { PrimaryButton } from '../../src/components/common/Button';
-import { resetPassword } from '../../src/api/auth';
 import colors from '../../src/constants/colors';
 import fonts from '../../src/constants/fonts';
 import layout from '../../src/constants/layout';
+import { useApiMutation } from '../../src/query/hooks';
 
 const ResetPasswordScreen = () => {
+  const resetPassword = useApiMutation(resetPasswordApi, []);
   const { t } = useTranslation();
   const { loginId, email } = useLocalSearchParams<{
     loginId: string;

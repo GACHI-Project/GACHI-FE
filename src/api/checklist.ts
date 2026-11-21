@@ -29,18 +29,19 @@ const getAuthConfig = (version?: number) =>
 
 export interface TodayChecklistItem {
   checklistId: number;
+  isCompleted?: boolean;
   content: string;
   detail: string | null;
   newsletterTitle: string;
   childName: string;
 }
 
-export const getTodayChecklists = async (): Promise<TodayChecklistItem[]> => {
+export const getTodayChecklists = async (signal?: AbortSignal): Promise<TodayChecklistItem[]> => {
   try {
     const config = await getAuthConfig();
     const response = await apiClient.get<{ result: { checklists: TodayChecklistItem[] } }>(
       '/api/v1/checklists/today',
-      config
+      { ...config, signal }
     );
     return response.data.result.checklists ?? [];
   } catch (error) {
@@ -50,20 +51,28 @@ export const getTodayChecklists = async (): Promise<TodayChecklistItem[]> => {
 
 export const toggleChecklistItem = async (
   checklistId: number,
-  isCompleted: boolean
+  isCompleted: boolean,
+  signal?: AbortSignal
 ): Promise<void> => {
   try {
     const config = await getAuthConfig();
-    await apiClient.patch(`/api/v1/checklists/${checklistId}/complete`, { isCompleted }, config);
+    await apiClient.patch(
+      `/api/v1/checklists/${checklistId}/complete`,
+      { isCompleted },
+      { ...config, signal }
+    );
   } catch (error) {
     throw wrapError(error);
   }
 };
 
-export const deleteChecklistItem = async (checklistId: number): Promise<void> => {
+export const deleteChecklistItem = async (
+  checklistId: number,
+  signal?: AbortSignal
+): Promise<void> => {
   try {
     const config = await getAuthConfig();
-    await apiClient.delete(`/api/v1/checklists/${checklistId}`, config);
+    await apiClient.delete(`/api/v1/checklists/${checklistId}`, { ...config, signal });
   } catch (error) {
     throw wrapError(error);
   }

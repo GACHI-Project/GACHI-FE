@@ -1,55 +1,31 @@
-import { useState, useEffect, useMemo } from 'react';
-import {
-  fetchSchoolMeals,
-  getMealsForChild,
-  fetchSchoolTimetables,
-  getPeriodsForChild,
-} from '../../api/meal';
-import type {
-  SchoolMealGroup,
-  SchoolTimetableGroup,
-  MealMenu,
-  TimetablePeriod,
-} from '../../api/meal';
+import { useMemo } from 'react';
 import type { ChildItem } from '../../api/child';
+import type { MealMenu, TimetablePeriod } from '../../api/meal';
+import { getMealsForChild, getPeriodsForChild } from '../../api/meal';
+import { useMealsQuery, useTimetablesQuery } from '../../query/resources';
 import { fmt, getDisplayWeekDays, getNextWeekdays } from '../../utils/date';
+import useCurrentDate from '../useCurrentDate';
 
 export type TimetableDay = { date: Date; periods: TimetablePeriod[] };
 export type MealDay = { date: Date; menus: MealMenu[] };
 
 const useMealTimetable = (childItems: ChildItem[], selectedChild: ChildItem | undefined) => {
-  const [schoolTimetables, setSchoolTimetables] = useState<SchoolTimetableGroup[]>([]);
-  const [schoolMeals, setSchoolMeals] = useState<SchoolMealGroup[]>([]);
-  const [loading, setLoading] = useState(false);
-
-  const weekDays = useMemo(() => getDisplayWeekDays(), []);
-  const mealDays = useMemo(() => getNextWeekdays(5), []);
-
-  useEffect(() => {
-    let cancelled = false;
-    if (childItems.length) {
-      setLoading(true);
-      const ttFrom = fmt(weekDays[0]);
-      const ttTo = fmt(weekDays[4]);
-      const mealFrom = fmt(mealDays[0]);
-      const mealTo = fmt(mealDays[mealDays.length - 1]);
-      Promise.all([
-        fetchSchoolTimetables(ttFrom, ttTo).catch(() => [] as SchoolTimetableGroup[]),
-        fetchSchoolMeals(mealFrom, mealTo).catch(() => [] as SchoolMealGroup[]),
-      ])
-        .then(([tt, meals]) => {
-          if (cancelled) return;
-          setSchoolTimetables(tt);
-          setSchoolMeals(meals);
-        })
-        .finally(() => {
-          if (!cancelled) setLoading(false);
-        });
-    }
-    return () => {
-      cancelled = true;
-    };
-  }, [childItems, weekDays, mealDays]);
+  const today = useCurrentDate();
+  const weekDays = useMemo(() => getDisplayWeekDays(new Date(`${today}T12:00:00`)), [today]);
+  const mealDays = useMemo(() => getNextWeekdays(5, new Date(`${today}T12:00:00`)), [today]);
+  const timetableQuery = useTimetablesQuery(
+    fmt(weekDays[0]),
+    fmt(weekDays[4]),
+    !!childItems.length
+  );
+  const mealQuery = useMealsQuery(
+    fmt(mealDays[0]),
+    fmt(mealDays[mealDays.length - 1]),
+    !!childItems.length
+  );
+  const schoolTimetables = useMemo(() => timetableQuery.data ?? [], [timetableQuery.data]);
+  const schoolMeals = useMemo(() => mealQuery.data ?? [], [mealQuery.data]);
+  const loading = timetableQuery.isLoading || mealQuery.isLoading;
 
   const timetableByDay = useMemo((): TimetableDay[] => {
     if (!selectedChild) return [];
@@ -84,7 +60,14 @@ const useMealTimetable = (childItems: ChildItem[], selectedChild: ChildItem | un
     return Math.max(0, ...allPeriods, 6);
   }, [timetableByDay]);
 
-  return { timetableByDay, mealsByDay, periodCount, loading };
+  return {
+    timetableByDay,
+    mealsByDay,
+    periodCount,
+    loading,
+    timetableError: timetableQuery.isError,
+    mealError: mealQuery.isError,
+  };
 };
 
 export default useMealTimetable;

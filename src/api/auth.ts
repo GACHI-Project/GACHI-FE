@@ -1,21 +1,18 @@
-import axios, { type AxiosRequestConfig, type InternalAxiosRequestConfig } from 'axios';
-import * as SecureStore from 'expo-secure-store';
-import { router } from 'expo-router';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
-import { ServerNotificationPreference } from '../types/notification';
-import { useUserStore } from '../store/userStore';
-import { useChildrenStore } from '../store/childrenStore';
-import { useNotificationStore } from '../store/notificationStore';
-import { useRegisterStore } from '../store/registerStore';
-import { useKakaoAuthStore } from '../store/kakaoAuthStore';
+import axios, { type AxiosRequestConfig, type InternalAxiosRequestConfig } from 'axios';
+import { router } from 'expo-router';
+import * as SecureStore from 'expo-secure-store';
 import { useGoogleAuthStore } from '../store/googleAuthStore';
+import { useKakaoAuthStore } from '../store/kakaoAuthStore';
+import { useRegisterStore } from '../store/registerStore';
 import { useSocialLinkStore } from '../store/socialLinkStore';
+import { ServerNotificationPreference } from '../types/notification';
 import {
-  getSessionVersion,
-  isCurrentSession,
-  invalidateSession,
   assertCurrentSession,
   assertSessionAuthenticated,
+  getSessionVersion,
+  invalidateSession,
+  isCurrentSession,
   markSessionAuthenticated,
 } from '../utils/authSession';
 
@@ -194,9 +191,6 @@ export const clearSession = (): Promise<SessionCleanupResult> => {
   invalidateSession();
   refreshTask?.controller.abort();
   refreshTask = null;
-  useUserStore.getState().reset();
-  useChildrenStore.getState().reset();
-  useNotificationStore.getState().reset();
   useRegisterStore.getState().reset();
   useKakaoAuthStore.getState().reset();
   useGoogleAuthStore.getState().reset();
@@ -247,9 +241,12 @@ export const logout = async (): Promise<SessionCleanupResult | undefined> => {
   return undefined;
 };
 
-export const checkLoginId = async (loginId: string): Promise<{ available: boolean }> => {
+export const checkLoginId = async (
+  loginId: string,
+  signal?: AbortSignal
+): Promise<{ available: boolean }> => {
   try {
-    const response = await apiClient.post('/api/v1/auth/check-login-id', { loginId });
+    const response = await apiClient.post('/api/v1/auth/check-login-id', { loginId }, { signal });
     return { available: response.data.result?.available ?? true };
   } catch (error) {
     if (axios.isAxiosError(error) && error.response?.status === 409) {
@@ -259,9 +256,16 @@ export const checkLoginId = async (loginId: string): Promise<{ available: boolea
   }
 };
 
-export const checkPhoneNumber = async (phoneNumber: string): Promise<{ available: boolean }> => {
+export const checkPhoneNumber = async (
+  phoneNumber: string,
+  signal?: AbortSignal
+): Promise<{ available: boolean }> => {
   try {
-    const response = await apiClient.post('/api/v1/auth/check-phone-number', { phoneNumber });
+    const response = await apiClient.post(
+      '/api/v1/auth/check-phone-number',
+      { phoneNumber },
+      { signal }
+    );
     return { available: response.data.result?.available ?? true };
   } catch (error) {
     if (axios.isAxiosError(error) && error.response?.status === 409) {
@@ -271,9 +275,12 @@ export const checkPhoneNumber = async (phoneNumber: string): Promise<{ available
   }
 };
 
-export const checkEmail = async (email: string): Promise<{ available: boolean }> => {
+export const checkEmail = async (
+  email: string,
+  signal?: AbortSignal
+): Promise<{ available: boolean }> => {
   try {
-    const response = await apiClient.post('/api/v1/auth/check-email', { email });
+    const response = await apiClient.post('/api/v1/auth/check-email', { email }, { signal });
     return { available: response.data.result?.available ?? true };
   } catch (error) {
     if (axios.isAxiosError(error) && error.response?.status === 409) {
@@ -284,10 +291,11 @@ export const checkEmail = async (email: string): Promise<{ available: boolean }>
 };
 
 export const sendEmailVerificationCode = async (
-  email: string
+  email: string,
+  signal?: AbortSignal
 ): Promise<{ codeTtlSeconds: number; resendCooldownSeconds: number }> => {
   try {
-    const response = await apiClient.post('/api/v1/auth/email/send', { email });
+    const response = await apiClient.post('/api/v1/auth/email/send', { email }, { signal });
     return response.data.result;
   } catch (error) {
     throw wrapError(error);
@@ -306,22 +314,35 @@ export interface LoginResult {
 export const login = async (
   loginId: string,
   password: string,
-  rememberMe: boolean
+  rememberMe: boolean,
+  signal?: AbortSignal
 ): Promise<LoginResult> => {
   try {
-    const response = await apiClient.post('/api/v1/auth/login', { loginId, password, rememberMe });
+    const response = await apiClient.post(
+      '/api/v1/auth/login',
+      { loginId, password, rememberMe },
+      { signal }
+    );
     return response.data.result;
   } catch (error) {
     throw wrapError(error);
   }
 };
 
-export const verifyEmailCode = async (email: string, code: string): Promise<void> => {
+export const verifyEmailCode = async (
+  email: string,
+  code: string,
+  signal?: AbortSignal
+): Promise<void> => {
   try {
-    await apiClient.post('/api/v1/auth/email/verify', {
-      email: email.trim().toLowerCase(),
-      code,
-    });
+    await apiClient.post(
+      '/api/v1/auth/email/verify',
+      {
+        email: email.trim().toLowerCase(),
+        code,
+      },
+      { signal }
+    );
   } catch (error) {
     throw wrapError(error);
   }
@@ -335,19 +356,22 @@ export interface SignupResult {
   phoneNumber: string;
 }
 
-export const signup = async (payload: {
-  name: string;
-  email: string;
-  loginId: string;
-  password: string;
-  passwordConfirm: string;
-  phoneNumber: string;
-  consentAgreed: boolean;
-  languageCode: string;
-  notificationPreference: ServerNotificationPreference;
-}): Promise<SignupResult> => {
+export const signup = async (
+  payload: {
+    name: string;
+    email: string;
+    loginId: string;
+    password: string;
+    passwordConfirm: string;
+    phoneNumber: string;
+    consentAgreed: boolean;
+    languageCode: string;
+    notificationPreference: ServerNotificationPreference;
+  },
+  signal?: AbortSignal
+): Promise<SignupResult> => {
   try {
-    const response = await apiClient.post('/api/v1/auth/signup', payload);
+    const response = await apiClient.post('/api/v1/auth/signup', payload, { signal });
     return response.data.result;
   } catch (error) {
     throw wrapError(error);
@@ -355,22 +379,35 @@ export const signup = async (payload: {
 };
 
 export const sendFindLoginIdCode = async (
-  email: string
+  email: string,
+  signal?: AbortSignal
 ): Promise<{ codeTtlSeconds: number; resendCooldownSeconds: number }> => {
   try {
-    const response = await apiClient.post('/api/v1/auth/find-login-id/email/send', { email });
+    const response = await apiClient.post(
+      '/api/v1/auth/find-login-id/email/send',
+      { email },
+      { signal }
+    );
     return response.data.result;
   } catch (error) {
     throw wrapError(error);
   }
 };
 
-export const findLoginId = async (email: string, code: string): Promise<{ loginId: string }> => {
+export const findLoginId = async (
+  email: string,
+  code: string,
+  signal?: AbortSignal
+): Promise<{ loginId: string }> => {
   try {
-    const response = await apiClient.post('/api/v1/auth/find-login-id/email/verify', {
-      email: email.trim().toLowerCase(),
-      code,
-    });
+    const response = await apiClient.post(
+      '/api/v1/auth/find-login-id/email/verify',
+      {
+        email: email.trim().toLowerCase(),
+        code,
+      },
+      { signal }
+    );
     return response.data.result;
   } catch (error) {
     throw wrapError(error);
@@ -379,13 +416,18 @@ export const findLoginId = async (email: string, code: string): Promise<{ loginI
 
 export const sendFindPasswordCode = async (
   loginId: string,
-  email: string
+  email: string,
+  signal?: AbortSignal
 ): Promise<{ codeTtlSeconds: number; resendCooldownSeconds: number }> => {
   try {
-    const response = await apiClient.post('/api/v1/auth/password-reset/email/send', {
-      loginId,
-      email: email.trim().toLowerCase(),
-    });
+    const response = await apiClient.post(
+      '/api/v1/auth/password-reset/email/send',
+      {
+        loginId,
+        email: email.trim().toLowerCase(),
+      },
+      { signal }
+    );
     return response.data.result;
   } catch (error) {
     throw wrapError(error);
@@ -395,14 +437,19 @@ export const sendFindPasswordCode = async (
 export const verifyPasswordResetCode = async (
   loginId: string,
   email: string,
-  code: string
+  code: string,
+  signal?: AbortSignal
 ): Promise<void> => {
   try {
-    await apiClient.post('/api/v1/auth/password-reset/email/verify', {
-      loginId,
-      email: email.trim().toLowerCase(),
-      code,
-    });
+    await apiClient.post(
+      '/api/v1/auth/password-reset/email/verify',
+      {
+        loginId,
+        email: email.trim().toLowerCase(),
+        code,
+      },
+      { signal }
+    );
   } catch (error) {
     throw wrapError(error);
   }
@@ -412,15 +459,20 @@ export const resetPassword = async (
   loginId: string,
   email: string,
   password: string,
-  passwordConfirm: string
+  passwordConfirm: string,
+  signal?: AbortSignal
 ): Promise<void> => {
   try {
-    await apiClient.post('/api/v1/auth/password-reset', {
-      loginId,
-      email: email.trim().toLowerCase(),
-      password,
-      passwordConfirm,
-    });
+    await apiClient.post(
+      '/api/v1/auth/password-reset',
+      {
+        loginId,
+        email: email.trim().toLowerCase(),
+        password,
+        passwordConfirm,
+      },
+      { signal }
+    );
   } catch (error) {
     throw wrapError(error);
   }
@@ -449,28 +501,36 @@ export interface KakaoCompleteResult {
 
 export const completeKakaoLogin = async (
   ticket: string,
-  rememberMe: boolean
+  rememberMe: boolean,
+  signal?: AbortSignal
 ): Promise<KakaoCompleteResult> => {
   try {
-    const response = await apiClient.post('/api/v1/auth/kakao/complete', {
-      ticket,
-      rememberMe,
-    });
+    const response = await apiClient.post(
+      '/api/v1/auth/kakao/complete',
+      {
+        ticket,
+        rememberMe,
+      },
+      { signal }
+    );
     return response.data.result;
   } catch (error) {
     throw wrapError(error);
   }
 };
 
-export const signupWithKakao = async (payload: {
-  signupToken: string;
-  consentAgreed: boolean;
-  languageCode: string;
-  notificationPreference: ServerNotificationPreference;
-  rememberMe: boolean;
-}): Promise<KakaoTokens> => {
+export const signupWithKakao = async (
+  payload: {
+    signupToken: string;
+    consentAgreed: boolean;
+    languageCode: string;
+    notificationPreference: ServerNotificationPreference;
+    rememberMe: boolean;
+  },
+  signal?: AbortSignal
+): Promise<KakaoTokens> => {
   try {
-    const response = await apiClient.post('/api/v1/auth/kakao/signup', payload);
+    const response = await apiClient.post('/api/v1/auth/kakao/signup', payload, { signal });
     return response.data.result;
   } catch (error) {
     throw wrapError(error);
@@ -488,28 +548,36 @@ export interface GoogleCompleteResult {
 
 export const completeGoogleLogin = async (
   idToken: string,
-  rememberMe: boolean
+  rememberMe: boolean,
+  signal?: AbortSignal
 ): Promise<GoogleCompleteResult> => {
   try {
-    const response = await apiClient.post('/api/v1/auth/google/complete', {
-      idToken,
-      rememberMe,
-    });
+    const response = await apiClient.post(
+      '/api/v1/auth/google/complete',
+      {
+        idToken,
+        rememberMe,
+      },
+      { signal }
+    );
     return response.data.result;
   } catch (error) {
     throw wrapError(error);
   }
 };
 
-export const signupWithGoogle = async (payload: {
-  signupToken: string;
-  consentAgreed: boolean;
-  languageCode: string;
-  notificationPreference: ServerNotificationPreference;
-  rememberMe: boolean;
-}): Promise<LoginResult> => {
+export const signupWithGoogle = async (
+  payload: {
+    signupToken: string;
+    consentAgreed: boolean;
+    languageCode: string;
+    notificationPreference: ServerNotificationPreference;
+    rememberMe: boolean;
+  },
+  signal?: AbortSignal
+): Promise<LoginResult> => {
   try {
-    const response = await apiClient.post('/api/v1/auth/google/signup', payload);
+    const response = await apiClient.post('/api/v1/auth/google/signup', payload, { signal });
     return response.data.result;
   } catch (error) {
     throw wrapError(error);
@@ -521,14 +589,15 @@ const createUnauthorizedError = () => new AuthApiError('UNAUTHORIZED', '로그�
 export const linkGoogle = async (
   linkToken: string,
   rememberMe: boolean,
-  version: number
+  version: number,
+  signal?: AbortSignal
 ): Promise<LoginResult> => {
   try {
     const config = await getAuthRequestConfig(createUnauthorizedError, version);
     const response = await apiClient.post(
       '/api/v1/auth/google/link',
       { linkToken, rememberMe },
-      config
+      { ...config, signal }
     );
     return response.data.result;
   } catch (error) {
@@ -539,14 +608,15 @@ export const linkGoogle = async (
 export const linkKakao = async (
   linkToken: string,
   rememberMe: boolean,
-  version: number
+  version: number,
+  signal?: AbortSignal
 ): Promise<LoginResult> => {
   try {
     const config = await getAuthRequestConfig(createUnauthorizedError, version);
     const response = await apiClient.post(
       '/api/v1/auth/kakao/link',
       { linkToken, rememberMe },
-      config
+      { ...config, signal }
     );
     return response.data.result;
   } catch (error) {
@@ -554,19 +624,19 @@ export const linkKakao = async (
   }
 };
 
-export const unlinkGoogle = async (version: number): Promise<void> => {
+export const unlinkGoogle = async (version: number, signal?: AbortSignal): Promise<void> => {
   try {
     const config = await getAuthRequestConfig(createUnauthorizedError, version);
-    await apiClient.delete('/api/v1/auth/google/link', config);
+    await apiClient.delete('/api/v1/auth/google/link', { ...config, signal });
   } catch (error) {
     throw wrapError(error);
   }
 };
 
-export const unlinkKakao = async (version: number): Promise<void> => {
+export const unlinkKakao = async (version: number, signal?: AbortSignal): Promise<void> => {
   try {
     const config = await getAuthRequestConfig(createUnauthorizedError, version);
-    await apiClient.delete('/api/v1/auth/kakao/link', config);
+    await apiClient.delete('/api/v1/auth/kakao/link', { ...config, signal });
   } catch (error) {
     throw wrapError(error);
   }

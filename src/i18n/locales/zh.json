@@ -17,7 +17,9 @@
     "elementaryGrade": "小学{{grade}}年级",
     "grade": "{{grade}}年级",
     "preparing": "准备中",
-    "cancel": "取消"
+    "cancel": "取消",
+    "refreshFailed": "暂时无法更新，正在显示上次获取的信息。",
+    "waitingConnection": "正在等待网络连接。"
   },
   "tabs": {
     "home": "首页",

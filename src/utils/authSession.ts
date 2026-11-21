@@ -2,6 +2,20 @@ import { CanceledError } from 'axios';
 
 let sessionVersion = 0;
 let credentialsInvalidated = false;
+const listeners = new Set<() => void>();
+let snapshot = { version: sessionVersion, authenticated: !credentialsInvalidated };
+
+export const subscribeSession = (listener: () => void) => {
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
+};
+export const getSessionSnapshot = () => snapshot;
+const publishSession = () => {
+  snapshot = { version: sessionVersion, authenticated: !credentialsInvalidated };
+  listeners.forEach((listener) => listener());
+};
 
 export const getSessionVersion = (): number => sessionVersion;
 
@@ -10,6 +24,7 @@ export const isCurrentSession = (version: number): boolean => version === sessio
 export const invalidateSession = (): void => {
   sessionVersion += 1;
   credentialsInvalidated = true;
+  publishSession();
 };
 
 export const assertCurrentSession = (version: number): void => {
@@ -23,7 +38,10 @@ export const assertSessionAuthenticated = (version: number): void => {
 
 export const markSessionAuthenticated = (version: number): void => {
   assertCurrentSession(version);
-  credentialsInvalidated = false;
+  if (credentialsInvalidated) {
+    credentialsInvalidated = false;
+    publishSession();
+  }
 };
 
 // 비동기 작업을 시작할 때 생성해, 세션 종료 후 도착한 결과를 무시한다.

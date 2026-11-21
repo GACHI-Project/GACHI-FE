@@ -1,8 +1,10 @@
 import { Alert } from 'react-native';
-import i18n from '../i18n';
 import { AuthApiError, linkGoogle, linkKakao, saveAuthTokens } from '../api/auth';
-import { assertCurrentSession, isCurrentSession } from './authSession';
+import i18n from '../i18n';
+import { invalidateResources } from '../query/client';
+import { executeSessionMutation } from '../query/operations';
 import { useSocialLinkStore, type PendingLink } from '../store/socialLinkStore';
+import { assertCurrentSession, isCurrentSession } from './authSession';
 
 export type LinkErrorResult = 'mismatch' | 'alreadyLinked' | 'error';
 
@@ -24,17 +26,21 @@ export const attemptPendingLink = async (
   version: number
 ): Promise<void> => {
   try {
-    const linked =
+    assertCurrentSession(version);
+    const linked = await executeSessionMutation(() =>
       pending.provider === 'kakao'
-        ? await linkKakao(pending.linkToken, rememberMe, version)
-        : await linkGoogle(pending.linkToken, rememberMe, version);
+        ? linkKakao(pending.linkToken, rememberMe, version)
+        : linkGoogle(pending.linkToken, rememberMe, version)
+    );
     assertCurrentSession(version);
     await saveAuthTokens(linked, version);
+    await invalidateResources(['profile'], version);
   } catch (error) {
     if (!isCurrentSession(version)) return;
     const messageKey = LINK_ERROR_MESSAGE_KEYS[mapLinkError(error)];
     Alert.alert(i18n.t('profile.accountLink.sectionTitle'), i18n.t(messageKey));
   } finally {
-    useSocialLinkStore.getState().clearPendingLink();
+    if (isCurrentSession(version) && useSocialLinkStore.getState().pendingLink === pending)
+      useSocialLinkStore.getState().clearPendingLink();
   }
 };

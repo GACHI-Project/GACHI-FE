@@ -1,64 +1,67 @@
-import React, { useEffect, useState } from 'react';
-import {
-  View,
-  Text,
-  Alert,
-  TouchableOpacity,
-  ScrollView,
-  StyleSheet,
-  ActivityIndicator,
-} from 'react-native';
-import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
+import { router } from 'expo-router';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import {
+  ActivityIndicator,
+  Alert,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PrimaryButton } from '../../src/components/common/Button';
 import Header from '../../src/components/common/Header';
+import QueryNotice from '../../src/components/common/QueryNotice';
 import SelectionCard from '../../src/components/common/SelectionCard';
 import ScanHelpModal from '../../src/components/scan/ScanHelpModal';
 import ScanStepIndicator from '../../src/components/scan/ScanStepIndicator';
-import { getMyChildren, ChildResult } from '../../src/api/child';
 import colors from '../../src/constants/colors';
 import fonts from '../../src/constants/fonts';
 import layout from '../../src/constants/layout';
 import { MAX_PAGES } from '../../src/constants/scan';
+import { useChildrenQuery } from '../../src/query/resources';
+import { hasBlockingQueryError } from '../../src/query/state';
 import { pickGalleryImages } from '../../src/utils/scanImage';
 
 const ScanChildSelectScreen = () => {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
-  const [children, setChildren] = useState<ChildResult[]>([]);
-  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const childrenQuery = useChildrenQuery();
+  const children = useMemo(() => childrenQuery.data ?? [], [childrenQuery.data]);
+  const [selectedId, setSelectedId] = useState<number | null | undefined>(undefined);
   const [helpVisible, setHelpVisible] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const loading = childrenQuery.isLoading;
+  const childrenError = hasBlockingQueryError(childrenQuery);
+  const blocked = childrenError || childrenQuery.data === undefined;
+  const unassigned = selectedId === null || selectedId === undefined;
   const [pickingGallery, setPickingGallery] = useState(false);
 
   useEffect(() => {
-    getMyChildren()
-      .then((result) => {
-        setChildren(result);
-        if (result.length > 0) setSelectedId(result[0].id);
-      })
-      .catch(() =>
-        Alert.alert(t('scan.select.error.errorTitle'), t('scan.select.error.loadChildren'))
-      )
-      .finally(() => setLoading(false));
-  }, [t]);
+    if (childrenQuery.data === undefined) return;
+    setSelectedId((current) =>
+      current === null || children.some((child) => child.id === current) ? current : children[0]?.id
+    );
+  }, [children, childrenQuery.data]);
 
   const selected = children.find((c) => c.id === selectedId);
   const childParams = {
-    childId: String(selectedId ?? ''),
+    childId: selected ? String(selected.id) : '',
     childName: selected?.name ?? '',
     childColor: selected?.colorCode ?? '',
     childGrade: selected ? t('common.elementaryGrade', { grade: selected.grade }) : '',
   };
 
   const handleCamera = () => {
+    if (blocked) return;
     router.push({ pathname: '/scan/camera', params: childParams });
   };
 
   const handlePdf = async () => {
+    if (blocked) return;
     try {
       const result = await DocumentPicker.getDocumentAsync({
         type: 'application/pdf',
@@ -81,7 +84,7 @@ const ScanChildSelectScreen = () => {
   };
 
   const handleGallery = async () => {
-    if (pickingGallery) return;
+    if (pickingGallery || blocked) return;
     setPickingGallery(true);
     try {
       const result = await pickGalleryImages(MAX_PAGES);
@@ -107,6 +110,33 @@ const ScanChildSelectScreen = () => {
     }
   };
 
+  const renderChildren = () => {
+    if (childrenError)
+      return (
+        <QueryNotice
+          onRetry={() => {
+            void childrenQuery.refetch();
+          }}
+          retrying={childrenQuery.isFetching}
+        />
+      );
+    if (childrenQuery.fetchStatus === 'paused' && !childrenQuery.data)
+      return <QueryNotice loading message={t('common.waitingConnection')} />;
+    if (loading) return <ActivityIndicator color={colors.primary[400]} />;
+    return children.map((child) => (
+      <SelectionCard
+        key={child.id}
+        name={child.name}
+        label={t('common.elementaryGrade', { grade: child.grade })}
+        leftElement={<View style={[styles.avatar, { backgroundColor: child.colorCode }]} />}
+        selected={selectedId === child.id}
+        onPress={() => setSelectedId(child.id)}
+        size="md"
+        indicatorColor={child.colorCode}
+      />
+    ));
+  };
+
   return (
     <View style={styles.screen}>
       <Header title={t('scan.title')} onHelp={() => setHelpVisible(true)} />
@@ -126,52 +156,45 @@ const ScanChildSelectScreen = () => {
         </View>
 
         <View style={styles.childList}>
-          {loading ? (
-            <ActivityIndicator color={colors.primary[400]} />
-          ) : (
-            children.map((child) => (
-              <SelectionCard
-                key={child.id}
-                name={child.name}
-                label={t('common.elementaryGrade', { grade: child.grade })}
-                leftElement={<View style={[styles.avatar, { backgroundColor: child.colorCode }]} />}
-                selected={selectedId === child.id}
-                onPress={() => setSelectedId(child.id)}
-                size="md"
-                indicatorColor={child.colorCode}
-              />
-            ))
+          {renderChildren()}
+          {childrenQuery.error && !childrenError && (
+            <QueryNotice
+              message={t('common.refreshFailed')}
+              onRetry={() => {
+                void childrenQuery.refetch();
+              }}
+            />
           )}
 
           <TouchableOpacity
-            style={[styles.unknownCard, selectedId === null && styles.unknownCardSelected]}
+            style={[styles.unknownCard, unassigned && styles.unknownCardSelected]}
             onPress={() => setSelectedId(null)}
+            disabled={blocked}
             activeOpacity={0.8}
             accessibilityLabel={t('scan.select.unknown')}
             accessibilityRole="button"
           >
-            <View
-              style={[
-                styles.unknownIconWrap,
-                selectedId === null && styles.unknownIconWrapSelected,
-              ]}
-            >
+            <View style={[styles.unknownIconWrap, unassigned && styles.unknownIconWrapSelected]}>
               <Ionicons name="help" size={14} color={colors.text.white} />
             </View>
-            <Text style={[styles.unknownText, selectedId === null && styles.unknownTextSelected]}>
+            <Text style={[styles.unknownText, unassigned && styles.unknownTextSelected]}>
               {t('scan.select.unknown')}
             </Text>
           </TouchableOpacity>
         </View>
 
         <View style={styles.buttonGroup}>
-          <PrimaryButton label={t('scan.select.camera')} onPress={handleCamera} />
+          <PrimaryButton
+            label={t('scan.select.camera')}
+            onPress={handleCamera}
+            disabled={blocked}
+          />
           <PrimaryButton
             label={t('scan.select.gallery')}
             onPress={handleGallery}
-            disabled={pickingGallery}
+            disabled={pickingGallery || blocked}
           />
-          <PrimaryButton label={t('scan.select.pdf')} onPress={handlePdf} />
+          <PrimaryButton label={t('scan.select.pdf')} onPress={handlePdf} disabled={blocked} />
         </View>
       </ScrollView>
 

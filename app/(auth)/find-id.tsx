@@ -1,18 +1,25 @@
-import { useState, useRef, useEffect } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
-import { router } from 'expo-router';
-import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
+import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import {
+  AuthApiError,
+  findLoginId as findLoginIdApi,
+  sendFindLoginIdCode as sendFindLoginIdCodeApi,
+} from '../../src/api/auth';
 import FormField from '../../src/components/auth/FormField';
 import { PrimaryButton } from '../../src/components/common/Button';
-import { sendFindLoginIdCode, findLoginId, AuthApiError } from '../../src/api/auth';
 import colors from '../../src/constants/colors';
 import fonts from '../../src/constants/fonts';
 import layout from '../../src/constants/layout';
+import { useApiMutation } from '../../src/query/hooks';
 
 type ValidationMsg = { text: string; state: 'success' | 'error' };
 
 const FindIdScreen = () => {
+  const findLoginId = useApiMutation(findLoginIdApi, []);
+  const sendFindLoginIdCode = useApiMutation(sendFindLoginIdCodeApi, []);
   const { t } = useTranslation();
 
   const [step, setStep] = useState<'form' | 'found'>('form');

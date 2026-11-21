@@ -17,7 +17,9 @@
     "elementaryGrade": "초등학교 {{grade}}학년",
     "grade": "{{grade}}학년",
     "preparing": "준비 중",
-    "cancel": "취소"
+    "cancel": "취소",
+    "refreshFailed": "최신 정보를 불러오지 못했어요. 기존 정보를 표시하고 있어요.",
+    "waitingConnection": "네트워크 연결을 기다리고 있어요."
   },
   "tabs": {
     "home": "홈",

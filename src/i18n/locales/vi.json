@@ -17,7 +17,9 @@
     "elementaryGrade": "Lớp {{grade}} tiểu học",
     "grade": "Lớp {{grade}}",
     "preparing": "Đang chuẩn bị",
-    "cancel": "Hủy"
+    "cancel": "Hủy",
+    "refreshFailed": "Không thể cập nhật. Đang hiển thị thông tin gần nhất.",
+    "waitingConnection": "Đang chờ kết nối mạng."
   },
   "tabs": {
     "home": "Trang chủ",

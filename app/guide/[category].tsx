@@ -1,19 +1,17 @@
-import { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, FlatList, ActivityIndicator } from 'react-native';
-import { useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import { ActivityIndicator, FlatList, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { getSchoolGuideFaqs, type SchoolGuideCategoryEnum } from '../../src/api/schoolGuide';
 import Header from '../../src/components/common/Header';
+import QueryNotice from '../../src/components/common/QueryNotice';
 import colors from '../../src/constants/colors';
 import layout from '../../src/constants/layout';
-import styles from '../../src/styles/guide/categoryScreen';
-import {
-  getSchoolGuideFaqs,
-  type SchoolGuideCategoryEnum,
-  type SchoolGuideFaqItem,
-} from '../../src/api/schoolGuide';
 import useGuideFaqExpand from '../../src/hooks/guide/useGuideFaqExpand';
+import { useServerQuery } from '../../src/query/hooks';
+import { hasBlockingQueryError } from '../../src/query/state';
+import styles from '../../src/styles/guide/categoryScreen';
 
 const CategoryScreen = () => {
   const { category, categoryEnum, emoji } = useLocalSearchParams<{
@@ -24,25 +22,16 @@ const CategoryScreen = () => {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
 
-  const [faqs, setFaqs] = useState<SchoolGuideFaqItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
-
+  const query = useServerQuery(
+    'guide',
+    ['category', categoryEnum],
+    (signal) => getSchoolGuideFaqs({ category: categoryEnum as SchoolGuideCategoryEnum }, signal),
+    { enabled: !!categoryEnum }
+  );
+  const faqs = query.data ?? [];
+  const loading = query.isLoading;
+  const error = !categoryEnum || hasBlockingQueryError(query);
   const { expandedId, answerCache, loadingDetailId, handleExpand } = useGuideFaqExpand();
-
-  useEffect(() => {
-    if (!categoryEnum) {
-      setLoading(false);
-      setError(true);
-      return;
-    }
-    setLoading(true);
-    setError(false);
-    getSchoolGuideFaqs({ category: categoryEnum as SchoolGuideCategoryEnum })
-      .then(setFaqs)
-      .catch(() => setError(true))
-      .finally(() => setLoading(false));
-  }, [categoryEnum]);
 
   const renderContent = () => {
     if (loading) {
@@ -55,12 +44,27 @@ const CategoryScreen = () => {
     if (error) {
       return (
         <View style={styles.centered}>
-          <Text style={styles.errorText}>{t('guide.loadFailed')}</Text>
+          <QueryNotice
+            message={t('guide.loadFailed')}
+            onRetry={() => {
+              void query.refetch();
+            }}
+            retrying={query.isFetching}
+          />
         </View>
       );
     }
     return (
       <>
+        {query.error && (
+          <QueryNotice
+            message={t('common.refreshFailed')}
+            onRetry={() => {
+              void query.refetch();
+            }}
+            retrying={query.isFetching}
+          />
+        )}
         <View style={styles.countRow}>
           <Text style={styles.countText}>
             {(() => {

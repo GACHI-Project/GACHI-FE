@@ -76,10 +76,13 @@ export interface MonthlyMarker {
   childColor: string;
 }
 
-export const fetchChildren = async (): Promise<ChildInfo[]> => {
+export const fetchChildren = async (signal?: AbortSignal): Promise<ChildInfo[]> => {
   try {
     const config = await getAuthConfig();
-    const response = await apiClient.get<{ result: ChildInfo[] }>('/api/v1/children', config);
+    const response = await apiClient.get<{ result: ChildInfo[] }>('/api/v1/children', {
+      ...config,
+      signal,
+    });
     return response.data.result ?? [];
   } catch (error) {
     throw wrapError(error);
@@ -89,7 +92,8 @@ export const fetchChildren = async (): Promise<ChildInfo[]> => {
 export const fetchMonthlyMarkers = async (
   year: number,
   month: number,
-  childName?: string
+  childName?: string,
+  signal?: AbortSignal
 ): Promise<MonthlyMarker[]> => {
   try {
     const config = await getAuthConfig();
@@ -97,7 +101,7 @@ export const fetchMonthlyMarkers = async (
     if (childName) params.childName = childName;
     const response = await apiClient.get<{ result: { markedDates: MonthlyMarker[] } }>(
       '/api/v1/calendars/monthly',
-      { ...config, params }
+      { ...config, params, signal }
     );
     return response.data.result?.markedDates ?? [];
   } catch (error) {
@@ -105,7 +109,11 @@ export const fetchMonthlyMarkers = async (
   }
 };
 
-export const fetchDailyEvents = async (date: string, childName?: string): Promise<DailyResult> => {
+export const fetchDailyEvents = async (
+  date: string,
+  childName?: string,
+  signal?: AbortSignal
+): Promise<DailyResult> => {
   try {
     const config = await getAuthConfig();
     const params: Record<string, unknown> = { date };
@@ -113,6 +121,7 @@ export const fetchDailyEvents = async (date: string, childName?: string): Promis
     const response = await apiClient.get<{ result: DailyResult }>('/api/v1/calendars/daily', {
       ...config,
       params,
+      signal,
     });
     return response.data.result ?? { date, events: [] };
   } catch (error) {
@@ -122,7 +131,8 @@ export const fetchDailyEvents = async (date: string, childName?: string): Promis
 
 export const fetchWeeklyEvents = async (
   date: string,
-  childName?: string
+  childName?: string,
+  signal?: AbortSignal
 ): Promise<WeeklyResult> => {
   try {
     const config = await getAuthConfig();
@@ -131,6 +141,7 @@ export const fetchWeeklyEvents = async (
     const response = await apiClient.get<{ result: WeeklyResult }>('/api/v1/calendars/weekly', {
       ...config,
       params,
+      signal,
     });
     return (
       response.data.result ?? {
@@ -158,12 +169,15 @@ export interface CalendarPreviewItem {
   allDay?: boolean | null;
 }
 
-export const getCalendarPreview = async (newsletterId: number): Promise<CalendarPreviewItem[]> => {
+export const getCalendarPreview = async (
+  newsletterId: number,
+  signal?: AbortSignal
+): Promise<CalendarPreviewItem[]> => {
   try {
     const config = await getAuthConfig();
     const response = await apiClient.get<{ result: { events: CalendarPreviewItem[] } }>(
       `/api/v1/newsletters/${newsletterId}/calendar/preview`,
-      config
+      { ...config, signal }
     );
     return response.data.result?.events ?? [];
   } catch (error) {
@@ -178,11 +192,16 @@ export interface CalendarDatePatchEvent {
 
 export const patchCalendarPreviewDates = async (
   newsletterId: number,
-  events: CalendarDatePatchEvent[]
+  events: CalendarDatePatchEvent[],
+  signal?: AbortSignal
 ): Promise<void> => {
   try {
     const config = await getAuthConfig();
-    await apiClient.patch(`/api/v1/newsletters/${newsletterId}/calendar/dates`, { events }, config);
+    await apiClient.patch(
+      `/api/v1/newsletters/${newsletterId}/calendar/dates`,
+      { events },
+      { ...config, signal }
+    );
   } catch (error) {
     throw wrapError(error);
   }
@@ -197,14 +216,15 @@ export interface CalendarPostEvent {
 
 export const postCalendarEvents = async (
   newsletterId: number,
-  events: CalendarPostEvent[]
+  events: CalendarPostEvent[],
+  signal?: AbortSignal
 ): Promise<{ registeredCount: number }> => {
   try {
     const config = await getAuthConfig();
     const response = await apiClient.post<{ result: { registeredCount: number } }>(
       `/api/v1/newsletters/${newsletterId}/calendar`,
       { events },
-      config
+      { ...config, signal }
     );
     return response.data.result;
   } catch (error) {
@@ -255,13 +275,14 @@ export interface SchoolScheduleResult {
 
 export const fetchSchoolSchedules = async (
   fromDate: string,
-  toDate: string
+  toDate: string,
+  signal?: AbortSignal
 ): Promise<SchoolScheduleResult> => {
   try {
     const config = await getAuthConfig();
     const response = await apiClient.get<{ result: SchoolScheduleResult }>(
       '/api/v1/calendars/school-schedules',
-      { ...config, params: { fromDate, toDate } }
+      { ...config, params: { fromDate, toDate }, signal }
     );
     return response.data.result;
   } catch (error) {
@@ -273,20 +294,25 @@ export const fetchSchoolSchedules = async (
 
 export const completeChecklist = async (
   checklistId: number,
-  isCompleted: boolean
+  isCompleted: boolean,
+  signal?: AbortSignal
 ): Promise<void> => {
   try {
     const config = await getAuthConfig();
-    await apiClient.patch(`/api/v1/checklists/${checklistId}/complete`, { isCompleted }, config);
+    await apiClient.patch(
+      `/api/v1/checklists/${checklistId}/complete`,
+      { isCompleted },
+      { ...config, signal }
+    );
   } catch (error) {
     throw wrapError(error);
   }
 };
 
-export const deleteCalendarEvent = async (eventId: number): Promise<void> => {
+export const deleteCalendarEvent = async (eventId: number, signal?: AbortSignal): Promise<void> => {
   try {
     const config = await getAuthConfig();
-    await apiClient.delete(`/api/v1/calendars/events/${eventId}`, config);
+    await apiClient.delete(`/api/v1/calendars/events/${eventId}`, { ...config, signal });
   } catch (error) {
     throw wrapError(error);
   }

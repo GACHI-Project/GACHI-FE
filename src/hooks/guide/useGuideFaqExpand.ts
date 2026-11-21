@@ -1,29 +1,21 @@
 import { useState } from 'react';
 import { getSchoolGuideFaqDetail } from '../../api/schoolGuide';
+import { useServerQuery } from '../../query/hooks';
 
 const useGuideFaqExpand = () => {
   const [expandedId, setExpandedId] = useState<number | null>(null);
-  const [answerCache, setAnswerCache] = useState<Record<number, string>>({});
-  const [loadingDetailId, setLoadingDetailId] = useState<number | null>(null);
-
-  const handleExpand = (faqId: number) => {
-    if (expandedId === faqId) {
-      setExpandedId(null);
-      return;
-    }
-    setExpandedId(faqId);
-    if (answerCache[faqId] !== undefined) return;
-
-    setLoadingDetailId(faqId);
-    getSchoolGuideFaqDetail(faqId)
-      .then((detail) => setAnswerCache((prev) => ({ ...prev, [faqId]: detail.answer })))
-      .catch(() => {})
-      .finally(() => setLoadingDetailId((current) => (current === faqId ? null : current)));
+  const query = useServerQuery(
+    'guide',
+    ['detail', expandedId],
+    (signal) => getSchoolGuideFaqDetail(expandedId!, signal),
+    { enabled: expandedId !== null }
+  );
+  return {
+    expandedId,
+    answerCache: query.data && expandedId !== null ? { [expandedId]: query.data.answer } : {},
+    loadingDetailId: query.isLoading ? expandedId : null,
+    handleExpand: (id: number) => setExpandedId((current) => (current === id ? null : id)),
+    clearExpand: () => setExpandedId(null),
   };
-
-  const clearExpand = () => setExpandedId(null);
-
-  return { expandedId, answerCache, loadingDetailId, handleExpand, clearExpand };
 };
-
 export default useGuideFaqExpand;

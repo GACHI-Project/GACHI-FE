@@ -304,6 +304,50 @@ test('verification is bound to the email address and resets on email changes', a
   });
 });
 
+test('equivalent normalized code edits preserve pending and completed verification', async () => {
+  const { runner, verify, inputCode, sendCode } = emailSetup();
+  await sendCode();
+  inputCode();
+  const pending = runner.result.confirm('first@example.com');
+  inputCode('123-4567');
+  assert.equal(runner.result.codeChecking, true);
+  verify.calls[0].resolve();
+  await pending;
+  await runner.flush();
+  inputCode('123 456');
+  assert.equal(runner.result.canSubmit('first@example.com'), true);
+});
+
+['unavailable email', 'availability error'].forEach((failure) => {
+  test(`a resend preserves the active code and its deadline after an ${failure}`, async () => {
+    const { runner, check, send, verify, inputCode, sendCode, advance } = emailSetup();
+    await sendCode();
+    inputCode();
+    const resend = runner.result.send('first@example.com');
+    await runner.flush();
+    assert.equal(runner.result.emailChecking, true);
+    await runner.result.confirm('first@example.com');
+    assert.equal(verify.calls.length, 0);
+    advance(20);
+    await runner.flush();
+    assert.equal(runner.result.emailTimer, 40);
+    if (failure === 'unavailable email') check.calls[1].resolve({ available: false });
+    else check.calls[1].reject(new Error('Availability check failed'));
+    await resend;
+    await runner.flush();
+    assert.equal(runner.result.emailChecking, false);
+    assert.equal(runner.result.verificationCode, '123456');
+    assert.equal(runner.result.emailTimer, 40);
+    assert.equal(send.calls.length, 1);
+    const confirmation = runner.result.confirm('first@example.com');
+    assert.equal(verify.calls[0].args[1], '123456');
+    verify.calls[0].resolve();
+    await confirmation;
+    await runner.flush();
+    assert.equal(runner.result.canSubmit('first@example.com'), true);
+  });
+});
+
 test('completed verification survives blur while the event guard rejects background submissions', async () => {
   const { runner, verify, inputCode, sendCode } = emailSetup();
   await sendCode();
@@ -331,15 +375,20 @@ test('completed verification survives blur while the event guard rejects backgro
     let resend;
     if (change === 'email') inputEmail('second@example.com');
     if (change === 'code') inputCode('654321');
-    if (change === 'resend') resend = runner.result.send('first@example.com');
+    if (change === 'resend') {
+      resend = runner.result.send('first@example.com');
+      await runner.flush();
+      assert.equal(runner.result.codeChecking, true);
+      check.calls[1].resolve({ available: true });
+      await runner.flush();
+      assert.equal(send.calls.length, 2);
+    }
     verify.calls[0].resolve();
     await pending;
     await runner.flush();
     assert.equal(runner.result.isVerified('first@example.com'), false);
     assert.notEqual(runner.result.codeValidation, 'success');
     if (resend) {
-      check.calls[1].resolve({ available: true });
-      await runner.flush();
       send.calls[1].resolve({ codeTtlSeconds: 60 });
       await resend;
     }
@@ -438,50 +487,49 @@ test('send and confirm prevent duplicate requests before a rerender', async () =
   await confirmation;
 });
 
-test('expired codes cannot be confirmed and delayed successes cannot mark them verified', async () => {
+[true, false].forEach((runTimers) => {
+  test(`server success after the local deadline is accepted (timer ran: ${runTimers})`, async () => {
+    const { runner, verify, inputCode, sendCode, advance } = emailSetup();
+    await sendCode();
+    inputCode();
+    const pending = runner.result.confirm('first@example.com');
+    advance(61, runTimers);
+    await runner.flush();
+    assert.equal(runner.result.codeChecking, true);
+    verify.calls[0].resolve();
+    await pending;
+    runner.runTimers();
+    await runner.flush();
+    assert.equal(runner.result.emailTimer, null);
+    assert.equal(runner.result.codeChecking, false);
+    assert.equal(runner.result.canSubmit('first@example.com'), true);
+  });
+});
+
+test('server expiry after the local countdown ends still rejects the pending confirmation', async () => {
   const { runner, verify, inputCode, sendCode, advance } = emailSetup();
   await sendCode();
   inputCode();
   const pending = runner.result.confirm('first@example.com');
   advance(61);
-  verify.calls[0].resolve();
+  verify.calls[0].reject(new AuthApiError('AUTH4003'));
   await pending;
   await runner.flush();
-  assert.equal(runner.result.emailTimer, null);
-  assert.equal(runner.result.codeChecking, false);
-  assert.equal(runner.result.codeValidation, 'error');
   assert.equal(runner.result.codeMessageKey, 'auth.register.basic.error.codeExpired');
-  assert.equal(runner.result.isVerified('first@example.com'), false);
-  await runner.result.confirm('first@example.com');
-  assert.equal(verify.calls.length, 1);
+  assert.equal(runner.result.codeChecking, false);
+  assert.equal(runner.result.canSubmit('first@example.com'), false);
 });
 
-['before confirmation', 'during confirmation'].forEach((timing) => {
-  test(`expiry ${timing} clears loading and invalidates verification before a delayed timer runs`, async () => {
-    const { runner, verify, inputCode, sendCode, advance } = emailSetup();
-    await sendCode();
-    inputCode();
-    let pending;
-    if (timing === 'during confirmation') {
-      pending = runner.result.confirm('first@example.com');
-    }
-    advance(61, false);
-    if (pending) {
-      verify.calls[0].resolve();
-      await pending;
-    } else {
-      await runner.result.confirm('first@example.com');
-      assert.equal(verify.calls.length, 0);
-    }
-    await runner.flush();
-    assert.equal(runner.result.emailTimer, null);
-    assert.equal(runner.result.codeChecking, false);
-    assert.equal(runner.result.codeValidation, 'error');
-    assert.equal(runner.result.codeMessageKey, 'auth.register.basic.error.codeExpired');
-    assert.equal(runner.result.isVerified('first@example.com'), false);
-    runner.runTimers();
-    assert.equal(runner.result.codeMessageKey, 'auth.register.basic.error.codeExpired');
-  });
+test('local expiry blocks new confirmations even before the countdown callback runs', async () => {
+  const { runner, verify, inputCode, sendCode, advance } = emailSetup();
+  await sendCode();
+  inputCode();
+  advance(61, false);
+  await runner.result.confirm('first@example.com');
+  await runner.flush();
+  assert.equal(verify.calls.length, 0);
+  assert.equal(runner.result.emailTimer, null);
+  assert.equal(runner.result.codeMessageKey, 'auth.register.basic.error.codeExpired');
 });
 
 test('blur discards confirmation responses and recalculates expiry on returning', async () => {
@@ -655,4 +703,23 @@ test('the Next action reads current form values again instead of submitting a ca
   next.onPress();
   assert.equal(screen.saved.length, 0);
   assert.equal(screen.navigations.length, 0);
+});
+
+test('the Next action validates and saves the current form even if the rendered validity is stale', () => {
+  const screen = registerScreenSetup();
+  const next = screen.render();
+  assert.equal(next.disabled, false);
+  screen.values.agreed = false;
+  next.onPress();
+  screen.values.agreed = true;
+  screen.values.passwordConfirm = 'mismatch';
+  next.onPress();
+  assert.equal(screen.saved.length, 0);
+  assert.equal(screen.navigations.length, 0);
+
+  screen.values.passwordConfirm = screen.values.password;
+  screen.values.name = '  Parent  ';
+  next.onPress();
+  assert.equal(screen.saved[0].name, 'Parent');
+  assert.deepEqual(screen.navigations, ['/(auth)/register/child']);
 });

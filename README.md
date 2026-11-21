@@ -27,17 +27,18 @@
 
 ## 🛠 기술 스택
 
-| 분류        | 기술                                      |
-| ----------- | ----------------------------------------- |
-| Framework   | React Native (Expo ~55)                   |
-| Language    | TypeScript                                |
-| Navigation  | Expo Router                               |
-| State       | Zustand                                   |
-| Form        | React Hook Form + Zod                     |
-| HTTP        | Axios                                     |
-| i18n        | i18next, react-i18next                    |
-| UI          | React Native Reanimated, React Native SVG |
-| Lint/Format | ESLint (Airbnb), Prettier                 |
+| 분류         | 기술                                      |
+| ------------ | ----------------------------------------- |
+| Framework    | React Native (Expo ~55)                   |
+| Language     | TypeScript                                |
+| Navigation   | Expo Router                               |
+| State        | Zustand                                   |
+| Server state | TanStack Query                            |
+| Form         | React Hook Form + Zod                     |
+| HTTP         | Axios                                     |
+| i18n         | i18next, react-i18next                    |
+| UI           | React Native Reanimated, React Native SVG |
+| Lint/Format  | ESLint (Airbnb), Prettier                 |
 
 ---
 
@@ -121,6 +122,9 @@ npm run lint
 npm run lint:fix
 npm run format
 ```
+
+서버 데이터의 조회·캐시·갱신 규칙은 [서버 상태 관리](src/query/README.md)를 참고하세요.
+전체 회귀 테스트는 `npm test`로 실행합니다. NetInfo 추가 후에는 개발 클라이언트를 다시 빌드해야 합니다.
 
 ---
 

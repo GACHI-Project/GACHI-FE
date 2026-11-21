@@ -1,26 +1,27 @@
-import { useState, useEffect } from 'react';
+import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
-  View,
-  Text,
+  ActivityIndicator,
   ScrollView,
+  Text,
   TextInput,
   TouchableOpacity,
-  ActivityIndicator,
+  View,
 } from 'react-native';
-import { router } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import { useTranslation } from 'react-i18next';
-import StepHeader from '../../../src/components/common/StepHeader';
-import { PrimaryButton } from '../../../src/components/common/Button';
-import colors from '../../../src/constants/colors';
-import { GRADES, CALENDAR_COLORS } from '../../../src/constants/child';
-import { searchSchools, fetchClasses, ClassItem } from '../../../src/api/school';
-import { SchoolResult } from '../../../src/types/school';
-import { ChildInfo } from '../../../src/types/child';
-import cardStyles from '../../../src/styles/register/childCard';
-import styles from '../../../src/styles/register/child';
-import { useRegisterStore } from '../../../src/store/registerStore';
 import { ChildPayload } from '../../../src/api/child';
+import { fetchClasses, searchSchools } from '../../../src/api/school';
+import { PrimaryButton } from '../../../src/components/common/Button';
+import StepHeader from '../../../src/components/common/StepHeader';
+import { CALENDAR_COLORS, GRADES } from '../../../src/constants/child';
+import colors from '../../../src/constants/colors';
+import { useDebouncedValue, useServerQuery } from '../../../src/query/hooks';
+import { useRegisterStore } from '../../../src/store/registerStore';
+import styles from '../../../src/styles/register/child';
+import cardStyles from '../../../src/styles/register/childCard';
+import { ChildInfo } from '../../../src/types/child';
+import { SchoolResult } from '../../../src/types/school';
 
 // ─── 헬퍼 ────────────────────────────────────────────────────────────────────
 
@@ -55,31 +56,20 @@ interface SchoolPickerProps {
 export const SchoolPicker = ({ selectedSchool, schoolQuery, onUpdate }: SchoolPickerProps) => {
   const { t } = useTranslation();
   const [focused, setFocused] = useState(false);
-  const [results, setResults] = useState<SchoolResult[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
-
-  useEffect(() => {
-    if (!schoolQuery.trim()) {
-      setResults([]);
-      return () => {};
+  const keyword = schoolQuery.trim();
+  const debounced = useDebouncedValue(keyword, 500);
+  const query = useServerQuery(
+    'schools',
+    ['search', keyword],
+    (signal) => searchSchools(keyword, 10, signal),
+    {
+      public: true,
+      enabled: !!keyword && keyword === debounced && !selectedSchool,
+      staleTime: 300000,
     }
-    let cancelled = false;
-    const timer = setTimeout(async () => {
-      setIsSearching(true);
-      try {
-        const schools = await searchSchools(schoolQuery.trim());
-        if (!cancelled) setResults(schools);
-      } catch {
-        if (!cancelled) setResults([]);
-      } finally {
-        if (!cancelled) setIsSearching(false);
-      }
-    }, 500);
-    return () => {
-      cancelled = true;
-      clearTimeout(timer);
-    };
-  }, [schoolQuery]);
+  );
+  const results = query.data ?? [];
+  const isSearching = !!keyword && !selectedSchool && (keyword !== debounced || query.isLoading);
 
   return (
     <View style={cardStyles.section}>
@@ -216,44 +206,24 @@ interface ClassPickerProps {
 
 export const ClassPicker = ({ selectedSchool, grade, className, onUpdate }: ClassPickerProps) => {
   const { t } = useTranslation();
-  const [classes, setClasses] = useState<ClassItem[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [fallback, setFallback] = useState(false);
-
+  const classQuery = useServerQuery(
+    'schools',
+    ['classes', selectedSchool?.officeCode, selectedSchool?.schoolCode, grade],
+    (signal) =>
+      fetchClasses(selectedSchool!.officeCode, selectedSchool!.schoolCode, grade!, signal),
+    { public: true, enabled: !!selectedSchool && grade !== null, staleTime: 300000 }
+  );
+  const classes = classQuery.data ?? [];
+  const { isLoading } = classQuery;
+  const fallback = classQuery.isError || (classQuery.isSuccess && classes.length === 0);
   useEffect(() => {
-    if (!selectedSchool || grade === null) {
-      setClasses([]);
-      setFallback(false);
-      setIsLoading(false);
-      return () => {};
-    }
-
-    setIsLoading(true);
-    setFallback(false);
-    setClasses([]);
-    let cancelled = false;
-    fetchClasses(selectedSchool.officeCode, selectedSchool.schoolCode, grade)
-      .then((result) => {
-        if (cancelled) return;
-        if (result.length === 0) {
-          setFallback(true);
-        } else {
-          setClasses(result);
-          if (className && !result.some((c) => c.className === className)) {
-            onUpdate({ className: null });
-          }
-        }
-        setIsLoading(false);
-      })
-      .catch(() => {
-        if (cancelled) return;
-        setFallback(true);
-        setIsLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [selectedSchool?.schoolCode, selectedSchool?.officeCode, grade]); // eslint-disable-line react-hooks/exhaustive-deps
+    if (
+      classQuery.data?.length &&
+      className &&
+      !classQuery.data.some((item) => item.className === className)
+    )
+      onUpdate({ className: null });
+  }, [classQuery.data, className, onUpdate]);
 
   const showButtons = !isLoading && !fallback && classes.length > 0;
   const showInput =

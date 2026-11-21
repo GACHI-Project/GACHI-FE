@@ -1,17 +1,17 @@
-import { RefObject, useCallback, useEffect, useRef, useState } from 'react';
-import { View, ScrollView, StyleSheet } from 'react-native';
+import { RefObject, useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import {
   getNewsletterTranslation,
-  NewsletterTranslationResult,
   NewsletterApiError,
   TranslationPage,
 } from '../../../api/newsletter';
+import { useServerQuery } from '../../../query/hooks';
 import { fromServerLanguageCode } from '../../../types/language';
 import CenteredMessage from '../../common/CenteredMessage';
-import TextSection from './TextSection';
 import FullDocPageSection from './FullDocPageSection';
 import PageImageViewerModal from './PageImageViewerModal';
+import TextSection from './TextSection';
 
 interface Props {
   newsletterId?: number;
@@ -21,48 +21,24 @@ interface Props {
 
 const FullDocTab = ({ newsletterId, scrollRef, scrollY = 0 }: Props) => {
   const { t } = useTranslation();
-  const [data, setData] = useState<NewsletterTranslationResult | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const query = useServerQuery(
+    'translation',
+    [newsletterId],
+    (signal) => getNewsletterTranslation(newsletterId!, signal),
+    { enabled: !!newsletterId }
+  );
+  const { data } = query;
+  const loading = query.isLoading;
+  let error: string | null = null;
+  if (!newsletterId) error = t('scan.result.fullDoc.error.notFound');
+  else if (query.error instanceof NewsletterApiError && query.error.code === 'NL4004')
+    error = t('scan.result.fullDoc.error.notAnalyzed');
+  else if (query.error instanceof NewsletterApiError && query.error.code === 'NL4041')
+    error = t('scan.result.fullDoc.error.newsletterNotFound');
+  else if (query.error) error = t('scan.result.fullDoc.error.loadFailed');
   const [viewerPage, setViewerPage] = useState<TranslationPage | null>(null);
   const pageOffsetsRef = useRef<Record<number, number>>({});
   const containerYRef = useRef(0);
-
-  useEffect(() => {
-    setLoading(true);
-    setError(null);
-    setData(null);
-
-    if (!newsletterId) {
-      setError(t('scan.result.fullDoc.error.notFound'));
-      setLoading(false);
-      return () => {};
-    }
-
-    let cancelled = false;
-
-    getNewsletterTranslation(newsletterId)
-      .then((result) => {
-        if (cancelled) return;
-        setData(result);
-        setLoading(false);
-      })
-      .catch((e) => {
-        if (cancelled) return;
-        if (e instanceof NewsletterApiError && e.code === 'NL4004') {
-          setError(t('scan.result.fullDoc.error.notAnalyzed'));
-        } else if (e instanceof NewsletterApiError && e.code === 'NL4041') {
-          setError(t('scan.result.fullDoc.error.newsletterNotFound'));
-        } else {
-          setError(t('scan.result.fullDoc.error.loadFailed'));
-        }
-        setLoading(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [newsletterId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const totalPages = data?.totalPages ?? data?.pages?.length ?? 0;
 

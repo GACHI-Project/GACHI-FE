@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { AntDesign, Ionicons } from '@expo/vector-icons';
-import { useTranslation } from 'react-i18next';
 import { router } from 'expo-router';
-import { getRecentNewsletters, type RecentNewsletterGroup } from '../../api/newsletter';
+import { useTranslation } from 'react-i18next';
+import { ActivityIndicator, Text, TouchableOpacity, View } from 'react-native';
+import { getRecentNewsletters } from '../../api/newsletter';
 import colors from '../../constants/colors';
+import { useServerQuery } from '../../query/hooks';
 import styles from './recentDocs.styles';
 
 const formatGroupDate = (dateStr: string, locale: string) =>
@@ -12,31 +12,12 @@ const formatGroupDate = (dateStr: string, locale: string) =>
 
 const RecentDocs = () => {
   const { t, i18n } = useTranslation();
-  const [groups, setGroups] = useState<RecentNewsletterGroup[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-    getRecentNewsletters(5)
-      .then((data) => {
-        if (!cancelled) {
-          const filtered = data
-            .map((g) => ({ ...g, items: g.items.filter((doc) => doc.title != null) }))
-            .filter((g) => g.items.length > 0);
-          setGroups(filtered);
-        }
-      })
-      .catch(() => {
-        if (!cancelled) setError(true);
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  const query = useServerQuery('recent', [5], (signal) => getRecentNewsletters(5, signal));
+  const groups = (query.data ?? [])
+    .map((group) => ({ ...group, items: group.items.filter((doc) => doc.title != null) }))
+    .filter((group) => group.items.length > 0);
+  const loading = query.isLoading;
+  const error = query.isError;
 
   const renderContent = () => {
     if (loading) {

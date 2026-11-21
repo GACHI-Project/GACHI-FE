@@ -65,7 +65,8 @@ const getMimeType = (uri: string) => {
 
 export const uploadNewsletter = async (
   photoUris: string[],
-  childId?: number
+  childId?: number,
+  signal?: AbortSignal
 ): Promise<{ newsletterId: number; status: NewsletterStatus }> => {
   try {
     const config = await getAuthConfig();
@@ -92,6 +93,7 @@ export const uploadNewsletter = async (
       },
       params,
       timeout: 60000,
+      signal,
     });
 
     return response.data.result;
@@ -149,13 +151,14 @@ export interface NewsletterTranslationResult {
 }
 
 export const getNewsletterTranslation = async (
-  newsletterId: number
+  newsletterId: number,
+  signal?: AbortSignal
 ): Promise<NewsletterTranslationResult> => {
   try {
     const config = await getAuthConfig();
     const response = await apiClient.get<{ result: NewsletterTranslationResult }>(
       `/api/v1/newsletters/${newsletterId}/translation`,
-      config
+      { ...config, signal }
     );
     return response.data.result;
   } catch (error) {
@@ -177,7 +180,8 @@ export interface ChecklistItem {
 
 export const getNewsletterChecklist = async (
   newsletterId: number,
-  type?: ChecklistItemType
+  type?: ChecklistItemType,
+  signal?: AbortSignal
 ): Promise<ChecklistItem[]> => {
   try {
     const config = await getAuthConfig();
@@ -185,7 +189,7 @@ export const getNewsletterChecklist = async (
     if (type) params.type = type;
     const response = await apiClient.get<{ result: { items: ChecklistItem[] } }>(
       `/api/v1/newsletters/${newsletterId}/checklist`,
-      { ...config, params }
+      { ...config, params, signal }
     );
     return response.data.result.items;
   } catch (error) {
@@ -205,12 +209,15 @@ export interface NewsletterDetail {
   createdAt: string;
 }
 
-export const getNewsletterDetail = async (newsletterId: number): Promise<NewsletterDetail> => {
+export const getNewsletterDetail = async (
+  newsletterId: number,
+  signal?: AbortSignal
+): Promise<NewsletterDetail> => {
   try {
     const config = await getAuthConfig();
     const response = await apiClient.get<{ result: NewsletterDetail }>(
       `/api/v1/newsletters/${newsletterId}`,
-      config
+      { ...config, signal }
     );
     return response.data.result;
   } catch (error) {
@@ -224,13 +231,14 @@ export interface NewsletterSummaryResult {
 }
 
 export const getNewsletterSummary = async (
-  newsletterId: number
+  newsletterId: number,
+  signal?: AbortSignal
 ): Promise<NewsletterSummaryResult> => {
   try {
     const config = await getAuthConfig();
     const response = await apiClient.get<{ result: NewsletterSummaryResult }>(
       `/api/v1/newsletters/${newsletterId}/summary`,
-      config
+      { ...config, signal }
     );
     return response.data.result;
   } catch (error) {
@@ -239,13 +247,14 @@ export const getNewsletterSummary = async (
 };
 
 export const getNewsletterStatus = async (
-  newsletterId: number
+  newsletterId: number,
+  signal?: AbortSignal
 ): Promise<NewsletterStatusResult> => {
   try {
     const config = await getAuthConfig();
     const response = await apiClient.get<{ result: NewsletterStatusResult }>(
       `/api/v1/newsletters/${newsletterId}/status`,
-      config
+      { ...config, signal }
     );
     return response.data.result;
   } catch (error) {
@@ -258,13 +267,16 @@ export interface NewsletterResumeResult {
   status: NewsletterStatus;
 }
 
-export const resumeNewsletter = async (newsletterId: number): Promise<NewsletterResumeResult> => {
+export const resumeNewsletter = async (
+  newsletterId: number,
+  signal?: AbortSignal
+): Promise<NewsletterResumeResult> => {
   try {
     const config = await getAuthConfig();
     const response = await apiClient.post<{ result: NewsletterResumeResult }>(
       `/api/v1/newsletters/${newsletterId}/resume`,
       undefined,
-      config
+      { ...config, signal }
     );
     return response.data.result;
   } catch (error) {
@@ -272,13 +284,16 @@ export const resumeNewsletter = async (newsletterId: number): Promise<Newsletter
   }
 };
 
-export const retryAnalysis = async (newsletterId: number): Promise<NewsletterResumeResult> => {
+export const retryAnalysis = async (
+  newsletterId: number,
+  signal?: AbortSignal
+): Promise<NewsletterResumeResult> => {
   try {
     const config = await getAuthConfig();
     const response = await apiClient.post<{ result: NewsletterResumeResult }>(
       `/api/v1/newsletters/${newsletterId}/analysis/retry`,
       undefined,
-      config
+      { ...config, signal }
     );
     return response.data.result;
   } catch (error) {
@@ -288,14 +303,15 @@ export const retryAnalysis = async (newsletterId: number): Promise<NewsletterRes
 
 export const skipNewsletterPage = async (
   newsletterId: number,
-  pageNo: number
+  pageNo: number,
+  signal?: AbortSignal
 ): Promise<NewsletterResumeResult> => {
   try {
     const config = await getAuthConfig();
     const response = await apiClient.post<{ result: NewsletterResumeResult }>(
       `/api/v1/newsletters/${newsletterId}/pages/${pageNo}/skip`,
       undefined,
-      config
+      { ...config, signal }
     );
     return response.data.result;
   } catch (error) {
@@ -315,12 +331,15 @@ export interface RecentNewsletterGroup {
   items: RecentNewsletterItem[];
 }
 
-export const getRecentNewsletters = async (limit = 5): Promise<RecentNewsletterGroup[]> => {
+export const getRecentNewsletters = async (
+  limit?: number,
+  signal?: AbortSignal
+): Promise<RecentNewsletterGroup[]> => {
   try {
     const config = await getAuthConfig();
     const response = await apiClient.get<{ result: { groups: RecentNewsletterGroup[] } }>(
       '/api/v1/newsletters/recent',
-      { ...config, params: { limit } }
+      { ...config, params: { limit: limit ?? 5 }, signal }
     );
     return response.data.result.groups ?? [];
   } catch (error) {
@@ -349,12 +368,15 @@ export interface ConversationTopic {
   topic: string;
 }
 
-export const getConversationTopics = async (newsletterId: number): Promise<ConversationTopic[]> => {
+export const getConversationTopics = async (
+  newsletterId: number,
+  signal?: AbortSignal
+): Promise<ConversationTopic[]> => {
   try {
     const config = await getAuthConfig();
     const response = await apiClient.get<{ result: { topics: ConversationTopic[] } }>(
       `/api/v1/newsletters/${newsletterId}/conversation-topics`,
-      config
+      { ...config, signal }
     );
     return response.data.result.topics ?? [];
   } catch (error) {
@@ -369,12 +391,15 @@ export interface CulturalGuide {
   answer: string;
 }
 
-export const getCulturalGuides = async (newsletterId: number): Promise<CulturalGuide[]> => {
+export const getCulturalGuides = async (
+  newsletterId: number,
+  signal?: AbortSignal
+): Promise<CulturalGuide[]> => {
   try {
     const config = await getAuthConfig();
     const response = await apiClient.get<{ result: { guides: CulturalGuide[] } }>(
       `/api/v1/newsletters/${newsletterId}/cultural-guides`,
-      config
+      { ...config, signal }
     );
     return response.data.result.guides ?? [];
   } catch (error) {
@@ -382,12 +407,15 @@ export const getCulturalGuides = async (newsletterId: number): Promise<CulturalG
   }
 };
 
-export const fetchNewsletters = async (params: {
-  childName?: string;
-  search?: string;
-  page?: number;
-  sort?: 'recent' | 'oldest';
-}): Promise<NewsletterListResult> => {
+export const fetchNewsletters = async (
+  params: {
+    childName?: string;
+    search?: string;
+    page?: number;
+    sort?: 'recent' | 'oldest';
+  },
+  signal?: AbortSignal
+): Promise<NewsletterListResult> => {
   try {
     const config = await getAuthConfig();
     const queryParams: Record<string, string | number> = {};
@@ -398,6 +426,7 @@ export const fetchNewsletters = async (params: {
     const response = await apiClient.get<{ result: NewsletterListResult }>('/api/v1/newsletters', {
       ...config,
       params: queryParams,
+      signal,
     });
     return response.data.result;
   } catch (error) {

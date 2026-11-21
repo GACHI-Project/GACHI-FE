@@ -1,140 +1,55 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useIsFocused } from '@react-navigation/native';
+import { useInfiniteQuery } from '@tanstack/react-query';
 import { useFocusEffect } from 'expo-router';
-import { fetchNewsletters, type NewsletterItem } from '../../api/newsletter';
-
-interface ListRequest {
-  childName: string | undefined;
-  search: string | undefined;
-  page: number;
-  loadedCount: number;
-  totalCount: number;
-  loading: boolean;
-  loadingMore: boolean;
-}
+import { useCallback, useRef } from 'react';
+import { queryClient, resourceKey } from '../../query/client';
+import { useDebouncedValue, useSessionScope } from '../../query/hooks';
+import { newsletterListOptions } from '../../query/options';
 
 const useNewsletterList = (selectedChildName: string | undefined, searchQuery: string) => {
-  const [newsletters, setNewsletters] = useState<NewsletterItem[]>([]);
-  const [totalCount, setTotalCount] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const scope = useSessionScope();
+  const focused = useIsFocused();
   const search = searchQuery.trim() || undefined;
-
-  const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const hasFocusedRef = useRef(false);
-  const focusedRef = useRef(false);
-  const queryRef = useRef({ childName: selectedChildName, search });
-  const activeRequestRef = useRef<ListRequest | null>(null);
-  const lastLoadedRef = useRef<ListRequest | null>(null);
-
-  const loadNewsletters = useCallback(async () => {
-    if (!focusedRef.current) return;
-    const previous = lastLoadedRef.current;
-    const request: ListRequest = {
-      ...queryRef.current,
-      page: previous?.page ?? 0,
-      loadedCount: previous?.loadedCount ?? 0,
-      totalCount: previous?.totalCount ?? 0,
-      loading: true,
-      loadingMore: false,
-    };
-    activeRequestRef.current = request;
-    setIsLoading(true);
-    setIsLoadingMore(false);
-    try {
-      const result = await fetchNewsletters({
-        childName: request.childName,
-        search: request.search,
-        page: 0,
-      });
-      if (activeRequestRef.current !== request) return;
-      request.page = 0;
-      request.loadedCount = result.newsletters.length;
-      request.totalCount = result.totalCount;
-      lastLoadedRef.current = request;
-      setNewsletters(result.newsletters);
-      setTotalCount(result.totalCount);
-    } catch {
-      // Preserve the current list when reloading the same query fails.
-    } finally {
-      if (activeRequestRef.current === request) {
-        request.loading = false;
-        setIsLoading(false);
-      }
-    }
-  }, []);
-
-  const loadMore = useCallback(async () => {
-    const request = activeRequestRef.current;
-    if (
-      !request ||
-      request.loading ||
-      request.loadingMore ||
-      request.loadedCount >= request.totalCount
-    )
-      return;
-
-    request.loadingMore = true;
-    setIsLoadingMore(true);
-    const nextPage = request.page + 1;
-    try {
-      const result = await fetchNewsletters({
-        childName: request.childName,
-        search: request.search,
-        page: nextPage,
-      });
-      if (activeRequestRef.current !== request) return;
-      request.page = nextPage;
-      request.loadedCount += result.newsletters.length;
-      request.totalCount = result.totalCount;
-      lastLoadedRef.current = request;
-      setNewsletters((prev) => [...prev, ...result.newsletters]);
-      setTotalCount(result.totalCount);
-    } catch {
-      // A failed page can be retried without advancing pagination.
-    } finally {
-      if (activeRequestRef.current === request) {
-        request.loadingMore = false;
-        setIsLoadingMore(false);
-      }
-    }
-  }, []);
-
-  useEffect(() => {
-    queryRef.current = { childName: selectedChildName, search };
-    lastLoadedRef.current = null;
-    // Invalidate the previous query before the debounce timer fires.
-    activeRequestRef.current = null;
-    setNewsletters([]);
-    setTotalCount(0);
-    setIsLoading(true);
-    setIsLoadingMore(false);
-    searchDebounceRef.current = setTimeout(() => {
-      searchDebounceRef.current = null;
-      void loadNewsletters();
-    }, 500);
-    return () => {
-      if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
-      activeRequestRef.current = null;
-    };
-  }, [selectedChildName, search, loadNewsletters]);
-
+  const debounced = useDebouncedValue(search, 500);
+  const queryKey = resourceKey(
+    scope.version,
+    scope.language,
+    'newsletters',
+    selectedChildName,
+    search
+  );
+  const keyHash = JSON.stringify(queryKey);
+  const query = useInfiniteQuery(
+    {
+      ...newsletterListOptions(scope, selectedChildName, search),
+      enabled: scope.authenticated && search === debounced,
+      subscribed: focused,
+    },
+    queryClient
+  );
+  const firstFocus = useRef(true);
+  const previousKey = useRef(keyHash);
   useFocusEffect(
     useCallback(() => {
-      focusedRef.current = true;
-      if (hasFocusedRef.current) {
-        if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
-        void loadNewsletters();
+      if (firstFocus.current || previousKey.current !== keyHash) {
+        firstFocus.current = false;
+        previousKey.current = keyHash;
+        return;
       }
-      hasFocusedRef.current = true;
-      return () => {
-        focusedRef.current = false;
-        if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
-        activeRequestRef.current = null;
-      };
-    }, [loadNewsletters])
+      void queryClient.invalidateQueries({ queryKey: JSON.parse(keyHash), exact: true });
+    }, [keyHash])
   );
-
-  return { newsletters, totalCount, isLoading, isLoadingMore, loadMore };
+  const loadMore = async () => {
+    if (!focused || query.isFetching || !query.hasNextPage) return;
+    await query.fetchNextPage({ cancelRefetch: false });
+  };
+  return {
+    newsletters: query.data?.pages.flatMap((page) => page.newsletters) ?? [],
+    totalCount: query.data?.pages.at(-1)?.totalCount ?? 0,
+    isLoading: search !== debounced || query.isLoading,
+    isLoadingMore: query.isFetchingNextPage,
+    error: query.error,
+    loadMore,
+  };
 };
-
 export default useNewsletterList;

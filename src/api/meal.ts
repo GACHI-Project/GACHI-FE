@@ -84,13 +84,15 @@ export const parseDishName = (dishName: string): MealMenu[] =>
 
 export const fetchSchoolMeals = async (
   fromDate: string,
-  toDate: string
+  toDate: string,
+  signal?: AbortSignal
 ): Promise<SchoolMealGroup[]> => {
   try {
     const config = await getAuthConfig();
     const response = await apiClient.get('/api/v1/calendars/school-meals', {
       ...config,
       params: { fromDate, toDate },
+      signal,
     });
     return response.data.result.schoolMeals ?? [];
   } catch (error) {
@@ -141,13 +143,15 @@ export interface SchoolTimetableGroup {
 
 export const fetchSchoolTimetables = async (
   fromDate: string,
-  toDate: string
+  toDate: string,
+  signal?: AbortSignal
 ): Promise<SchoolTimetableGroup[]> => {
   try {
     const config = await getAuthConfig();
     const response = await apiClient.get('/api/v1/calendars/elementary-timetables', {
       ...config,
       params: { fromDate, toDate },
+      signal,
     });
     return response.data.result.schoolTimetables ?? [];
   } catch (error) {

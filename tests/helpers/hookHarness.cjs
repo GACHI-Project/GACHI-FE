@@ -27,7 +27,7 @@ const queuedApi = () => {
 };
 
 // Execute the production hook with controlled renders, effects, focus and timers.
-const hookHarness = (file, mocks) => {
+const hookHarness = (file, mocks, globals = {}, exportName = 'default') => {
   const cells = [];
   const timers = new Map();
   let cursor = 0;
@@ -41,6 +41,7 @@ const hookHarness = (file, mocks) => {
   let focusCallback;
   let focusCleanup;
   let postUnmountUpdates = 0;
+  let readingRenderValue = false;
   const same = (a, b) =>
     a && b && a.length === b.length && a.every((value, i) => Object.is(value, b[i]));
   const memo = (fn, deps) => {
@@ -73,11 +74,28 @@ const hookHarness = (file, mocks) => {
     useRef: (initial) => {
       const index = cursor;
       cursor += 1;
-      if (!cells[index]) cells[index] = { current: initial };
+      if (!cells[index]) {
+        let value = initial;
+        cells[index] = {
+          get current() {
+            if (readingRenderValue) throw new Error('Render-time value cannot read ref.current');
+            return value;
+          },
+          set current(next) {
+            if (readingRenderValue) throw new Error('Render-time value cannot write ref.current');
+            value = next;
+          },
+        };
+      }
       return cells[index];
     },
     useMemo: memo,
     useCallback: (callback, deps) => memo(() => callback, deps),
+    useSyncExternalStore: (subscribe, getSnapshot) => {
+      const [, update] = react.useState(0);
+      react.useEffect(() => subscribe(() => update((value) => value + 1)), [subscribe]);
+      return getSnapshot();
+    },
     useEffect: (callback, deps) => {
       const index = cursor;
       cursor += 1;
@@ -96,6 +114,7 @@ const hookHarness = (file, mocks) => {
     ...mocks,
     react,
     'expo-router': {
+      ...mocks['expo-router'],
       useFocusEffect: (callback) =>
         react.useEffect(() => {
           focusCallback = callback;
@@ -110,11 +129,17 @@ const hookHarness = (file, mocks) => {
   const exports = {};
   const filename = path.resolve(__dirname, '../..', file);
   const { outputText } = ts.transpileModule(fs.readFileSync(filename, 'utf8'), {
-    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 },
+    fileName: filename,
+    compilerOptions: {
+      module: ts.ModuleKind.CommonJS,
+      target: ts.ScriptTarget.ES2020,
+      jsx: ts.JsxEmit.ReactJSX,
+    },
   });
   vm.runInNewContext(
     outputText,
     {
+      ...globals,
       exports,
       require: (name) => {
         if (!(name in imports)) throw new Error(`Unexpected module: ${name}`);
@@ -136,7 +161,7 @@ const hookHarness = (file, mocks) => {
       dirty = false;
       cursor = 0;
       effects = [];
-      result = exports.default(...args);
+      result = exports[exportName](...args);
       effects.forEach((effect) => effect());
       iterations += 1;
       if (iterations > 20) throw new Error('Hook did not settle');
@@ -145,6 +170,14 @@ const hookHarness = (file, mocks) => {
   };
   return {
     render,
+    renderValue: (read) => {
+      readingRenderValue = true;
+      try {
+        return read(result);
+      } finally {
+        readingRenderValue = false;
+      }
+    },
     get result() {
       return result;
     },

@@ -1,18 +1,18 @@
-import { useState } from 'react';
-import { View, Text, TextInput, ScrollView, StyleSheet, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { type NewsletterItem } from '../../src/api/newsletter';
+import ChildFilterBar from '../../src/components/common/ChildFilterBar';
+import Header from '../../src/components/common/Header';
+import DocumentCard from '../../src/components/document/DocumentCard';
 import colors from '../../src/constants/colors';
 import fonts from '../../src/constants/fonts';
 import layout from '../../src/constants/layout';
-import type { DocumentItem } from '../../src/types/document';
-import { useChildrenStore } from '../../src/store/childrenStore';
-import { type NewsletterItem } from '../../src/api/newsletter';
-import DocumentCard from '../../src/components/document/DocumentCard';
-import Header from '../../src/components/common/Header';
-import ChildFilterBar from '../../src/components/common/ChildFilterBar';
 import useNewsletterList from '../../src/hooks/document/useNewsletterList';
+import { useChildrenQuery } from '../../src/query/resources';
+import type { DocumentItem } from '../../src/types/document';
 import { formatShortDate } from '../../src/utils/date';
 
 const toDocumentItem = (doc: NewsletterItem): DocumentItem => ({
@@ -29,7 +29,7 @@ const toDocumentItem = (doc: NewsletterItem): DocumentItem => ({
 const DocumentScreen = () => {
   const router = useRouter();
   const { t } = useTranslation();
-  const { children } = useChildrenStore();
+  const { data: children = [] } = useChildrenQuery();
   const [selectedChildName, setSelectedChildName] = useState<string | undefined>(undefined);
   const [searchQuery, setSearchQuery] = useState('');
 

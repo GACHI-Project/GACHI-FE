@@ -1,14 +1,13 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
-import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { router, useFocusEffect } from 'expo-router';
+import { router } from 'expo-router';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  getTodayChecklists,
-  toggleChecklistItem,
-  type TodayChecklistItem,
-} from '../../api/checklist';
-import { getMyChildren, type ChildResult } from '../../api/child';
+import { ActivityIndicator, Text, TouchableOpacity, View } from 'react-native';
+import { getTodayChecklists } from '../../api/checklist';
 import colors from '../../constants/colors';
+import useCurrentDate from '../../hooks/useCurrentDate';
+import { changeChecklist } from '../../query/checklists';
+import { useApiMutation, useServerQuery } from '../../query/hooks';
+import { useChildrenQuery } from '../../query/resources';
 import styles from './taskCard.styles';
 import TodoItem from './TodoItem';
 
@@ -16,43 +15,15 @@ const VISIBLE_COUNT = 2;
 
 const TaskCard = () => {
   const { t } = useTranslation();
-  const [items, setItems] = useState<TodayChecklistItem[]>([]);
-  const [children, setChildren] = useState<ChildResult[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
-  const [checked, setChecked] = useState<Record<number, boolean>>({});
+  const today = useCurrentDate();
+  const query = useServerQuery('today', [today], (signal) => getTodayChecklists(signal));
+  const { data: children = [] } = useChildrenQuery();
+  const items = useMemo(() => query.data ?? [], [query.data]);
+  const loading = query.isLoading;
+  const error = query.isError;
+  const mutate = useApiMutation(changeChecklist);
   const [pendingIds, setPendingIds] = useState<Record<number, boolean>>({});
-  const [focusKey, setFocusKey] = useState(0);
-
-  useFocusEffect(
-    useCallback(() => {
-      setFocusKey((k) => k + 1);
-      setChecked({});
-      setPendingIds({});
-    }, [])
-  );
-
-  useEffect(() => {
-    let cancelled = false;
-    setLoading(true);
-    setError(false);
-    Promise.all([getTodayChecklists(), getMyChildren()])
-      .then(([checklists, childList]) => {
-        if (!cancelled) {
-          setItems(checklists);
-          setChildren(childList);
-        }
-      })
-      .catch(() => {
-        if (!cancelled) setError(true);
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [focusKey]);
+  const checked = Object.fromEntries(items.map((item) => [item.checklistId, item.isCompleted]));
 
   const colorMap = useMemo(() => {
     const map: Record<string, string> = {};
@@ -90,29 +61,22 @@ const TaskCard = () => {
   }, [items, t, total]);
 
   const { todayMonth, todayDay } = useMemo(() => {
-    const now = new Date();
+    const now = new Date(`${today}T12:00:00`);
     return {
       todayMonth: now.toLocaleString('en-US', { month: 'short' }).toUpperCase(),
       todayDay: now.getDate(),
     };
-  }, []);
+  }, [today]);
 
-  const toggleCheck = useCallback(
-    (id: number, currentChecked: boolean) => {
-      if (pendingIds[id]) return;
-      const next = !currentChecked;
-      setChecked((prev) => ({ ...prev, [id]: next }));
-      setPendingIds((prev) => ({ ...prev, [id]: true }));
-      toggleChecklistItem(id, next)
-        .catch(() => {
-          setChecked((prev) => ({ ...prev, [id]: !next }));
-        })
-        .finally(() => {
-          setPendingIds((prev) => ({ ...prev, [id]: false }));
-        });
-    },
-    [pendingIds]
-  );
+  const toggleCheck = (id: number, currentChecked: boolean) => {
+    if (pendingIds[id]) return;
+    setPendingIds((previous) => ({ ...previous, [id]: true }));
+    void mutate(id, currentChecked, !currentChecked)
+      .catch(() => {})
+      .finally(() => {
+        setPendingIds((previous) => ({ ...previous, [id]: false }));
+      });
+  };
 
   const summaryTitle = (() => {
     if (loading || error) return '';

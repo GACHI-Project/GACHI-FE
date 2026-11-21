@@ -1,12 +1,27 @@
+import { CanceledError } from 'axios';
 import { fetchUnreadCount } from '../api/notifications';
-import { useNotificationStore } from '../store/notificationStore';
-import { getSessionVersion, isCurrentSession } from './authSession';
+import i18n from '../i18n';
+import { queryClient, resourceKey } from '../query/client';
+import {
+  assertCurrentSession,
+  getSessionVersion,
+  isCurrentSession,
+  subscribeSession,
+} from './authSession';
 
-let requestVersion = 0;
 const pendingReads = new Map<number | 'all', Promise<void>>();
 let readVersion = 0;
 let readsSettled = Promise.resolve();
 let resolveReadsSettled = () => {};
+let currentSession = getSessionVersion();
+subscribeSession(() => {
+  if (getSessionVersion() === currentSession) return;
+  currentSession = getSessionVersion();
+  pendingReads.clear();
+  resolveReadsSettled();
+  readsSettled = Promise.resolve();
+  readVersion += 1;
+});
 
 export const getNotificationReadVersion = () => readVersion;
 
@@ -20,16 +35,18 @@ export const waitForNotificationReads = async (): Promise<void> => {
 
 // Every count consumer shares this guard so an older response cannot overwrite a newer one.
 export const refreshUnreadCount = async (): Promise<void> => {
-  requestVersion += 1;
-  const version = requestVersion;
   const sessionVersion = getSessionVersion();
   if (pendingReads.size > 0) return;
 
-  const count = await fetchUnreadCount();
-  // A total from a previous session must not reappear after logout or in the next account.
-  if (version === requestVersion && pendingReads.size === 0 && isCurrentSession(sessionVersion)) {
-    useNotificationStore.getState().setUnreadCount(count);
-  }
+  await queryClient.fetchQuery({
+    queryKey: resourceKey(sessionVersion, i18n.language || 'ko', 'unread'),
+    staleTime: 0,
+    queryFn: async ({ signal }) => {
+      const count = await getUnreadTotal(signal);
+      assertCurrentSession(sessionVersion);
+      return count;
+    },
+  });
 };
 
 export const runNotificationRead = (
@@ -45,8 +62,10 @@ export const runNotificationRead = (
     });
   }
   readVersion += 1;
-  requestVersion += 1;
   const sessionVersion = getSessionVersion();
+  void queryClient.cancelQueries({
+    predicate: (query) => query.queryKey[1] === sessionVersion && query.queryKey[3] === 'unread',
+  });
   let operation: Promise<number>;
   try {
     operation = read();
@@ -57,14 +76,20 @@ export const runNotificationRead = (
     .then((readCount) => {
       // readCount is the number changed by this write, not the remaining unread total.
       if (isCurrentSession(sessionVersion)) {
-        useNotificationStore.getState().decreaseUnreadCount(readCount);
+        queryClient.setQueriesData<number>(
+          {
+            predicate: (query) =>
+              query.queryKey[1] === sessionVersion && query.queryKey[3] === 'unread',
+          },
+          (count) => (count === undefined ? undefined : Math.max(0, count - Math.max(0, readCount)))
+        );
       }
     })
     .finally(() => {
+      if (!isCurrentSession(sessionVersion)) return;
       // A failed response does not prove the server did not commit the write.
       readVersion += 1;
       pendingReads.delete(key);
-      requestVersion += 1;
       if (pendingReads.size === 0) {
         resolveReadsSettled();
         // Keep the last confirmed total if this background reconciliation fails.
@@ -73,4 +98,14 @@ export const runNotificationRead = (
     });
   pendingReads.set(key, request);
   return request;
+};
+
+export const getUnreadTotal = async (signal?: AbortSignal): Promise<number> => {
+  await waitForNotificationReads();
+  const revision = readVersion;
+  const count = await fetchUnreadCount(signal);
+  await waitForNotificationReads();
+  if (signal?.aborted) throw new CanceledError('Count request cancelled');
+  if (revision !== readVersion) return getUnreadTotal(signal);
+  return count;
 };

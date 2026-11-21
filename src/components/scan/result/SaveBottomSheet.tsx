@@ -1,35 +1,36 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
-  View,
-  Modal,
-  Pressable,
-  Animated,
-  StyleSheet,
-  Keyboard,
-  Platform,
-  useWindowDimensions,
   Alert,
+  Animated,
+  Keyboard,
+  Modal,
+  Platform,
+  Pressable,
+  StyleSheet,
+  useWindowDimensions,
+  View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useTranslation } from 'react-i18next';
-import i18n from '../../../i18n';
-import styles from './styles';
-import {
-  getCalendarPreview,
-  patchCalendarPreviewDates,
-  postCalendarEvents,
-  CalendarApiError,
-} from '../../../api/calendar';
 import type { CalendarPreviewItem } from '../../../api/calendar';
+import {
+  CalendarApiError,
+  getCalendarPreview,
+  patchCalendarPreviewDates as patchCalendarPreviewDatesApi,
+  postCalendarEvents as postCalendarEventsApi,
+} from '../../../api/calendar';
+import i18n from '../../../i18n';
+import { useApiMutation, useServerQuery } from '../../../query/hooks';
+import { getCalendarDday } from '../../../utils/calendarDday';
+import { formatEventTime } from '../../../utils/calendarEventTime';
 import {
   createCalendarPreviewDraft,
   getCalendarPreviewSchedule,
 } from '../../../utils/calendarPreview';
-import { formatEventTime } from '../../../utils/calendarEventTime';
-import { getCalendarDday } from '../../../utils/calendarDday';
 import { getKstDate } from '../../../utils/calendarWeek';
-import type { EventState } from './EventPreviewCard';
 import ConfirmStep from './ConfirmStep';
+import type { EventState } from './EventPreviewCard';
+import styles from './styles';
 import SuccessStep from './SuccessStep';
 
 interface Props {
@@ -39,6 +40,13 @@ interface Props {
   onDismiss: () => void;
   childName: string;
   newsletterId?: number;
+}
+
+interface PreviewDraft {
+  newsletterId: number;
+  previews: CalendarPreviewItem[];
+  eventStates: Record<string, EventState>;
+  invalid: boolean;
 }
 
 const getClosestEventDate = (
@@ -85,6 +93,24 @@ const SaveBottomSheet = ({
   childName,
   newsletterId,
 }: Props) => {
+  const postCalendarEvents = useApiMutation(postCalendarEventsApi, [
+    'calendar',
+    'markers',
+    'preview',
+    'newsletters',
+    'recent',
+    'today',
+    'newsletterChecklist',
+  ]);
+  const patchCalendarPreviewDates = useApiMutation(patchCalendarPreviewDatesApi, [
+    'calendar',
+    'markers',
+    'preview',
+    'newsletters',
+    'recent',
+    'today',
+    'newsletterChecklist',
+  ]);
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { height: windowHeight } = useWindowDimensions();
@@ -92,15 +118,47 @@ const SaveBottomSheet = ({
 
   const [show, setShow] = useState(false);
   const [step, setStep] = useState<'confirm' | 'success'>('confirm');
-  const [previews, setPreviews] = useState<CalendarPreviewItem[]>([]);
-  const [eventStates, setEventStates] = useState<Record<string, EventState>>({});
-  const [previewLoading, setPreviewLoading] = useState(false);
-  const [previewError, setPreviewError] = useState<string | null>(null);
+  const previewQuery = useServerQuery(
+    'preview',
+    [newsletterId],
+    (signal) => getCalendarPreview(newsletterId!, signal),
+    { enabled: visible && !!newsletterId, staleTime: 0 }
+  );
+  const { data: previewData, error: previewQueryError } = previewQuery;
+  const [draft, setDraft] = useState<PreviewDraft | null>(null);
+  const currentDraft = draft?.newsletterId === newsletterId ? draft : null;
+  const previews = useMemo(
+    () => currentDraft?.previews ?? previewData ?? [],
+    [currentDraft, previewData]
+  );
+  const eventStates = useMemo(() => currentDraft?.eventStates ?? {}, [currentDraft]);
+  let previewError: string | null = null;
+  if (!newsletterId) previewError = t('scan.result.saveBottomSheet.error.noPreviewMsg');
+  else if (previewQueryError)
+    previewError = t(
+      previewQueryError instanceof CalendarApiError &&
+        (previewQueryError.status === 404 || previewQueryError.code === 'CAL4042')
+        ? 'scan.result.saveBottomSheet.error.expired'
+        : 'scan.result.saveBottomSheet.error.loadFailed'
+    );
+  else if (currentDraft?.invalid) previewError = t('scan.result.saveBottomSheet.error.loadFailed');
+  const previewLoading =
+    visible && !!newsletterId && !previewError && (previewQuery.isLoading || !currentDraft);
   const [registering, setRegistering] = useState(false);
 
   const updateEventState = useCallback(
     (id: string, patch: Partial<EventState>) =>
-      setEventStates((prev) => ({ ...prev, [id]: { ...prev[id], ...patch } })),
+      setDraft((prev) =>
+        prev
+          ? {
+              ...prev,
+              eventStates: {
+                ...prev.eventStates,
+                [id]: { ...prev.eventStates[id], ...patch },
+              },
+            }
+          : prev
+      ),
     []
   );
 
@@ -141,48 +199,31 @@ const SaveBottomSheet = ({
     [t]
   );
 
-  // 서버에 임시 저장된 AI 추출 일정을 조회한다.
+  // 시트를 연 시점의 데이터로 편집 초안을 만든다. 백그라운드 조회로 입력을 덮어쓰지 않는다.
   useEffect(() => {
-    if (!visible || !newsletterId) return () => {};
-    let cancelled = false;
+    if (!visible) {
+      setDraft(null);
+      return;
+    }
+    if (
+      !newsletterId ||
+      !previewData ||
+      previewQuery.isFetching ||
+      (currentDraft && (!currentDraft.invalid || currentDraft.previews === previewData))
+    )
+      return;
+    try {
+      const states = previewData.reduce<Record<string, EventState>>((result, item) => {
+        const eventDraft = createCalendarPreviewDraft(item);
+        if (!eventDraft) throw new Error('Invalid calendar preview date');
+        return { ...result, [item.tempEventId]: { ...eventDraft, isEditing: false } };
+      }, {});
+      setDraft({ newsletterId, previews: previewData, eventStates: states, invalid: false });
+    } catch {
+      setDraft({ newsletterId, previews: previewData, eventStates: {}, invalid: true });
+    }
+  }, [visible, newsletterId, previewData, currentDraft, previewQuery.isFetching]);
 
-    setPreviews([]);
-    setEventStates({});
-    setPreviewLoading(true);
-    setPreviewError(null);
-
-    const loadPreview = async () => {
-      try {
-        const items = await getCalendarPreview(newsletterId);
-        if (cancelled) return;
-        const states = items.reduce<Record<string, EventState>>((acc, item) => {
-          const draft = createCalendarPreviewDraft(item);
-          if (!draft) throw new Error('Invalid calendar preview date');
-          acc[item.tempEventId] = { ...draft, isEditing: false };
-          return acc;
-        }, {});
-        setPreviews(items);
-        setEventStates(states);
-      } catch (e) {
-        if (cancelled) return;
-        if (e instanceof CalendarApiError && (e.status === 404 || e.code === 'CAL4042')) {
-          setPreviewError(i18n.t('scan.result.saveBottomSheet.error.expired'));
-        } else {
-          setPreviewError(i18n.t('scan.result.saveBottomSheet.error.loadFailed'));
-        }
-      } finally {
-        if (!cancelled) setPreviewLoading(false);
-      }
-    };
-
-    loadPreview();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [visible, newsletterId]);
-
-  // 시트 애니메이션
   useEffect(() => {
     if (visible) {
       if (show) return;
@@ -306,7 +347,15 @@ const SaveBottomSheet = ({
     } finally {
       setRegistering(false);
     }
-  }, [canRegister, t, previews, eventStates, newsletterId]);
+  }, [
+    canRegister,
+    t,
+    previews,
+    eventStates,
+    newsletterId,
+    patchCalendarPreviewDates,
+    postCalendarEvents,
+  ]);
 
   return (
     <Modal visible={show} transparent animationType="none" onRequestClose={onClose}>

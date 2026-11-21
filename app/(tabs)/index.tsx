@@ -1,15 +1,13 @@
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { useMemo, useCallback } from 'react';
-import { useTranslation } from 'react-i18next';
+import { LinearGradient } from 'expo-linear-gradient';
+import { router } from 'expo-router';
 import type { TFunction } from 'i18next';
-import { router, useFocusEffect } from 'expo-router';
-import { useUserStore } from '../../src/store/userStore';
-import { refreshUnreadCount } from '../../src/utils/unreadCount';
-import { useNotificationStore } from '../../src/store/notificationStore';
+import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
+import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import TaskCard from '../../src/components/home/TaskCard';
+import { useProfileQuery, useUnreadQuery } from '../../src/query/resources';
 // import ScanBanner from '../../src/components/home/ScanBanner';
 import FeatureSection from '../../src/components/home/FeatureSection';
 import MealTimetableWidget from '../../src/components/home/MealTimetableWidget';
@@ -40,16 +38,11 @@ const getGreetingByTime = (t: TFunction): string => {
 const HomeScreen = () => {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
-  const name = useUserStore((s) => s.name);
+  const { data: profile } = useProfileQuery();
+  const name = profile?.name ?? '';
   const greetingText = useMemo(() => getGreetingByTime(t), [t]);
 
-  const unreadCount = useNotificationStore((state) => state.unreadCount);
-
-  useFocusEffect(
-    useCallback(() => {
-      void refreshUnreadCount().catch(() => {});
-    }, [])
-  );
+  const { data: unreadCount = 0 } = useUnreadQuery();
 
   return (
     <View style={styles.screen}>

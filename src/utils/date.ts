@@ -13,8 +13,8 @@ export const isToday = (d: Date): boolean => {
   );
 };
 
-export const getDisplayWeekDays = (): Date[] => {
-  const today = new Date();
+export const getDisplayWeekDays = (reference = new Date()): Date[] => {
+  const today = new Date(reference);
   const dow = today.getDay();
   const monday = new Date(today);
   if (dow === 0) monday.setDate(today.getDate() + 1);
@@ -28,9 +28,9 @@ export const getDisplayWeekDays = (): Date[] => {
   });
 };
 
-export const getNextWeekdays = (count: number): Date[] => {
+export const getNextWeekdays = (count: number, reference = new Date()): Date[] => {
   const result: Date[] = [];
-  const d = new Date();
+  const d = new Date(reference);
   d.setHours(0, 0, 0, 0);
   while (result.length < count) {
     if (d.getDay() !== 0 && d.getDay() !== 6) result.push(new Date(d));

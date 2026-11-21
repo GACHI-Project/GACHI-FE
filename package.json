@@ -14,15 +14,19 @@
     "typecheck": "tsc --noEmit",
     "test:notifications": "node --test tests/notification-count.test.cjs",
     "test:lists": "node --test tests/async-list-state.test.cjs",
-    "test:auth": "node --test tests/auth-session.test.cjs",
-    "test:layout": "node --test tests/i18n-layout.test.cjs"
+    "test:auth": "node --test tests/auth-session.test.cjs tests/register-validation.test.cjs",
+    "test:layout": "node --test tests/i18n-layout.test.cjs",
+    "test": "node --test tests/notification-count.test.cjs tests/async-list-state.test.cjs tests/auth-session.test.cjs tests/i18n-layout.test.cjs tests/register-validation.test.cjs tests/query-cache.test.cjs",
+    "test:query": "node --test tests/query-cache.test.cjs"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.2",
     "@hookform/resolvers": "^5.2.2",
     "@react-native-async-storage/async-storage": "2.2.0",
+    "@react-native-community/netinfo": "11.5.2",
     "@react-native-google-signin/google-signin": "^17.0.0",
     "@react-navigation/native": "^7.2.0",
+    "@tanstack/react-query": "^5.108.2",
     "axios": "^1.13.6",
     "expo": "~55.0.14",
     "expo-application": "~55.0.15",

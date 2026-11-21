@@ -1,39 +1,56 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import {
-  View,
-  Image,
-  Text,
-  Animated,
-  ActivityIndicator,
-  TouchableOpacity,
-  Alert,
-  ScrollView,
-} from 'react-native';
-import { useLocalSearchParams, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { router, useLocalSearchParams } from 'expo-router';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import {
+  ActivityIndicator,
+  Alert,
+  Animated,
+  Image,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import {
+  getNewsletterStatus,
+  NewsletterApiError,
+  NewsletterStatus,
+  resumeNewsletter as resumeNewsletterApi,
+  retryAnalysis as retryAnalysisApi,
+  skipNewsletterPage as skipNewsletterPageApi,
+  uploadNewsletter as uploadNewsletterApi,
+} from '../../src/api/newsletter';
 import Header from '../../src/components/common/Header';
 import ScanHelpModal from '../../src/components/scan/ScanHelpModal';
 import ScanStepIndicator from '../../src/components/scan/ScanStepIndicator';
-import useResponsiveLayout from '../../src/hooks/useResponsiveLayout';
-import {
-  uploadNewsletter,
-  getNewsletterStatus,
-  resumeNewsletter,
-  skipNewsletterPage,
-  retryAnalysis,
-  NewsletterApiError,
-  NewsletterStatus,
-  NewsletterStatusResult,
-} from '../../src/api/newsletter';
-import { getPausedTitle, getPausedDescription } from '../../src/utils/newsletterPaused';
-import { SCAN_FRAME_H, ScanChildParams } from '../../src/constants/scan';
-import { parsePagesParam } from '../../src/utils/scanNavigation';
 import colors from '../../src/constants/colors';
+import { SCAN_FRAME_H, ScanChildParams } from '../../src/constants/scan';
+import useResponsiveLayout from '../../src/hooks/useResponsiveLayout';
+import { invalidateResources, queryClient, resourceKey } from '../../src/query/client';
+import { useApiMutation, useServerQuery, useSessionScope } from '../../src/query/hooks';
 import styles from '../../src/styles/scan/loading';
+import { getPausedDescription, getPausedTitle } from '../../src/utils/newsletterPaused';
+import { parsePagesParam } from '../../src/utils/scanNavigation';
+
+const NEWSLETTER_RESOURCES = [
+  'newsletters',
+  'newsletter',
+  'recent',
+  'preview',
+  'newsletterChecklist',
+  'summary',
+  'topics',
+  'cultural',
+  'translation',
+];
 
 const ScanLoadingScreen = () => {
+  const retryAnalysis = useApiMutation(retryAnalysisApi, NEWSLETTER_RESOURCES);
+  const skipNewsletterPage = useApiMutation(skipNewsletterPageApi, NEWSLETTER_RESOURCES);
+  const resumeNewsletter = useApiMutation(resumeNewsletterApi, NEWSLETTER_RESOURCES);
+  const uploadNewsletter = useApiMutation(uploadNewsletterApi, NEWSLETTER_RESOURCES);
   const {
     photoUri,
     pages,
@@ -49,12 +66,10 @@ const ScanLoadingScreen = () => {
       newsletterId?: string;
     }
   >();
-  let photoUris: string[] = [];
-  if (pages) {
-    photoUris = parsePagesParam(pages);
-  } else if (photoUri) {
-    photoUris = [photoUri];
-  }
+  const photoUris = useMemo(() => {
+    if (pages) return parsePagesParam(pages);
+    return photoUri ? [photoUri] : [];
+  }, [pages, photoUri]);
   const displayUri = photoUris[0];
   const resumeNewsletterId = resumeNewsletterIdParam ? Number(resumeNewsletterIdParam) : undefined;
 
@@ -75,35 +90,56 @@ const ScanLoadingScreen = () => {
   const glowAnimation = useRef<Animated.CompositeAnimation | null>(null);
   const completionAnimation = useRef<Animated.CompositeAnimation | null>(null);
   const { t } = useTranslation();
-  const [displayPercent, setDisplayPercent] = useState(0);
-  const [analysisStatus, setAnalysisStatus] = useState<NewsletterStatus>('PENDING');
-  const [isComplete, setIsComplete] = useState(false);
   const [helpVisible, setHelpVisible] = useState(false);
   const [newsletterId, setNewsletterId] = useState<number | null>(null);
-  const [pageProgress, setPageProgress] = useState<{ total?: number; processed?: number }>({});
-  const [pausedInfo, setPausedInfo] = useState<NewsletterStatusResult | null>(null);
   const [actionLoading, setActionLoading] = useState<'retry' | 'skip' | null>(null);
-  const pollingRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const startPollingRef = useRef<((id: number) => void) | undefined>(undefined);
+  const scope = useSessionScope();
+  const statusQuery = useServerQuery(
+    'newsletterStatus',
+    [newsletterId],
+    (signal) => getNewsletterStatus(newsletterId!, signal),
+    {
+      enabled: newsletterId !== null,
+      staleTime: 0,
+      refetchInterval: (query) =>
+        query.state.error ||
+        ['COMPLETED', 'FAILED', 'PAUSED'].includes(query.state.data?.status ?? '')
+          ? false
+          : 2000,
+    }
+  );
+  const {
+    refetch: refetchStatus,
+    isError: statusError,
+    errorUpdatedAt: statusErrorAt,
+  } = statusQuery;
+  const displayPercent = statusQuery.data?.progressPercent ?? 0;
+  const analysisStatus = statusQuery.data?.status ?? 'PENDING';
+  const isComplete = analysisStatus === 'COMPLETED';
+  const pausedInfo = analysisStatus === 'PAUSED' ? statusQuery.data : null;
+  const pageProgress = {
+    total: statusQuery.data?.totalPages,
+    processed: statusQuery.data?.processedPages,
+  };
+  const startTaskRef = useRef<{ key: string; promise: Promise<number> } | null>(null);
+  const inputKey = JSON.stringify([resumeNewsletterId, photoUris, childId]);
+
+  useEffect(() => {
+    if (isComplete) void invalidateResources(NEWSLETTER_RESOURCES, scope.version);
+  }, [isComplete, newsletterId, scope.version]);
 
   const handleActionError = useCallback(() => {
     Alert.alert(t('scan.loading.error.analysisFailed'), t('scan.loading.error.analysisFailedMsg'));
   }, [t]);
 
   const applyResumeResult = useCallback(
-    async (id: number, result: { status: NewsletterStatus }) => {
-      if (result.status === 'PAUSED') {
-        const fresh = await getNewsletterStatus(id);
-        setPausedInfo(fresh);
-        setDisplayPercent(fresh.progressPercent);
-        setAnalysisStatus(fresh.status);
-        return;
-      }
-      setPausedInfo(null);
-      setAnalysisStatus(result.status);
-      startPollingRef.current?.(id);
+    async (id: number, _result: { status: NewsletterStatus }) => {
+      await queryClient.invalidateQueries({
+        queryKey: resourceKey(scope.version, scope.language, 'newsletterStatus', id),
+        refetchType: 'all',
+      });
     },
-    []
+    [scope.version, scope.language]
   );
 
   useEffect(() => {
@@ -130,115 +166,74 @@ const ScanLoadingScreen = () => {
   }, [scanLine, pausedInfo]);
 
   useEffect(() => {
-    if (photoUris.length === 0 && resumeNewsletterId === undefined) return () => {};
-    let cancelled = false;
-
-    const poll = async (id: number) => {
-      if (cancelled) return;
-      try {
-        const result = await getNewsletterStatus(id);
-        if (cancelled) return;
-
-        setDisplayPercent(result.progressPercent);
-        setAnalysisStatus(result.status);
-        setPageProgress({ total: result.totalPages, processed: result.processedPages });
-        Animated.timing(progress, {
-          toValue: result.progressPercent / 100,
-          duration: 400,
-          useNativeDriver: false,
-        }).start();
-
-        if (result.status === 'COMPLETED') {
-          setPausedInfo(null);
-          setIsComplete(true);
-          return;
-        }
-        if (result.status === 'FAILED') {
-          Alert.alert(
-            t('scan.loading.error.analysisFailed'),
-            t('scan.loading.error.analysisFailedMsg'),
-            [
-              { text: t('common.cancel'), style: 'cancel', onPress: () => router.back() },
-              {
-                text: t('scan.loading.paused.retryButton'),
-                onPress: () => {
-                  retryAnalysis(id)
-                    .then((retryResult) => {
-                      if (cancelled) return undefined;
-                      return applyResumeResult(id, retryResult);
-                    })
-                    .catch(() => {
-                      if (cancelled) return;
-                      Alert.alert(
-                        t('scan.loading.error.analysisFailed'),
-                        t('scan.loading.error.analysisFailedMsg'),
-                        [{ text: t('common.confirm'), onPress: () => router.back() }]
-                      );
-                    });
-                },
-              },
-            ]
-          );
-          return;
-        }
-        if (result.status === 'PAUSED') {
-          setPausedInfo(result);
-          return;
-        }
-        setPausedInfo(null);
-      } catch {
-        // 폴링 중 네트워크 오류는 무시하고 계속 시도
-      }
-      pollingRef.current = setTimeout(() => poll(id), 2000);
-    };
-
-    const startPolling = (id: number) => {
-      pollingRef.current = setTimeout(() => poll(id), 2000);
-    };
-    startPollingRef.current = startPolling;
-
-    if (resumeNewsletterId !== undefined) {
-      setNewsletterId(resumeNewsletterId);
-      resumeNewsletter(resumeNewsletterId)
-        .then((result) => {
-          if (cancelled) return undefined;
-          return applyResumeResult(resumeNewsletterId, result);
-        })
-        .catch(() => {
-          if (cancelled) return;
-          Alert.alert(
-            t('scan.loading.error.analysisFailed'),
-            t('scan.loading.error.analysisFailedMsg'),
-            [{ text: t('common.confirm'), onPress: () => router.back() }]
-          );
-        });
-    } else {
-      const parsedChildId = childId ? Number(childId) : undefined;
-      uploadNewsletter(photoUris, parsedChildId)
-        .then((result) => {
-          if (cancelled) return;
-          setNewsletterId(result.newsletterId);
-          startPolling(result.newsletterId);
-        })
-        .catch((error: unknown) => {
-          if (cancelled) return;
-          let message = t('scan.loading.error.uploadDefault');
-          if (error instanceof NewsletterApiError) {
-            if (error.code === 'NL4091') message = t('scan.loading.error.duplicate');
-            else if (error.code === 'NL4002') message = t('scan.loading.error.unsupportedFormat');
-            else if (error.code === 'NL4003') message = t('scan.loading.error.fileTooLarge');
-          }
-          Alert.alert(t('scan.loading.error.uploadFailed'), message, [
-            { text: t('common.confirm'), onPress: () => router.back() },
-          ]);
-        });
+    let active = true;
+    if (!photoUris.length && resumeNewsletterId === undefined) return undefined;
+    if (startTaskRef.current?.key !== inputKey) {
+      const promise =
+        resumeNewsletterId !== undefined
+          ? resumeNewsletter(resumeNewsletterId).then(() => resumeNewsletterId)
+          : uploadNewsletter(photoUris, childId ? Number(childId) : undefined).then(
+              (result) => result.newsletterId
+            );
+      startTaskRef.current = { key: inputKey, promise };
     }
-
+    startTaskRef.current.promise
+      .then((id) => {
+        if (active) setNewsletterId(id);
+      })
+      .catch((error: unknown) => {
+        if (!active) return;
+        let message = t('scan.loading.error.uploadDefault');
+        if (error instanceof NewsletterApiError) {
+          if (error.code === 'NL4091') message = t('scan.loading.error.duplicate');
+          else if (error.code === 'NL4002') message = t('scan.loading.error.unsupportedFormat');
+          else if (error.code === 'NL4003') message = t('scan.loading.error.fileTooLarge');
+        }
+        Alert.alert(t('scan.loading.error.uploadFailed'), message, [
+          { text: t('common.confirm'), onPress: () => router.back() },
+        ]);
+      });
     return () => {
-      cancelled = true;
-      if (pollingRef.current) clearTimeout(pollingRef.current);
+      active = false;
     };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [inputKey, resumeNewsletterId, childId, resumeNewsletter, uploadNewsletter, photoUris, t]);
+
+  useEffect(() => {
+    Animated.timing(progress, {
+      toValue: displayPercent / 100,
+      duration: 400,
+      useNativeDriver: false,
+    }).start();
+  }, [displayPercent, progress]);
+
+  useEffect(() => {
+    if (!newsletterId || (analysisStatus !== 'FAILED' && !statusError)) return;
+    Alert.alert(t('scan.loading.error.analysisFailed'), t('scan.loading.error.analysisFailedMsg'), [
+      { text: t('common.cancel'), style: 'cancel', onPress: () => router.back() },
+      {
+        text: t('scan.loading.paused.retryButton'),
+        onPress: () => {
+          const operation =
+            analysisStatus === 'FAILED'
+              ? retryAnalysis(newsletterId).then((result) =>
+                  applyResumeResult(newsletterId, result)
+                )
+              : refetchStatus();
+          void operation.catch(handleActionError);
+        },
+      },
+    ]);
+  }, [
+    analysisStatus,
+    newsletterId,
+    statusError,
+    statusErrorAt,
+    retryAnalysis,
+    refetchStatus,
+    applyResumeResult,
+    handleActionError,
+    t,
+  ]);
 
   useEffect(() => {
     if (!isComplete) return () => {};

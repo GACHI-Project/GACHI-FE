@@ -37,7 +37,10 @@ export interface ChatResponse {
   sentAt: string;
 }
 
-export const sendChatMessage = async (params: SendMessageParams): Promise<ChatResponse> => {
+export const sendChatMessage = async (
+  params: SendMessageParams,
+  signal?: AbortSignal
+): Promise<ChatResponse> => {
   try {
     const config = await getAuthConfig();
     const { data } = await apiClient.post<{ result: ChatResponse }>(
@@ -50,7 +53,7 @@ export const sendChatMessage = async (params: SendMessageParams): Promise<ChatRe
           Number.isInteger(params.newsletterId) &&
           params.newsletterId > 0 && { newsletterId: params.newsletterId }),
       },
-      config
+      { ...config, signal }
     );
     return data.result;
   } catch (error) {

@@ -1,20 +1,21 @@
-import { useState, useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Alert } from 'react-native';
 import { router } from 'expo-router';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Header from '../../src/components/common/Header';
-import FormField from '../../src/components/auth/FormField';
-import { emailSchema } from '../../src/validation/auth';
 import {
-  sendEmailChangeCode,
-  verifyEmailChangeCode,
-  changeEmail,
+  changeEmail as changeEmailApi,
+  sendEmailChangeCode as sendEmailChangeCodeApi,
   UserApiError,
+  verifyEmailChangeCode as verifyEmailChangeCodeApi,
 } from '../../src/api/user';
+import FormField from '../../src/components/auth/FormField';
+import Header from '../../src/components/common/Header';
 import colors from '../../src/constants/colors';
 import fonts from '../../src/constants/fonts';
 import layout from '../../src/constants/layout';
+import { useApiMutation } from '../../src/query/hooks';
+import { emailSchema } from '../../src/validation/auth';
 
 const formatTimer = (seconds: number) => {
   const m = Math.floor(seconds / 60)
@@ -25,6 +26,9 @@ const formatTimer = (seconds: number) => {
 };
 
 const EditEmailScreen = () => {
+  const changeEmail = useApiMutation(changeEmailApi, ['profile']);
+  const verifyEmailChangeCode = useApiMutation(verifyEmailChangeCodeApi);
+  const sendEmailChangeCode = useApiMutation(sendEmailChangeCodeApi);
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
 

@@ -1,50 +1,45 @@
-import React, { useEffect, useState } from 'react';
-import {
-  View,
-  Text,
-  Alert,
-  TouchableOpacity,
-  ScrollView,
-  StyleSheet,
-  ActivityIndicator,
-} from 'react-native';
-import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
+import { router } from 'expo-router';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import {
+  ActivityIndicator,
+  Alert,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PrimaryButton } from '../../src/components/common/Button';
 import Header from '../../src/components/common/Header';
 import SelectionCard from '../../src/components/common/SelectionCard';
 import ScanHelpModal from '../../src/components/scan/ScanHelpModal';
 import ScanStepIndicator from '../../src/components/scan/ScanStepIndicator';
-import { getMyChildren, ChildResult } from '../../src/api/child';
 import colors from '../../src/constants/colors';
 import fonts from '../../src/constants/fonts';
 import layout from '../../src/constants/layout';
 import { MAX_PAGES } from '../../src/constants/scan';
+import { useChildrenQuery } from '../../src/query/resources';
 import { pickGalleryImages } from '../../src/utils/scanImage';
 
 const ScanChildSelectScreen = () => {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
-  const [children, setChildren] = useState<ChildResult[]>([]);
+  const childrenQuery = useChildrenQuery();
+  const children = useMemo(() => childrenQuery.data ?? [], [childrenQuery.data]);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [helpVisible, setHelpVisible] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const loading = childrenQuery.isLoading;
   const [pickingGallery, setPickingGallery] = useState(false);
 
   useEffect(() => {
-    getMyChildren()
-      .then((result) => {
-        setChildren(result);
-        if (result.length > 0) setSelectedId(result[0].id);
-      })
-      .catch(() =>
-        Alert.alert(t('scan.select.error.errorTitle'), t('scan.select.error.loadChildren'))
-      )
-      .finally(() => setLoading(false));
-  }, [t]);
+    setSelectedId((current) =>
+      children.some((child) => child.id === current) ? current : (children[0]?.id ?? null)
+    );
+  }, [children]);
 
   const selected = children.find((c) => c.id === selectedId);
   const childParams = {

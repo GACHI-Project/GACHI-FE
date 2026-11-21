@@ -1,23 +1,24 @@
+import { Feather, Ionicons } from '@expo/vector-icons';
+import { router, useLocalSearchParams } from 'expo-router';
+import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
-  View,
-  Text,
+  Animated,
   FlatList,
-  TextInput,
-  TouchableOpacity,
+  Image,
   KeyboardAvoidingView,
   Platform,
-  Animated,
-  Image,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import { Ionicons, Feather } from '@expo/vector-icons';
-import { useTranslation } from 'react-i18next';
-import { router, useLocalSearchParams } from 'expo-router';
-import { useState, useRef, useEffect } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ChatApiError, sendChatMessage as sendChatMessageApi } from '../../src/api/chat';
 import colors from '../../src/constants/colors';
 import layout from '../../src/constants/layout';
+import { useApiMutation } from '../../src/query/hooks';
 import styles from '../../src/styles/chat/chatScreen';
-import { sendChatMessage, ChatApiError } from '../../src/api/chat';
 
 type MessageRole = 'user' | 'assistant';
 
@@ -79,6 +80,7 @@ const TypingBubble = () => {
 };
 
 const ChatScreen = () => {
+  const sendChatMessage = useApiMutation(sendChatMessageApi, []);
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const flatListRef = useRef<FlatList<ChatMessage>>(null);

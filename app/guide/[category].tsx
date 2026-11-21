@@ -1,19 +1,15 @@
-import { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, FlatList, ActivityIndicator } from 'react-native';
-import { useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import { ActivityIndicator, FlatList, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { getSchoolGuideFaqs, type SchoolGuideCategoryEnum } from '../../src/api/schoolGuide';
 import Header from '../../src/components/common/Header';
 import colors from '../../src/constants/colors';
 import layout from '../../src/constants/layout';
-import styles from '../../src/styles/guide/categoryScreen';
-import {
-  getSchoolGuideFaqs,
-  type SchoolGuideCategoryEnum,
-  type SchoolGuideFaqItem,
-} from '../../src/api/schoolGuide';
 import useGuideFaqExpand from '../../src/hooks/guide/useGuideFaqExpand';
+import { useServerQuery } from '../../src/query/hooks';
+import styles from '../../src/styles/guide/categoryScreen';
 
 const CategoryScreen = () => {
   const { category, categoryEnum, emoji } = useLocalSearchParams<{
@@ -24,25 +20,16 @@ const CategoryScreen = () => {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
 
-  const [faqs, setFaqs] = useState<SchoolGuideFaqItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
-
+  const query = useServerQuery(
+    'guide',
+    ['category', categoryEnum],
+    (signal) => getSchoolGuideFaqs({ category: categoryEnum as SchoolGuideCategoryEnum }, signal),
+    { enabled: !!categoryEnum }
+  );
+  const faqs = query.data ?? [];
+  const loading = query.isLoading;
+  const error = !categoryEnum || query.isError;
   const { expandedId, answerCache, loadingDetailId, handleExpand } = useGuideFaqExpand();
-
-  useEffect(() => {
-    if (!categoryEnum) {
-      setLoading(false);
-      setError(true);
-      return;
-    }
-    setLoading(true);
-    setError(false);
-    getSchoolGuideFaqs({ category: categoryEnum as SchoolGuideCategoryEnum })
-      .then(setFaqs)
-      .catch(() => setError(true))
-      .finally(() => setLoading(false));
-  }, [categoryEnum]);
 
   const renderContent = () => {
     if (loading) {

@@ -120,6 +120,37 @@ const checklist = (id, isCompleted = false) => ({ checklistId: id, isCompleted }
 const rows = () => [checklist(1), checklist(2), checklist(3)];
 const values = (data) => Array.from(data, (row) => [row.checklistId, row.isCompleted]);
 
+['success', 'failure'].forEach((firstOutcome) => {
+  test(`queued toggle rolls back to its execution-time value after an earlier ${firstOutcome}`, async () => {
+    const r = setup();
+    const refresh = queuedApi();
+    const { changeChecklist } = r.load('src/query/checklists.ts');
+    const view = r.observe({
+      ...r
+        .load('src/query/options.ts')
+        .serverOptions(r.scope(), 'newsletterChecklist', [1], refresh.request),
+      initialData: [checklist(1)],
+      staleTime: Infinity,
+    });
+    const first = changeChecklist(1, false, true).catch(() => {});
+    const second = changeChecklist(1, true, false).catch(() => {});
+    await r.flush();
+    if (firstOutcome === 'success') r.calls.toggle.calls[0].resolve();
+    else r.calls.toggle.calls[0].reject(new Error('First PATCH failed'));
+    await first;
+    await r.flush();
+    assert.equal(r.calls.toggle.calls.length, 2);
+    assert.equal(view.result.data[0].isCompleted, false);
+    r.calls.toggle.calls[1].reject(new Error('Second PATCH failed'));
+    await second;
+    await r.flush();
+    refresh.calls.at(-1).reject(new Error('Final reconciliation failed'));
+    await r.flush();
+    assert.equal(view.result.isRefetchError, true);
+    assert.equal(view.result.data[0].isCompleted, firstOutcome === 'success');
+  });
+});
+
 ['newsletterChecklist', 'calendar'].forEach((domain) => {
   const seed = (r) => {
     const key = r.key(domain, 1);

@@ -126,11 +126,16 @@ export const changeChecklist = (id: number, previous: boolean, next?: boolean): 
         const hash = JSON.stringify(queryKey);
         if (!deletionOrders.has(hash)) deletionOrders.set(hash, data);
       });
+    let capturedPrevious = false;
     originals.forEach(([queryKey, data]) =>
       queryClient.setQueryData(
         queryKey,
         visit(data, (row) => {
           if (row.checklistId !== id) return row;
+          if (!capturedPrevious && typeof row.isCompleted === 'boolean') {
+            change.previous = row.isCompleted;
+            capturedPrevious = true;
+          }
           return next === undefined ? null : { ...row, isCompleted: next };
         })
       )

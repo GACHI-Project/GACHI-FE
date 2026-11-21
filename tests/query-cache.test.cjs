@@ -10,8 +10,8 @@ const { queryRuntime } = require('./helpers/queryRuntime.cjs');
 const { queuedApi, hookHarness } = require('./helpers/hookHarness.cjs');
 
 const runtimes = new Set();
-const setup = () => {
-  const r = queryRuntime();
+const setup = (overrides) => {
+  const r = queryRuntime(overrides);
   runtimes.add(r);
   return r;
 };
@@ -369,7 +369,10 @@ const previewSheet = (r, query) => {
     '../../../i18n': { default: { t: translate } },
     '../../../query/calendar': r.load('src/query/calendar.ts'),
     '../../../query/state': r.load('src/query/state.ts'),
-    '../../../query/hooks': { useApiMutation: (fn) => fn, useServerQuery: () => query },
+    '../../../query/hooks': {
+      useApiMutation: (fn) => fn,
+      useServerQuery: () => (typeof query === 'function' ? query() : query),
+    },
     '../../../utils/calendarDday': {},
     '../../../utils/calendarEventTime': {},
     '../../../utils/calendarWeek': {},
@@ -438,6 +441,59 @@ test('background preview refresh preserves the opened form and reopening starts 
   );
   assert.equal(view.eventStates['new-preview'].day, '21');
   sheet.runner.unmount();
+});
+
+[false, true].forEach((reopen) => {
+  test(`calendar retry preserves edited dates and duration after ${reopen ? 'reopening the sheet' : 'editing the open form'}`, async () => {
+    const patch = queuedApi();
+    const post = queuedApi();
+    const refresh = queuedApi();
+    const r = setup({
+      calendar: { patchCalendarPreviewDates: patch.request, postCalendarEvents: post.request },
+    });
+    const original = [
+      {
+        ...previewItem('event', '2026-12-01'),
+        startAt: '2026-12-01T09:00:00+09:00',
+        endAt: '2026-12-03T10:00:00+09:00',
+      },
+    ];
+    const view = r.observe({
+      ...r.load('src/query/options.ts').serverOptions(r.scope(), 'preview', [1], refresh.request),
+      initialData: original,
+      staleTime: Infinity,
+    });
+    const sheet = previewSheet(r, () => view.result);
+    sheet.render().onUpdate('event', { day: '2' });
+    const first = sheet.render().onRegister();
+    assert.equal(patch.calls[0].args[1][0].correctedDate, '2026-12-02');
+    if (reopen) {
+      sheet.render(1, false);
+    } else {
+      sheet.current().onUpdate('event', { day: '1' });
+    }
+    sheet.render();
+    patch.calls[0].resolve();
+    await r.flush();
+    assert.equal(sheet.render().eventStates.event.day, '1');
+    post.calls[0].reject(new Error('Registration failed'));
+    await first;
+    await r.flush();
+    refresh.calls[0].resolve(r.client.getQueryData(r.key('preview', 1)));
+    await r.flush();
+    const current = sheet.render();
+    assert.equal(current.eventStates.event.day, '1');
+    const second = current.onRegister();
+    assert.equal(patch.calls.length, 2);
+    assert.equal(patch.calls[1].args[1][0].correctedDate, '2026-12-01');
+    patch.calls[1].resolve();
+    await r.flush();
+    assert.equal(post.calls[1].args[1][0].startAt, '2026-12-01T09:00:00+09:00');
+    assert.equal(post.calls[1].args[1][0].endAt, '2026-12-03T10:00:00+09:00');
+    post.calls[1].resolve({ registeredCount: 1 });
+    await second;
+    sheet.runner.unmount();
+  });
 });
 
 const scanLoadingScreen = (r, query) => {

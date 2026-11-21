@@ -22,13 +22,15 @@ const domains = [
 export const registerNewsletterCalendar = async (
   id: number,
   events: CalendarPostEvent[],
-  corrections: CalendarDatePatchEvent[]
+  corrections: CalendarDatePatchEvent[],
+  onDatesPatched?: (confirmed: CalendarDatePatchEvent[]) => void
 ) => {
   const version = getSessionVersion();
   try {
     if (corrections.length) {
       await patchCalendarPreviewDates(id, corrections);
       assertCurrentSession(version);
+      onDatesPatched?.(corrections);
       const filters = {
         predicate: (query: { queryKey: readonly unknown[] }) =>
           query.queryKey[1] === version &&

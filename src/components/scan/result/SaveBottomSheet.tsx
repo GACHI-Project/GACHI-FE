@@ -12,7 +12,11 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import type { CalendarPreviewItem } from '../../../api/calendar';
+import type {
+  CalendarDatePatchEvent,
+  CalendarPostEvent,
+  CalendarPreviewItem,
+} from '../../../api/calendar';
 import { CalendarApiError, getCalendarPreview } from '../../../api/calendar';
 import i18n from '../../../i18n';
 import { registerNewsletterCalendar } from '../../../query/calendar';
@@ -43,6 +47,8 @@ interface PreviewDraft {
   newsletterId: number;
   previews: CalendarPreviewItem[];
   eventStates: Record<string, EventState>;
+  // 일정 기간 계산용 originalStartAt과 별도로 마지막 PATCH 성공 날짜를 보존한다.
+  confirmedDates: Record<string, string | undefined>;
   invalid: boolean;
 }
 
@@ -90,7 +96,6 @@ const SaveBottomSheet = ({
   childName,
   newsletterId,
 }: Props) => {
-  const registerCalendar = useApiMutation(registerNewsletterCalendar);
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { height: windowHeight } = useWindowDimensions();
@@ -106,6 +111,19 @@ const SaveBottomSheet = ({
   );
   const { data: previewData, error: previewQueryError } = previewQuery;
   const [draft, setDraft] = useState<PreviewDraft | null>(null);
+  const registerCalendar = useApiMutation(
+    (id: number, events: CalendarPostEvent[], corrections: CalendarDatePatchEvent[]) =>
+      registerNewsletterCalendar(id, events, corrections, (confirmed) => {
+        setDraft((current) => {
+          if (current?.newsletterId !== id) return current;
+          const confirmedDates = { ...current.confirmedDates };
+          confirmed.forEach(({ tempEventId, correctedDate }) => {
+            confirmedDates[tempEventId] = correctedDate;
+          });
+          return { ...current, confirmedDates };
+        });
+      })
+  );
   const currentDraft = draft?.newsletterId === newsletterId ? draft : null;
   const previews = useMemo(
     () => currentDraft?.previews ?? previewData ?? [],
@@ -202,9 +220,24 @@ const SaveBottomSheet = ({
         if (!eventDraft) throw new Error('Invalid calendar preview date');
         return { ...result, [item.tempEventId]: { ...eventDraft, isEditing: false } };
       }, {});
-      setDraft({ newsletterId, previews: previewData, eventStates: states, invalid: false });
+      const confirmedDates = Object.fromEntries(
+        Object.entries(states).map(([key, state]) => [key, state.originalStartAt?.slice(0, 10)])
+      );
+      setDraft({
+        newsletterId,
+        previews: previewData,
+        eventStates: states,
+        confirmedDates,
+        invalid: false,
+      });
     } catch {
-      setDraft({ newsletterId, previews: previewData, eventStates: {}, invalid: true });
+      setDraft({
+        newsletterId,
+        previews: previewData,
+        eventStates: {},
+        confirmedDates: {},
+        invalid: true,
+      });
     }
   }, [visible, newsletterId, previewData, currentDraft, previewQuery.isFetching]);
 
@@ -282,7 +315,7 @@ const SaveBottomSheet = ({
   const canRegister = !!newsletterId && previews.length > 0 && !previewLoading && !previewError;
 
   const handleRegisterConfirm = useCallback(async () => {
-    if (!canRegister) {
+    if (!canRegister || !currentDraft) {
       Alert.alert(
         t('scan.result.saveBottomSheet.error.registerFailed'),
         t('scan.result.saveBottomSheet.error.noPreviewMsg')
@@ -317,7 +350,7 @@ const SaveBottomSheet = ({
         .map((e) => ({
           tempEventId: e.tempEventId,
           correctedDate: e.startAt.slice(0, 10),
-          originalDate: eventStates[e.tempEventId].originalStartAt?.slice(0, 10),
+          originalDate: currentDraft.confirmedDates[e.tempEventId],
         }))
         .filter((e) => e.correctedDate !== e.originalDate)
         .map(({ tempEventId, correctedDate }) => ({ tempEventId, correctedDate }));
@@ -328,7 +361,7 @@ const SaveBottomSheet = ({
     } finally {
       setRegistering(false);
     }
-  }, [canRegister, t, previews, eventStates, newsletterId, registerCalendar]);
+  }, [canRegister, currentDraft, t, previews, eventStates, newsletterId, registerCalendar]);
 
   return (
     <Modal visible={show} transparent animationType="none" onRequestClose={onClose}>

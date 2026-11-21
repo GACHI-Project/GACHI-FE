@@ -46,6 +46,21 @@ test('the total uses the authoritative endpoint including unread rows on unloade
   assert.deepEqual(r.ids(), [1, 2]);
 });
 
+test('a push refresh replaces an in-flight count instead of sharing its older total', async () => {
+  const r = await setup();
+  const beforePush = r.total.result.refetch();
+  await r.flush();
+  const oldCount = r.calls.count.calls.at(-1);
+  const refresh = r.counter.refreshUnreadCount();
+  await r.flush();
+  assert.equal(oldCount.args[0].aborted, true);
+  assert.equal(r.calls.count.calls.length, 3);
+  oldCount.resolve(5);
+  r.calls.count.calls.at(-1).resolve(6);
+  await Promise.all([beforePush, refresh]);
+  assert.equal(r.total.result.data, 6);
+});
+
 test('a successful read decrements only its server-confirmed delta and reconciles the total', async () => {
   const r = await setup();
   const pending = r.operations.readNotifications(1, [1, 2]);

@@ -37,9 +37,12 @@ export const waitForNotificationReads = async (): Promise<void> => {
 export const refreshUnreadCount = async (): Promise<void> => {
   const sessionVersion = getSessionVersion();
   if (pendingReads.size > 0) return;
+  const queryKey = resourceKey(sessionVersion, i18n.language || 'ko', 'unread');
+  await queryClient.cancelQueries({ queryKey, exact: true });
+  assertCurrentSession(sessionVersion);
 
   await queryClient.fetchQuery({
-    queryKey: resourceKey(sessionVersion, i18n.language || 'ko', 'unread'),
+    queryKey,
     staleTime: 0,
     queryFn: async ({ signal }) => {
       const count = await getUnreadTotal(signal);

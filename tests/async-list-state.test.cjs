@@ -148,18 +148,22 @@ const values = (data) => Array.from(data, (row) => [row.checklistId, row.isCompl
       [3, false],
     ]);
   });
-  test(`${domain}: same-item toggle and delete share a synchronous lock`, async () => {
+  test(`${domain}: deletion waits for the same item's toggle and runs once`, async () => {
     const r = setup();
     const { changeChecklist } = r.load('src/query/checklists.ts');
     seed(r);
     const first = changeChecklist(1, false, true);
     const duplicate = changeChecklist(1, false);
+    const repeatedDelete = changeChecklist(1, false);
     await r.flush();
-    assert.equal(first, duplicate);
     assert.equal(r.calls.toggle.calls.length, 1);
     assert.equal(r.calls.remove.calls.length, 0);
     r.calls.toggle.calls[0].resolve();
     await first;
+    await r.flush();
+    assert.equal(r.calls.remove.calls.length, 1);
+    r.calls.remove.calls[0].resolve();
+    await Promise.all([duplicate, repeatedDelete]);
   });
   test(`${domain}: a refresh started before a completed change cannot restore its old value`, async () => {
     const r = setup();
@@ -200,25 +204,30 @@ const values = (data) => Array.from(data, (row) => [row.checklistId, row.isCompl
   });
 });
 
-['forward', 'reverse'].forEach((order) => {
-  test(`concurrent failed deletions restore only their own rows in original order (${order})`, async () => {
-    const r = setup();
-    const { changeChecklist } = r.load('src/query/checklists.ts');
-    const key = r.key('newsletterChecklist', 1);
-    r.client.setQueryData(key, rows());
-    const first = changeChecklist(1, false).catch(() => {});
-    await r.flush();
-    const second = changeChecklist(2, false).catch(() => {});
-    await r.flush();
-    const orderIndexes = order === 'forward' ? [0, 1] : [1, 0];
-    r.calls.remove.calls[orderIndexes[0]].reject(new Error('First failure'));
-    await r.flush();
-    r.calls.remove.calls[orderIndexes[1]].reject(new Error('Second failure'));
-    await Promise.all([first, second]);
-    assert.deepEqual(
-      Array.from(r.client.getQueryData(key), (row) => row.checklistId),
-      [1, 2, 3]
-    );
+[
+  [1, 2],
+  [2, 1],
+].forEach((startOrder) => {
+  ['forward', 'reverse'].forEach((order) => {
+    test(`concurrent failed deletions preserve order (start ${startOrder}, fail ${order})`, async () => {
+      const r = setup();
+      const { changeChecklist } = r.load('src/query/checklists.ts');
+      const key = r.key('newsletterChecklist', 1);
+      r.client.setQueryData(key, rows());
+      const first = changeChecklist(startOrder[0], false).catch(() => {});
+      await r.flush();
+      const second = changeChecklist(startOrder[1], false).catch(() => {});
+      await r.flush();
+      const orderIndexes = order === 'forward' ? [0, 1] : [1, 0];
+      r.calls.remove.calls[orderIndexes[0]].reject(new Error('First failure'));
+      await r.flush();
+      r.calls.remove.calls[orderIndexes[1]].reject(new Error('Second failure'));
+      await Promise.all([first, second]);
+      assert.deepEqual(
+        Array.from(r.client.getQueryData(key), (row) => row.checklistId),
+        [1, 2, 3]
+      );
+    });
   });
 });
 

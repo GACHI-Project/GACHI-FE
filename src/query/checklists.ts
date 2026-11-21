@@ -1,3 +1,4 @@
+import { CanceledError } from 'axios';
 import { deleteCalendarEvent } from '../api/calendar';
 import { deleteChecklistItem, toggleChecklistItem } from '../api/checklist';
 import {
@@ -12,13 +13,15 @@ type Row = Record<string, unknown>;
 type Change = { next?: boolean; previous: boolean; pending: boolean; sequence: number };
 let sequence = 0;
 const changes = new Map<string, Change>();
-const locks = new Map<string, Promise<void>>();
+const locks = new Map<string, { next?: boolean; promise: Promise<void> }>();
+const deletionOrders = new Map<string, unknown>();
 let currentVersion = getSessionVersion();
 subscribeSession(() => {
   if (getSessionVersion() === currentVersion) return;
   currentVersion = getSessionVersion();
   changes.clear();
   locks.clear();
+  deletionOrders.clear();
 });
 const domains = ['calendar', 'newsletterChecklist', 'today', 'markers'];
 const rowKey = (version: number, kind: string, id: number) => `${version}:${kind}:${id}`;
@@ -50,7 +53,7 @@ export const applyResourceChanges = <T>(data: T, version: number, started: numbe
     return { ...row, isCompleted: change.next };
   }) as T;
 
-const restoreRow = (current: unknown, original: unknown, id: number): unknown => {
+const restoreRow = (current: unknown, original: unknown, id: number, order = original): unknown => {
   if (Array.isArray(current) && Array.isArray(original)) {
     let next = current.map((item, itemIndex) => {
       const identity = ['checklistId', 'eventId', 'date'].find(
@@ -59,11 +62,18 @@ const restoreRow = (current: unknown, original: unknown, id: number): unknown =>
       const match = identity
         ? original.find((row) => (row as Row)?.[identity] === (item as Row)?.[identity])
         : original[itemIndex];
-      return restoreRow(item, match, id);
+      let orderMatch: unknown;
+      if (Array.isArray(order))
+        orderMatch = identity
+          ? order.find((row) => (row as Row)?.[identity] === (item as Row)?.[identity])
+          : order[itemIndex];
+      return restoreRow(item, match, id, orderMatch);
     });
     const index = original.findIndex((row) => (row as Row)?.checklistId === id);
     if (index >= 0 && !next.some((row) => (row as Row)?.checklistId === id)) {
-      const later = new Set(original.slice(index + 1).map((row) => (row as Row)?.checklistId));
+      const ordered = Array.isArray(order) ? order : original;
+      const orderIndex = ordered.findIndex((row) => (row as Row)?.checklistId === id);
+      const later = new Set(ordered.slice(orderIndex + 1).map((row) => (row as Row)?.checklistId));
       const insertion = next.findIndex((row) => later.has((row as Row)?.checklistId));
       next = [
         ...next.slice(0, insertion < 0 ? next.length : insertion),
@@ -77,7 +87,7 @@ const restoreRow = (current: unknown, original: unknown, id: number): unknown =>
     return Object.fromEntries(
       Object.entries(current).map(([key, value]) => [
         key,
-        restoreRow(value, (original as Row)[key], id),
+        restoreRow(value, (original as Row)[key], id, (order as Row | undefined)?.[key]),
       ])
     );
   }
@@ -88,7 +98,17 @@ export const changeChecklist = (id: number, previous: boolean, next?: boolean): 
   const version = getSessionVersion();
   const key = rowKey(version, 'checklist', id);
   const pending = locks.get(key);
-  if (pending) return pending;
+  if (pending) {
+    if (pending.next === next) return pending.promise;
+    if (pending.next === undefined)
+      return Promise.reject(new CanceledError('Checklist deletion in progress'));
+    return pending.promise
+      .catch(() => {})
+      .then(() => {
+        assertCurrentSession(version);
+        return changeChecklist(id, previous, next);
+      });
+  }
   const operation = (async () => {
     const change: Change = { next, previous, pending: true, sequence: (sequence += 1) };
     changes.set(key, change);
@@ -101,6 +121,11 @@ export const changeChecklist = (id: number, previous: boolean, next?: boolean): 
       predicate: (query) =>
         query.queryKey[1] === version && domains.includes(String(query.queryKey[3])),
     });
+    if (next === undefined)
+      originals.forEach(([queryKey, data]) => {
+        const hash = JSON.stringify(queryKey);
+        if (!deletionOrders.has(hash)) deletionOrders.set(hash, data);
+      });
     originals.forEach(([queryKey, data]) =>
       queryClient.setQueryData(
         queryKey,
@@ -123,7 +148,7 @@ export const changeChecklist = (id: number, previous: boolean, next?: boolean): 
         if (next === undefined) {
           originals.forEach(([queryKey, original]) => {
             queryClient.setQueryData(queryKey, (current: unknown) =>
-              restoreRow(current, original, id)
+              restoreRow(current, original, id, deletionOrders.get(JSON.stringify(queryKey)))
             );
           });
         } else {
@@ -143,9 +168,12 @@ export const changeChecklist = (id: number, previous: boolean, next?: boolean): 
     }
   })().finally(() => {
     locks.delete(key);
-    if (isCurrentSession(version)) void invalidateResources(domains, version);
+    if (isCurrentSession(version)) {
+      if (![...locks.values()].some((lock) => lock.next === undefined)) deletionOrders.clear();
+      void invalidateResources(domains, version);
+    }
   });
-  locks.set(key, operation);
+  locks.set(key, { next, promise: operation });
   return operation;
 };
 

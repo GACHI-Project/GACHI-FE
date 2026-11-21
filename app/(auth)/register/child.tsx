@@ -218,12 +218,13 @@ export const ClassPicker = ({ selectedSchool, grade, className, onUpdate }: Clas
   const fallback = classQuery.isError || (classQuery.isSuccess && classes.length === 0);
   useEffect(() => {
     if (
+      classQuery.isSuccess &&
       classQuery.data?.length &&
       className &&
       !classQuery.data.some((item) => item.className === className)
     )
       onUpdate({ className: null });
-  }, [classQuery.data, className, onUpdate]);
+  }, [classQuery.isSuccess, classQuery.data, className, onUpdate]);
 
   const showButtons = !isLoading && !fallback && classes.length > 0;
   const showInput =

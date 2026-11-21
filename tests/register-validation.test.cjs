@@ -78,6 +78,29 @@ test('email changes during availability checking prevent sending to the old addr
   assert.equal(runner.result.emailChecking, false);
 });
 
+test('a failed resend availability check preserves the existing code and absolute expiry', async () => {
+  const { runner, check, send, verify, sendCode, inputCode, advance } = emailSetup();
+  await sendCode();
+  inputCode('123456');
+  advance(10);
+  const resend = runner.result.send('first@example.com');
+  check.calls.at(-1).reject(new Error('Availability lookup failed'));
+  await resend;
+  await runner.flush();
+  assert.equal(send.calls.length, 1);
+  assert.equal(runner.result.emailSent, true);
+  assert.equal(runner.result.verificationCode, '123456');
+  advance(5);
+  assert.equal(runner.result.emailTimer, 45);
+  const confirm = runner.result.confirm('first@example.com');
+  assert.equal(verify.calls.length, 1);
+  verify.calls[0].resolve();
+  await confirm;
+  await runner.flush();
+  assert.equal(runner.result.isVerified('first@example.com'), true);
+  runner.unmount();
+});
+
 test('a late email send cannot replace the newer send or its loading state', async () => {
   const { runner, check, send, inputEmail } = emailSetup();
   inputEmail('first@example.com');

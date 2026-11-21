@@ -161,12 +161,7 @@ const useRegisterEmailVerification = () => {
     const request = {};
     sendRequestRef.current = request;
     codeRequestRef.current = null;
-    sentEmailRef.current = null;
-    verifiedEmailRef.current = null;
-    codeRef.current = '';
-    expiresAtRef.current = null;
-    stopTimer();
-    setState({ ...initialState, emailChecking: true });
+    setState((current) => ({ ...current, emailChecking: true, codeChecking: false }));
     const isCurrent = () =>
       focusedRef.current && sendRequestRef.current === request && emailRef.current === email;
     try {
@@ -180,6 +175,12 @@ const useRegisterEmailVerification = () => {
         }));
         return;
       }
+      sentEmailRef.current = null;
+      verifiedEmailRef.current = null;
+      codeRef.current = '';
+      expiresAtRef.current = null;
+      stopTimer();
+      setState({ ...initialState, emailChecking: true });
       const { codeTtlSeconds } = await sendEmailVerificationCode(email);
       if (!isCurrent()) return;
       sentEmailRef.current = email;

@@ -6,11 +6,13 @@ import { Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { type NotificationPreference } from '../../src/api/user';
 import Header from '../../src/components/common/Header';
+import QueryNotice from '../../src/components/common/QueryNotice';
 import Toggle from '../../src/components/common/Toggle';
 import layout from '../../src/constants/layout';
 import { useApiMutation } from '../../src/query/hooks';
 import { saveNotificationPreference } from '../../src/query/profile';
 import { useProfileQuery } from '../../src/query/resources';
+import { hasBlockingQueryError } from '../../src/query/state';
 import styles from '../../src/styles/profile/profileNotification';
 
 type NotificationLevel = 'all' | 'important' | 'urgent';
@@ -78,6 +80,22 @@ const ProfileNotificationScreen = () => {
     if (masterOn) await savePreference(true, nextLevel);
   };
 
+  if (!profile.data || hasBlockingQueryError(profile)) {
+    return (
+      <View style={styles.container}>
+        <Header title={t('profile.notificationSetting.title')} onBack={() => router.back()} />
+        <QueryNotice
+          loading={!profile.error && profile.isPending}
+          message={profile.isPaused ? t('common.waitingConnection') : undefined}
+          onRetry={() => {
+            void profile.refetch();
+          }}
+          retrying={profile.isFetching}
+        />
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <Header title={t('profile.notificationSetting.title')} onBack={() => router.back()} />
@@ -87,6 +105,15 @@ const ProfileNotificationScreen = () => {
         contentContainerStyle={{ paddingBottom: insets.bottom + layout.screenPaddingBottom }}
         showsVerticalScrollIndicator={false}
       >
+        {profile.error && (
+          <QueryNotice
+            message={t('common.refreshFailed')}
+            onRetry={() => {
+              void profile.refetch();
+            }}
+            retrying={profile.isFetching}
+          />
+        )}
         {/* 전체 알림 */}
         <Text style={styles.sectionLabel}>{t('profile.notificationSetting.masterSection')}</Text>
         <View style={styles.masterCard}>

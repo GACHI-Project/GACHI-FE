@@ -795,12 +795,14 @@ const notificationSettings = (r) => {
     '../../src/api/user': { updateNotificationPreference: api.request },
     '../../src/query/profile': { saveNotificationPreference: api.request },
     '../../src/components/common/Header': {},
+    '../../src/components/common/QueryNotice': { default: 'QueryNotice' },
     '../../src/components/common/Toggle': { default: 'Toggle' },
     '../../src/constants/layout': { default: {} },
     '../../src/query/hooks': { useApiMutation: (fn) => fn },
     '../../src/query/resources': {
       useProfileQuery: () => ({ data: r.client.getQueryData(key) }),
     },
+    '../../src/query/state': r.load('src/query/state.ts'),
     '../../src/styles/profile/profileNotification': {
       default: { segmentTabSelected: 'selected' },
     },

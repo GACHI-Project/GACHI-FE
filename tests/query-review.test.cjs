@@ -111,6 +111,41 @@ test('a confirmed notification preference survives a failed profile reconciliati
   assert.equal(view.result.data.notificationEnabled, false);
 });
 
+test('notification settings expose an initial profile error and recover through retry', async () => {
+  const r = setup();
+  const fetch = queuedApi();
+  const view = r.observe(
+    r.load('src/query/options.ts').serverOptions(r.scope(), 'profile', [], fetch.request)
+  );
+  fetch.calls[0].reject(transient());
+  await r.flush();
+  const runner = hookHarness('app/profile/notification.tsx', {
+    ...ui(r),
+    axios: require('axios'),
+    'expo-router': {},
+    '../../src/components/common/Toggle': { default: 'Toggle' },
+    '../../src/query/hooks': { useApiMutation: (fn) => fn },
+    '../../src/query/profile': {},
+    '../../src/query/resources': { useProfileQuery: () => view.result },
+    '../../src/styles/profile/profileNotification': { default: {} },
+  });
+  runner.render();
+  const notice = elements(runner.result, 'QueryNotice')[0];
+  assert.ok(notice);
+  assert.equal(elements(runner.result, 'Toggle').length, 0);
+  notice.props.onRetry();
+  await r.flush();
+  assert.equal(fetch.calls.length, 2);
+  fetch.calls[1].resolve({ notificationPreference: 'OFF' });
+  await r.flush();
+  runner.render();
+  assert.equal(elements(runner.result, 'QueryNotice').length, 0);
+  const toggle = elements(runner.result, 'Toggle')[0].props;
+  assert.equal(toggle.disabled, false);
+  assert.equal(toggle.value, false);
+  runner.unmount();
+});
+
 const calendarSetup = () => {
   const patch = queuedApi();
   const post = queuedApi();

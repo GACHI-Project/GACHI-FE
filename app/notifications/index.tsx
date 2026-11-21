@@ -5,6 +5,7 @@ import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Header from '../../src/components/common/Header';
+import QueryNotice from '../../src/components/common/QueryNotice';
 import HeaderMenuButton from '../../src/components/common/HeaderMenuButton';
 import ChildFilterBar from '../../src/components/common/ChildFilterBar';
 import { type NotificationApiItem, type NotificationType } from '../../src/api/notifications';
@@ -43,6 +44,8 @@ const NotificationsScreen = () => {
     children,
     isLoading,
     loadError,
+    refreshError,
+    retry,
     isFetchingMore,
     loadInitial,
     loadMore,
@@ -189,6 +192,7 @@ const NotificationsScreen = () => {
         ListEmptyComponent={<Text style={styles.emptyText}>{t('notifications.empty')}</Text>}
         ListFooterComponent={
           <>
+            {refreshError && <QueryNotice message={t('common.refreshFailed')} onRetry={retry} />}
             {isFetchingMore && (
               <ActivityIndicator size="small" color={colors.primary[400]} style={styles.loader} />
             )}

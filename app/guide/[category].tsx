@@ -5,10 +5,12 @@ import { ActivityIndicator, FlatList, Text, TouchableOpacity, View } from 'react
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getSchoolGuideFaqs, type SchoolGuideCategoryEnum } from '../../src/api/schoolGuide';
 import Header from '../../src/components/common/Header';
+import QueryNotice from '../../src/components/common/QueryNotice';
 import colors from '../../src/constants/colors';
 import layout from '../../src/constants/layout';
 import useGuideFaqExpand from '../../src/hooks/guide/useGuideFaqExpand';
 import { useServerQuery } from '../../src/query/hooks';
+import { hasBlockingQueryError } from '../../src/query/state';
 import styles from '../../src/styles/guide/categoryScreen';
 
 const CategoryScreen = () => {
@@ -28,7 +30,7 @@ const CategoryScreen = () => {
   );
   const faqs = query.data ?? [];
   const loading = query.isLoading;
-  const error = !categoryEnum || query.isError;
+  const error = !categoryEnum || hasBlockingQueryError(query);
   const { expandedId, answerCache, loadingDetailId, handleExpand } = useGuideFaqExpand();
 
   const renderContent = () => {
@@ -42,12 +44,27 @@ const CategoryScreen = () => {
     if (error) {
       return (
         <View style={styles.centered}>
-          <Text style={styles.errorText}>{t('guide.loadFailed')}</Text>
+          <QueryNotice
+            message={t('guide.loadFailed')}
+            onRetry={() => {
+              void query.refetch();
+            }}
+            retrying={query.isFetching}
+          />
         </View>
       );
     }
     return (
       <>
+        {query.error && (
+          <QueryNotice
+            message={t('common.refreshFailed')}
+            onRetry={() => {
+              void query.refetch();
+            }}
+            retrying={query.isFetching}
+          />
+        )}
         <View style={styles.countRow}>
           <Text style={styles.countText}>
             {(() => {

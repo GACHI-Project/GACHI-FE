@@ -9,6 +9,7 @@ import {
 import { useServerQuery } from '../../../query/hooks';
 import { fromServerLanguageCode } from '../../../types/language';
 import CenteredMessage from '../../common/CenteredMessage';
+import QueryNotice from '../../common/QueryNotice';
 import FullDocPageSection from './FullDocPageSection';
 import PageImageViewerModal from './PageImageViewerModal';
 import TextSection from './TextSection';
@@ -58,6 +59,8 @@ const FullDocTab = ({ newsletterId, scrollRef, scrollY = 0 }: Props) => {
     [scrollY, scrollToPage]
   );
 
+  if (newsletterId && !data && !query.error && query.fetchStatus === 'paused')
+    return <QueryNotice loading message={t('common.waitingConnection')} />;
   if (loading) return <CenteredMessage loading />;
   if (error || !data)
     return <CenteredMessage message={error ?? t('scan.result.fullDoc.error.loadFailed')} />;

@@ -6,6 +6,7 @@ import { queryClient, resourceKey } from '../../query/client';
 import { useApiMutation, useSessionScope } from '../../query/hooks';
 import { notificationListOptions, readNotifications } from '../../query/notifications';
 import { useChildrenQuery, useUnreadQuery } from '../../query/resources';
+import { hasBlockingQueryError } from '../../query/state';
 
 const useNotificationList = () => {
   const scope = useSessionScope();
@@ -22,10 +23,14 @@ const useNotificationList = () => {
   );
   const firstFocus = useRef(true);
   const loadInitial = useCallback(() => {
-    void queryClient.invalidateQueries({
-      queryKey: resourceKey(scope.version, scope.language, 'notifications'),
-      exact: true,
-    });
+    void Promise.all(
+      ['notifications', 'children'].map((domain) =>
+        queryClient.invalidateQueries({
+          queryKey: resourceKey(scope.version, scope.language, domain),
+          exact: true,
+        })
+      )
+    );
   }, [scope.version, scope.language]);
   useFocusEffect(
     useCallback(() => {
@@ -42,6 +47,7 @@ const useNotificationList = () => {
     ).values()
   );
   const read = useApiMutation(readNotifications);
+  const loadError = hasBlockingQueryError(query) || hasBlockingQueryError(childrenQuery);
   return {
     notifications,
     children: (childrenQuery.data ?? []).map((child) => ({
@@ -50,7 +56,13 @@ const useNotificationList = () => {
       colorCode: child.colorCode,
     })),
     isLoading: query.isLoading || childrenQuery.isLoading,
-    loadError: query.isError || childrenQuery.isError,
+    loadError,
+    refreshError: !loadError && (!!query.error || !!childrenQuery.error),
+    retry: () => {
+      if (query.isFetchNextPageError && !childrenQuery.error)
+        void query.fetchNextPage({ cancelRefetch: false });
+      else loadInitial();
+    },
     isFetchingMore: query.isFetchingNextPage,
     loadInitial,
     loadMore: async () => {

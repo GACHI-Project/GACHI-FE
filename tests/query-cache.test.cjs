@@ -367,6 +367,8 @@ const previewSheet = (r, query) => {
     ...screenMocks(),
     '../../../api/calendar': { CalendarApiError: Error },
     '../../../i18n': { default: { t: translate } },
+    '../../../query/calendar': r.load('src/query/calendar.ts'),
+    '../../../query/state': r.load('src/query/state.ts'),
     '../../../query/hooks': { useApiMutation: (fn) => fn, useServerQuery: () => query },
     '../../../utils/calendarDday': {},
     '../../../utils/calendarEventTime': {},
@@ -506,6 +508,57 @@ test('a second failed status refresh still offers the user another retry', async
   assert.equal(alerts.length, 2);
   assert.equal(alerts[1][2][1].text, 'scan.loading.paused.retryButton');
   runner.unmount();
+});
+
+test('a failed status GET retries GET even when the cached analysis status is FAILED', async () => {
+  const r = setup();
+  let requests = 0;
+  const query = {
+    data: { status: 'FAILED' },
+    isError: true,
+    errorUpdatedAt: 1,
+    refetch: () => {
+      requests += 1;
+      return Promise.resolve({ isError: true });
+    },
+  };
+  const { runner, upload, alerts } = scanLoadingScreen(r, query);
+  upload.calls[0].resolve({ newsletterId: 1 });
+  await runner.flush();
+  alerts[0][2][1].onPress();
+  assert.equal(requests, 1);
+  runner.unmount();
+});
+
+test('a temporary preview refresh failure preserves the editable draft and registration retry', () => {
+  const r = setup();
+  const query = { data: [previewItem('event')], isFetching: false };
+  const sheet = previewSheet(r, query);
+  sheet.render().onUpdate('event', { day: '25' });
+  query.error = Object.assign(new Error('Unavailable'), { status: 503 });
+  const view = sheet.render();
+  assert.equal(view.canRegister, true);
+  assert.equal(view.previewError, null);
+  assert.equal(view.previewRefreshError, 'common.refreshFailed');
+  assert.equal(view.eventStates.event.day, '25');
+  sheet.runner.unmount();
+});
+
+test('an expired preview blocks an existing draft and a first request failure blocks registration', () => {
+  const r = setup();
+  const query = { data: [previewItem('event')], isFetching: false };
+  const sheet = previewSheet(r, query);
+  sheet.render();
+  query.error = Object.assign(new Error('Expired'), { status: 404 });
+  assert.equal(sheet.render().canRegister, false);
+  assert.ok(sheet.current().previewError);
+  sheet.runner.unmount();
+  const missing = previewSheet(r, {
+    error: Object.assign(new Error('Unavailable'), { status: 503 }),
+  });
+  assert.equal(missing.render().canRegister, false);
+  assert.ok(missing.current().previewError);
+  missing.runner.unmount();
 });
 
 const languageScreen = (r, api, saveLanguage = () => Promise.resolve()) => {
@@ -684,6 +737,7 @@ const notificationSettings = (r) => {
     },
     'expo-router': {},
     '../../src/api/user': { updateNotificationPreference: api.request },
+    '../../src/query/profile': { saveNotificationPreference: api.request },
     '../../src/components/common/Header': {},
     '../../src/components/common/Toggle': { default: 'Toggle' },
     '../../src/constants/layout': { default: {} },

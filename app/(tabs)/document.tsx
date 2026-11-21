@@ -6,6 +6,7 @@ import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, View } from
 import { type NewsletterItem } from '../../src/api/newsletter';
 import ChildFilterBar from '../../src/components/common/ChildFilterBar';
 import Header from '../../src/components/common/Header';
+import QueryNotice from '../../src/components/common/QueryNotice';
 import DocumentCard from '../../src/components/document/DocumentCard';
 import colors from '../../src/constants/colors';
 import fonts from '../../src/constants/fonts';
@@ -33,15 +34,22 @@ const DocumentScreen = () => {
   const [selectedChildName, setSelectedChildName] = useState<string | undefined>(undefined);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const { newsletters, isLoading, isLoadingMore, loadMore } = useNewsletterList(
-    selectedChildName,
-    searchQuery
-  );
+  const { newsletters, isLoading, isLoadingMore, loadMore, error, loadError, retry, isWaiting } =
+    useNewsletterList(selectedChildName, searchQuery);
 
   const renderContent = () => {
+    if (isWaiting) return <QueryNotice loading message={t('common.waitingConnection')} />;
     if (isLoading) {
       return <ActivityIndicator color={colors.primary[400]} style={styles.loader} />;
     }
+    if (loadError)
+      return (
+        <QueryNotice
+          onRetry={() => {
+            void retry();
+          }}
+        />
+      );
     if (newsletters.length === 0) {
       return <Text style={styles.emptyText}>{t('document.empty')}</Text>;
     }
@@ -99,6 +107,14 @@ const DocumentScreen = () => {
         scrollEventThrottle={400}
       >
         {renderContent()}
+        {error && !loadError && !isLoading && (
+          <QueryNotice
+            message={t('common.refreshFailed')}
+            onRetry={() => {
+              void retry();
+            }}
+          />
+        )}
         {isLoadingMore && (
           <ActivityIndicator
             size="small"

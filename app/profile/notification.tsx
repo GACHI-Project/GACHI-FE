@@ -4,14 +4,12 @@ import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import {
-  updateNotificationPreference as updateNotificationPreferenceApi,
-  type NotificationPreference,
-} from '../../src/api/user';
+import { type NotificationPreference } from '../../src/api/user';
 import Header from '../../src/components/common/Header';
 import Toggle from '../../src/components/common/Toggle';
 import layout from '../../src/constants/layout';
 import { useApiMutation } from '../../src/query/hooks';
+import { saveNotificationPreference } from '../../src/query/profile';
 import { useProfileQuery } from '../../src/query/resources';
 import styles from '../../src/styles/profile/profileNotification';
 
@@ -44,7 +42,7 @@ const levelToPref = (lv: NotificationLevel): NotificationPreference => {
 };
 
 const ProfileNotificationScreen = () => {
-  const updateNotificationPreference = useApiMutation(updateNotificationPreferenceApi, ['profile']);
+  const updateNotificationPreference = useApiMutation(saveNotificationPreference, ['profile']);
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const profile = useProfileQuery();

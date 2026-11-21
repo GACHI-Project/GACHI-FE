@@ -13,14 +13,11 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { CalendarPreviewItem } from '../../../api/calendar';
-import {
-  CalendarApiError,
-  getCalendarPreview,
-  patchCalendarPreviewDates as patchCalendarPreviewDatesApi,
-  postCalendarEvents as postCalendarEventsApi,
-} from '../../../api/calendar';
+import { CalendarApiError, getCalendarPreview } from '../../../api/calendar';
 import i18n from '../../../i18n';
+import { registerNewsletterCalendar } from '../../../query/calendar';
 import { useApiMutation, useServerQuery } from '../../../query/hooks';
+import { isTransientQueryError } from '../../../query/state';
 import { getCalendarDday } from '../../../utils/calendarDday';
 import { formatEventTime } from '../../../utils/calendarEventTime';
 import {
@@ -93,24 +90,7 @@ const SaveBottomSheet = ({
   childName,
   newsletterId,
 }: Props) => {
-  const postCalendarEvents = useApiMutation(postCalendarEventsApi, [
-    'calendar',
-    'markers',
-    'preview',
-    'newsletters',
-    'recent',
-    'today',
-    'newsletterChecklist',
-  ]);
-  const patchCalendarPreviewDates = useApiMutation(patchCalendarPreviewDatesApi, [
-    'calendar',
-    'markers',
-    'preview',
-    'newsletters',
-    'recent',
-    'today',
-    'newsletterChecklist',
-  ]);
+  const registerCalendar = useApiMutation(registerNewsletterCalendar);
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { height: windowHeight } = useWindowDimensions();
@@ -134,7 +114,10 @@ const SaveBottomSheet = ({
   const eventStates = useMemo(() => currentDraft?.eventStates ?? {}, [currentDraft]);
   let previewError: string | null = null;
   if (!newsletterId) previewError = t('scan.result.saveBottomSheet.error.noPreviewMsg');
-  else if (previewQueryError)
+  else if (
+    previewQueryError &&
+    !(currentDraft && !currentDraft.invalid && isTransientQueryError(previewQueryError))
+  )
     previewError = t(
       previewQueryError instanceof CalendarApiError &&
         (previewQueryError.status === 404 || previewQueryError.code === 'CAL4042')
@@ -142,6 +125,7 @@ const SaveBottomSheet = ({
         : 'scan.result.saveBottomSheet.error.loadFailed'
     );
   else if (currentDraft?.invalid) previewError = t('scan.result.saveBottomSheet.error.loadFailed');
+  const previewRefreshError = previewQueryError && !previewError ? t('common.refreshFailed') : null;
   const previewLoading =
     visible && !!newsletterId && !previewError && (previewQuery.isLoading || !currentDraft);
   const [registering, setRegistering] = useState(false);
@@ -337,25 +321,14 @@ const SaveBottomSheet = ({
         }))
         .filter((e) => e.correctedDate !== e.originalDate)
         .map(({ tempEventId, correctedDate }) => ({ tempEventId, correctedDate }));
-      if (dateCorrections.length > 0) {
-        await patchCalendarPreviewDates(newsletterId!, dateCorrections);
-      }
-      await postCalendarEvents(newsletterId!, postEvents);
+      await registerCalendar(newsletterId!, postEvents, dateCorrections);
       setStep('success');
     } catch (e) {
       Alert.alert(t('scan.result.saveBottomSheet.error.registerFailed'), mapRegisterError(e));
     } finally {
       setRegistering(false);
     }
-  }, [
-    canRegister,
-    t,
-    previews,
-    eventStates,
-    newsletterId,
-    patchCalendarPreviewDates,
-    postCalendarEvents,
-  ]);
+  }, [canRegister, t, previews, eventStates, newsletterId, registerCalendar]);
 
   return (
     <Modal visible={show} transparent animationType="none" onRequestClose={onClose}>
@@ -391,6 +364,10 @@ const SaveBottomSheet = ({
                   hasAnyMissingDate={hasAnyMissingDate}
                   previewLoading={previewLoading}
                   previewError={previewError}
+                  previewRefreshError={previewRefreshError}
+                  onRetryPreview={() => {
+                    void previewQuery.refetch();
+                  }}
                   previews={previews}
                   eventStates={eventStates}
                   childName={childName}

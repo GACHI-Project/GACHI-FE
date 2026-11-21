@@ -5,6 +5,8 @@ import { ActivityIndicator, Text, TouchableOpacity, View } from 'react-native';
 import { getRecentNewsletters } from '../../api/newsletter';
 import colors from '../../constants/colors';
 import { useServerQuery } from '../../query/hooks';
+import { hasBlockingQueryError } from '../../query/state';
+import QueryNotice from '../common/QueryNotice';
 import styles from './recentDocs.styles';
 
 const formatGroupDate = (dateStr: string, locale: string) =>
@@ -17,7 +19,7 @@ const RecentDocs = () => {
     .map((group) => ({ ...group, items: group.items.filter((doc) => doc.title != null) }))
     .filter((group) => group.items.length > 0);
   const loading = query.isLoading;
-  const error = query.isError;
+  const error = hasBlockingQueryError(query);
 
   const renderContent = () => {
     if (loading) {
@@ -30,7 +32,14 @@ const RecentDocs = () => {
       );
     }
     if (error) {
-      return <Text style={styles.docMeta}>{t('common.networkError')}</Text>;
+      return (
+        <QueryNotice
+          onRetry={() => {
+            void query.refetch();
+          }}
+          retrying={query.isFetching}
+        />
+      );
     }
     if (groups.length === 0) {
       return <Text style={styles.docMeta}>{t('document.empty')}</Text>;
@@ -97,6 +106,15 @@ const RecentDocs = () => {
           <Text style={styles.moreText}>{t('home.recentDocs.more')}</Text>
         </TouchableOpacity>
       </View>
+      {query.error && !error && (
+        <QueryNotice
+          message={t('common.refreshFailed')}
+          onRetry={() => {
+            void query.refetch();
+          }}
+          retrying={query.isFetching}
+        />
+      )}
       {renderContent()}
     </View>
   );

@@ -5,6 +5,7 @@ import { useCallback, useRef } from 'react';
 import { queryClient, resourceKey } from '../../query/client';
 import { useDebouncedValue, useSessionScope } from '../../query/hooks';
 import { newsletterListOptions } from '../../query/options';
+import { hasBlockingQueryError } from '../../query/state';
 
 const useNewsletterList = (selectedChildName: string | undefined, searchQuery: string) => {
   const scope = useSessionScope();
@@ -19,10 +20,11 @@ const useNewsletterList = (selectedChildName: string | undefined, searchQuery: s
     search
   );
   const keyHash = JSON.stringify(queryKey);
+  const enabled = scope.authenticated && search === debounced;
   const query = useInfiniteQuery(
     {
       ...newsletterListOptions(scope, selectedChildName, search),
-      enabled: scope.authenticated && search === debounced,
+      enabled,
       subscribed: focused,
     },
     queryClient
@@ -40,7 +42,7 @@ const useNewsletterList = (selectedChildName: string | undefined, searchQuery: s
     }, [keyHash])
   );
   const loadMore = async () => {
-    if (!focused || query.isFetching || !query.hasNextPage) return;
+    if (!focused || !enabled || query.isFetching || !query.hasNextPage) return;
     await query.fetchNextPage({ cancelRefetch: false });
   };
   return {
@@ -49,6 +51,13 @@ const useNewsletterList = (selectedChildName: string | undefined, searchQuery: s
     isLoading: search !== debounced || query.isLoading,
     isLoadingMore: query.isFetchingNextPage,
     error: query.error,
+    loadError: hasBlockingQueryError(query),
+    isWaiting: query.data === undefined && !query.error && query.fetchStatus === 'paused',
+    retry: async () => {
+      if (!focused || !enabled) return;
+      if (query.isFetchNextPageError) await query.fetchNextPage({ cancelRefetch: false });
+      else await query.refetch();
+    },
     loadMore,
   };
 };

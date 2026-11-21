@@ -214,7 +214,7 @@ const ScanLoadingScreen = () => {
         text: t('scan.loading.paused.retryButton'),
         onPress: () => {
           const operation =
-            analysisStatus === 'FAILED'
+            !statusError && analysisStatus === 'FAILED'
               ? retryAnalysis(newsletterId).then((result) =>
                   applyResumeResult(newsletterId, result)
                 )

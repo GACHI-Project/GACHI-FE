@@ -43,11 +43,13 @@ import {
 import FormField from '../../src/components/auth/FormField';
 import ConfirmModal from '../../src/components/common/ConfirmModal';
 import Header from '../../src/components/common/Header';
+import QueryNotice from '../../src/components/common/QueryNotice';
 import colors from '../../src/constants/colors';
 import layout from '../../src/constants/layout';
 import { KAKAO_REDIRECT_URI } from '../../src/constants/socialAuth';
 import { useApiMutation } from '../../src/query/hooks';
 import { useProfileQuery } from '../../src/query/resources';
+import { hasBlockingQueryError } from '../../src/query/state';
 import { useKakaoAuthStore } from '../../src/store/kakaoAuthStore';
 import linkStyles from '../../src/styles/profile/accountLink';
 import styles from '../../src/styles/profile/profileEdit';
@@ -260,7 +262,7 @@ const ProfileEditScreen = () => {
   const [editSheetVisible, setEditSheetVisible] = useState(false);
   const [editSheetFocus, setEditSheetFocus] = useState<'name' | 'phone'>('name');
   const profileQuery = useProfileQuery();
-  const userInfo = profileQuery.data ?? null;
+  const userInfo = hasBlockingQueryError(profileQuery) ? null : (profileQuery.data ?? null);
   const [disconnectTarget, setDisconnectTarget] = useState<SocialProvider | null>(null);
   const [mismatchTarget, setMismatchTarget] = useState<SocialProvider | null>(null);
   const [processingProvider, setProcessingProvider] = useState<SocialProvider | null>(null);
@@ -459,6 +461,21 @@ const ProfileEditScreen = () => {
     setEditSheetVisible(true);
   };
 
+  if (!userInfo) {
+    const waiting = !profileQuery.error && profileQuery.fetchStatus === 'paused';
+    return (
+      <View style={styles.container}>
+        <Header title={t('profile.edit')} onBack={() => router.back()} />
+        <QueryNotice
+          loading={!profileQuery.error && profileQuery.isPending}
+          message={waiting ? t('common.waitingConnection') : undefined}
+          onRetry={loadUserInfo}
+          retrying={profileQuery.isFetching}
+        />
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <Header title={t('profile.edit')} onBack={() => router.back()} onHelp={() => {}} />
@@ -467,6 +484,13 @@ const ProfileEditScreen = () => {
         contentContainerStyle={{ paddingBottom: insets.bottom + layout.screenPaddingBottom }}
         showsVerticalScrollIndicator={false}
       >
+        {profileQuery.error && (
+          <QueryNotice
+            message={t('common.refreshFailed')}
+            onRetry={loadUserInfo}
+            retrying={profileQuery.isFetching}
+          />
+        )}
         <View style={styles.profileCard}>
           <Image source={require('../../assets/icon.png')} style={styles.avatar} />
           <Text style={styles.loginId}>{userInfo?.loginId ?? ''}</Text>

@@ -27,7 +27,8 @@ export interface NewsletterStatusResult {
 export class NewsletterApiError extends Error {
   constructor(
     public readonly code: string,
-    message: string
+    message: string,
+    public readonly status?: number
   ) {
     super(message);
     this.name = 'NewsletterApiError';
@@ -38,7 +39,8 @@ const wrapError = (error: unknown): Error => {
   if (axios.isAxiosError(error) && error.response?.data?.code) {
     return new NewsletterApiError(
       error.response.data.code,
-      error.response.data.message ?? '알 수 없는 오류'
+      error.response.data.message ?? '알 수 없는 오류',
+      error.response.status
     );
   }
   return error instanceof Error ? error : new Error(String(error));

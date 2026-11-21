@@ -4,7 +4,8 @@ import { apiClient, getAuthRequestConfig } from './auth';
 export class SchoolGuideApiError extends Error {
   constructor(
     public readonly code: string,
-    message: string
+    message: string,
+    public readonly status?: number
   ) {
     super(message);
     this.name = 'SchoolGuideApiError';
@@ -15,7 +16,8 @@ const wrapError = (error: unknown): Error => {
   if (axios.isAxiosError(error) && error.response?.data?.code) {
     return new SchoolGuideApiError(
       error.response.data.code,
-      error.response.data.message ?? '알 수 없는 오류'
+      error.response.data.message ?? '알 수 없는 오류',
+      error.response.status
     );
   }
   return error instanceof Error ? error : new Error(String(error));

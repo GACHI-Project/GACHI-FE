@@ -11,12 +11,13 @@ import {
   View,
 } from 'react-native';
 import { ChildPayload } from '../../../src/api/child';
-import { fetchClasses, searchSchools } from '../../../src/api/school';
+import { searchSchools } from '../../../src/api/school';
 import { PrimaryButton } from '../../../src/components/common/Button';
 import StepHeader from '../../../src/components/common/StepHeader';
 import { CALENDAR_COLORS, GRADES } from '../../../src/constants/child';
 import colors from '../../../src/constants/colors';
 import { useDebouncedValue, useServerQuery } from '../../../src/query/hooks';
+import { schoolClassesResource } from '../../../src/query/schools';
 import { useRegisterStore } from '../../../src/store/registerStore';
 import styles from '../../../src/styles/register/child';
 import cardStyles from '../../../src/styles/register/childCard';
@@ -206,13 +207,8 @@ interface ClassPickerProps {
 
 export const ClassPicker = ({ selectedSchool, grade, className, onUpdate }: ClassPickerProps) => {
   const { t } = useTranslation();
-  const classQuery = useServerQuery(
-    'schools',
-    ['classes', selectedSchool?.officeCode, selectedSchool?.schoolCode, grade],
-    (signal) =>
-      fetchClasses(selectedSchool!.officeCode, selectedSchool!.schoolCode, grade!, signal),
-    { public: true, enabled: !!selectedSchool && grade !== null, staleTime: 300000 }
-  );
+  const { params, fetch, options } = schoolClassesResource(selectedSchool, grade);
+  const classQuery = useServerQuery('schools', params, fetch, options);
   const classes = classQuery.data ?? [];
   const { isLoading } = classQuery;
   const fallback = classQuery.isError || (classQuery.isSuccess && classes.length === 0);
@@ -237,11 +233,20 @@ export const ClassPicker = ({ selectedSchool, grade, className, onUpdate }: Clas
         <View style={cardStyles.classPickerPlaceholder} />
       )}
       {isLoading && (
-        <ActivityIndicator
-          size="small"
-          color={colors.primary[400]}
-          style={cardStyles.searchLoader}
-        />
+        <View style={cardStyles.classLoadingRow}>
+          {className ? (
+            <View
+              style={[
+                cardStyles.gradeButton,
+                cardStyles.classButton,
+                cardStyles.gradeButtonSelected,
+              ]}
+            >
+              <Text style={[cardStyles.gradeText, cardStyles.gradeTextSelected]}>{className}</Text>
+            </View>
+          ) : null}
+          <ActivityIndicator size="small" color={colors.primary[400]} />
+        </View>
       )}
       {showButtons && (
         <ScrollView

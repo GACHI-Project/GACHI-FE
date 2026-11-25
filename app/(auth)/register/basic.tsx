@@ -259,7 +259,8 @@ const RegisterBasicScreen = () => {
 
           {emailSent &&
             (() => {
-              const isExpired = emailTimer === null && codeValidation !== 'success';
+              const isExpired =
+                emailTimer === null && !codeChecking && codeValidation !== 'success';
               const codeState = isExpired ? 'error' : codeValidation;
               const translatedCodeMessage = codeMessageKey ? t(codeMessageKey) : undefined;
               const codeMsg = isExpired
@@ -348,8 +349,9 @@ const RegisterBasicScreen = () => {
         <PrimaryButton
           label={t('common.next')}
           onPress={() => {
-            if (!canContinue) return;
-            const values = getValues();
+            const result = formSchema.safeParse(getValues());
+            if (!result.success) return;
+            const values = result.data;
             if (
               !idCheck.canSubmit(values.id) ||
               !phoneCheck.canSubmit(values.phone.replace(/-/g, '')) ||

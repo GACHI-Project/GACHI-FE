@@ -73,8 +73,12 @@ const useRegisterEmailVerification = () => {
 
   const expireVerification = useCallback(() => {
     stopTimer();
-    codeRequestRef.current = null;
     expiresAtRef.current = null;
+    // A request already sent to the server can still succeed after the countdown.
+    if (codeRequestRef.current) {
+      setState((current) => ({ ...current, emailTimer: null }));
+      return;
+    }
     verifiedEmailRef.current = null;
     setState((current) => ({
       ...current,
@@ -118,6 +122,7 @@ const useRegisterEmailVerification = () => {
 
   const updateCode = (value: string) => {
     const code = value.replace(/\D/g, '').slice(0, 6);
+    if (codeRef.current === code) return;
     codeRef.current = code;
     verifiedEmailRef.current = null;
     codeRequestRef.current = null;
@@ -157,11 +162,10 @@ const useRegisterEmailVerification = () => {
       return;
     }
 
-    emailRef.current = email;
+    if (emailRef.current !== email || verifiedEmailRef.current !== null) updateEmail(email);
     const request = {};
     sendRequestRef.current = request;
-    codeRequestRef.current = null;
-    setState((current) => ({ ...current, emailChecking: true, codeChecking: false }));
+    setState((current) => ({ ...current, emailChecking: true }));
     const isCurrent = () =>
       focusedRef.current && sendRequestRef.current === request && emailRef.current === email;
     try {
@@ -175,6 +179,7 @@ const useRegisterEmailVerification = () => {
         }));
         return;
       }
+      codeRequestRef.current = null;
       sentEmailRef.current = null;
       verifiedEmailRef.current = null;
       codeRef.current = '';
@@ -239,10 +244,6 @@ const useRegisterEmailVerification = () => {
     try {
       await verifyEmailCode(email, code);
       if (!isCurrent()) return;
-      if (expiresAtRef.current === null || expiresAtRef.current <= Date.now()) {
-        expireVerification();
-        return;
-      }
       stopTimer();
       expiresAtRef.current = null;
       verifiedEmailRef.current = email;

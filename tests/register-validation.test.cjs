@@ -1,11 +1,228 @@
 /* eslint-env node */
 const assert = require('node:assert/strict');
-const { test } = require('node:test');
+const { test, afterEach } = require('node:test');
 const { z } = require('zod');
+const { queryRuntime } = require('./helpers/queryRuntime.cjs');
 const { hookHarness, queuedApi } = require('./helpers/hookHarness.cjs');
 
 // These tests exercise request ordering; input formats are validated by the production schemas.
 const schema = { safeParse: (value) => ({ success: value !== '' }) };
+
+const availabilityCleanups = new Set();
+afterEach(() => {
+  availabilityCleanups.forEach((cleanup) => cleanup());
+  availabilityCleanups.clear();
+});
+
+const availabilitySetup = (field) => {
+  const api = queuedApi();
+  const runtime = queryRuntime();
+  const client = runtime.load('src/query/client.ts');
+  const { serverOptions } = runtime.load('src/query/options.ts');
+  // Execute the real debounce hook with the harness clock and use a real query observer.
+  const debounce = hookHarness(
+    'src/query/hooks.ts',
+    {
+      '@react-navigation/native': {},
+      '@tanstack/react-query': {},
+      'react-i18next': {},
+      '../utils/authSession': {},
+      './client': {},
+      './options': {},
+    },
+    {},
+    'useDebouncedValue'
+  );
+  let view;
+  let focused = true;
+  let disposed = false;
+  const runner = hookHarness('src/hooks/auth/useRegisterAvailability.ts', {
+    '../../api/auth': { checkLoginId: api.request, checkPhoneNumber: api.request },
+    '../../validation/auth': { loginIdSchema: schema, phoneNumberSchema: schema },
+    '../../query/client': client,
+    '../../query/hooks': {
+      useSessionScope: runtime.scope,
+      useDebouncedValue: (value, delay) => debounce.render(value, delay),
+      useServerQuery: (domain, params, fetch, options) => {
+        const next = {
+          ...serverOptions(runtime.scope(), domain, params, fetch),
+          ...options,
+          enabled: focused && options.enabled,
+        };
+        if (!view) view = runtime.observe(next);
+        else view.setOptions(next);
+        return view.result;
+      },
+    },
+  });
+  const { runTimers, flush, blur, focus, unmount } = runner;
+  runner.runTimers = () => {
+    if (disposed) return;
+    debounce.runTimers();
+    runTimers();
+    runner.render();
+  };
+  runner.flush = async () => {
+    await flush();
+    if (!disposed) runner.render();
+  };
+  runner.blur = () => {
+    focused = false;
+    blur();
+    view.dispose();
+  };
+  runner.focus = () => {
+    focused = true;
+    view = undefined;
+    focus();
+    runner.render();
+  };
+  runner.unmount = () => {
+    if (disposed) return;
+    disposed = true;
+    unmount();
+    debounce.unmount();
+    runtime.dispose();
+  };
+  availabilityCleanups.add(runner.unmount);
+  runner.render(field);
+  const input = (value) => {
+    runner.result.check(value);
+    runner.render();
+  };
+  return { runner, api, input };
+};
+
+['id', 'phone'].forEach((field) => {
+  test(`${field}: a late success cannot overwrite the current rejection`, async () => {
+    const { runner, api, input } = availabilitySetup(field);
+    input('first');
+    runner.runTimers();
+    input('second');
+    runner.runTimers();
+    api.calls[1].resolve({ available: false });
+    await runner.flush();
+    api.calls[0].resolve({ available: true });
+    await runner.flush();
+    assert.equal(runner.result.validation, 'error');
+    assert.equal(runner.result.isAvailable('second'), false);
+    assert.equal(runner.result.messageKey, `auth.register.basic.error.${field}Taken`);
+  });
+
+  test(`${field}: stale failures cannot end the newer request or change its message`, async () => {
+    const { runner, api, input } = availabilitySetup(field);
+    input('first');
+    runner.runTimers();
+    input('second');
+    runner.runTimers();
+    api.calls[0].reject(new Error('Old request failed'));
+    await runner.flush();
+    assert.equal(runner.result.checking, true);
+    assert.equal(runner.result.validation, undefined);
+    api.calls[1].resolve({ available: true });
+    await runner.flush();
+    assert.equal(runner.result.isAvailable('second'), true);
+    assert.equal(runner.result.isAvailable('first'), false);
+  });
+
+  test(`${field}: changing input invalidates a request before the next debounce fires`, async () => {
+    const { runner, api, input } = availabilitySetup(field);
+    input('first');
+    runner.runTimers();
+    input('second');
+    api.calls[0].resolve({ available: true });
+    await runner.flush();
+    assert.equal(runner.result.validation, undefined);
+    assert.equal(runner.result.checking, true);
+    assert.equal(api.calls.length, 1);
+    input('');
+    runner.runTimers();
+    assert.equal(api.calls.length, 1);
+    assert.equal(runner.result.checking, false);
+  });
+
+  test(`${field}: returning to the same input does not revive its old request`, async () => {
+    const { runner, api, input } = availabilitySetup(field);
+    input('first');
+    runner.runTimers();
+    input('second');
+    input('first');
+    runner.runTimers();
+    api.calls[0].resolve({ available: true });
+    await runner.flush();
+    assert.equal(runner.result.checking, true);
+    assert.equal(runner.result.isAvailable('first'), false);
+    api.calls[1].resolve({ available: false });
+    await runner.flush();
+    assert.equal(runner.result.validation, 'error');
+  });
+
+  test(`${field}: blur discards pending results and focus revalidates availability`, async () => {
+    const { runner, api, input } = availabilitySetup(field);
+    input('first');
+    runner.runTimers();
+    runner.blur();
+    api.calls[0].resolve({ available: true });
+    await runner.flush();
+    assert.equal(runner.result.validation, undefined);
+    runner.focus();
+    runner.runTimers();
+    assert.equal(api.calls.length, 2);
+    api.calls[1].resolve({ available: true });
+    await runner.flush();
+    assert.equal(runner.result.isAvailable('first'), true);
+    runner.blur();
+    runner.focus();
+    runner.runTimers();
+    assert.equal(api.calls.length, 3);
+    assert.equal(runner.result.canSubmit('first'), false);
+    api.calls[2].resolve({ available: false });
+    await runner.flush();
+    assert.equal(runner.result.isAvailable('first'), false);
+  });
+
+  test(`${field}: unmount cancels debounce and ignores an in-flight response`, async () => {
+    const pending = availabilitySetup(field);
+    pending.input('first');
+    pending.runner.runTimers();
+    pending.runner.unmount();
+    pending.api.calls[0].reject(new Error('Late failure'));
+    await pending.runner.flush();
+    assert.equal(pending.runner.postUnmountUpdates, 0);
+    const debouncing = availabilitySetup(field);
+    debouncing.input('first');
+    debouncing.runner.unmount();
+    debouncing.runner.runTimers();
+    assert.equal(debouncing.api.calls.length, 0);
+  });
+
+  test(`${field}: rendered validation uses state while submission immediately guards pending work`, async () => {
+    const { runner, api, input } = availabilitySetup(field);
+    input('first');
+    runner.runTimers();
+    api.calls[0].resolve({ available: true });
+    await runner.flush();
+    assert.equal(
+      runner.renderValue((result) => result.isAvailable('first')),
+      true
+    );
+    assert.equal(runner.result.canSubmit('first'), true);
+    runner.result.check('first');
+    // A committed render is a snapshot; an event guard sees pending work immediately.
+    assert.equal(
+      runner.renderValue((result) => result.isAvailable('first')),
+      true
+    );
+    assert.equal(runner.result.canSubmit('first'), false);
+    runner.render();
+    assert.equal(
+      runner.renderValue((result) => result.isAvailable('first')),
+      false
+    );
+    runner.blur();
+    assert.equal(runner.result.canSubmit('first'), false);
+  });
+});
 
 class AuthApiError extends Error {
   constructor(code) {
@@ -194,6 +411,50 @@ test('verification is bound to the email address and resets on email changes', a
   });
 });
 
+test('equivalent normalized code edits preserve pending and completed verification', async () => {
+  const { runner, verify, inputCode, sendCode } = emailSetup();
+  await sendCode();
+  inputCode();
+  const pending = runner.result.confirm('first@example.com');
+  inputCode('123-4567');
+  assert.equal(runner.result.codeChecking, true);
+  verify.calls[0].resolve();
+  await pending;
+  await runner.flush();
+  inputCode('123 456');
+  assert.equal(runner.result.canSubmit('first@example.com'), true);
+});
+
+['unavailable email', 'availability error'].forEach((failure) => {
+  test(`a resend preserves the active code and its deadline after an ${failure}`, async () => {
+    const { runner, check, send, verify, inputCode, sendCode, advance } = emailSetup();
+    await sendCode();
+    inputCode();
+    const resend = runner.result.send('first@example.com');
+    await runner.flush();
+    assert.equal(runner.result.emailChecking, true);
+    await runner.result.confirm('first@example.com');
+    assert.equal(verify.calls.length, 0);
+    advance(20);
+    await runner.flush();
+    assert.equal(runner.result.emailTimer, 40);
+    if (failure === 'unavailable email') check.calls[1].resolve({ available: false });
+    else check.calls[1].reject(new Error('Availability check failed'));
+    await resend;
+    await runner.flush();
+    assert.equal(runner.result.emailChecking, false);
+    assert.equal(runner.result.verificationCode, '123456');
+    assert.equal(runner.result.emailTimer, 40);
+    assert.equal(send.calls.length, 1);
+    const confirmation = runner.result.confirm('first@example.com');
+    assert.equal(verify.calls[0].args[1], '123456');
+    verify.calls[0].resolve();
+    await confirmation;
+    await runner.flush();
+    assert.equal(runner.result.canSubmit('first@example.com'), true);
+  });
+});
+
 test('completed verification survives blur while the event guard rejects background submissions', async () => {
   const { runner, verify, inputCode, sendCode } = emailSetup();
   await sendCode();
@@ -221,15 +482,20 @@ test('completed verification survives blur while the event guard rejects backgro
     let resend;
     if (change === 'email') inputEmail('second@example.com');
     if (change === 'code') inputCode('654321');
-    if (change === 'resend') resend = runner.result.send('first@example.com');
+    if (change === 'resend') {
+      resend = runner.result.send('first@example.com');
+      await runner.flush();
+      assert.equal(runner.result.codeChecking, true);
+      check.calls[1].resolve({ available: true });
+      await runner.flush();
+      assert.equal(send.calls.length, 2);
+    }
     verify.calls[0].resolve();
     await pending;
     await runner.flush();
     assert.equal(runner.result.isVerified('first@example.com'), false);
     assert.notEqual(runner.result.codeValidation, 'success');
     if (resend) {
-      check.calls[1].resolve({ available: true });
-      await runner.flush();
       send.calls[1].resolve({ codeTtlSeconds: 60 });
       await resend;
     }
@@ -328,50 +594,49 @@ test('send and confirm prevent duplicate requests before a rerender', async () =
   await confirmation;
 });
 
-test('expired codes cannot be confirmed and delayed successes cannot mark them verified', async () => {
+[true, false].forEach((runTimers) => {
+  test(`server success after the local deadline is accepted (timer ran: ${runTimers})`, async () => {
+    const { runner, verify, inputCode, sendCode, advance } = emailSetup();
+    await sendCode();
+    inputCode();
+    const pending = runner.result.confirm('first@example.com');
+    advance(61, runTimers);
+    await runner.flush();
+    assert.equal(runner.result.codeChecking, true);
+    verify.calls[0].resolve();
+    await pending;
+    runner.runTimers();
+    await runner.flush();
+    assert.equal(runner.result.emailTimer, null);
+    assert.equal(runner.result.codeChecking, false);
+    assert.equal(runner.result.canSubmit('first@example.com'), true);
+  });
+});
+
+test('server expiry after the local countdown ends still rejects the pending confirmation', async () => {
   const { runner, verify, inputCode, sendCode, advance } = emailSetup();
   await sendCode();
   inputCode();
   const pending = runner.result.confirm('first@example.com');
   advance(61);
-  verify.calls[0].resolve();
+  verify.calls[0].reject(new AuthApiError('AUTH4003'));
   await pending;
   await runner.flush();
-  assert.equal(runner.result.emailTimer, null);
-  assert.equal(runner.result.codeChecking, false);
-  assert.equal(runner.result.codeValidation, 'error');
   assert.equal(runner.result.codeMessageKey, 'auth.register.basic.error.codeExpired');
-  assert.equal(runner.result.isVerified('first@example.com'), false);
-  await runner.result.confirm('first@example.com');
-  assert.equal(verify.calls.length, 1);
+  assert.equal(runner.result.codeChecking, false);
+  assert.equal(runner.result.canSubmit('first@example.com'), false);
 });
 
-['before confirmation', 'during confirmation'].forEach((timing) => {
-  test(`expiry ${timing} clears loading and invalidates verification before a delayed timer runs`, async () => {
-    const { runner, verify, inputCode, sendCode, advance } = emailSetup();
-    await sendCode();
-    inputCode();
-    let pending;
-    if (timing === 'during confirmation') {
-      pending = runner.result.confirm('first@example.com');
-    }
-    advance(61, false);
-    if (pending) {
-      verify.calls[0].resolve();
-      await pending;
-    } else {
-      await runner.result.confirm('first@example.com');
-      assert.equal(verify.calls.length, 0);
-    }
-    await runner.flush();
-    assert.equal(runner.result.emailTimer, null);
-    assert.equal(runner.result.codeChecking, false);
-    assert.equal(runner.result.codeValidation, 'error');
-    assert.equal(runner.result.codeMessageKey, 'auth.register.basic.error.codeExpired');
-    assert.equal(runner.result.isVerified('first@example.com'), false);
-    runner.runTimers();
-    assert.equal(runner.result.codeMessageKey, 'auth.register.basic.error.codeExpired');
-  });
+test('local expiry blocks new confirmations even before the countdown callback runs', async () => {
+  const { runner, verify, inputCode, sendCode, advance } = emailSetup();
+  await sendCode();
+  inputCode();
+  advance(61, false);
+  await runner.result.confirm('first@example.com');
+  await runner.flush();
+  assert.equal(verify.calls.length, 0);
+  assert.equal(runner.result.emailTimer, null);
+  assert.equal(runner.result.codeMessageKey, 'auth.register.basic.error.codeExpired');
 });
 
 test('blur discards confirmation responses and recalculates expiry on returning', async () => {
@@ -545,4 +810,23 @@ test('the Next action reads current form values again instead of submitting a ca
   next.onPress();
   assert.equal(screen.saved.length, 0);
   assert.equal(screen.navigations.length, 0);
+});
+
+test('the Next action validates and saves the current form even if the rendered validity is stale', () => {
+  const screen = registerScreenSetup();
+  const next = screen.render();
+  assert.equal(next.disabled, false);
+  screen.values.agreed = false;
+  next.onPress();
+  screen.values.agreed = true;
+  screen.values.passwordConfirm = 'mismatch';
+  next.onPress();
+  assert.equal(screen.saved.length, 0);
+  assert.equal(screen.navigations.length, 0);
+
+  screen.values.passwordConfirm = screen.values.password;
+  screen.values.name = '  Parent  ';
+  next.onPress();
+  assert.equal(screen.saved[0].name, 'Parent');
+  assert.deepEqual(screen.navigations, ['/(auth)/register/child']);
 });

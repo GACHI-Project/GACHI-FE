@@ -97,8 +97,10 @@ test('unsubscribing cancels the HTTP signal and ignores the old completion on re
   first.dispose();
   assert.equal(old.args[1].aborted, true);
   const second = r.observe(options, true);
-  old.resolve(list(['old']));
   r.calls.newsletters.calls[1].resolve(list(['new']));
+  await r.flush();
+  assert.deepEqual(listIds(second), ['new']);
+  old.resolve(list(['old']));
   await r.flush();
   assert.deepEqual(listIds(second), ['new']);
 });

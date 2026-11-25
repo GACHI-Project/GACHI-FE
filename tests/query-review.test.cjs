@@ -499,10 +499,12 @@ test('scan replaces a selected child that was deleted with a remaining child', (
   const screen = scanSelect(r, query);
   elements(screen.runner.result, 'SelectionCard')[1].props.onPress();
   screen.runner.render();
+  screen.camera().onPress();
+  assert.equal(screen.routes[0].params.childId, '2');
   query.data = [child(1)];
   screen.runner.render();
   screen.camera().onPress();
-  assert.equal(screen.routes[0].params.childId, '1');
+  assert.equal(screen.routes[1].params.childId, '1');
   screen.runner.unmount();
 });
 

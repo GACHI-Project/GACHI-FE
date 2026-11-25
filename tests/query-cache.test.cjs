@@ -127,6 +127,7 @@ test('imperative native mutations retain their starting session and do not updat
   const error = await pending;
   assert.equal(error.code, 'ERR_CANCELED');
   assert.equal(r.client.getQueryData(key).name, 'New account');
+  assert.equal(r.client.getQueryState(key).isInvalidated, false);
 });
 
 const mutationHook = (r) => {
@@ -218,9 +219,12 @@ test('a callback captured by the previous account cannot send a write in the new
       r.client.setQueryData(key, { name: 'New account' });
       const result = await pending;
       assert.equal(result.code, 'ERR_CANCELED');
+      assert.equal(r.client.getQueryData(key).name, 'New account');
+      assert.equal(r.client.getQueryState(key).isInvalidated, false);
       profile.calls[0].resolve({ name: 'Late old account' });
       await r.flush();
       assert.equal(r.client.getQueryData(key).name, 'New account');
+      assert.equal(r.client.getQueryState(key).isInvalidated, false);
       runner?.unmount();
     });
   });
@@ -644,10 +648,21 @@ test('an expired preview blocks an existing draft and a first request failure bl
   missing.runner.unmount();
 });
 
-const languageScreen = (r, api, saveLanguage = () => Promise.resolve()) => {
+const languageScreen = (
+  r,
+  api,
+  saveLanguage = () => Promise.resolve(),
+  onChangeLanguage = () => {}
+) => {
   const mocks = screenMocks();
   const changed = [];
-  const i18n = { language: 'ko', changeLanguage: async (value) => changed.push(value) };
+  const i18n = {
+    language: 'ko',
+    changeLanguage: async (value) => {
+      onChangeLanguage(value);
+      changed.push(value);
+    },
+  };
   const runner = hookHarness('app/profile/language.tsx', {
     ...mocks,
     'react-native': { ...mocks['react-native'], StyleSheet: { create: (value) => value } },
@@ -683,10 +698,15 @@ test('changing language cancels late responses and removes cached results before
   const api = queuedApi();
   const { serverOptions } = r.load('src/query/options.ts');
   const ko = serverOptions(r.scope(), 'translation', [1], queryApi.request);
+  r.client.setQueryData(ko.queryKey, { text: 'Old Korean translation' });
   r.observe(ko);
   const enKey = r.load('src/query/client.ts').resourceKey(0, 'en', 'translation', 1);
   r.client.setQueryData(enKey, { text: 'Old translation' });
-  const screen = languageScreen(r, api);
+  const screen = languageScreen(r, api, undefined, () => {
+    assert.equal(queryApi.calls[0].args[0].aborted, true);
+    assert.equal(r.client.getQueryState(ko.queryKey), undefined);
+    assert.equal(r.client.getQueryState(enKey), undefined);
+  });
   const save = screen.save();
   api.calls[0].resolve();
   await save;

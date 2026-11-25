@@ -1,29 +1,30 @@
-import { useEffect, useRef } from 'react';
-import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
+import { useEffect, useRef } from 'react';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import {
-  completeKakaoLogin,
-  linkKakao,
+  AuthApiError,
+  completeKakaoLogin as completeKakaoLoginApi,
+  linkKakao as linkKakaoApi,
   saveAuthTokens,
   saveRememberMe,
-  AuthApiError,
 } from '../../src/api/auth';
+import { getMe as getMeApi } from '../../src/api/user';
+import colors from '../../src/constants/colors';
+import i18n, { saveLanguage, SUPPORTED_LANGUAGES, SupportedLanguage } from '../../src/i18n';
+import { useApiMutation } from '../../src/query/hooks';
+import { fetchSessionResource } from '../../src/query/operations';
+import { useKakaoAuthStore } from '../../src/store/kakaoAuthStore';
+import { useRegisterStore } from '../../src/store/registerStore';
+import { useSocialLinkStore } from '../../src/store/socialLinkStore';
+import { fromServerLanguageCode } from '../../src/types/language';
 import {
+  assertCurrentSession,
   getSessionVersion,
   isCurrentSession,
-  assertCurrentSession,
 } from '../../src/utils/authSession';
 import { attemptPendingLink, mapLinkError } from '../../src/utils/pendingLink';
-import { getMe } from '../../src/api/user';
-import { useUserStore } from '../../src/store/userStore';
-import { useRegisterStore } from '../../src/store/registerStore';
-import { useKakaoAuthStore } from '../../src/store/kakaoAuthStore';
-import { useSocialLinkStore } from '../../src/store/socialLinkStore';
-import i18n, { saveLanguage, SUPPORTED_LANGUAGES, SupportedLanguage } from '../../src/i18n';
-import { fromServerLanguageCode } from '../../src/types/language';
 import { registerDevicePushToken } from '../../src/utils/pushToken';
-import colors from '../../src/constants/colors';
 
 type KakaoErrorCode =
   | 'invalidCredentials'
@@ -46,8 +47,9 @@ const replaceToEditWithResult = (result: KakaoLinkResult) => {
 let lastHandledTicket: string | null = null;
 
 const KakaoAuthBounceScreen = () => {
+  const linkKakao = useApiMutation(linkKakaoApi, []);
+  const completeKakaoLogin = useApiMutation(completeKakaoLoginApi, []);
   const { ticket } = useLocalSearchParams<{ ticket?: string }>();
-  const setName = useUserStore((s) => s.setName);
   const setAuthMethod = useRegisterStore((s) => s.setAuthMethod);
   const setSignupToken = useRegisterStore((s) => s.setSignupToken);
   const handledRef = useRef(false);
@@ -110,9 +112,9 @@ const KakaoAuthBounceScreen = () => {
           assertCurrentSession(version);
 
           try {
-            const me = await getMe();
+            const me = await fetchSessionResource('profile', [], (signal) => getMeApi(signal));
             assertCurrentSession(version);
-            setName(me.name);
+
             const lang = fromServerLanguageCode(me.languageCode) as SupportedLanguage;
             if (SUPPORTED_LANGUAGES.includes(lang)) {
               await saveLanguage(lang);
@@ -181,7 +183,7 @@ const KakaoAuthBounceScreen = () => {
     } else {
       completeLogin(ticket, rememberMe, version);
     }
-  }, [ticket, setName, setAuthMethod, setSignupToken]);
+  }, [ticket, setAuthMethod, setSignupToken, completeKakaoLogin, linkKakao]);
 
   return (
     <View style={styles.container}>

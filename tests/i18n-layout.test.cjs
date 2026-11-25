@@ -699,10 +699,13 @@ test('home card selection stays valid during child removal and resizes without a
               i18n: { language },
             }),
           },
-          '../../store/childrenStore': {
-            useChildrenStore: (select) => select({ children: [{ id: 1 }] }),
+          '../../query/resources': {
+            useChildrenQuery: () => ({ data: [{ id: 1 }], isLoading: false }),
+            useMealsQuery: () => ({ data: [], isLoading: false }),
+            useTimetablesQuery: () => ({ data: [], isLoading: false }),
           },
-          '../../api/meal': {},
+          '../../hooks/useCurrentDate': { default: () => '2026-11-21' },
+          '../../api/meal': { getMealsForChild: () => [], getPeriodsForChild: () => [] },
           './MealCard': { default: 'MealCard' },
           './TimetableCard': { default: 'TimetableCard' },
           '../../../assets/images/home/home_ai.png': 1,

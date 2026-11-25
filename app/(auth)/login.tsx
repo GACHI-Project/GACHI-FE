@@ -1,50 +1,53 @@
-import { useState, useEffect, useRef } from 'react';
-import axios from 'axios';
-import { View, Text, Image, TouchableOpacity, ScrollView, TextInput } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { router, useLocalSearchParams } from 'expo-router';
-import * as WebBrowser from 'expo-web-browser';
+import { Ionicons } from '@expo/vector-icons';
 import {
   GoogleSignin,
   isErrorWithCode,
   statusCodes,
 } from '@react-native-google-signin/google-signin';
-import { Ionicons } from '@expo/vector-icons';
+import axios from 'axios';
+import { LinearGradient } from 'expo-linear-gradient';
+import { router, useLocalSearchParams } from 'expo-router';
+import * as WebBrowser from 'expo-web-browser';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import AuthInput from '../../src/components/auth/AuthInput';
-import { PrimaryButton } from '../../src/components/common/Button';
-import ConfirmModal from '../../src/components/common/ConfirmModal';
+import { Image, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import GoogleIcon from '../../assets/social/google.png';
+import KakaoIcon from '../../assets/social/kakao.png';
 import {
-  login,
   AuthApiError,
+  completeGoogleLogin as completeGoogleLoginApi,
   getKakaoAuthorizeUrl,
-  completeGoogleLogin,
+  login as loginApi,
   saveAuthTokens,
   saveRememberMe,
 } from '../../src/api/auth';
+import { getMe as getMeApi } from '../../src/api/user';
+import AuthInput from '../../src/components/auth/AuthInput';
+import { PrimaryButton } from '../../src/components/common/Button';
+import ConfirmModal from '../../src/components/common/ConfirmModal';
+import colors from '../../src/constants/colors';
+import { KAKAO_REDIRECT_URI } from '../../src/constants/socialAuth';
+import i18n, { saveLanguage, SUPPORTED_LANGUAGES, SupportedLanguage } from '../../src/i18n';
+import { useApiMutation } from '../../src/query/hooks';
+import { fetchSessionResource } from '../../src/query/operations';
+import { useGoogleAuthStore } from '../../src/store/googleAuthStore';
+import { useKakaoAuthStore } from '../../src/store/kakaoAuthStore';
+import { useRegisterStore } from '../../src/store/registerStore';
+import { useSocialLinkStore } from '../../src/store/socialLinkStore';
+import styles from '../../src/styles/auth/login';
+import { fromServerLanguageCode } from '../../src/types/language';
 import {
+  assertCurrentSession,
   getSessionVersion,
   isCurrentSession,
-  assertCurrentSession,
 } from '../../src/utils/authSession';
-import { attemptPendingLink } from '../../src/utils/pendingLink';
-import { getMe } from '../../src/api/user';
-import { useUserStore } from '../../src/store/userStore';
-import { useRegisterStore } from '../../src/store/registerStore';
-import { useKakaoAuthStore } from '../../src/store/kakaoAuthStore';
-import { useGoogleAuthStore } from '../../src/store/googleAuthStore';
-import { useSocialLinkStore } from '../../src/store/socialLinkStore';
-import i18n, { saveLanguage, SUPPORTED_LANGUAGES, SupportedLanguage } from '../../src/i18n';
-import { fromServerLanguageCode } from '../../src/types/language';
-import { registerDevicePushToken } from '../../src/utils/pushToken';
 import { maskEmail } from '../../src/utils/mask';
-import { KAKAO_REDIRECT_URI } from '../../src/constants/socialAuth';
-import colors from '../../src/constants/colors';
-import KakaoIcon from '../../assets/social/kakao.png';
-import GoogleIcon from '../../assets/social/google.png';
-import styles from '../../src/styles/auth/login';
+import { attemptPendingLink } from '../../src/utils/pendingLink';
+import { registerDevicePushToken } from '../../src/utils/pushToken';
 
 const LoginScreen = () => {
+  const completeGoogleLogin = useApiMutation(completeGoogleLoginApi, []);
+  const login = useApiMutation(loginApi, []);
   const { t } = useTranslation();
   const { kakaoError } = useLocalSearchParams<{ kakaoError?: string }>();
   const idInputRef = useRef<TextInput>(null);
@@ -61,7 +64,6 @@ const LoginScreen = () => {
 
   const isAnyLoginInProgress = loading || kakaoLoading || googleLoading;
 
-  const setName = useUserStore((s) => s.setName);
   const pendingLink = useSocialLinkStore((s) => s.pendingLink);
 
   useEffect(() => {
@@ -91,9 +93,9 @@ const LoginScreen = () => {
 
   const completeNavigation = async (version: number) => {
     try {
-      const me = await getMe();
+      const me = await fetchSessionResource('profile', [], (signal) => getMeApi(signal));
       assertCurrentSession(version);
-      setName(me.name);
+
       const lang = fromServerLanguageCode(me.languageCode) as SupportedLanguage;
       if (SUPPORTED_LANGUAGES.includes(lang)) {
         await saveLanguage(lang);

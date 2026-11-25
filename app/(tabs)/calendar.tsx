@@ -1,33 +1,26 @@
-import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
-import { View, TouchableOpacity, Alert } from 'react-native';
 import { FontAwesome5, Ionicons } from '@expo/vector-icons';
-import { useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import colors from '../../src/constants/colors';
+import { Alert, TouchableOpacity, View } from 'react-native';
+import { CalendarApiError } from '../../src/api/calendar';
+import MonthViewContent from '../../src/components/calendar/MonthViewContent';
 import styles from '../../src/components/calendar/styles';
-import Header from '../../src/components/common/Header';
+import WeekViewContent from '../../src/components/calendar/WeekViewContent';
 import ChildFilterBar from '../../src/components/common/ChildFilterBar';
 import ConfirmModal from '../../src/components/common/ConfirmModal';
-import WeekViewContent from '../../src/components/calendar/WeekViewContent';
-import MonthViewContent from '../../src/components/calendar/MonthViewContent';
-import {
-  fetchSchoolSchedules,
-  CalendarApiError,
-  type HolidayItem,
-  type SchoolGroup,
-} from '../../src/api/calendar';
-import { fetchChildren as fetchChildrenApi } from '../../src/api/child';
-import { useChildrenStore } from '../../src/store/childrenStore';
-import { withCurrentSession } from '../../src/utils/authSession';
-import useCalendarMarkers from '../../src/hooks/calendar/useCalendarMarkers';
+import Header from '../../src/components/common/Header';
+import colors from '../../src/constants/colors';
 import useCalendarEvents from '../../src/hooks/calendar/useCalendarEvents';
+import useCalendarMarkers from '../../src/hooks/calendar/useCalendarMarkers';
+import { useChildrenQuery, useSchoolSchedulesQuery } from '../../src/query/resources';
 import { getKstDate } from '../../src/utils/calendarWeek';
 
 const CalendarScreen = () => {
   const today = getKstDate();
   const todayDate = new Date(`${today}T12:00:00`);
   const { t } = useTranslation();
-  const { children, setChildren: setStoreChildren } = useChildrenStore();
+  const { data: children = [] } = useChildrenQuery();
   const [selectedChildName, setSelectedChildName] = useState<string | undefined>(undefined);
   const [selectedDate, setSelectedDate] = useState<string>(today);
   const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
@@ -38,9 +31,6 @@ const CalendarScreen = () => {
     year: todayDate.getFullYear(),
     month: todayDate.getMonth(),
   });
-  const [schoolGroups, setSchoolGroups] = useState<SchoolGroup[]>([]);
-  const [commonHolidays, setCommonHolidays] = useState<HolidayItem[]>([]);
-  const [refreshKey, setRefreshKey] = useState(0);
   const [deleteTargetId, setDeleteTargetId] = useState<number | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -54,25 +44,6 @@ const CalendarScreen = () => {
     setCalendarMonth({ year: y, month: m - 1 });
   }, [dateParam]);
 
-  const [focusKey, setFocusKey] = useState(0);
-  const hasFocusedOnceRef = useRef(false);
-
-  useFocusEffect(
-    useCallback(() => {
-      if (!hasFocusedOnceRef.current) {
-        hasFocusedOnceRef.current = true;
-        fetchChildrenApi()
-          .then(withCurrentSession(setStoreChildren))
-          .catch(() => {});
-        return;
-      }
-      fetchChildrenApi()
-        .then(withCurrentSession(setStoreChildren))
-        .catch(() => {});
-      setFocusKey((k) => k + 1);
-    }, [setStoreChildren])
-  );
-
   const selectedChildId = useMemo(
     () => children.find((c) => c.name === selectedChildName)?.id,
     [children, selectedChildName]
@@ -84,7 +55,6 @@ const CalendarScreen = () => {
   weekOffsetRef.current = weekOffset;
   const todayGroupY = useRef<number | undefined>(undefined);
   const isFirstChildRenderRef = useRef(true);
-  const schoolReqIdRef = useRef(0);
 
   useEffect(() => {
     shouldAutoScrollRef.current = weekOffset === 0;
@@ -123,30 +93,17 @@ const CalendarScreen = () => {
     return `${calendarMonth.year}-${String(calendarMonth.month + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
   }, [isWeekMode, weekDates, calendarMonth.year, calendarMonth.month]);
 
-  useEffect(() => {
-    schoolReqIdRef.current += 1;
-    const reqId = schoolReqIdRef.current;
-    fetchSchoolSchedules(schoolFromDate, schoolToDate)
-      .then((data) => {
-        if (reqId !== schoolReqIdRef.current) return;
-        setCommonHolidays(data.commonHolidays);
-        setSchoolGroups(data.schoolSchedules);
-      })
-      .catch((e) => {
-        if (reqId !== schoolReqIdRef.current) return;
-        // eslint-disable-next-line no-console
-        console.error('fetchSchoolSchedules failed:', e);
-      });
-  }, [schoolFromDate, schoolToDate, focusKey]);
+  const schoolQuery = useSchoolSchedulesQuery(schoolFromDate, schoolToDate);
+  const commonHolidays = schoolQuery.data?.commonHolidays ?? [];
+  const schoolGroups = schoolQuery.data?.schoolSchedules ?? [];
 
   const { markedDatesMap, markersLoading } = useCalendarMarkers({
     isWeekMode,
     calendarMonth,
     selectedChildName,
-    focusKey,
+
     commonHolidays,
     schoolGroups,
-    refreshKey,
   });
 
   const {
@@ -165,7 +122,7 @@ const CalendarScreen = () => {
     selectedDate,
     selectedChildName,
     selectedChildId,
-    focusKey,
+
     commonHolidays,
     schoolGroups,
   });
@@ -245,7 +202,7 @@ const CalendarScreen = () => {
         next.delete(eventId);
         return next;
       });
-      setRefreshKey((k) => k + 1);
+
       setDeleteTargetId(null);
     } catch (error) {
       Alert.alert(t('common.error'), mapDeleteError(error));

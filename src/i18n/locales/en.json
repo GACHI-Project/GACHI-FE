@@ -17,7 +17,9 @@
     "elementaryGrade": "Grade {{grade}}",
     "grade": "Grade {{grade}}",
     "preparing": "Coming Soon",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "refreshFailed": "Could not refresh. Showing the last available information.",
+    "waitingConnection": "Waiting for a network connection."
   },
   "tabs": {
     "home": "Home",

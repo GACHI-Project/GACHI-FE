@@ -1,15 +1,10 @@
-import { useEffect, useState } from 'react';
 import {
-  getNewsletterSummary,
   getConversationTopics,
   getCulturalGuides,
+  getNewsletterSummary,
   NewsletterApiError,
 } from '../../api/newsletter';
-import type {
-  NewsletterSummaryResult,
-  ConversationTopic,
-  CulturalGuide,
-} from '../../api/newsletter';
+import { useServerQuery } from '../../query/hooks';
 
 const mapSummaryErrorKey = (e: unknown): string => {
   if (e instanceof NewsletterApiError) {
@@ -22,96 +17,43 @@ const mapSummaryErrorKey = (e: unknown): string => {
 };
 
 const useAISummary = (newsletterId: number | undefined) => {
-  const [summary, setSummary] = useState<NewsletterSummaryResult | null>(null);
-  const [summaryLoading, setSummaryLoading] = useState(true);
-  const [summaryError, setSummaryError] = useState<string | null>(null);
-
-  const [topics, setTopics] = useState<ConversationTopic[]>([]);
-  const [topicsLoading, setTopicsLoading] = useState(true);
-  const [topicsError, setTopicsError] = useState<string | null>(null);
-
-  const [guides, setGuides] = useState<CulturalGuide[]>([]);
-  const [guidesLoading, setGuidesLoading] = useState(true);
-
-  useEffect(() => {
-    setSummary(null);
-    setSummaryLoading(true);
-    setSummaryError(null);
-    setTopics([]);
-    setTopicsLoading(true);
-    setTopicsError(null);
-    setGuides([]);
-    setGuidesLoading(true);
-
-    if (!newsletterId) {
-      setSummaryError('scan.result.aiSummary.error.notFound');
-      setSummaryLoading(false);
-      setTopicsError('scan.result.aiSummary.error.notFound');
-      setTopicsLoading(false);
-      setGuidesLoading(false);
-      return () => {};
-    }
-
-    let cancelled = false;
-
-    getNewsletterSummary(newsletterId)
-      .then((data) => {
-        if (!cancelled) {
-          setSummary(data);
-          setSummaryError(null);
-        }
-      })
-      .catch((e: unknown) => {
-        if (!cancelled) setSummaryError(mapSummaryErrorKey(e));
-      })
-      .finally(() => {
-        if (!cancelled) setSummaryLoading(false);
-      });
-
-    getConversationTopics(newsletterId)
-      .then((data) => {
-        if (!cancelled) {
-          setTopics(data);
-          setTopicsError(null);
-        }
-      })
-      .catch((e: unknown) => {
-        if (cancelled) return;
-        if (e instanceof NewsletterApiError && e.code === 'NL4041') {
-          setTopicsError('scan.result.aiSummary.error.newsletterNotFound');
-        } else {
-          setTopicsError('scan.result.aiSummary.error.conversationFailed');
-        }
-      })
-      .finally(() => {
-        if (!cancelled) setTopicsLoading(false);
-      });
-
-    getCulturalGuides(newsletterId)
-      .then((data) => {
-        if (!cancelled) setGuides(data);
-      })
-      .catch(() => {
-        if (!cancelled) setGuides([]);
-      })
-      .finally(() => {
-        if (!cancelled) setGuidesLoading(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [newsletterId]);
-
+  const summary = useServerQuery(
+    'summary',
+    [newsletterId],
+    (signal) => getNewsletterSummary(newsletterId!, signal),
+    { enabled: !!newsletterId }
+  );
+  const topics = useServerQuery(
+    'topics',
+    [newsletterId],
+    (signal) => getConversationTopics(newsletterId!, signal),
+    { enabled: !!newsletterId }
+  );
+  const guides = useServerQuery(
+    'cultural',
+    [newsletterId],
+    (signal) => getCulturalGuides(newsletterId!, signal),
+    { enabled: !!newsletterId }
+  );
+  const missing = 'scan.result.aiSummary.error.notFound';
+  let summaryError: string | null = null;
+  let topicsError: string | null = null;
+  if (!newsletterId) {
+    summaryError = missing;
+    topicsError = missing;
+  } else {
+    if (summary.error) summaryError = mapSummaryErrorKey(summary.error);
+    if (topics.error) topicsError = 'scan.result.aiSummary.error.conversationFailed';
+  }
   return {
-    summary,
-    summaryLoading,
+    summary: summary.data ?? null,
+    summaryLoading: summary.isLoading,
     summaryError,
-    topics,
-    topicsLoading,
+    topics: topics.data ?? [],
+    topicsLoading: topics.isLoading,
     topicsError,
-    guides,
-    guidesLoading,
+    guides: guides.data ?? [],
+    guidesLoading: guides.isLoading,
   };
 };
 

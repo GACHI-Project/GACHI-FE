@@ -1,28 +1,16 @@
-import { useState, useEffect } from 'react';
-import {
-  getSchoolGuideCategories,
-  getPopularFaqs,
-  type SchoolGuideCategory,
-  type PopularFaq,
-} from '../../api/schoolGuide';
+import { getPopularFaqs, getSchoolGuideCategories } from '../../api/schoolGuide';
+import { useServerQuery } from '../../query/hooks';
 
 const useGuideData = () => {
-  const [categories, setCategories] = useState<SchoolGuideCategory[]>([]);
-  const [popularFaqs, setPopularFaqs] = useState<PopularFaq[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState(false);
-
-  useEffect(() => {
-    Promise.all([getSchoolGuideCategories(), getPopularFaqs()])
-      .then(([cats, faqs]) => {
-        setCategories(cats);
-        setPopularFaqs(faqs);
-      })
-      .catch(() => setLoadError(true))
-      .finally(() => setLoading(false));
-  }, []);
-
-  return { categories, popularFaqs, loading, loadError };
+  const categories = useServerQuery('guide', ['categories'], (signal) =>
+    getSchoolGuideCategories(signal)
+  );
+  const popular = useServerQuery('guide', ['popular'], (signal) => getPopularFaqs(signal));
+  return {
+    categories: categories.data ?? [],
+    popularFaqs: popular.data ?? [],
+    loading: categories.isLoading || popular.isLoading,
+    loadError: categories.isError || popular.isError,
+  };
 };
-
 export default useGuideData;

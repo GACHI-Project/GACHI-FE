@@ -1,495 +1,382 @@
 /* eslint-env node */
 const assert = require('node:assert/strict');
-const { test } = require('node:test');
-const { hookHarness, queuedApi } = require('./helpers/hookHarness.cjs');
+const { test, afterEach } = require('node:test');
+const { queryRuntime } = require('./helpers/queryRuntime.cjs');
+const { queuedApi } = require('./helpers/hookHarness.cjs');
 
-const listResult = (ids, totalCount = 5) => ({
+const runtimes = new Set();
+const setup = () => {
+  const runtime = queryRuntime();
+  runtimes.add(runtime);
+  return runtime;
+};
+afterEach(() => {
+  runtimes.forEach((runtime) => runtime.dispose());
+  runtimes.clear();
+});
+const list = (ids, totalCount = 5) => ({
   newsletters: ids.map((newsletterId) => ({ newsletterId })),
   totalCount,
 });
-const listIds = (runner) => Array.from(runner.result.newsletters, (item) => item.newsletterId);
-const checklistItems = (values = [false, false, false]) =>
-  values.map((isCompleted, index) => ({
-    checklistId: index + 1,
-    isCompleted,
-    content: `item-${index + 1}`,
-  }));
-const itemValues = (items) => Array.from(items, (item) => [item.checklistId, item.isCompleted]);
-
-const documentSetup = async () => {
-  const fetch = queuedApi();
-  const runner = hookHarness('src/hooks/document/useNewsletterList.ts', {
-    '../../api/newsletter': { fetchNewsletters: fetch.request },
-  });
-  runner.render('A', '');
-  runner.runTimers();
-  fetch.calls[0].resolve(listResult(['A0']));
-  await runner.flush();
-  return { runner, fetch };
-};
+const listIds = (view) =>
+  view.result.data?.pages.flatMap((page) => page.newsletters.map((item) => item.newsletterId)) ??
+  [];
 
 ['child', 'search'].forEach((condition) => {
-  test(`document pagination ignores the old ${condition} response after the new first page`, async () => {
-    const { runner, fetch } = await documentSetup();
-    const oldMore = runner.result.loadMore();
-    runner.render(condition === 'child' ? 'B' : 'A', condition === 'search' ? 'new' : '');
-    runner.runTimers();
-    fetch.calls[2].resolve(listResult(['B0']));
-    await runner.flush();
-    fetch.calls[1].resolve(listResult(['A1']));
-    await oldMore;
-    await runner.flush();
-    assert.deepEqual(listIds(runner), ['B0']);
-    const next = runner.result.loadMore();
-    assert.equal(fetch.calls[3].args[0].page, 1);
-    assert.equal(fetch.calls[3].args[0].childName, condition === 'child' ? 'B' : 'A');
-    assert.equal(fetch.calls[3].args[0].search, condition === 'search' ? 'new' : undefined);
-    fetch.calls[3].resolve(listResult(['B1']));
-    await next;
+  test(`document ${condition} changes isolate a late page from the current cache`, async () => {
+    const r = setup();
+    const { newsletterListOptions } = r.load('src/query/options.ts');
+    const first = newsletterListOptions(r.scope(), 'A', undefined);
+    const view = r.observe(first, true);
+    r.calls.newsletters.calls[0].resolve(list(['A0']));
+    await r.flush();
+    const pending = view.result.fetchNextPage();
+    await r.flush();
+    const next = newsletterListOptions(
+      r.scope(),
+      condition === 'child' ? 'B' : 'A',
+      condition === 'search' ? 'new' : undefined
+    );
+    view.setOptions(next);
+    r.calls.newsletters.calls[2].resolve(list(['B0']));
+    await r.flush();
+    r.calls.newsletters.calls[1].resolve(list(['A1']));
+    await pending;
+    await r.flush();
+    assert.deepEqual(listIds(view), ['B0']);
+    const more = view.result.fetchNextPage();
+    await r.flush();
+    assert.equal(r.calls.newsletters.calls[3].args[0].page, 1);
+    r.calls.newsletters.calls[3].resolve(list(['B1']));
+    await more;
+    assert.deepEqual(listIds(view), ['B0', 'B1']);
   });
 });
 
-test('document filters invalidate old pagination during the debounce delay', async () => {
-  const { runner, fetch } = await documentSetup();
-  const pending = runner.result.loadMore();
-  runner.render('B', '');
-  fetch.calls[1].resolve(listResult(['A1']));
+test('failed pagination preserves loaded pages and retries the same page', async () => {
+  const r = setup();
+  const { newsletterListOptions } = r.load('src/query/options.ts');
+  const view = r.observe(newsletterListOptions(r.scope(), undefined, undefined), true);
+  r.calls.newsletters.calls[0].resolve(list(['first']));
+  await r.flush();
+  const pending = view.result.fetchNextPage();
+  await r.flush();
+  r.calls.newsletters.calls[1].reject(new Error('Network failure'));
   await pending;
-  await runner.flush();
-  assert.deepEqual(listIds(runner), []);
-  assert.equal(runner.result.isLoading, true);
-  await runner.result.loadMore();
-  assert.equal(fetch.calls.length, 2);
-});
-
-test('an old pagination completion cannot unlock a newer pagination request', async () => {
-  const { runner, fetch } = await documentSetup();
-  const oldMore = runner.result.loadMore();
-  runner.render('B', '');
-  runner.runTimers();
-  fetch.calls[2].resolve(listResult(['B0']));
-  await runner.flush();
-  const newMore = runner.result.loadMore();
-  fetch.calls[1].reject(new Error('Old page failed'));
-  await oldMore;
-  await runner.flush();
-  assert.equal(runner.result.isLoadingMore, true);
-  await runner.result.loadMore();
-  assert.equal(fetch.calls.length, 4);
-  fetch.calls[3].resolve(listResult(['B1']));
-  await newMore;
-});
-
-test('pagination is locked synchronously and retries the same page after failure', async () => {
-  const { runner, fetch } = await documentSetup();
-  const first = runner.result.loadMore();
-  await runner.result.loadMore();
-  assert.equal(fetch.calls.length, 2);
-  fetch.calls[1].reject(new Error('Network failed'));
-  await first;
-  const retry = runner.result.loadMore();
-  assert.equal(fetch.calls[2].args[0].page, 1);
-  fetch.calls[2].resolve(listResult(['A1']));
+  assert.deepEqual(listIds(view), ['first']);
+  const retry = view.result.fetchNextPage();
+  await r.flush();
+  assert.equal(r.calls.newsletters.calls[2].args[0].page, 1);
+  r.calls.newsletters.calls[2].resolve(list(['second']));
   await retry;
+  assert.deepEqual(listIds(view), ['first', 'second']);
 });
 
-test('returning to the same filter cannot accept its previous request', async () => {
-  const { runner, fetch } = await documentSetup();
-  const oldMore = runner.result.loadMore();
-  runner.render('B', '');
-  runner.render('A', '');
-  runner.runTimers();
-  fetch.calls[2].resolve(listResult(['A-new']));
-  await runner.flush();
-  fetch.calls[1].resolve(listResult(['A-old']));
-  await oldMore;
-  await runner.flush();
-  assert.deepEqual(listIds(runner), ['A-new']);
+test('the last page stops pagination and refresh restarts from the initial cursor', async () => {
+  const r = setup();
+  const { newsletterListOptions } = r.load('src/query/options.ts');
+  const options = newsletterListOptions(r.scope(), undefined, undefined);
+  const view = r.observe(options, true);
+  r.calls.newsletters.calls[0].resolve(list(['only'], 1));
+  await r.flush();
+  assert.equal(view.result.hasNextPage, false);
+  const refresh = view.result.refetch();
+  await r.flush();
+  assert.equal(r.calls.newsletters.calls[1].args[0].page, 0);
+  r.calls.newsletters.calls[1].resolve(list(['fresh'], 1));
+  await refresh;
+  assert.deepEqual(listIds(view), ['fresh']);
 });
 
-test('refocusing starts a fresh list and discards old pending pagination', async () => {
-  const { runner, fetch } = await documentSetup();
-  const oldMore = runner.result.loadMore();
-  runner.blur();
-  runner.focus();
-  fetch.calls[2].resolve(listResult(['fresh']));
-  await runner.flush();
-  fetch.calls[1].resolve(listResult(['old']));
-  await oldMore;
-  await runner.flush();
-  assert.deepEqual(listIds(runner), ['fresh']);
+test('unsubscribing cancels the HTTP signal and ignores the old completion on remount', async () => {
+  const r = setup();
+  const { newsletterListOptions } = r.load('src/query/options.ts');
+  const options = newsletterListOptions(r.scope(), 'A', undefined);
+  const first = r.observe(options, true);
+  const old = r.calls.newsletters.calls[0];
+  first.dispose();
+  assert.equal(old.args[1].aborted, true);
+  const second = r.observe(options, true);
+  r.calls.newsletters.calls[1].resolve(list(['new']));
+  await r.flush();
+  assert.deepEqual(listIds(second), ['new']);
+  old.resolve(list(['old']));
+  await r.flush();
+  assert.deepEqual(listIds(second), ['new']);
 });
 
-test('list responses after unmount do not update state', async () => {
-  const { runner, fetch } = await documentSetup();
-  const pending = runner.result.loadMore();
-  runner.unmount();
-  fetch.calls[1].resolve(listResult(['late']));
-  await pending;
-  assert.equal(runner.postUnmountUpdates, 0);
+test('query keys isolate languages and authenticated account generations', async () => {
+  const r = setup();
+  const { newsletterListOptions } = r.load('src/query/options.ts');
+  const ko = newsletterListOptions(r.scope('ko'), 'A', undefined);
+  const en = newsletterListOptions(r.scope('en'), 'A', undefined);
+  assert.notDeepEqual(ko.queryKey, en.queryKey);
+  r.client.setQueryData(ko.queryKey, { pages: [list(['private'])], pageParams: [0] });
+  r.session.invalidateSession();
+  assert.equal(r.client.getQueryData(ko.queryKey), undefined);
+  r.session.markSessionAuthenticated(r.session.getSessionVersion());
+  assert.notDeepEqual(ko.queryKey, newsletterListOptions(r.scope(), 'A', undefined).queryKey);
 });
 
-const calendarSetup = async (weekly = false) => {
-  const daily = queuedApi();
-  const week = queuedApi();
-  const complete = queuedApi();
-  const remove = queuedApi();
-  const runner = hookHarness('src/hooks/calendar/useCalendarEvents.ts', {
-    '../../api/calendar': {
-      fetchDailyEvents: daily.request,
-      fetchWeeklyEvents: week.request,
-      completeChecklist: complete.request,
-      deleteCalendarEvent: remove.request,
-    },
-    '../../utils/calendarWeek': {
-      getWeeklyQueryDate: (dates) => dates[0],
-      orderWeekDates: (dates) => dates,
-    },
-    '../../utils/schoolSchedule': {
-      getHolidaysForDate: () => [],
-      getAcademicSchedulesForDate: () => [],
-      getSchoolDotsForDate: () => [],
-    },
-  });
-  const params = {
-    isWeekMode: weekly,
-    weekDates: ['2026-11-12'],
-    selectedDate: '2026-11-12',
-    selectedChildName: 'A',
-    selectedChildId: 1,
-    focusKey: 0,
-    commonHolidays: [],
-    schoolGroups: [],
-  };
-  const events = (values) => [
-    { eventId: 10, checklists: checklistItems(values), childName: 'A', calendarColor: '#ffffff' },
-  ];
-  const result = (values) =>
-    weekly
-      ? { days: [{ date: '2026-11-12', events: events(values) }] }
-      : { events: events(values) };
-  const source = weekly ? week : daily;
-  runner.render(params);
-  source.calls[0].resolve(result([false, false]));
-  await runner.flush();
-  const currentItems = () =>
-    weekly
-      ? runner.result.weeklyData.days[0].events[0]?.checklists
-      : runner.result.dayEvents[0]?.checklists;
-  return { runner, params, source, result, complete, remove, currentItems };
-};
+const checklist = (id, isCompleted = false) => ({ checklistId: id, isCompleted });
+const rows = () => [checklist(1), checklist(2), checklist(3)];
+const values = (data) => Array.from(data, (row) => [row.checklistId, row.isCompleted]);
 
-[false, true].forEach((weekly) => {
-  test(`${weekly ? 'weekly' : 'daily'} checklist failure preserves another successful change`, async () => {
-    const app = await calendarSetup(weekly);
-    const first = app.runner.result.toggleCheck(10, 1);
-    await app.runner.flush();
-    const second = app.runner.result.toggleCheck(10, 2);
-    app.complete.calls[1].resolve();
-    await second;
-    app.complete.calls[0].reject(new Error('First failed'));
+['success', 'failure'].forEach((firstOutcome) => {
+  test(`queued toggle rolls back to its execution-time value after an earlier ${firstOutcome}`, async () => {
+    const r = setup();
+    const refresh = queuedApi();
+    const { changeChecklist } = r.load('src/query/checklists.ts');
+    const view = r.observe({
+      ...r
+        .load('src/query/options.ts')
+        .serverOptions(r.scope(), 'newsletterChecklist', [1], refresh.request),
+      initialData: [checklist(1)],
+      staleTime: Infinity,
+    });
+    const first = changeChecklist(1, false, true).catch(() => {});
+    const second = changeChecklist(1, true, false).catch(() => {});
+    await r.flush();
+    if (firstOutcome === 'success') r.calls.toggle.calls[0].resolve();
+    else r.calls.toggle.calls[0].reject(new Error('First PATCH failed'));
     await first;
-    await app.runner.flush();
-    assert.deepEqual(itemValues(app.currentItems()), [
+    await r.flush();
+    assert.equal(r.calls.toggle.calls.length, 2);
+    assert.equal(view.result.data[0].isCompleted, false);
+    r.calls.toggle.calls[1].reject(new Error('Second PATCH failed'));
+    await second;
+    await r.flush();
+    refresh.calls.at(-1).reject(new Error('Final reconciliation failed'));
+    await r.flush();
+    assert.equal(view.result.isRefetchError, true);
+    assert.equal(view.result.data[0].isCompleted, firstOutcome === 'success');
+  });
+});
+
+['newsletterChecklist', 'calendar'].forEach((domain) => {
+  const seed = (r) => {
+    const key = r.key(domain, 1);
+    const data = domain === 'calendar' ? { events: [{ eventId: 10, checklists: rows() }] } : rows();
+    r.client.setQueryData(key, data);
+    const current = () =>
+      domain === 'calendar'
+        ? (r.client.getQueryData(key).events[0]?.checklists ?? [])
+        : r.client.getQueryData(key);
+    return { key, current };
+  };
+  test(`${domain}: one failed optimistic change cannot undo another successful change`, async () => {
+    const r = setup();
+    const { changeChecklist } = r.load('src/query/checklists.ts');
+    const { current } = seed(r);
+    const first = changeChecklist(1, false, true).catch(() => {});
+    const second = changeChecklist(2, false, true);
+    await r.flush();
+    r.calls.toggle.calls[1].resolve();
+    await second;
+    r.calls.toggle.calls[0].reject(new Error('Failed first change'));
+    await first;
+    assert.deepEqual(values(current()), [
       [1, false],
       [2, true],
+      [3, false],
     ]);
   });
-
-  test(`${weekly ? 'weekly' : 'daily'} checklist rollback cannot overwrite a new filter`, async () => {
-    const app = await calendarSetup(weekly);
-    const oldToggle = app.runner.result.toggleCheck(10, 1);
-    app.runner.render({ ...app.params, selectedChildName: 'B' });
-    app.source.calls[1].resolve(app.result([true, true]));
-    await app.runner.flush();
-    app.complete.calls[0].reject(new Error('Old toggle failed'));
-    await oldToggle;
-    await app.runner.flush();
-    assert.deepEqual(itemValues(app.currentItems()), [
-      [1, true],
-      [2, true],
-    ]);
+  test(`${domain}: deletion waits for the same item's toggle and runs once`, async () => {
+    const r = setup();
+    const { changeChecklist } = r.load('src/query/checklists.ts');
+    seed(r);
+    const first = changeChecklist(1, false, true);
+    const duplicate = changeChecklist(1, false);
+    const repeatedDelete = changeChecklist(1, false);
+    await r.flush();
+    assert.equal(r.calls.toggle.calls.length, 1);
+    assert.equal(r.calls.remove.calls.length, 0);
+    r.calls.toggle.calls[0].resolve();
+    await first;
+    await r.flush();
+    assert.equal(r.calls.remove.calls.length, 1);
+    r.calls.remove.calls[0].resolve();
+    await Promise.all([duplicate, repeatedDelete]);
   });
-
-  test(`${weekly ? 'weekly' : 'daily'} stale refresh keeps a pending change and failure restores it`, async () => {
-    const app = await calendarSetup(weekly);
-    const toggle = app.runner.result.toggleCheck(10, 1);
-    app.runner.render({ ...app.params, focusKey: 1 });
-    app.source.calls[1].resolve(app.result([false, false]));
-    await app.runner.flush();
-    assert.deepEqual(itemValues(app.currentItems()), [
-      [1, true],
-      [2, false],
-    ]);
-    app.complete.calls[0].reject(new Error('Toggle failed'));
-    await toggle;
-    await app.runner.flush();
-    assert.deepEqual(itemValues(app.currentItems()), [
-      [1, false],
-      [2, false],
-    ]);
+  test(`${domain}: a refresh started before a completed change cannot restore its old value`, async () => {
+    const r = setup();
+    const { changeChecklist } = r.load('src/query/checklists.ts');
+    const { serverOptions } = r.load('src/query/options.ts');
+    const { key, current } = seed(r);
+    const pending = changeChecklist(1, false, true);
+    await r.flush();
+    let resolve;
+    const response = new Promise((done) => {
+      resolve = done;
+    });
+    const refresh = r.client.fetchQuery(serverOptions(r.scope(), domain, [1], () => response));
+    await r.flush();
+    r.calls.toggle.calls[0].resolve();
+    await pending;
+    resolve(domain === 'calendar' ? { events: [{ eventId: 10, checklists: rows() }] } : rows());
+    await refresh;
+    assert.equal(current()[0].isCompleted, true);
+    assert.equal(r.client.getQueryState(key).status, 'success');
   });
-
-  test(`${weekly ? 'weekly' : 'daily'} refresh started before a successful change keeps it`, async () => {
-    const app = await calendarSetup(weekly);
-    const toggle = app.runner.result.toggleCheck(10, 1);
-    app.runner.render({ ...app.params, focusKey: 1 });
-    app.complete.calls[0].resolve();
-    await toggle;
-    app.source.calls[1].resolve(app.result([false, false]));
-    await app.runner.flush();
-    assert.deepEqual(itemValues(app.currentItems()), [
-      [1, true],
-      [2, false],
-    ]);
-  });
-
-  test(`${weekly ? 'weekly' : 'daily'} refresh started after a successful change uses server state`, async () => {
-    const app = await calendarSetup(weekly);
-    const toggle = app.runner.result.toggleCheck(10, 1);
-    app.complete.calls[0].resolve();
-    await toggle;
-    app.runner.render({ ...app.params, focusKey: 1 });
-    app.source.calls[1].resolve(app.result([false, false]));
-    await app.runner.flush();
-    assert.deepEqual(itemValues(app.currentItems()), [
-      [1, false],
-      [2, false],
-    ]);
+  test(`${domain}: optimistic state is preserved during a refresh and rolls back after failure`, async () => {
+    const r = setup();
+    const { changeChecklist } = r.load('src/query/checklists.ts');
+    const { serverOptions } = r.load('src/query/options.ts');
+    const { current } = seed(r);
+    const pending = changeChecklist(1, false, true).catch(() => {});
+    await r.flush();
+    await r.client.fetchQuery(
+      serverOptions(r.scope(), domain, [1], async () =>
+        domain === 'calendar' ? { events: [{ eventId: 10, checklists: rows() }] } : rows()
+      )
+    );
+    assert.equal(current()[0].isCompleted, true);
+    r.calls.toggle.calls[0].reject(new Error('Lost write'));
+    await pending;
+    assert.equal(current()[0].isCompleted, false);
   });
 });
 
-test('failed same-query weekly refresh still lets a failed checklist change roll back', async () => {
-  const app = await calendarSetup(true);
-  const toggle = app.runner.result.toggleCheck(10, 1);
-  app.runner.render({ ...app.params, focusKey: 1 });
-  app.source.calls[1].reject(new Error('Refresh failed'));
-  await app.runner.flush();
-  app.complete.calls[0].reject(new Error('Toggle failed'));
-  await toggle;
-  await app.runner.flush();
-  assert.deepEqual(itemValues(app.currentItems()), [
-    [1, false],
-    [2, false],
-  ]);
-});
-
-test('calendar checklist requests lock the same item until completion', async () => {
-  const app = await calendarSetup();
-  const pending = app.runner.result.toggleCheck(10, 1);
-  await app.runner.result.toggleCheck(10, 1);
-  assert.equal(app.complete.calls.length, 1);
-  app.complete.calls[0].reject(new Error('Failed'));
-  await pending;
-  await app.runner.flush();
-  const retry = app.runner.result.toggleCheck(10, 1);
-  assert.equal(app.complete.calls.length, 2);
-  app.complete.calls[1].resolve();
-  await retry;
-});
-
-test('a failed checklist request cannot restore an event that was deleted', async () => {
-  const app = await calendarSetup();
-  const pending = app.runner.result.toggleCheck(10, 1);
-  const removal = app.runner.result.deleteEvent(10);
-  app.remove.calls[0].resolve();
-  await removal;
-  app.complete.calls[0].reject(new Error('Failed'));
-  await pending;
-  await app.runner.flush();
-  assert.equal(app.runner.result.dayEvents.length, 0);
-});
-
-const checklistSetup = async (values = [false, false, false]) => {
-  const fetch = queuedApi();
-  const complete = queuedApi();
-  const remove = queuedApi();
-  const runner = hookHarness('src/hooks/scan/useNewsletterChecklist.ts', {
-    '../../api/newsletter': {
-      getNewsletterChecklist: fetch.request,
-      NewsletterApiError: class extends Error {},
-    },
-    '../../api/checklist': {
-      toggleChecklistItem: complete.request,
-      deleteChecklistItem: remove.request,
-    },
+[
+  [1, 2],
+  [2, 1],
+].forEach((startOrder) => {
+  ['forward', 'reverse'].forEach((order) => {
+    test(`concurrent failed deletions preserve order (start ${startOrder}, fail ${order})`, async () => {
+      const r = setup();
+      const { changeChecklist } = r.load('src/query/checklists.ts');
+      const key = r.key('newsletterChecklist', 1);
+      r.client.setQueryData(key, rows());
+      const first = changeChecklist(startOrder[0], false).catch(() => {});
+      await r.flush();
+      const second = changeChecklist(startOrder[1], false).catch(() => {});
+      await r.flush();
+      const orderIndexes = order === 'forward' ? [0, 1] : [1, 0];
+      r.calls.remove.calls[orderIndexes[0]].reject(new Error('First failure'));
+      await r.flush();
+      r.calls.remove.calls[orderIndexes[1]].reject(new Error('Second failure'));
+      await Promise.all([first, second]);
+      assert.deepEqual(
+        Array.from(r.client.getQueryData(key), (row) => row.checklistId),
+        [1, 2, 3]
+      );
+    });
   });
-  runner.render(1);
-  fetch.calls[0].resolve(checklistItems(values));
-  await runner.flush();
-  return { runner, fetch, complete, remove };
-};
+});
 
-test('document checklist failure only rolls back the failed item', async () => {
-  const app = await checklistSetup();
-  const first = app.runner.result.toggle(1);
-  await app.runner.flush();
-  const second = app.runner.result.toggle(2);
-  app.complete.calls[1].resolve();
-  await second;
-  app.complete.calls[0].reject(new Error('First failed'));
+test('failed deletion preserves a successful deletion and another completed toggle', async () => {
+  const r = setup();
+  const { changeChecklist } = r.load('src/query/checklists.ts');
+  const key = r.key('newsletterChecklist', 1);
+  r.client.setQueryData(key, rows());
+  const first = changeChecklist(1, false).catch(() => {});
+  await r.flush();
+  const second = changeChecklist(2, false);
+  const toggle = changeChecklist(3, false, true);
+  await r.flush();
+  r.calls.remove.calls[1].resolve();
+  r.calls.toggle.calls[0].resolve();
+  await Promise.all([second, toggle]);
+  r.calls.remove.calls[0].reject(new Error('First deletion failed'));
   await first;
-  await app.runner.flush();
-  assert.deepEqual(itemValues(app.runner.result.items), [
+  assert.deepEqual(values(r.client.getQueryData(key)), [
     [1, false],
-    [2, true],
-    [3, false],
-  ]);
-});
-
-test('failed deletion preserves another completed toggle', async () => {
-  const app = await checklistSetup([true, false, false]);
-  const removal = app.runner.result.remove(1);
-  await app.runner.flush();
-  const toggle = app.runner.result.toggle(2);
-  app.complete.calls[0].resolve();
-  await toggle;
-  app.remove.calls[0].reject(new Error('Delete failed'));
-  await removal;
-  await app.runner.flush();
-  assert.deepEqual(itemValues(app.runner.result.items), [
-    [1, true],
-    [2, true],
-    [3, false],
-  ]);
-});
-
-test('failed deletion does not restore another successfully deleted item', async () => {
-  const app = await checklistSetup([true, true, true]);
-  const first = app.runner.result.remove(1);
-  await app.runner.flush();
-  const second = app.runner.result.remove(2);
-  app.remove.calls[1].resolve();
-  await second;
-  app.remove.calls[0].reject(new Error('First failed'));
-  await first;
-  await app.runner.flush();
-  assert.deepEqual(itemValues(app.runner.result.items), [
-    [1, true],
     [3, true],
   ]);
 });
 
-[false, true].forEach((reverse) => {
-  test(`failed concurrent deletions preserve original order (${reverse ? 'reverse' : 'forward'} completion)`, async () => {
-    const app = await checklistSetup([true, true, true, true]);
-    const first = app.runner.result.remove(2);
-    await app.runner.flush();
-    const second = app.runner.result.remove(3);
-    const order = reverse ? [1, 0] : [0, 1];
-    const pending = [first, second];
-    await order.reduce(async (previous, index) => {
-      await previous;
-      app.remove.calls[index].reject(new Error('Delete failed'));
-      await pending[index];
-      await app.runner.flush();
-    }, Promise.resolve());
-    assert.deepEqual(itemValues(app.runner.result.items), [
-      [1, true],
-      [2, true],
-      [3, true],
-      [4, true],
-    ]);
-  });
+test('a failed checklist write cannot restore an event that was successfully deleted', async () => {
+  const r = setup();
+  const { changeChecklist, removeCalendarEvent } = r.load('src/query/checklists.ts');
+  const key = r.key('calendar', 'day');
+  r.client.setQueryData(key, { events: [{ eventId: 10, checklists: rows() }] });
+  const change = changeChecklist(1, false, true).catch(() => {});
+  await r.flush();
+  const remove = removeCalendarEvent(10);
+  r.calls.deleteEvent.calls[0].resolve();
+  await remove;
+  r.calls.toggle.calls[0].reject(new Error('Late failure'));
+  await change;
+  assert.equal(r.client.getQueryData(key).events.length, 0);
 });
 
-test('toggle and deletion share the same item lock', async () => {
-  const app = await checklistSetup([true]);
-  const pending = app.runner.result.toggle(1);
-  await app.runner.result.toggle(1);
-  await app.runner.result.remove(1);
-  assert.equal(app.complete.calls.length, 1);
-  assert.equal(app.remove.calls.length, 0);
-  app.complete.calls[0].resolve();
+test('an old mutation completion cannot populate a new account cache', async () => {
+  const r = setup();
+  const { changeChecklist } = r.load('src/query/checklists.ts');
+  r.client.setQueryData(r.key('newsletterChecklist', 1), rows());
+  const pending = changeChecklist(1, false, true).catch(() => {});
+  await r.flush();
+  r.session.invalidateSession();
+  r.session.markSessionAuthenticated(r.session.getSessionVersion());
+  const key = r.key('newsletterChecklist', 1);
+  r.client.setQueryData(key, rows());
+  r.calls.toggle.calls[0].resolve();
   await pending;
+  assert.deepEqual(values(r.client.getQueryData(key)), [
+    [1, false],
+    [2, false],
+    [3, false],
+  ]);
 });
 
-test('old document mutation failures cannot change the next document', async () => {
-  const app = await checklistSetup([false]);
-  const pending = app.runner.result.toggle(1);
-  app.runner.render(2);
-  app.fetch.calls[1].resolve(checklistItems([true]));
-  await app.runner.flush();
-  app.complete.calls[0].reject(new Error('Old failure'));
+test('a new optimistic write preserves authoritative changes to a previously updated item', async () => {
+  const r = setup();
+  const { changeChecklist } = r.load('src/query/checklists.ts');
+  const { serverOptions } = r.load('src/query/options.ts');
+  const key = r.key('newsletterChecklist', 1);
+  r.client.setQueryData(key, rows());
+  const first = changeChecklist(1, false, true);
+  await r.flush();
+  r.calls.toggle.calls[0].resolve();
+  await first;
+  await r.client.fetchQuery(
+    serverOptions(r.scope(), 'newsletterChecklist', [1], async () => rows())
+  );
+  const second = changeChecklist(2, false, true);
+  await r.flush();
+  assert.deepEqual(values(r.client.getQueryData(key)), [
+    [1, false],
+    [2, true],
+    [3, false],
+  ]);
+  r.calls.toggle.calls[1].resolve();
+  await second;
+});
+
+test('failed writes restore queries first loaded while the optimistic change was pending', async () => {
+  const r = setup();
+  const { changeChecklist } = r.load('src/query/checklists.ts');
+  const { serverOptions } = r.load('src/query/options.ts');
+  r.client.setQueryData(r.key('newsletterChecklist', 1), rows());
+  const pending = changeChecklist(1, false, true).catch(() => {});
+  await r.flush();
+  const key = r.key('calendar', 'new-day');
+  await r.client.fetchQuery(
+    serverOptions(r.scope(), 'calendar', ['new-day'], async () => ({
+      events: [{ eventId: 10, checklists: rows() }],
+    }))
+  );
+  assert.equal(r.client.getQueryData(key).events[0].checklists[0].isCompleted, true);
+  r.calls.toggle.calls[0].reject(new Error('Failed write'));
   await pending;
-  await app.runner.flush();
-  assert.deepEqual(itemValues(app.runner.result.items), [[1, true]]);
+  assert.equal(r.client.getQueryData(key).events[0].checklists[0].isCompleted, false);
 });
 
-test('old document fetches cannot overwrite the next document', async () => {
-  const app = await checklistSetup();
-  app.runner.render(2);
-  app.runner.render(3);
-  app.fetch.calls[2].resolve(checklistItems([true]));
-  await app.runner.flush();
-  app.fetch.calls[1].resolve(checklistItems([false]));
-  await app.runner.flush();
-  assert.deepEqual(itemValues(app.runner.result.items), [[1, true]]);
-});
-
-test('failed document deletion after unmount does not restore state', async () => {
-  const app = await checklistSetup([true]);
-  const pending = app.runner.result.remove(1);
-  app.runner.unmount();
-  app.remove.calls[0].reject(new Error('Failed after unmount'));
+test('a lost mutation response refetches the server to reconcile its actual outcome', async () => {
+  const r = setup();
+  const api = queuedApi();
+  const { changeChecklist } = r.load('src/query/checklists.ts');
+  const { serverOptions } = r.load('src/query/options.ts');
+  const view = r.observe(serverOptions(r.scope(), 'newsletterChecklist', [1], api.request));
+  api.calls[0].resolve(rows());
+  await r.flush();
+  const pending = changeChecklist(1, false, true).catch(() => {});
+  await r.flush();
+  r.calls.toggle.calls[0].reject(new Error('Response lost after server committed'));
   await pending;
-  assert.equal(app.runner.postUnmountUpdates, 0);
-});
-
-test('failed same-query refresh keeps the loaded pages available for pagination', async () => {
-  const { runner, fetch } = await documentSetup();
-  const firstMore = runner.result.loadMore();
-  fetch.calls[1].resolve(listResult(['A1']));
-  await firstMore;
-  await runner.flush();
-  runner.blur();
-  runner.focus();
-  fetch.calls[2].reject(new Error('Refresh failed'));
-  await runner.flush();
-  assert.deepEqual(listIds(runner), ['A0', 'A1']);
-  const next = runner.result.loadMore();
-  assert.equal(fetch.calls.length, 4);
-  assert.equal(fetch.calls[3].args[0].page, 2);
-  fetch.calls[3].resolve(listResult(['A2']));
-  await next;
-});
-
-test('failed weekly filter loading cannot display the previous child events', async () => {
-  const app = await calendarSetup(true);
-  app.runner.render({ ...app.params, selectedChildName: 'B' });
-  app.source.calls[1].reject(new Error('New filter failed'));
-  await app.runner.flush();
-  assert.equal(app.runner.result.weeklyData, null);
-  assert.equal(app.runner.result.weekEventsLoading, false);
-});
-
-test('an old daily fetch cannot resurrect a successfully deleted event', async () => {
-  const app = await calendarSetup();
-  const removal = app.runner.result.deleteEvent(10);
-  app.runner.render({ ...app.params, focusKey: 1 });
-  app.remove.calls[0].resolve();
-  await removal;
-  app.source.calls[1].resolve(app.result([false, false]));
-  await app.runner.flush();
-  assert.equal(app.runner.result.dayEvents.length, 0);
-});
-
-test('failed same-query weekly refresh retains existing events', async () => {
-  const app = await calendarSetup(true);
-  const previous = app.runner.result.weeklyData;
-  app.runner.render({ ...app.params, focusKey: 1 });
-  app.source.calls[1].reject(new Error('Refresh failed'));
-  await app.runner.flush();
-  assert.equal(app.runner.result.weeklyData, previous);
-  assert.equal(app.runner.result.weekEventsLoading, false);
-});
-
-test('failed weekly date change cannot display the previous week events', async () => {
-  const app = await calendarSetup(true);
-  app.runner.render({ ...app.params, weekDates: ['2026-11-19'] });
-  assert.equal(app.source.calls[1].args[0], '2026-11-19');
-  app.source.calls[1].reject(new Error('New week failed'));
-  await app.runner.flush();
-  assert.equal(app.runner.result.weeklyData, null);
-  assert.equal(app.runner.result.weekEventsLoading, false);
+  await r.flush();
+  assert.equal(api.calls.length, 2);
+  api.calls[1].resolve([checklist(1, true), checklist(2), checklist(3)]);
+  await r.flush();
+  assert.equal(view.result.data[0].isCompleted, true);
 });

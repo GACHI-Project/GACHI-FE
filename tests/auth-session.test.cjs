@@ -7,7 +7,13 @@ const { test } = require('node:test');
 const axios = require('axios');
 const ts = require('typescript');
 const zustand = require('zustand');
-const { hookHarness, queuedApi } = require('./helpers/hookHarness.cjs');
+const tanstack = require('@tanstack/react-query');
+
+const clients = new Set();
+test.afterEach(() => {
+  clients.forEach((client) => client.clear());
+  clients.clear();
+});
 
 const deferred = () => {
   let resolve;
@@ -109,6 +115,7 @@ const setup = (options = {}) => {
             return { router: { replace: (route) => navigations.push(route) } };
           if (name.startsWith('.')) return load(`${path.resolve(path.dirname(filename), name)}.ts`);
           if (name === 'zustand') return zustand;
+          if (name === '@tanstack/react-query') return tanstack;
           throw new Error(`Unexpected module: ${name}`);
         },
       },
@@ -118,9 +125,27 @@ const setup = (options = {}) => {
   };
   const auth = load('src/api/auth.ts');
   const session = load('src/utils/authSession.ts');
-  const user = load('src/store/userStore.ts').useUserStore;
-  const children = load('src/store/childrenStore.ts').useChildrenStore;
-  const notifications = load('src/store/notificationStore.ts').useNotificationStore;
+  const client = load('src/query/client.ts').queryClient;
+  clients.add(client);
+  const key = (domain) => ['session', session.getSessionVersion(), 'ko', domain];
+  const user = {
+    getState: () => ({
+      name: client.getQueryData(key('profile'))?.name ?? '',
+      setName: (name) => client.setQueryData(key('profile'), { name }),
+    }),
+  };
+  const children = {
+    getState: () => ({
+      children: client.getQueryData(key('children')) ?? [],
+      setChildren: (items) => client.setQueryData(key('children'), items),
+    }),
+  };
+  const notifications = {
+    getState: () => ({
+      unreadCount: client.getQueryData(key('unread')) ?? 0,
+      setUnreadCount: (count) => client.setQueryData(key('unread'), count),
+    }),
+  };
   const registration = load('src/store/registerStore.ts').useRegisterStore;
   const kakao = load('src/store/kakaoAuthStore.ts').useKakaoAuthStore;
   const google = load('src/store/googleAuthStore.ts').useGoogleAuthStore;
@@ -219,7 +244,7 @@ test('a public login 401 preserves the original error without attempting refresh
   assert.equal(app.values.get('refreshToken'), tokens.refreshToken);
 });
 
-test('clearSession resets all account stores even if one token deletion fails', async () => {
+test('clearSession clears server caches and registration stores even if token deletion fails', async () => {
   const app = setup({ failDelete: 'accessToken' });
   app.user.getState().setName('Previous user');
   app.children.getState().setChildren([{ id: 1, name: 'Previous child' }]);
@@ -249,7 +274,7 @@ test('clearSession resets all account stores even if one token deletion fails', 
   assert.equal(app.navigations.length, 1);
 });
 
-test('a late response from the previous session is rejected before updating stores', async () => {
+test('a late response from the previous session is rejected before updating caches', async () => {
   const response = deferred();
   const app = setup({ adapter: async (config) => success(config, await response.promise) });
   const result = Promise.allSettled([
@@ -460,160 +485,6 @@ test('logout reports permanent deletion failures and blocks leftover credentials
 });
 
 // Load a module with explicit dependencies so the shared unread counter uses this app's session.
-const loadWithMocks = (file, imports) => {
-  const filename = path.resolve(__dirname, '..', file);
-  const exports = {};
-  const { outputText } = ts.transpileModule(fs.readFileSync(filename, 'utf8'), {
-    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 },
-  });
-  vm.runInNewContext(
-    outputText,
-    {
-      exports,
-      require: (name) => {
-        if (!(name in imports)) throw new Error(`Unexpected module: ${name}`);
-        return imports[name];
-      },
-    },
-    { filename }
-  );
-  return exports;
-};
-
-const notificationSetup = async () => {
-  const app = setup();
-  const fetch = queuedApi();
-  const children = queuedApi();
-  const read = queuedApi();
-  const readAll = queuedApi();
-  const counts = queuedApi();
-  const counter = loadWithMocks('src/utils/unreadCount.ts', {
-    '../api/notifications': { fetchUnreadCount: counts.request },
-    '../store/notificationStore': { useNotificationStore: app.notifications },
-    './authSession': app.session,
-  });
-  const runner = hookHarness('src/hooks/notifications/useNotificationList.ts', {
-    '../../api/notifications': {
-      fetchNotifications: fetch.request,
-      markNotificationRead: read.request,
-      markAllNotificationsRead: readAll.request,
-    },
-    '../../api/calendar': { fetchChildren: children.request },
-    '../../utils/unreadCount': counter,
-    '../../utils/authSession': app.session,
-  });
-  const page = (id, isRead = false) => ({
-    notifications: [{ id, read: isRead }],
-    nextCursor: id,
-    hasNext: true,
-  });
-  runner.render();
-  fetch.calls[0].resolve(page(1));
-  children.calls[0].resolve([]);
-  counts.calls[0].resolve(1);
-  await runner.flush();
-  const loadNewSession = async (id, isRead = false) => {
-    await app.auth.clearSession();
-    await app.auth.saveAuthTokens(refreshed, app.session.getSessionVersion());
-    runner.result.loadInitial();
-    fetch.calls[fetch.calls.length - 1].resolve(page(id, isRead));
-    children.calls[children.calls.length - 1].resolve([]);
-    await runner.flush();
-  };
-  // Pages wait for in-flight reads, then refetch once the read settles; answer that refetch.
-  const answerRefetch = async (id, isRead, unreadCount) => {
-    fetch.calls[fetch.calls.length - 1].resolve(page(id, isRead));
-    counts.calls[counts.calls.length - 1].resolve(unreadCount);
-    await runner.flush();
-  };
-  return {
-    app,
-    runner,
-    fetch,
-    children,
-    read,
-    readAll,
-    counts,
-    page,
-    loadNewSession,
-    answerRefetch,
-  };
-};
-
-test('old notification initialization cannot overwrite the next session list', async () => {
-  const state = await notificationSetup();
-  state.runner.result.loadInitial();
-  await state.loadNewSession(2);
-  state.fetch.calls[1].resolve(state.page(1));
-  state.children.calls[1].resolve([]);
-  await state.runner.flush();
-  assert.deepEqual(
-    Array.from(state.runner.result.notifications, (item) => item.id),
-    [2]
-  );
-});
-
-test('old notification pagination cannot append to the next session list', async () => {
-  const state = await notificationSetup();
-  const more = state.runner.result.loadMore();
-  await state.loadNewSession(2);
-  state.fetch.calls[1].resolve(state.page(99));
-  await more;
-  await state.runner.flush();
-  assert.deepEqual(
-    Array.from(state.runner.result.notifications, (item) => item.id),
-    [2]
-  );
-});
-
-test('old single-read failure cannot undo a newer session read state', async () => {
-  const state = await notificationSetup();
-  const pending = state.runner.result.markAsRead(1);
-  await state.loadNewSession(1, true);
-  state.read.calls[0].reject(new Error('Previous session request failed'));
-  await pending;
-  await state.answerRefetch(1, true, 0);
-  assert.equal(state.runner.result.notifications[0].read, true);
-  assert.equal(state.app.notifications.getState().unreadCount, 0);
-});
-
-test('old read-all failure cannot restore a previous session snapshot', async () => {
-  const state = await notificationSetup();
-  const pending = state.runner.result.handleMarkAllRead();
-  await state.loadNewSession(2);
-  state.readAll.calls[0].reject(new Error('Previous session request failed'));
-  await pending;
-  await state.answerRefetch(2, false, 1);
-  assert.deepEqual(
-    Array.from(state.runner.result.notifications, (item) => item.id),
-    [2]
-  );
-  assert.equal(state.app.notifications.getState().unreadCount, 1);
-});
-
-test('old single-read success cannot change the next session list or total', async () => {
-  const state = await notificationSetup();
-  const pending = state.runner.result.markAsRead(1);
-  await state.loadNewSession(1);
-  state.app.notifications.getState().setUnreadCount(3);
-  state.read.calls[0].resolve(1);
-  await pending;
-  await state.runner.flush();
-  assert.equal(state.app.notifications.getState().unreadCount, 3);
-  await state.answerRefetch(1, false, 3);
-  assert.equal(state.runner.result.notifications[0].read, false);
-  assert.equal(state.app.notifications.getState().unreadCount, 3);
-});
-
-test('an unread total requested by the previous session is ignored', async () => {
-  const state = await notificationSetup();
-  state.runner.result.loadInitial();
-  await state.app.auth.clearSession();
-  state.counts.calls[state.counts.calls.length - 1].resolve(7);
-  await state.runner.flush();
-  assert.equal(state.app.notifications.getState().unreadCount, 0);
-});
-
 // Isolate the actual screen callback without loading native UI modules.
 const loadScreenCallback = (file, name, globals) => {
   const filename = path.resolve(__dirname, '..', file);
@@ -665,6 +536,8 @@ const loadScreenCallback = (file, name, globals) => {
     let saves = 0;
     const callback = loadScreenCallback(filename, callbackName, {
       ...app.session,
+      fetchSessionResource: async (_domain, _params, fetch) => fetch(),
+      getMeApi: async () => ({ name: 'Old', languageCode: 'EN' }),
       AuthApiError: app.auth.AuthApiError,
       saveAuthTokens: app.auth.saveAuthTokens,
       saveRememberMe: async () => {},

@@ -1,53 +1,35 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useMemo } from 'react';
+import type { HolidayItem, SchoolGroup } from '../../api/calendar';
 import { fetchMonthlyMarkers } from '../../api/calendar';
-import type { MonthlyMarker, HolidayItem, SchoolGroup } from '../../api/calendar';
+import { useServerQuery } from '../../query/hooks';
 import { getSchoolDotsForDate } from '../../utils/schoolSchedule';
 
 interface Params {
   isWeekMode: boolean;
   calendarMonth: { year: number; month: number };
   selectedChildName: string | undefined;
-  focusKey: number;
+
   commonHolidays: HolidayItem[];
   schoolGroups: SchoolGroup[];
-  refreshKey: number;
 }
 
 const useCalendarMarkers = ({
   isWeekMode,
   calendarMonth,
   selectedChildName,
-  focusKey,
+
   commonHolidays,
   schoolGroups,
-  refreshKey,
 }: Params) => {
-  const [monthlyMarkers, setMonthlyMarkers] = useState<MonthlyMarker[]>([]);
-  const [markersLoading, setMarkersLoading] = useState(false);
-  const monthlyReqIdRef = useRef(0);
-
-  useEffect(() => {
-    if (isWeekMode) return;
-    setMarkersLoading(true);
-    monthlyReqIdRef.current += 1;
-    const reqId = monthlyReqIdRef.current;
-    fetchMonthlyMarkers(calendarMonth.year, calendarMonth.month + 1, selectedChildName)
-      .then((data) => {
-        if (reqId === monthlyReqIdRef.current) setMonthlyMarkers(data);
-      })
-      .catch(() => {})
-      .finally(() => {
-        if (reqId === monthlyReqIdRef.current) setMarkersLoading(false);
-      });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    isWeekMode,
-    calendarMonth.year,
-    calendarMonth.month,
-    selectedChildName,
-    focusKey,
-    refreshKey,
-  ]);
+  const query = useServerQuery(
+    'markers',
+    [calendarMonth.year, calendarMonth.month + 1, selectedChildName],
+    (signal) =>
+      fetchMonthlyMarkers(calendarMonth.year, calendarMonth.month + 1, selectedChildName, signal),
+    { enabled: !isWeekMode }
+  );
+  const monthlyMarkers = useMemo(() => query.data ?? [], [query.data]);
+  const markersLoading = query.isLoading;
 
   const markedDatesMap = useMemo(() => {
     const map: Record<string, { dots: { key: string; color: string }[] }> = {};

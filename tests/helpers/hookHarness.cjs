@@ -27,7 +27,7 @@ const queuedApi = () => {
 };
 
 // Execute the production hook with controlled renders, effects, focus and timers.
-const hookHarness = (file, mocks, globals = {}) => {
+const hookHarness = (file, mocks, globals = {}, exportName = 'default', sourceFiles = []) => {
   const cells = [];
   const timers = new Map();
   let cursor = 0;
@@ -38,8 +38,7 @@ const hookHarness = (file, mocks, globals = {}) => {
   let args = [];
   let result;
   let focused = true;
-  let focusCallback;
-  let focusCleanup;
+  const focusEffects = new Map();
   let postUnmountUpdates = 0;
   let readingRenderValue = false;
   const same = (a, b) =>
@@ -91,6 +90,25 @@ const hookHarness = (file, mocks, globals = {}) => {
     },
     useMemo: memo,
     useCallback: (callback, deps) => memo(() => callback, deps),
+    useSyncExternalStore: (subscribe, getSnapshot) => {
+      const snapshot = getSnapshot();
+      const [instance] = react.useState(() => ({ snapshot, getSnapshot }));
+      const [, update] = react.useState(0);
+      const check = react.useCallback(() => {
+        if (!Object.is(instance.snapshot, instance.getSnapshot())) update((value) => value + 1);
+      }, [instance, update]);
+      react.useEffect(() => {
+        instance.snapshot = snapshot;
+        instance.getSnapshot = getSnapshot;
+        check();
+      }, [instance, snapshot, getSnapshot, check]);
+      react.useEffect(() => {
+        const unsubscribe = subscribe(check);
+        check();
+        return unsubscribe;
+      }, [subscribe, check]);
+      return snapshot;
+    },
     useEffect: (callback, deps) => {
       const index = cursor;
       cursor += 1;
@@ -105,49 +123,62 @@ const hookHarness = (file, mocks, globals = {}) => {
       }
     },
   };
+  const resolvedMocks = typeof mocks === 'function' ? mocks(react, () => focused) : mocks;
   const imports = {
-    ...mocks,
+    ...resolvedMocks,
     react,
     'expo-router': {
-      ...mocks['expo-router'],
+      ...resolvedMocks['expo-router'],
       useFocusEffect: (callback) =>
         react.useEffect(() => {
-          focusCallback = callback;
-          if (focused) focusCleanup = callback();
+          const effect = { callback };
+          focusEffects.set(effect, focused ? callback() : undefined);
           return () => {
-            focusCleanup?.();
-            focusCleanup = undefined;
+            focusEffects.get(effect)?.();
+            focusEffects.delete(effect);
           };
         }, [callback]),
     },
   };
-  const exports = {};
-  const filename = path.resolve(__dirname, '../..', file);
-  const { outputText } = ts.transpileModule(fs.readFileSync(filename, 'utf8'), {
-    compilerOptions: {
-      module: ts.ModuleKind.CommonJS,
-      target: ts.ScriptTarget.ES2020,
-      jsx: ts.JsxEmit.ReactJSX,
-    },
-  });
-  vm.runInNewContext(
-    outputText,
-    {
-      ...globals,
-      exports,
-      require: (name) => {
-        if (!(name in imports)) throw new Error(`Unexpected module: ${name}`);
-        return imports[name];
+  const sources = new Set(sourceFiles.map((source) => path.resolve(__dirname, '../..', source)));
+  const modules = new Map();
+  const load = (filename) => {
+    if (modules.has(filename)) return modules.get(filename);
+    const exports = {};
+    modules.set(filename, exports);
+    const { outputText } = ts.transpileModule(fs.readFileSync(filename, 'utf8'), {
+      fileName: filename,
+      compilerOptions: {
+        module: ts.ModuleKind.CommonJS,
+        target: ts.ScriptTarget.ES2020,
+        jsx: ts.JsxEmit.ReactJSX,
       },
-      setTimeout: (callback) => {
-        timerId += 1;
-        timers.set(timerId, callback);
-        return timerId;
+    });
+    vm.runInNewContext(
+      outputText,
+      {
+        ...globals,
+        exports,
+        require: (name) => {
+          if (name.startsWith('.')) {
+            const source = path.resolve(path.dirname(filename), `${name}.ts`);
+            if (sources.has(source)) return load(source);
+          }
+          if (!(name in imports)) throw new Error(`Unexpected module: ${name}`);
+          return imports[name];
+        },
+        setTimeout: (callback) => {
+          timerId += 1;
+          timers.set(timerId, callback);
+          return timerId;
+        },
+        clearTimeout: (id) => timers.delete(id),
       },
-      clearTimeout: (id) => timers.delete(id),
-    },
-    { filename }
-  );
+      { filename }
+    );
+    return exports;
+  };
+  const exports = load(path.resolve(__dirname, '../..', file));
   const render = (...nextArgs) => {
     if (nextArgs.length) args = nextArgs;
     let iterations = 0;
@@ -155,7 +186,7 @@ const hookHarness = (file, mocks, globals = {}) => {
       dirty = false;
       cursor = 0;
       effects = [];
-      result = exports.default(...args);
+      result = exports[exportName](...args);
       effects.forEach((effect) => effect());
       iterations += 1;
       if (iterations > 20) throw new Error('Hook did not settle');
@@ -191,13 +222,22 @@ const hookHarness = (file, mocks, globals = {}) => {
       if (dirty) render();
     },
     blur: () => {
+      if (!focused) return;
       focused = false;
-      focusCleanup?.();
-      focusCleanup = undefined;
+      focusEffects.forEach((cleanup, effect) => {
+        cleanup?.();
+        focusEffects.set(effect, undefined);
+      });
+      render();
     },
     focus: () => {
+      if (focused) return;
+      const returningEffects = [...focusEffects.keys()];
       focused = true;
-      focusCleanup = focusCallback?.();
+      render();
+      returningEffects.forEach((effect) => {
+        if (focusEffects.has(effect)) focusEffects.set(effect, effect.callback());
+      });
       if (dirty) render();
     },
     unmount: () => {

@@ -1,22 +1,22 @@
-import { useState, useCallback } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
-import { router, useFocusEffect } from 'expo-router';
-import { useForm, Controller, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback, useState } from 'react';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
-import StepHeader from '../../../src/components/common/StepHeader';
-import { PrimaryButton } from '../../../src/components/common/Button';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { z } from 'zod';
 import FormField from '../../../src/components/auth/FormField';
 import PasswordStrengthBar, { getStrength } from '../../../src/components/auth/PasswordStrengthBar';
 import TermsCheckbox from '../../../src/components/auth/TermsCheckbox';
-import useRegisterAvailability from '../../../src/hooks/auth/useRegisterAvailability';
-import useRegisterEmailVerification from '../../../src/hooks/auth/useRegisterEmailVerification';
-import { loginIdSchema, emailSchema, validatePassword } from '../../../src/validation/auth';
+import { PrimaryButton } from '../../../src/components/common/Button';
+import StepHeader from '../../../src/components/common/StepHeader';
 import colors from '../../../src/constants/colors';
 import fonts from '../../../src/constants/fonts';
 import layout from '../../../src/constants/layout';
+import useRegisterAvailability from '../../../src/hooks/auth/useRegisterAvailability';
+import useRegisterEmailVerification from '../../../src/hooks/auth/useRegisterEmailVerification';
 import { useRegisterStore } from '../../../src/store/registerStore';
+import { emailSchema, loginIdSchema, validatePassword } from '../../../src/validation/auth';
 
 const formatTimer = (seconds: number) => {
   const m = Math.floor(seconds / 60)

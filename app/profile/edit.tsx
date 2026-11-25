@@ -1,62 +1,65 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
-import {
-  View,
-  Text,
-  Image,
-  ScrollView,
-  TouchableOpacity,
-  TouchableWithoutFeedback,
-  Modal,
-  Animated,
-  KeyboardAvoidingView,
-  Alert,
-  type ImageSourcePropType,
-} from 'react-native';
-import { Ionicons, FontAwesome5 } from '@expo/vector-icons';
-import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
-import * as WebBrowser from 'expo-web-browser';
+import { FontAwesome5, Ionicons } from '@expo/vector-icons';
 import {
   GoogleSignin,
   isErrorWithCode,
   statusCodes,
 } from '@react-native-google-signin/google-signin';
+import { router, useLocalSearchParams } from 'expo-router';
+import * as WebBrowser from 'expo-web-browser';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Header from '../../src/components/common/Header';
-import ConfirmModal from '../../src/components/common/ConfirmModal';
-import FormField from '../../src/components/auth/FormField';
 import {
-  fetchMyInfo,
-  updateProfile,
-  withdrawUser,
-  UserInfo,
-  UserApiError,
-} from '../../src/api/user';
+  Alert,
+  Animated,
+  Image,
+  KeyboardAvoidingView,
+  Modal,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  View,
+  type ImageSourcePropType,
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import GoogleIcon from '../../assets/social/google.png';
+import KakaoIcon from '../../assets/social/kakao.png';
 import {
   clearSession,
+  completeGoogleLogin as completeGoogleLoginApi,
   getKakaoAuthorizeUrl,
-  completeGoogleLogin,
-  linkGoogle,
-  unlinkGoogle,
-  unlinkKakao,
-  saveAuthTokens,
   getRememberMe,
+  linkGoogle as linkGoogleApi,
+  saveAuthTokens,
+  unlinkGoogle as unlinkGoogleApi,
+  unlinkKakao as unlinkKakaoApi,
 } from '../../src/api/auth';
 import {
+  updateProfile as updateProfileApi,
+  UserApiError,
+  UserInfo,
+  withdrawUser as withdrawUserApi,
+} from '../../src/api/user';
+import FormField from '../../src/components/auth/FormField';
+import ConfirmModal from '../../src/components/common/ConfirmModal';
+import Header from '../../src/components/common/Header';
+import QueryNotice from '../../src/components/common/QueryNotice';
+import colors from '../../src/constants/colors';
+import layout from '../../src/constants/layout';
+import { KAKAO_REDIRECT_URI } from '../../src/constants/socialAuth';
+import { useApiMutation } from '../../src/query/hooks';
+import { useProfileQuery } from '../../src/query/resources';
+import { hasBlockingQueryError } from '../../src/query/state';
+import { useKakaoAuthStore } from '../../src/store/kakaoAuthStore';
+import linkStyles from '../../src/styles/profile/accountLink';
+import styles from '../../src/styles/profile/profileEdit';
+import {
+  assertCurrentSession,
   getSessionVersion,
   isCurrentSession,
-  assertCurrentSession,
 } from '../../src/utils/authSession';
 import { mapLinkError } from '../../src/utils/pendingLink';
 import { phoneNumberSchema } from '../../src/validation/auth';
-import { useKakaoAuthStore } from '../../src/store/kakaoAuthStore';
-import { KAKAO_REDIRECT_URI } from '../../src/constants/socialAuth';
-import colors from '../../src/constants/colors';
-import layout from '../../src/constants/layout';
-import styles from '../../src/styles/profile/profileEdit';
-import linkStyles from '../../src/styles/profile/accountLink';
-import KakaoIcon from '../../assets/social/kakao.png';
-import GoogleIcon from '../../assets/social/google.png';
 
 type SocialProvider = 'kakao' | 'google';
 
@@ -100,6 +103,7 @@ const ProfileEditSheet = ({
   onClose,
   onSaved,
 }: ProfileEditSheetProps) => {
+  const updateProfile = useApiMutation(updateProfileApi, ['profile']);
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const [name, setName] = useState('');
@@ -242,6 +246,11 @@ const ProfileEditSheet = ({
 };
 
 const ProfileEditScreen = () => {
+  const unlinkKakao = useApiMutation(unlinkKakaoApi, []);
+  const unlinkGoogle = useApiMutation(unlinkGoogleApi, []);
+  const linkGoogle = useApiMutation(linkGoogleApi, []);
+  const completeGoogleLogin = useApiMutation(completeGoogleLoginApi, []);
+  const withdrawUser = useApiMutation(withdrawUserApi);
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const [withdrawModalVisible, setWithdrawModalVisible] = useState(false);
@@ -252,32 +261,18 @@ const ProfileEditScreen = () => {
   const [withdrawing, setWithdrawing] = useState(false);
   const [editSheetVisible, setEditSheetVisible] = useState(false);
   const [editSheetFocus, setEditSheetFocus] = useState<'name' | 'phone'>('name');
-  const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
+  const profileQuery = useProfileQuery();
+  const userInfo = hasBlockingQueryError(profileQuery) ? null : (profileQuery.data ?? null);
   const [disconnectTarget, setDisconnectTarget] = useState<SocialProvider | null>(null);
   const [mismatchTarget, setMismatchTarget] = useState<SocialProvider | null>(null);
   const [processingProvider, setProcessingProvider] = useState<SocialProvider | null>(null);
   const [blockedModalVisible, setBlockedModalVisible] = useState(false);
   const { kakaoLinkResult } = useLocalSearchParams<{ kakaoLinkResult?: string }>();
 
-  const userInfoRequestIdRef = useRef(0);
-
+  const { refetch: refetchProfile } = profileQuery;
   const loadUserInfo = useCallback(() => {
-    userInfoRequestIdRef.current += 1;
-    const requestId = userInfoRequestIdRef.current;
-    fetchMyInfo()
-      .then((info) => {
-        if (userInfoRequestIdRef.current !== requestId) return;
-        setUserInfo(info);
-      })
-      .catch(() => {
-        if (userInfoRequestIdRef.current !== requestId) return;
-        Alert.alert(t('common.error'), t('common.networkError'));
-      });
-    // t is used only in the error callback — re-fetching on language change is undesirable
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useFocusEffect(loadUserInfo);
+    void refetchProfile();
+  }, [refetchProfile]);
 
   useEffect(() => {
     if (!kakaoLinkResult) return;
@@ -466,6 +461,21 @@ const ProfileEditScreen = () => {
     setEditSheetVisible(true);
   };
 
+  if (!userInfo) {
+    const waiting = !profileQuery.error && profileQuery.fetchStatus === 'paused';
+    return (
+      <View style={styles.container}>
+        <Header title={t('profile.edit')} onBack={() => router.back()} />
+        <QueryNotice
+          loading={!profileQuery.error && profileQuery.isPending}
+          message={waiting ? t('common.waitingConnection') : undefined}
+          onRetry={loadUserInfo}
+          retrying={profileQuery.isFetching}
+        />
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <Header title={t('profile.edit')} onBack={() => router.back()} onHelp={() => {}} />
@@ -474,6 +484,13 @@ const ProfileEditScreen = () => {
         contentContainerStyle={{ paddingBottom: insets.bottom + layout.screenPaddingBottom }}
         showsVerticalScrollIndicator={false}
       >
+        {profileQuery.error && (
+          <QueryNotice
+            message={t('common.refreshFailed')}
+            onRetry={loadUserInfo}
+            retrying={profileQuery.isFetching}
+          />
+        )}
         <View style={styles.profileCard}>
           <Image source={require('../../assets/icon.png')} style={styles.avatar} />
           <Text style={styles.loginId}>{userInfo?.loginId ?? ''}</Text>

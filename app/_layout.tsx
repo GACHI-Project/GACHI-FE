@@ -1,14 +1,15 @@
-import { useEffect, useState } from 'react';
-import { StyleSheet, Platform } from 'react-native';
-import { Stack } from 'expo-router';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
-import * as SplashScreen from 'expo-splash-screen';
 import * as Font from 'expo-font';
 import * as Notifications from 'expo-notifications';
-import { initI18n } from '../src/i18n';
-import { refreshUnreadCount } from '../src/utils/unreadCount';
+import { Stack } from 'expo-router';
+import * as SplashScreen from 'expo-splash-screen';
+import { useEffect, useState } from 'react';
+import { Platform, StyleSheet } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import colors from '../src/constants/colors';
+import { initI18n } from '../src/i18n';
+import QueryProvider from '../src/query/QueryProvider';
+import { refreshUnreadCount } from '../src/utils/unreadCount';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
@@ -66,7 +67,9 @@ const RootLayout = () => {
   return (
     <GestureHandlerRootView style={styles.root}>
       <SafeAreaProvider>
-        <Stack screenOptions={{ headerShown: false }} />
+        <QueryProvider>
+          <Stack screenOptions={{ headerShown: false }} />
+        </QueryProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

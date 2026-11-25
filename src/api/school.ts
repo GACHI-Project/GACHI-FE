@@ -1,6 +1,6 @@
 import axios from 'axios';
-import { apiClient } from './auth';
 import { SchoolResult } from '../types/school';
+import { apiClient } from './auth';
 
 const wrapError = (error: unknown): Error => {
   if (axios.isAxiosError(error) && error.response?.data?.code) {
@@ -24,11 +24,13 @@ export interface ClassItem {
 export const fetchClasses = async (
   officeCode: string,
   schoolCode: string,
-  grade: number
+  grade: number,
+  signal?: AbortSignal
 ): Promise<ClassItem[]> => {
   try {
     const response = await apiClient.get('/api/v1/schools/classes', {
       params: { officeCode, schoolCode, grade },
+      signal,
     });
     return response.data.result?.classes ?? [];
   } catch (error) {
@@ -38,11 +40,13 @@ export const fetchClasses = async (
 
 export const searchSchools = async (
   keyword: string,
-  size: number = 10
+  size?: number,
+  signal?: AbortSignal
 ): Promise<SchoolResult[]> => {
   try {
     const response = await apiClient.get<{ result: SchoolSearchResult }>('/api/v1/schools/search', {
-      params: { keyword, size },
+      params: { keyword, size: size ?? 10 },
+      signal,
     });
     return response.data.result.schools;
   } catch (error) {

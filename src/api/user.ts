@@ -39,22 +39,25 @@ export interface UserInfo {
   passwordLoginAvailable: boolean;
 }
 
-export const fetchMyInfo = async (): Promise<UserInfo> => {
+export const fetchMyInfo = async (signal?: AbortSignal): Promise<UserInfo> => {
   try {
     const config = await getAuthConfig();
-    const { data } = await apiClient.get<{ result: UserInfo }>('/api/v1/users/me', config);
+    const { data } = await apiClient.get<{ result: UserInfo }>('/api/v1/users/me', {
+      ...config,
+      signal,
+    });
     return data.result;
   } catch (error) {
     throw wrapError(error);
   }
 };
 
-export const getMe = async (): Promise<UserInfo> => fetchMyInfo();
+export const getMe = async (signal?: AbortSignal): Promise<UserInfo> => fetchMyInfo(signal);
 
-export const updateLanguage = async (languageCode: string): Promise<void> => {
+export const updateLanguage = async (languageCode: string, signal?: AbortSignal): Promise<void> => {
   try {
     const config = await getAuthConfig();
-    await apiClient.patch('/api/v1/users/me/language', { languageCode }, config);
+    await apiClient.patch('/api/v1/users/me/language', { languageCode }, { ...config, signal });
   } catch (error) {
     throw wrapError(error);
   }
@@ -64,14 +67,15 @@ export type NotificationPreference = 'ALL' | 'IMPORTANT' | 'URGENT_ONLY' | 'OFF'
 
 export const sendEmailChangeCode = async (
   email: string,
-  currentPassword: string
+  currentPassword: string,
+  signal?: AbortSignal
 ): Promise<{ codeTtlSeconds: number; resendCooldownSeconds: number }> => {
   try {
     const config = await getAuthConfig();
     const { data } = await apiClient.post(
       '/api/v1/users/me/email/send',
       { email, currentPassword },
-      config
+      { ...config, signal }
     );
     return data.result;
   } catch (error) {
@@ -79,54 +83,70 @@ export const sendEmailChangeCode = async (
   }
 };
 
-export const verifyEmailChangeCode = async (email: string, code: string): Promise<void> => {
+export const verifyEmailChangeCode = async (
+  email: string,
+  code: string,
+  signal?: AbortSignal
+): Promise<void> => {
   try {
     const config = await getAuthConfig();
-    await apiClient.post('/api/v1/users/me/email/verify', { email, code }, config);
+    await apiClient.post('/api/v1/users/me/email/verify', { email, code }, { ...config, signal });
   } catch (error) {
     throw wrapError(error);
   }
 };
 
-export const changeEmail = async (email: string): Promise<void> => {
+export const changeEmail = async (email: string, signal?: AbortSignal): Promise<void> => {
   try {
     const config = await getAuthConfig();
-    await apiClient.patch('/api/v1/users/me/email', { email }, config);
+    await apiClient.patch('/api/v1/users/me/email', { email }, { ...config, signal });
   } catch (error) {
     throw wrapError(error);
   }
 };
 
-export const updateProfile = async (params: {
-  name?: string;
-  phoneNumber?: string;
-}): Promise<void> => {
+export const updateProfile = async (
+  params: {
+    name?: string;
+    phoneNumber?: string;
+  },
+  signal?: AbortSignal
+): Promise<void> => {
   try {
     const config = await getAuthConfig();
-    await apiClient.patch('/api/v1/users/me/profile', params, config);
+    await apiClient.patch('/api/v1/users/me/profile', params, { ...config, signal });
   } catch (error) {
     throw wrapError(error);
   }
 };
 
 export const updateNotificationPreference = async (
-  notificationPreference: NotificationPreference
+  notificationPreference: NotificationPreference,
+  signal?: AbortSignal
 ): Promise<void> => {
   try {
     const config = await getAuthConfig();
-    await apiClient.patch('/api/v1/users/me/notification', { notificationPreference }, config);
+    await apiClient.patch(
+      '/api/v1/users/me/notification',
+      { notificationPreference },
+      { ...config, signal }
+    );
   } catch (error) {
     throw wrapError(error);
   }
 };
 
-export const withdrawUser = async (currentPassword?: string): Promise<void> => {
+export const withdrawUser = async (
+  currentPassword?: string,
+  signal?: AbortSignal
+): Promise<void> => {
   let responseData: { success?: boolean; code?: string; message?: string } | undefined;
   try {
     const config = await getAuthConfig();
     const { data } = await apiClient.delete('/api/v1/users/me', {
       ...config,
       ...(currentPassword ? { data: { currentPassword } } : {}),
+      signal,
     });
     responseData = data;
   } catch (error) {
@@ -146,11 +166,17 @@ export interface ChangePasswordPayload {
   newPasswordConfirm: string;
 }
 
-export const changePassword = async (payload: ChangePasswordPayload): Promise<void> => {
+export const changePassword = async (
+  payload: ChangePasswordPayload,
+  signal?: AbortSignal
+): Promise<void> => {
   let responseData: { success?: boolean; code?: string; message?: string } | undefined;
   try {
     const config = await getAuthConfig();
-    const { data } = await apiClient.patch('/api/v1/users/me/password', payload, config);
+    const { data } = await apiClient.patch('/api/v1/users/me/password', payload, {
+      ...config,
+      signal,
+    });
     responseData = data;
   } catch (error) {
     throw wrapError(error);

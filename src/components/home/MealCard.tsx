@@ -1,22 +1,23 @@
 /* eslint-disable react/jsx-props-no-spreading */
-import { View, Text, Animated, ScrollView, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
+import { ActivityIndicator, Animated, ScrollView, Text, View } from 'react-native';
 import type { ChildItem } from '../../api/child';
 import type { MealMenu } from '../../api/meal';
 import colors from '../../constants/colors';
-import styles from './mealTimetableWidget.styles';
 import useSwipeableCard from '../../hooks/home/useSwipeableCard';
+import styles from './mealTimetableWidget.styles';
 
 interface Props {
   cardWidth: number;
   items: ChildItem[];
   meals: MealMenu[][];
   loading: boolean;
+  error?: boolean;
   fontScale: number;
 }
 
-const MealCard = ({ cardWidth, items, meals, loading, fontScale }: Props) => {
+const MealCard = ({ cardWidth, items, meals, loading, error = false, fontScale }: Props) => {
   const { t } = useTranslation();
   const { activeIdx, isPausedRef, translateX, panResponder } = useSwipeableCard(
     items.length,
@@ -28,6 +29,7 @@ const MealCard = ({ cardWidth, items, meals, loading, fontScale }: Props) => {
     if (loading) {
       return <ActivityIndicator color={colors.primary[400]} style={styles.loadingIndicator} />;
     }
+    if (error) return <Text style={styles.emptyText}>{t('common.networkError')}</Text>;
     if (!menus.length) {
       return <Text style={styles.emptyText}>{t('mealTimetable.meal.empty')}</Text>;
     }

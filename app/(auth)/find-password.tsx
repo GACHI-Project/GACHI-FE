@@ -1,18 +1,25 @@
-import { useState, useRef, useEffect } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
-import { router } from 'expo-router';
-import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
+import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import {
+  AuthApiError,
+  sendFindPasswordCode as sendFindPasswordCodeApi,
+  verifyPasswordResetCode as verifyPasswordResetCodeApi,
+} from '../../src/api/auth';
 import FormField from '../../src/components/auth/FormField';
 import { PrimaryButton } from '../../src/components/common/Button';
-import { sendFindPasswordCode, verifyPasswordResetCode, AuthApiError } from '../../src/api/auth';
 import colors from '../../src/constants/colors';
 import fonts from '../../src/constants/fonts';
 import layout from '../../src/constants/layout';
+import { useApiMutation } from '../../src/query/hooks';
 
 type ValidationMsg = { text: string; state: 'success' | 'error' };
 
 const FindPasswordScreen = () => {
+  const verifyPasswordResetCode = useApiMutation(verifyPasswordResetCodeApi, []);
+  const sendFindPasswordCode = useApiMutation(sendFindPasswordCodeApi, []);
   const { t } = useTranslation();
 
   const [loginId, setLoginId] = useState('');

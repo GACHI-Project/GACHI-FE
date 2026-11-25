@@ -4,7 +4,8 @@ import { apiClient, getAuthRequestConfig } from './auth';
 export class SchoolGuideApiError extends Error {
   constructor(
     public readonly code: string,
-    message: string
+    message: string,
+    public readonly status?: number
   ) {
     super(message);
     this.name = 'SchoolGuideApiError';
@@ -15,7 +16,8 @@ const wrapError = (error: unknown): Error => {
   if (axios.isAxiosError(error) && error.response?.data?.code) {
     return new SchoolGuideApiError(
       error.response.data.code,
-      error.response.data.message ?? '알 수 없는 오류'
+      error.response.data.message ?? '알 수 없는 오류',
+      error.response.status
     );
   }
   return error instanceof Error ? error : new Error(String(error));
@@ -64,12 +66,14 @@ export interface SchoolGuideFaqDetail {
   answer: string;
 }
 
-export const getSchoolGuideCategories = async (): Promise<SchoolGuideCategory[]> => {
+export const getSchoolGuideCategories = async (
+  signal?: AbortSignal
+): Promise<SchoolGuideCategory[]> => {
   try {
     const config = await getAuthConfig();
     const response = await apiClient.get<{ result: { categories: SchoolGuideCategory[] } }>(
       '/api/v1/school-guide/categories',
-      config
+      { ...config, signal }
     );
     return response.data.result?.categories ?? [];
   } catch (error) {
@@ -77,12 +81,12 @@ export const getSchoolGuideCategories = async (): Promise<SchoolGuideCategory[]>
   }
 };
 
-export const getPopularFaqs = async (): Promise<PopularFaq[]> => {
+export const getPopularFaqs = async (signal?: AbortSignal): Promise<PopularFaq[]> => {
   try {
     const config = await getAuthConfig();
     const response = await apiClient.get<{ result: { items: PopularFaq[] } }>(
       '/api/v1/school-guide/faqs/popular',
-      config
+      { ...config, signal }
     );
     return response.data.result?.items ?? [];
   } catch (error) {
@@ -95,7 +99,8 @@ type SchoolGuideFaqQuery =
   | { search: string; category?: never };
 
 export const getSchoolGuideFaqs = async (
-  params: SchoolGuideFaqQuery
+  params: SchoolGuideFaqQuery,
+  signal?: AbortSignal
 ): Promise<SchoolGuideFaqItem[]> => {
   try {
     if (params.category && params.search) {
@@ -107,7 +112,7 @@ export const getSchoolGuideFaqs = async (
     const config = await getAuthConfig();
     const response = await apiClient.get<{ result: { items: SchoolGuideFaqItem[] } }>(
       '/api/v1/school-guide/faqs',
-      { ...config, params }
+      { ...config, params, signal }
     );
     return response.data.result?.items ?? [];
   } catch (error) {
@@ -115,12 +120,15 @@ export const getSchoolGuideFaqs = async (
   }
 };
 
-export const getSchoolGuideFaqDetail = async (faqId: number): Promise<SchoolGuideFaqDetail> => {
+export const getSchoolGuideFaqDetail = async (
+  faqId: number,
+  signal?: AbortSignal
+): Promise<SchoolGuideFaqDetail> => {
   try {
     const config = await getAuthConfig();
     const response = await apiClient.get<{ result: SchoolGuideFaqDetail }>(
       `/api/v1/school-guide/faqs/${faqId}`,
-      config
+      { ...config, signal }
     );
     return response.data.result;
   } catch (error) {

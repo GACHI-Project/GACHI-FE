@@ -1,44 +1,59 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ActivityIndicator,
-  TouchableOpacity,
-  ScrollView,
-} from 'react-native';
 import { router } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
-import Svg, { Circle, Defs, RadialGradient, Stop } from 'react-native-svg';
-import ConfettiCannon from 'react-native-confetti-cannon';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import {
+  ActivityIndicator,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import ConfettiCannon from 'react-native-confetti-cannon';
+import Svg, { Circle, Defs, RadialGradient, Stop } from 'react-native-svg';
+import {
+  login as loginApi,
+  saveAuthTokens,
+  saveRememberMe,
+  signup as signupApi,
+  signupWithGoogle as signupWithGoogleApi,
+  signupWithKakao as signupWithKakaoApi,
+} from '../../../src/api/auth';
+import { registerChild as registerChildApi } from '../../../src/api/child';
 import { PrimaryButton } from '../../../src/components/common/Button';
 import colors from '../../../src/constants/colors';
 import fonts from '../../../src/constants/fonts';
 import layout from '../../../src/constants/layout';
+import { useApiMutation } from '../../../src/query/hooks';
+import { useGoogleAuthStore } from '../../../src/store/googleAuthStore';
+import { useKakaoAuthStore } from '../../../src/store/kakaoAuthStore';
+import { useRegisterStore } from '../../../src/store/registerStore';
 import {
-  signup,
-  login,
-  signupWithKakao,
-  signupWithGoogle,
-  saveAuthTokens,
-  saveRememberMe,
-} from '../../../src/api/auth';
-import {
+  assertCurrentSession,
   getSessionVersion,
   isCurrentSession,
-  assertCurrentSession,
 } from '../../../src/utils/authSession';
-import { registerChild } from '../../../src/api/child';
-import { useRegisterStore } from '../../../src/store/registerStore';
-import { useKakaoAuthStore } from '../../../src/store/kakaoAuthStore';
-import { useGoogleAuthStore } from '../../../src/store/googleAuthStore';
 
 // ─── 메인 화면 ────────────────────────────────────────────────────────────────
 
 type Status = 'loading' | 'done' | 'error';
 
 const RegisterCompleteScreen = () => {
+  const registerChild = useApiMutation(registerChildApi, [
+    'children',
+    'calendar',
+    'markers',
+    'schoolSchedules',
+    'meals',
+    'timetables',
+    'newsletters',
+    'recent',
+  ]);
+  const signupWithGoogle = useApiMutation(signupWithGoogleApi, []);
+  const signupWithKakao = useApiMutation(signupWithKakaoApi, []);
+  const login = useApiMutation(loginApi, []);
+  const signup = useApiMutation(signupApi, []);
   const { t } = useTranslation();
   const confettiRef = useRef<React.ComponentRef<typeof ConfettiCannon>>(null);
   const [status, setStatus] = useState<Status>('loading');
@@ -158,7 +173,7 @@ const RegisterCompleteScreen = () => {
       setErrorMessage(error instanceof Error ? error.message : t('auth.register.complete.error'));
       setStatus('error');
     }
-  }, [t]);
+  }, [t, login, registerChild, signup, signupWithGoogle, signupWithKakao]);
 
   useEffect(() => {
     run();

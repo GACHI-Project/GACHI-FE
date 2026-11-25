@@ -60,13 +60,15 @@ export interface FetchNotificationsParams {
 }
 
 export const fetchNotifications = async (
-  params: FetchNotificationsParams = {}
+  params?: FetchNotificationsParams,
+  signal?: AbortSignal
 ): Promise<NotificationsResult> => {
   try {
     const config = await getAuthConfig();
     const { data } = await apiClient.get<{ result: NotificationsResult }>('/api/v1/notifications', {
       ...config,
       params,
+      signal,
     });
     return data.result;
   } catch (error) {
@@ -74,13 +76,16 @@ export const fetchNotifications = async (
   }
 };
 
-export const markNotificationRead = async (notificationId: number): Promise<number> => {
+export const markNotificationRead = async (
+  notificationId: number,
+  signal?: AbortSignal
+): Promise<number> => {
   try {
     const config = await getAuthConfig();
     const { data } = await apiClient.patch<{ result: { readCount: number } }>(
       `/api/v1/notifications/${notificationId}/read`,
       undefined,
-      config
+      { ...config, signal }
     );
     return data.result.readCount;
   } catch (error) {
@@ -88,13 +93,13 @@ export const markNotificationRead = async (notificationId: number): Promise<numb
   }
 };
 
-export const markAllNotificationsRead = async (): Promise<number> => {
+export const markAllNotificationsRead = async (signal?: AbortSignal): Promise<number> => {
   try {
     const config = await getAuthConfig();
     const { data } = await apiClient.patch<{ result: { readCount: number } }>(
       '/api/v1/notifications/read-all',
       undefined,
-      config
+      { ...config, signal }
     );
     return data.result.readCount;
   } catch (error) {
@@ -118,12 +123,12 @@ export interface PushTokenResult {
   lastRegisteredAt: string;
 }
 
-export const fetchUnreadCount = async (): Promise<number> => {
+export const fetchUnreadCount = async (signal?: AbortSignal): Promise<number> => {
   try {
     const config = await getAuthConfig();
     const { data } = await apiClient.get<{ result: { unreadCount: number } }>(
       '/api/v1/notifications/unread-count',
-      config
+      { ...config, signal }
     );
     return data.result.unreadCount;
   } catch (error) {
@@ -132,14 +137,15 @@ export const fetchUnreadCount = async (): Promise<number> => {
 };
 
 export const registerPushToken = async (
-  params: RegisterPushTokenParams
+  params: RegisterPushTokenParams,
+  signal?: AbortSignal
 ): Promise<PushTokenResult> => {
   try {
     const config = await getAuthConfig();
     const { data } = await apiClient.post<{ result: PushTokenResult }>(
       '/api/v1/notifications/tokens',
       params,
-      config
+      { ...config, signal }
     );
     return data.result;
   } catch (error) {

@@ -1,11 +1,13 @@
-import { useCallback, useRef, useState } from 'react';
 import { useFocusEffect } from 'expo-router';
+import { useCallback, useRef, useState } from 'react';
 import {
   AuthApiError,
-  checkEmail,
-  sendEmailVerificationCode,
-  verifyEmailCode,
+  checkEmail as checkEmailApi,
+  sendEmailVerificationCode as sendEmailVerificationCodeApi,
+  verifyEmailCode as verifyEmailCodeApi,
 } from '../../api/auth';
+import { queryClient, resourceKey } from '../../query/client';
+import { useApiMutation, useSessionScope } from '../../query/hooks';
 import { emailSchema } from '../../validation/auth';
 
 interface EmailState {
@@ -42,6 +44,17 @@ const CODE_ERRORS: Record<string, string> = {
 };
 
 const useRegisterEmailVerification = () => {
+  const scope = useSessionScope();
+  const sendEmailVerificationCode = useApiMutation(sendEmailVerificationCodeApi);
+  const verifyEmailCode = useApiMutation(verifyEmailCodeApi);
+  const checkEmail = (email: string) =>
+    queryClient.fetchQuery({
+      queryKey: resourceKey(scope.version, scope.language, 'availability', 'email', email),
+      queryFn: ({ signal }) => checkEmailApi(email, signal),
+      staleTime: 0,
+      gcTime: 0,
+      retry: false,
+    });
   const [state, setState] = useState(initialState);
   const focusedRef = useRef(true);
   const emailRef = useRef('');

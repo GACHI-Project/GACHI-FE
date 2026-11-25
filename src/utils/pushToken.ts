@@ -1,9 +1,10 @@
-import { Platform } from 'react-native';
-import * as Notifications from 'expo-notifications';
 import * as Application from 'expo-application';
-import * as Device from 'expo-device';
 import Constants from 'expo-constants';
+import * as Device from 'expo-device';
+import * as Notifications from 'expo-notifications';
+import { Platform } from 'react-native';
 import { registerPushToken } from '../api/notifications';
+import { executeSessionMutation } from '../query/operations';
 
 export const registerDevicePushToken = async (): Promise<void> => {
   if (!Device.isDevice) return;
@@ -28,7 +29,9 @@ export const registerDevicePushToken = async (): Promise<void> => {
         ? (Application.getAndroidId() ?? 'android-unknown')
         : ((await Application.getIosIdForVendorAsync()) ?? 'ios-unknown');
 
-    await registerPushToken({ platform, token, deviceId, appVersion });
+    await executeSessionMutation(() =>
+      registerPushToken({ platform, token, deviceId, appVersion })
+    );
   } catch {
     // push token registration failure is non-fatal
   }

@@ -1,92 +1,59 @@
-import { useCallback, useRef, useState } from 'react';
 import { useFocusEffect } from 'expo-router';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { checkLoginId, checkPhoneNumber } from '../../api/auth';
+import { queryClient, resourceKey } from '../../query/client';
+import { useDebouncedValue, useServerQuery, useSessionScope } from '../../query/hooks';
 import { loginIdSchema, phoneNumberSchema } from '../../validation/auth';
 
-type Field = 'id' | 'phone';
-
-interface AvailabilityState {
-  value: string;
-  validation: 'success' | 'error' | undefined;
-  messageKey: string | undefined;
-  checking: boolean;
-}
-
-const useRegisterAvailability = (field: Field) => {
-  const [state, setState] = useState<AvailabilityState>({
-    value: '',
-    validation: undefined,
-    messageKey: undefined,
-    checking: false,
-  });
-  const requestRef = useRef(0);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+const useRegisterAvailability = (field: 'id' | 'phone') => {
+  const [value, setValue] = useState('');
+  const inputRef = useRef('');
+  const acceptedRef = useRef<string | null>(null);
   const focusedRef = useRef(true);
-  const pendingValueRef = useRef<string | null>(null);
-
-  const check = useCallback(
-    (value: string) => {
-      requestRef.current += 1;
-      const request = requestRef.current;
-      if (timerRef.current) clearTimeout(timerRef.current);
-      timerRef.current = null;
-      pendingValueRef.current = null;
-      const schema = field === 'id' ? loginIdSchema : phoneNumberSchema;
-      const valid = schema.safeParse(value).success;
-      setState({ value, validation: undefined, messageKey: undefined, checking: valid });
-      if (!valid || !focusedRef.current) return;
-
-      pendingValueRef.current = value;
-      timerRef.current = setTimeout(async () => {
-        timerRef.current = null;
-        const isCurrent = () => focusedRef.current && requestRef.current === request;
-        try {
-          const { available } = await (field === 'id' ? checkLoginId : checkPhoneNumber)(value);
-          if (!isCurrent()) return;
-          setState({
-            value,
-            validation: available ? 'success' : 'error',
-            messageKey: `auth.register.basic.error.${field}${available ? 'Available' : 'Taken'}`,
-            checking: false,
-          });
-        } catch {
-          if (!isCurrent()) return;
-          setState({
-            value,
-            validation: 'error',
-            messageKey: 'auth.register.basic.error.checkError',
-            checking: false,
-          });
-        } finally {
-          if (isCurrent()) pendingValueRef.current = null;
-        }
-      }, 500);
-    },
-    [field]
+  const scope = useSessionScope();
+  const debounced = useDebouncedValue(value, 500);
+  const valid = (field === 'id' ? loginIdSchema : phoneNumberSchema).safeParse(value).success;
+  const query = useServerQuery(
+    'availability',
+    [field, value],
+    (signal) => (field === 'id' ? checkLoginId : checkPhoneNumber)(value, signal),
+    { public: true, enabled: valid && value === debounced, staleTime: 0, gcTime: 0, retry: false }
   );
-
+  const checking = valid && (value !== debounced || query.isFetching || !query.isFetched);
+  let validation: 'success' | 'error' | undefined;
+  if (valid && !checking)
+    validation = query.isError || !query.data?.available ? 'error' : 'success';
+  let messageKey: string | undefined;
+  if (validation)
+    messageKey = query.isError
+      ? 'auth.register.basic.error.checkError'
+      : `auth.register.basic.error.${field}${query.data?.available ? 'Available' : 'Taken'}`;
+  useEffect(() => {
+    if (inputRef.current === value && validation === 'success') acceptedRef.current = value;
+  }, [value, validation, query.dataUpdatedAt]);
   useFocusEffect(
     useCallback(() => {
       focusedRef.current = true;
-      // Retry an interrupted check when returning from terms/privacy screens.
-      if (pendingValueRef.current !== null) check(pendingValueRef.current);
       return () => {
         focusedRef.current = false;
-        requestRef.current += 1;
-        if (timerRef.current) clearTimeout(timerRef.current);
-        timerRef.current = null;
       };
-    }, [check])
+    }, [])
   );
-
-  const isAvailable = (value: string) =>
-    state.value === value && state.validation === 'success' && !state.checking;
-
-  // Event handlers also check pending work before React commits the next state.
-  const canSubmit = (value: string) =>
-    focusedRef.current && pendingValueRef.current === null && isAvailable(value);
-
-  return { ...state, check, isAvailable, canSubmit };
+  const check = (next: string) => {
+    inputRef.current = next;
+    acceptedRef.current = null;
+    setValue(next);
+    void queryClient.invalidateQueries({
+      queryKey: resourceKey(scope.version, scope.language, 'availability', field, next),
+      exact: true,
+    });
+  };
+  const isAvailable = (input: string) => input === value && validation === 'success' && !checking;
+  const canSubmit = (input: string) =>
+    focusedRef.current &&
+    acceptedRef.current === input &&
+    inputRef.current === input &&
+    isAvailable(input);
+  return { value, checking, validation, messageKey, check, isAvailable, canSubmit };
 };
-
 export default useRegisterAvailability;

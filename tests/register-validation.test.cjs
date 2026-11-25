@@ -1,24 +1,87 @@
 /* eslint-env node */
 const assert = require('node:assert/strict');
-const { test } = require('node:test');
+const { test, afterEach } = require('node:test');
 const { z } = require('zod');
+const { QueryObserver } = require('@tanstack/react-query');
+const { queryRuntime } = require('./helpers/queryRuntime.cjs');
 const { hookHarness, queuedApi } = require('./helpers/hookHarness.cjs');
 
 // These tests exercise request ordering; input formats are validated by the production schemas.
 const schema = { safeParse: (value) => ({ success: value !== '' }) };
 
-const availabilitySetup = (field) => {
+const availabilityCleanups = new Set();
+afterEach(() => {
+  availabilityCleanups.forEach((cleanup) => cleanup());
+  availabilityCleanups.clear();
+});
+
+const availabilitySetup = (field, refetchOnMount = true) => {
   const api = queuedApi();
-  const runner = hookHarness('src/hooks/auth/useRegisterAvailability.ts', {
-    '../../api/auth': { checkLoginId: api.request, checkPhoneNumber: api.request },
-    '../../validation/auth': { loginIdSchema: schema, phoneNumberSchema: schema },
+  const runtime = queryRuntime();
+  const client = runtime.load('src/query/client.ts');
+  const observers = [];
+  const invalidations = [];
+  const invalidate = runtime.client.invalidateQueries.bind(runtime.client);
+  runtime.client.invalidateQueries = (filters) => {
+    invalidations.push(filters);
+    return invalidate(filters);
+  };
+  // Only the React binding is adapted: production hooks share one lifecycle and observer.
+  const runner = hookHarness(
+    'src/hooks/auth/useRegisterAvailability.ts',
+    (react, isFocused) => ({
+      '../../api/auth': { checkLoginId: api.request, checkPhoneNumber: api.request },
+      '../../validation/auth': { loginIdSchema: schema, phoneNumberSchema: schema },
+      '../../query/client': client,
+      '@react-navigation/native': { useIsFocused: isFocused },
+      'react-i18next': { useTranslation: () => ({ i18n: { language: 'ko' } }) },
+      '../utils/authSession': runtime.session,
+      './client': client,
+      './options': runtime.load('src/query/options.ts'),
+      '@tanstack/react-query': {
+        useQuery: (options, queryClient) => {
+          const subscribed = options.subscribed !== false;
+          const defaults = queryClient.defaultQueryOptions({
+            ...options,
+            refetchOnMount,
+            _optimisticResults: subscribed ? 'optimistic' : undefined,
+          });
+          const [observer] = react.useState(() => {
+            const next = new QueryObserver(queryClient, defaults);
+            observers.push(next);
+            return next;
+          });
+          const result = observer.getOptimisticResult(defaults);
+          react.useEffect(() => observer.setOptions(defaults), [observer, defaults]);
+          react.useSyncExternalStore(
+            react.useCallback(
+              (notify) => {
+                const unsubscribe = subscribed ? observer.subscribe(notify) : () => {};
+                observer.updateResult();
+                return unsubscribe;
+              },
+              [observer, subscribed]
+            ),
+            () => observer.getCurrentResult()
+          );
+          return result;
+        },
+      },
+    }),
+    {},
+    'default',
+    ['src/query/hooks.ts']
+  );
+  availabilityCleanups.add(() => {
+    runner.unmount();
+    runtime.dispose();
   });
   runner.render(field);
   const input = (value) => {
     runner.result.check(value);
     runner.render();
   };
-  return { runner, api, input };
+  return { runner, api, input, observers, invalidations };
 };
 
 ['id', 'phone'].forEach((field) => {
@@ -85,24 +148,51 @@ const availabilitySetup = (field) => {
     assert.equal(runner.result.validation, 'error');
   });
 
-  test(`${field}: blur discards pending results and focus retries the interrupted check`, async () => {
-    const { runner, api, input } = availabilitySetup(field);
-    input('first');
-    runner.runTimers();
-    runner.blur();
-    api.calls[0].resolve({ available: true });
-    await runner.flush();
-    assert.equal(runner.result.validation, undefined);
-    runner.focus();
-    runner.runTimers();
-    assert.equal(api.calls.length, 2);
-    api.calls[1].resolve({ available: true });
-    await runner.flush();
-    assert.equal(runner.result.isAvailable('first'), true);
-    runner.blur();
-    runner.focus();
-    runner.runTimers();
-    assert.equal(api.calls.length, 2);
+  [true, false].forEach((refetchOnMount) => {
+    test(`${field}: focus revalidates the same observer (refetchOnMount: ${refetchOnMount})`, async () => {
+      const { runner, api, input, observers, invalidations } = availabilitySetup(
+        field,
+        refetchOnMount
+      );
+      input('first');
+      runner.runTimers();
+      const observer = observers[0];
+      const beforeFocus = invalidations.length;
+      runner.blur();
+      assert.equal(observer.hasListeners(), false);
+      assert.equal(api.calls[0].args[1].aborted, true);
+      api.calls[0].resolve({ available: true });
+      await runner.flush();
+      assert.equal(runner.result.validation, undefined);
+      runner.focus();
+      assert.equal(observer.hasListeners(), true);
+      assert.equal(invalidations.length, beforeFocus + 1);
+      assert.equal(api.calls.length, 2);
+      assert.equal(runner.result.canSubmit('first'), false);
+      api.calls[1].resolve({ available: true });
+      await runner.flush();
+      assert.equal(runner.result.isAvailable('first'), true);
+      assert.equal(runner.result.canSubmit('first'), true);
+      runner.blur();
+      runner.focus();
+      assert.equal(observers.length, 1);
+      assert.equal(observers[0], observer);
+      assert.equal(invalidations.length, beforeFocus + 2);
+      // With cached data, focus invalidation replaces the automatic mount refetch.
+      assert.equal(api.calls.length, refetchOnMount ? 4 : 3);
+      if (refetchOnMount) assert.equal(api.calls[2].args[1].aborted, true);
+      assert.equal(runner.result.canSubmit('first'), false);
+      api.calls.at(-1).resolve({ available: false });
+      await runner.flush();
+      assert.equal(runner.result.isAvailable('first'), false);
+      assert.equal(runner.result.canSubmit('first'), false);
+      if (refetchOnMount) {
+        api.calls[2].resolve({ available: true });
+        await runner.flush();
+        assert.equal(runner.result.isAvailable('first'), false);
+        assert.equal(runner.result.canSubmit('first'), false);
+      }
+    });
   });
 
   test(`${field}: unmount cancels debounce and ignores an in-flight response`, async () => {
@@ -170,6 +260,14 @@ const emailSetup = () => {
         verifyEmailCode: verify.request,
       },
       '../../validation/auth': { emailSchema: schema },
+      '../../query/hooks': {
+        useSessionScope: () => ({ version: 0, language: 'ko' }),
+        useApiMutation: (fn) => fn,
+      },
+      '../../query/client': {
+        resourceKey: () => [],
+        queryClient: { fetchQuery: (options) => options.queryFn({ signal: undefined }) },
+      },
     },
     { Date: { now: () => now } }
   );
@@ -209,6 +307,29 @@ test('email changes during availability checking prevent sending to the old addr
   assert.equal(send.calls.length, 0);
   assert.equal(runner.result.emailSent, false);
   assert.equal(runner.result.emailChecking, false);
+});
+
+test('a failed resend availability check preserves the existing code and absolute expiry', async () => {
+  const { runner, check, send, verify, sendCode, inputCode, advance } = emailSetup();
+  await sendCode();
+  inputCode('123456');
+  advance(10);
+  const resend = runner.result.send('first@example.com');
+  check.calls.at(-1).reject(new Error('Availability lookup failed'));
+  await resend;
+  await runner.flush();
+  assert.equal(send.calls.length, 1);
+  assert.equal(runner.result.emailSent, true);
+  assert.equal(runner.result.verificationCode, '123456');
+  advance(5);
+  assert.equal(runner.result.emailTimer, 45);
+  const confirm = runner.result.confirm('first@example.com');
+  assert.equal(verify.calls.length, 1);
+  verify.calls[0].resolve();
+  await confirm;
+  await runner.flush();
+  assert.equal(runner.result.isVerified('first@example.com'), true);
+  runner.unmount();
 });
 
 test('a late email send cannot replace the newer send or its loading state', async () => {

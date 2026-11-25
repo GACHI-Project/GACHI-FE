@@ -1,19 +1,19 @@
-import { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useChildrenStore } from '../../src/store/childrenStore';
+import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Header from '../../src/components/common/Header';
-import TimetableGrid from '../../src/components/meal-timetable/TimetableGrid';
 import MealTimeline from '../../src/components/meal-timetable/MealTimeline';
-import useMealTimetable from '../../src/hooks/meal/useMealTimetable';
-import layout from '../../src/constants/layout';
 import styles from '../../src/components/meal-timetable/styles';
+import TimetableGrid from '../../src/components/meal-timetable/TimetableGrid';
+import layout from '../../src/constants/layout';
+import useMealTimetable from '../../src/hooks/meal/useMealTimetable';
+import { useChildrenQuery } from '../../src/query/resources';
 
 const MealTimetablePage = () => {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
-  const childItems = useChildrenStore((s) => s.children);
+  const { data: childItems = [] } = useChildrenQuery();
 
   const [selectedChildIdx, setSelectedChildIdx] = useState(0);
   const [activeTab, setActiveTab] = useState<'timetable' | 'meal'>('timetable');
@@ -27,10 +27,8 @@ const MealTimetablePage = () => {
   }, [childItems]);
 
   const selectedChild = childItems[selectedChildIdx];
-  const { timetableByDay, mealsByDay, periodCount, loading } = useMealTimetable(
-    childItems,
-    selectedChild
-  );
+  const { timetableByDay, mealsByDay, periodCount, loading, timetableError, mealError } =
+    useMealTimetable(childItems, selectedChild);
 
   return (
     <View style={[styles.screen, { paddingTop: insets.top }]}>
@@ -92,6 +90,9 @@ const MealTimetablePage = () => {
           ]}
           showsVerticalScrollIndicator={false}
         >
+          {(activeTab === 'timetable' ? timetableError : mealError) && (
+            <Text>{t('common.networkError')}</Text>
+          )}
           {activeTab === 'timetable' ? (
             <TimetableGrid
               loading={loading}

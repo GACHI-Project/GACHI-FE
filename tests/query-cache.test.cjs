@@ -20,6 +20,33 @@ afterEach(() => {
   runtimes.clear();
 });
 
+test('the hook harness catches a store change before subscription and cleans up its listener', async () => {
+  let value = 0;
+  const listeners = new Set();
+  const runner = hookHarness('tests/fixtures/useExternalStore.ts', {});
+  const store = {
+    getSnapshot: () => value,
+    subscribe: (listener) => {
+      listeners.add(listener);
+      return () => listeners.delete(listener);
+    },
+    beforeSubscribe: () => {
+      assert.equal(listeners.size, 0);
+      value = 1;
+    },
+  };
+  assert.equal(runner.render(store), 1);
+  assert.equal(listeners.size, 1);
+  value = 2;
+  listeners.forEach((listener) => listener());
+  await runner.flush();
+  assert.equal(runner.result, 2);
+  assert.equal(listeners.size, 1);
+  runner.unmount();
+  assert.equal(listeners.size, 0);
+  assert.equal(runner.postUnmountUpdates, 0);
+});
+
 test('two observers of the same resource share an in-flight request and fresh cache', async () => {
   const r = setup();
   const api = queuedApi();

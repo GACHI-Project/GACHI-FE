@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -52,7 +52,7 @@ const ChildEditSheet = ({
   const isPending = action !== null;
   const overlayOpacity = useRef(new Animated.Value(0)).current;
   const sheetTranslateY = useRef(new Animated.Value(300)).current;
-  useEffect(() => {
+  useLayoutEffect(() => {
     editorRef.current = visible ? child : null;
     requestRef.current = null;
     setAction(null);

@@ -202,10 +202,11 @@ const editSheet = (runtime, initialChild = child(), isNew = false, handlers = {}
       props.visible = false;
       runner.render(props);
     },
-    open: (next = initialChild) => {
+    open: (next = initialChild, beforeEffects = false) => {
       props.visible = true;
       props.child = next ? toChildInfo(next) : null;
-      runner.render(props);
+      if (beforeEffects) runner.renderBeforeEffects(props);
+      else runner.render(props);
     },
   };
 };
@@ -571,6 +572,24 @@ test('saving immediately guards double taps, deletion, edits and dismissal until
   });
 
   ['success', 'failure'].forEach((outcome) => {
+    test(`an old ${kind} ${outcome} is ignored after another child commits before passive effects`, async () => {
+      const { runtime } = setup();
+      const write = queuedApi();
+      const screen = editSheet(runtime, child({ roadAddress: 'Address' }), false, {
+        [kind]: write.request,
+      });
+      const pending = startAction(screen, kind);
+      screen.open(child({ id: 2, name: 'Second child', roadAddress: 'Address' }), true);
+      if (outcome === 'success') write.calls[0].resolve();
+      else write.calls[0].reject(new Error('Old failure'));
+      await pending;
+      assert.equal(screen.closed.length, 0);
+      assert.equal(screen.alerts.length, 0);
+      screen.runner.render();
+      assert.equal(screen.card().child.id, '2');
+      assert.equal(screen.button().disabled, false);
+    });
+
     test(`an old ${kind} ${outcome} cannot close or unlock a newer child's operation`, async () => {
       const { runtime } = setup();
       const write = queuedApi();

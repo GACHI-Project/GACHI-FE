@@ -11,8 +11,14 @@ import {
 } from 'react-native';
 import ConfettiCannon from 'react-native-confetti-cannon';
 import Svg, { Circle, Defs, RadialGradient, Stop } from 'react-native-svg';
-import { saveAuthTokens, saveRememberMe, getAccessToken } from '../../../src/auth/session';
 import {
+  saveAuthTokens,
+  saveRememberMe,
+  getAccessToken,
+  TokenStorageRetryError,
+} from '../../../src/auth/session';
+import {
+  type LoginResult,
   login as loginApi,
   signup as signupApi,
   signupWithGoogle as signupWithGoogleApi,
@@ -56,8 +62,16 @@ const RegisterCompleteScreen = () => {
   const confettiRef = useRef<React.ComponentRef<typeof ConfettiCannon>>(null);
   const [status, setStatus] = useState<Status>('loading');
   const [errorMessage, setErrorMessage] = useState<string>('');
+  const startedRef = useRef(false);
+  const runningRef = useRef(false);
+  const pendingSocialTokens = useRef<{
+    version: number;
+    tokens: LoginResult;
+    rememberMe: boolean;
+  } | null>(null);
 
   const run = useCallback(async () => {
+    if (runningRef.current) return;
     const version = getSessionVersion();
     const {
       loginId,
@@ -94,36 +108,33 @@ const RegisterCompleteScreen = () => {
       return;
     }
 
+    runningRef.current = true;
     try {
-      if (authMethod === 'kakao') {
+      if (authMethod === 'kakao' || authMethod === 'google') {
         if (!signupDone) {
-          const { rememberMe } = useKakaoAuthStore.getState();
-          const tokens = await signupWithKakao({
+          const { rememberMe } =
+            authMethod === 'kakao' ? useKakaoAuthStore.getState() : useGoogleAuthStore.getState();
+          const signupSocial = authMethod === 'kakao' ? signupWithKakao : signupWithGoogle;
+          const tokens = await signupSocial({
             signupToken,
             consentAgreed: socialTermsAgreed,
             languageCode,
             notificationPreference,
             rememberMe,
           });
-          await saveAuthTokens(tokens, version);
-          await saveRememberMe(rememberMe, version);
+          assertCurrentSession(version);
+          pendingSocialTokens.current = { version, tokens, rememberMe };
           setSignupDone(true);
-          setLoginDone(true);
         }
-      } else if (authMethod === 'google') {
-        if (!signupDone) {
-          const { rememberMe } = useGoogleAuthStore.getState();
-          const tokens = await signupWithGoogle({
-            signupToken,
-            consentAgreed: socialTermsAgreed,
-            languageCode,
-            notificationPreference,
-            rememberMe,
-          });
-          await saveAuthTokens(tokens, version);
+        const pending = pendingSocialTokens.current;
+        if (pending?.version === version) {
+          const { tokens, rememberMe } = pending;
+          await saveAuthTokens(tokens, version, { allowRetry: true });
           await saveRememberMe(rememberMe, version);
-          setSignupDone(true);
           setLoginDone(true);
+          pendingSocialTokens.current = null;
+        } else if (!loginDone) {
+          throw new Error(t('auth.register.complete.noInfo'));
         }
       } else {
         if (!signupDone) {
@@ -144,13 +155,13 @@ const RegisterCompleteScreen = () => {
 
         if (!loginDone) {
           const result = await login(loginId, password, false);
-          await saveAuthTokens(result, version);
+          await saveAuthTokens(result, version, { allowRetry: true });
           setLoginDone(true);
         } else {
           const stored = await getAccessToken(version);
           if (!stored) {
             const result = await login(loginId, password, false);
-            await saveAuthTokens(result, version);
+            await saveAuthTokens(result, version, { allowRetry: true });
           }
         }
       }
@@ -167,14 +178,25 @@ const RegisterCompleteScreen = () => {
       setStatus('done');
       reset();
     } catch (error) {
-      if (!isCurrentSession(version)) return;
+      const retryVersion = error instanceof TokenStorageRetryError ? error.sessionVersion : version;
+      if (!isCurrentSession(retryVersion)) return;
+      if (error instanceof TokenStorageRetryError) {
+        setLoginDone(false);
+        if (pendingSocialTokens.current?.version === version) {
+          pendingSocialTokens.current.version = retryVersion;
+        }
+      }
       setErrorMessage(error instanceof Error ? error.message : t('auth.register.complete.error'));
       setStatus('error');
+    } finally {
+      runningRef.current = false;
     }
   }, [t, login, registerChild, signup, signupWithGoogle, signupWithKakao]);
 
   useEffect(() => {
-    run();
+    if (startedRef.current) return;
+    startedRef.current = true;
+    void run();
   }, [run]);
 
   useEffect(() => {

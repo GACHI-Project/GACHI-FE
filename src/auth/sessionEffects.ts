@@ -19,11 +19,14 @@ export const installSessionEffects = (
     useGoogleAuthStore,
     useSocialLinkStore,
   ].map((store) =>
-    subscribeSessionCleanup((phase) => {
-      if (phase === 'invalidated') store.getState().reset();
+    subscribeSessionCleanup((phase, reason) => {
+      if (phase !== 'invalidated') return;
+      if (reason === 'token-storage-retry' && store === useRegisterStore) return;
+      store.getState().reset();
     })
   );
-  const unsubscribe = subscribeSessionCleanup((phase) => {
+  const unsubscribe = subscribeSessionCleanup((phase, reason) => {
+    if (reason === 'token-storage-retry') return;
     if (phase === 'clearing-tokens') {
       void Promise.resolve()
         .then(() => GoogleSignin.signOut())

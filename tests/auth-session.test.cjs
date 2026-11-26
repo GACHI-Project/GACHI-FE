@@ -1095,3 +1095,301 @@ test('unmounting the app removes navigation and cleanup listeners', async () => 
     assert.equal(app.refreshCalls.length, 0);
   });
 });
+
+test('access-token read failures share refresh without deleting usable refresh credentials', async () => {
+  const refresh = deferred();
+  const app = setup({
+    getItem: (key, values) => {
+      if (key === 'accessToken') throw new Error('Access token read failed');
+      return values.get(key);
+    },
+    refresh: () => refresh.promise,
+    adapter: (config) =>
+      config.headers.Authorization === 'Bearer new-access' ? success(config) : unauthorized(config),
+  });
+  const pending = Promise.all([app.request(), app.request()]);
+  await flush();
+  assert.equal(app.refreshCalls.length, 1);
+  assert.equal(app.refreshCalls[0][1].refreshToken, tokens.refreshToken);
+  refresh.resolve({ data: { result: refreshed } });
+  await pending;
+  assert.equal(app.deletions.length, 0);
+  assert.equal(app.navigations.length, 0);
+  assert.equal(app.values.get('refreshToken'), refreshed.refreshToken);
+});
+
+test('a delayed access-token read failure cannot erase a newer saved token pair', async () => {
+  const read = deferred();
+  let firstRead = true;
+  const app = setup({
+    getItem: (key, values) => {
+      if (key === 'accessToken' && firstRead) {
+        firstRead = false;
+        return read.promise;
+      }
+      return values.get(key);
+    },
+    adapter: (config) =>
+      config.headers.Authorization === 'Bearer new-access' ? success(config) : unauthorized(config),
+  });
+  const version = app.session.getSessionVersion();
+  const pending = app.request();
+  await flush();
+  await app.auth.saveAuthTokens(refreshed, version);
+  assert.equal(app.session.getSessionVersion(), version);
+  read.reject(new Error('Old lookup failed'));
+  await pending;
+  assert.equal(app.refreshCalls.length, 0);
+  assert.equal(app.deletions.length, 0);
+  assert.equal(app.navigations.length, 0);
+  assert.equal(app.values.get('refreshToken'), refreshed.refreshToken);
+});
+
+test('a canceled access-token lookup does not refresh or clear the session', async () => {
+  const app = setup({
+    getItem: () => {
+      throw new axios.CanceledError('Lookup canceled');
+    },
+  });
+  await assert.rejects(app.request(), axios.isCancel);
+  assert.equal(app.refreshCalls.length, 0);
+  assert.equal(app.deletions.length, 0);
+  assert.equal(app.session.getSessionSnapshot().authenticated, true);
+});
+
+['accessToken', 'refreshToken'].forEach((key) => {
+  test(`recoverable ${key} write failure preserves drafts but blocks authentication`, async () => {
+    const app = setup({
+      beforeWrite: (name) => {
+        if (name === key) throw new Error('Storage write failed');
+      },
+    });
+    app.registration.setState({ signupDone: true, children: [childPayload] });
+    app.google.setState({ rememberMe: true });
+    app.kakao.setState({ rememberMe: true });
+    const version = app.session.getSessionVersion();
+    await assert.rejects(
+      app.auth.saveAuthTokens(refreshed, version, { allowRetry: true }),
+      (error) =>
+        error instanceof app.auth.TokenStorageRetryError &&
+        error.sessionVersion === app.session.getSessionVersion()
+    );
+    assert.equal(app.session.getSessionSnapshot().authenticated, false);
+    assert.equal(app.values.size, 0);
+    assert.equal(app.registration.getState().signupDone, true);
+    assert.equal(app.registration.getState().children.length, 1);
+    assert.equal(app.google.getState().rememberMe, false);
+    assert.equal(app.kakao.getState().rememberMe, false);
+    assert.equal(app.navigations.length, 0);
+    assert.equal(app.getGoogleSignOutCalls(), 0);
+    await assert.rejects(app.request(), axios.isCancel);
+    await app.auth.clearSession();
+    assert.equal(app.registration.getState().children.length, 0);
+    assert.equal(app.navigations.length, 1);
+  });
+});
+
+test('explicit logout takes precedence over pending token-storage recovery', async () => {
+  const deletion = deferred();
+  const app = setup({
+    beforeWrite: () => {
+      throw new Error('Storage write failed');
+    },
+    beforeDelete: () => deletion.promise,
+  });
+  app.registration.setState({ signupDone: true, children: [childPayload] });
+  const write = assert.rejects(
+    app.auth.saveAuthTokens(refreshed, app.session.getSessionVersion(), { allowRetry: true }),
+    axios.isCancel
+  );
+  await flush();
+  const cleanup = app.auth.clearSession();
+  assert.equal(app.registration.getState().children.length, 0);
+  deletion.resolve();
+  await Promise.all([write, cleanup]);
+  assert.equal(app.navigations.length, 1);
+  assert.equal(app.getGoogleSignOutCalls(), 1);
+});
+
+test('a reentrant logout during recovery invalidation cannot become a retryable error', async () => {
+  const app = setup({
+    beforeWrite: () => {
+      throw new Error('Storage write failed');
+    },
+  });
+  app.registration.setState({ signupDone: true, children: [childPayload] });
+  app.auth.subscribeSessionCleanup((phase, reason) => {
+    if (phase === 'invalidated' && reason === 'token-storage-retry') app.auth.clearSession();
+  });
+  await assert.rejects(
+    app.auth.saveAuthTokens(refreshed, app.session.getSessionVersion(), { allowRetry: true }),
+    axios.isCancel
+  );
+  assert.equal(app.registration.getState().children.length, 0);
+  assert.equal(app.navigations.length, 1);
+});
+
+const findElement = (node, predicate) => {
+  if (!node || typeof node !== 'object') return undefined;
+  if (predicate(node)) return node;
+  const children = [node.props?.children].flat();
+  return children.map((child) => findElement(child, predicate)).find(Boolean);
+};
+
+const registrationScreen = (app, api) => {
+  const t = (key) => key;
+  const jsx = (type, props) => ({ type, props });
+  return hookHarness('app/(auth)/register/complete.tsx', (react) => ({
+    'react/jsx-runtime': { jsx, jsxs: jsx },
+    'react-native': {
+      ActivityIndicator: 'ActivityIndicator',
+      ScrollView: 'ScrollView',
+      Text: 'Text',
+      TouchableOpacity: 'TouchableOpacity',
+      View: 'View',
+      StyleSheet: { create: (styles) => styles },
+    },
+    'react-i18next': { useTranslation: () => ({ t }) },
+    'react-native-confetti-cannon': { default: 'ConfettiCannon' },
+    'react-native-svg': { default: 'Svg' },
+    '../../../src/components/common/Button': { PrimaryButton: 'PrimaryButton' },
+    '../../../src/constants/colors': { default: app.load('src/constants/colors.ts').default },
+    '../../../src/constants/fonts': { default: app.load('src/constants/fonts.ts').default },
+    '../../../src/constants/layout': { default: { screenPaddingHorizontal: 20 } },
+    '../../../src/auth/session': app.auth,
+    '../../../src/utils/authSession': app.session,
+    '../../../src/store/registerStore': { useRegisterStore: app.registration },
+    '../../../src/store/googleAuthStore': { useGoogleAuthStore: app.google },
+    '../../../src/store/kakaoAuthStore': { useKakaoAuthStore: app.kakao },
+    '../../../src/api/auth': api,
+    '../../../src/api/child': { registerChild: api.registerChild },
+    '../../../src/query/hooks': {
+      useApiMutation: (fn) => {
+        const { version } = react.useSyncExternalStore(
+          app.session.subscribeSession,
+          app.session.getSessionSnapshot
+        );
+        return react.useCallback(
+          async (...args) => {
+            app.session.assertCurrentSession(version);
+            const result = await fn(...args);
+            app.session.assertCurrentSession(version);
+            return result;
+          },
+          [fn, version]
+        );
+      },
+    },
+  }));
+};
+
+['normal', 'google', 'kakao'].forEach((authMethod) => {
+  ['accessToken', 'refreshToken'].forEach((key) => {
+    test(`${authMethod} signup retries a ${key} storage failure on the same screen`, async () => {
+      let failWrite = true;
+      const app = setup({
+        beforeWrite: (name) => {
+          if (failWrite && name === key) throw new Error('Storage write failed');
+        },
+      });
+      const children = [childPayload, { ...childPayload, name: 'Second child' }];
+      app.google.setState({ rememberMe: true });
+      app.kakao.setState({ rememberMe: true });
+      app.registration.setState({
+        loginId: 'parent',
+        password: 'password',
+        authMethod,
+        signupToken: 'signup-token',
+        children,
+      });
+      const calls = { signup: 0, login: 0, children: [] };
+      const signup = async () => {
+        calls.signup += 1;
+        return { ...refreshed, rememberMe: true };
+      };
+      const runner = registrationScreen(app, {
+        signup,
+        signupWithGoogle: signup,
+        signupWithKakao: signup,
+        login: async () => {
+          calls.login += 1;
+          return refreshed;
+        },
+        registerChild: async (child, version) => {
+          app.session.assertSessionAuthenticated(version);
+          calls.children.push(child.name);
+        },
+      });
+      try {
+        runner.render();
+        await runner.flush();
+        await runner.flush();
+        assert.equal(app.registration.getState().signupDone, true);
+        assert.equal(app.registration.getState().children.length, 2);
+        assert.equal(calls.signup, 1);
+        assert.equal(calls.login, authMethod === 'normal' ? 1 : 0);
+        assert.equal(calls.children.length, 0);
+        assert.equal(app.values.size, 0);
+        const retry = findElement(
+          runner.result,
+          (node) =>
+            node.type === 'TouchableOpacity' &&
+            node.props.children?.props?.children === 'common.retry'
+        );
+        assert.ok(retry, 'a retry button must remain visible after session invalidation');
+        failWrite = false;
+        await retry.props.onPress();
+        await runner.flush();
+        assert.equal(calls.signup, 1, 'a successful server signup must never be repeated');
+        assert.equal(calls.login, authMethod === 'normal' ? 2 : 0);
+        assert.deepEqual(
+          calls.children,
+          children.map((child) => child.name)
+        );
+        assert.ok(findElement(runner.result, (node) => node.type === 'PrimaryButton'));
+        assert.equal(app.registration.getState().children.length, 0);
+        assert.equal(app.session.getSessionSnapshot().authenticated, true);
+        if (authMethod !== 'normal') assert.equal(app.values.get('rememberMe'), 'true');
+        assert.equal(app.navigations.length, 0);
+      } finally {
+        runner.unmount();
+      }
+    });
+  });
+});
+
+test('a normal signup retry preserves child progress and registers only remaining children', async () => {
+  let failWrite = true;
+  const app = setup({
+    beforeWrite: () => {
+      if (failWrite) throw new Error('Storage write failed');
+    },
+  });
+  app.registration.setState({
+    loginId: 'parent',
+    password: 'password',
+    signupDone: true,
+    children: [childPayload, { ...childPayload, name: 'Remaining child' }],
+    registeredChildrenCount: 1,
+  });
+  const registered = [];
+  const runner = registrationScreen(app, {
+    login: async () => refreshed,
+    registerChild: async (child) => registered.push(child.name),
+    signup: async () => assert.fail('signup already completed'),
+  });
+  try {
+    runner.render();
+    await runner.flush();
+    assert.equal(app.registration.getState().registeredChildrenCount, 1);
+    failWrite = false;
+    const retry = findElement(runner.result, (node) => node.type === 'TouchableOpacity');
+    assert.ok(retry);
+    await retry.props.onPress();
+    await runner.flush();
+    assert.deepEqual(registered, ['Remaining child']);
+    assert.ok(findElement(runner.result, (node) => node.type === 'PrimaryButton'));
+  } finally {
+    runner.unmount();
+  }
+});

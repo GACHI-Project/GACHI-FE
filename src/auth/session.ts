@@ -13,9 +13,14 @@ import {
 
 export type SessionRequestConfig = AxiosRequestConfig & { sessionVersion: number };
 export type SessionCleanupPhase = 'invalidated' | 'clearing-tokens' | 'cleared';
-const cleanupListeners = new Set<(phase: SessionCleanupPhase) => void>();
+export type SessionCleanupReason = 'session-ended' | 'token-storage-retry';
+const cleanupListeners = new Set<
+  (phase: SessionCleanupPhase, reason: SessionCleanupReason) => void
+>();
 
-export const subscribeSessionCleanup = (listener: (phase: SessionCleanupPhase) => void) => {
+export const subscribeSessionCleanup = (
+  listener: (phase: SessionCleanupPhase, reason: SessionCleanupReason) => void
+) => {
   cleanupListeners.add(listener);
   return () => {
     cleanupListeners.delete(listener);
@@ -25,7 +30,7 @@ export const subscribeSessionCleanup = (listener: (phase: SessionCleanupPhase) =
 const publishCleanup = (phase: SessionCleanupPhase) => {
   cleanupListeners.forEach((listener) => {
     try {
-      listener(phase);
+      listener(phase, cleanupReason);
     } catch {
       /* App effects cannot prevent credential cleanup. */
     }
@@ -57,8 +62,20 @@ let refreshTask: {
   promise: Promise<string>;
 } | null = null;
 let clearingSession: Promise<SessionCleanupResult> | null = null;
+let cleanupReason: SessionCleanupReason = 'session-ended';
+let tokenCleanupStarted = false;
 let tokenWrite: Promise<void> = Promise.resolve();
 let tokenRevision = 0;
+
+export class TokenStorageRetryError extends Error {
+  constructor(
+    message: string,
+    public readonly sessionVersion: number
+  ) {
+    super(message);
+    this.name = 'TokenStorageRetryError';
+  }
+}
 
 const REMEMBER_ME_KEY = 'rememberMe';
 
@@ -82,7 +99,8 @@ export const getRememberMe = async (version = getSessionVersion()): Promise<bool
 
 export const saveAuthTokens = (
   tokens: { accessToken: string; refreshToken: string },
-  version: number
+  version: number,
+  options: { allowRetry?: boolean } = {}
 ): Promise<void> => {
   const write = tokenWrite.then(async () => {
     assertCurrentSession(version);
@@ -97,7 +115,19 @@ export const saveAuthTokens = (
   return write.catch(async (error: unknown) => {
     // SecureStore has no multi-key transaction; a partial failure cannot keep a mixed token pair.
     // Reconcile after the queued write settles so cleanup never waits on itself.
-    if (isCurrentSession(version) && !axios.isCancel(error)) await clearSession();
+    if (isCurrentSession(version) && !axios.isCancel(error)) {
+      const cleanup = clearSession(options.allowRetry ? 'token-storage-retry' : 'session-ended');
+      const retryVersion = getSessionVersion();
+      await cleanup;
+      if (options.allowRetry) {
+        assertCurrentSession(retryVersion);
+        if (cleanupReason !== 'token-storage-retry') throw new axios.CanceledError('Session ended');
+        throw new TokenStorageRetryError(
+          error instanceof Error ? error.message : String(error),
+          retryVersion
+        );
+      }
+    }
     throw error;
   });
 };
@@ -146,27 +176,43 @@ export const getRetryAccessToken = async (
 ): Promise<string> => {
   assertSessionAuthenticated(version);
   if (refreshTask?.version === version) return refreshTask.promise;
+  const readRevision = tokenRevision;
+  let currentToken: string | null;
   try {
-    const readRevision = tokenRevision;
-    const currentToken = await getAccessToken(version);
-    assertSessionAuthenticated(version);
-    // Only an actual rotation is shared. A lookup cannot suppress a needed rotation.
-    if (refreshTask?.version === version) return refreshTask.promise;
-    // A storage read can finish after newer credentials were fully saved.
-    if (readRevision !== tokenRevision) return getRetryAccessToken(version, rejectedAuthorization);
-    if (currentToken && rejectedAuthorization !== `Bearer ${currentToken}`) return currentToken;
-    return refreshAccessToken(version);
+    currentToken = await getAccessToken(version);
   } catch (error) {
-    if (isCurrentSession(version) && !axios.isCancel(error)) await clearSession();
-    throw error;
+    assertSessionAuthenticated(version);
+    if (axios.isCancel(error)) throw error;
+    if (readRevision !== tokenRevision) return getRetryAccessToken(version, rejectedAuthorization);
+    return refreshAccessToken(version);
   }
+  assertSessionAuthenticated(version);
+  // Only an actual rotation is shared. A lookup cannot suppress a needed rotation.
+  if (refreshTask?.version === version) return refreshTask.promise;
+  // A storage read can finish after newer credentials were fully saved.
+  if (readRevision !== tokenRevision) return getRetryAccessToken(version, rejectedAuthorization);
+  if (currentToken && rejectedAuthorization !== `Bearer ${currentToken}`) return currentToken;
+  return refreshAccessToken(version);
 };
 
-export const clearSession = (): Promise<SessionCleanupResult> => {
-  if (clearingSession) return clearingSession;
+export const clearSession = (
+  reason: SessionCleanupReason = 'session-ended'
+): Promise<SessionCleanupResult> => {
+  if (clearingSession) {
+    // An explicit logout must still reset app state while a recoverable cleanup is pending.
+    if (reason === 'session-ended' && cleanupReason === 'token-storage-retry') {
+      cleanupReason = reason;
+      invalidateSession();
+      publishCleanup('invalidated');
+      if (tokenCleanupStarted) publishCleanup('clearing-tokens');
+    }
+    return clearingSession;
+  }
 
+  cleanupReason = reason;
   clearingSession = tokenWrite
     .then(async () => {
+      tokenCleanupStarted = true;
       publishCleanup('clearing-tokens');
       // 진행 중이던 토큰 저장이 끝난 뒤 삭제해 이전 토큰이 다시 남지 않게 한다.
       const results = await Promise.allSettled(
@@ -183,6 +229,7 @@ export const clearSession = (): Promise<SessionCleanupResult> => {
     })
     .finally(() => {
       clearingSession = null;
+      tokenCleanupStarted = false;
     });
   // Reserve cleanup before notifying app callbacks, which can reenter session APIs.
   invalidateSession();

@@ -7,6 +7,7 @@ import { Platform, StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import colors from '../src/constants/colors';
+import useSessionEffects from '../src/auth/useSessionEffects';
 import { initI18n } from '../src/i18n';
 import QueryProvider from '../src/query/QueryProvider';
 import { refreshUnreadCount } from '../src/utils/unreadCount';
@@ -42,6 +43,7 @@ const FONTS = {
 
 const RootLayout = () => {
   const [ready, setReady] = useState(false);
+  useSessionEffects(ready);
 
   useEffect(() => {
     Promise.all([Font.loadAsync(FONTS), initI18n()]).finally(() => {

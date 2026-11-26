@@ -1,5 +1,4 @@
 import { router } from 'expo-router';
-import * as SecureStore from 'expo-secure-store';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -12,10 +11,9 @@ import {
 } from 'react-native';
 import ConfettiCannon from 'react-native-confetti-cannon';
 import Svg, { Circle, Defs, RadialGradient, Stop } from 'react-native-svg';
+import { saveAuthTokens, saveRememberMe, getAccessToken } from '../../../src/auth/session';
 import {
   login as loginApi,
-  saveAuthTokens,
-  saveRememberMe,
   signup as signupApi,
   signupWithGoogle as signupWithGoogleApi,
   signupWithKakao as signupWithKakaoApi,
@@ -149,7 +147,7 @@ const RegisterCompleteScreen = () => {
           await saveAuthTokens(result, version);
           setLoginDone(true);
         } else {
-          const stored = await SecureStore.getItemAsync('accessToken');
+          const stored = await getAccessToken(version);
           if (!stored) {
             const result = await login(loginId, password, false);
             await saveAuthTokens(result, version);

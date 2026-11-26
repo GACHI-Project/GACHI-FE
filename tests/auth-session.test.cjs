@@ -8,6 +8,7 @@ const axios = require('axios');
 const ts = require('typescript');
 const zustand = require('zustand');
 const tanstack = require('@tanstack/react-query');
+const { hookHarness } = require('./helpers/hookHarness.cjs');
 
 const clients = new Set();
 test.afterEach(() => {
@@ -98,6 +99,7 @@ const setup = (options = {}) => {
       {
         exports,
         AbortController,
+        process: { env: { EXPO_PUBLIC_API_BASE_URL: options.apiBaseUrl } },
         require: (name) => {
           if (name === 'axios') return http;
           if (name === '@react-native-google-signin/google-signin') {
@@ -123,7 +125,13 @@ const setup = (options = {}) => {
     );
     return exports;
   };
-  const auth = load('src/api/auth.ts');
+  if (options.installEffects !== false) load('src/auth/sessionEffects.ts').installSessionEffects();
+  const auth = {
+    ...load('src/api/auth.ts'),
+    ...load('src/api/client.ts'),
+    ...load('src/auth/session.ts'),
+    ...load('src/auth/logout.ts'),
+  };
   const session = load('src/utils/authSession.ts');
   const client = load('src/query/client.ts').queryClient;
   clients.add(client);
@@ -601,4 +609,489 @@ test('an old non-401 error is cancelled instead of triggering another account wo
   assert.equal(axios.isCancel(result.reason), true);
   assert.equal(app.refreshCalls.length, 0);
   assert.equal(app.values.get('accessToken'), refreshed.accessToken);
+});
+
+test('the configured API origin is shared by normal requests, token refresh and social authorization', async () => {
+  const app = setup({
+    apiBaseUrl: ' https://staging.example.test/ ',
+    adapter: (config) =>
+      config.headers.Authorization === 'Bearer new-access' ? success(config) : unauthorized(config),
+  });
+  await app.request();
+  assert.equal(app.auth.apiClient.defaults.baseURL, 'https://staging.example.test');
+  assert.equal(app.requests[0].baseURL, 'https://staging.example.test');
+  assert.equal(app.refreshCalls[0][0], 'https://staging.example.test/api/v1/auth/reissue');
+  assert.equal(
+    app.auth.getKakaoAuthorizeUrl(),
+    'https://staging.example.test/api/v1/auth/kakao/authorize'
+  );
+});
+
+test('an unspecified API origin retains the existing server default', () => {
+  const app = setup();
+  assert.equal(app.auth.apiClient.defaults.baseURL, 'https://43.202.191.103');
+});
+
+test('HTTP 401 after a refreshed retry does not start another refresh loop', async () => {
+  const app = setup();
+  await assert.rejects(app.request());
+  assert.equal(app.refreshCalls.length, 1);
+  assert.equal(app.requests.length, 2);
+});
+
+test('session cleanup works without app navigation or SDK effects installed', async () => {
+  const app = setup({ installEffects: false });
+  app.registration.getState().setSignupToken('draft');
+  app.user.getState().setName('Old account');
+  await app.auth.clearSession();
+  assert.equal(app.values.size, 0);
+  assert.equal(app.user.getState().name, '');
+  assert.equal(app.registration.getState().signupToken, 'draft');
+  assert.equal(app.navigations.length, 0);
+  assert.equal(app.getGoogleSignOutCalls(), 0);
+});
+
+test('app cleanup effects are idempotent and an old disposer cannot remove a later installation', async () => {
+  const app = setup();
+  const effects = app.load('src/auth/sessionEffects.ts');
+  const oldDispose = effects.installSessionEffects();
+  assert.equal(effects.installSessionEffects(), oldDispose);
+  oldDispose();
+  const currentDispose = effects.installSessionEffects();
+  oldDispose();
+  assert.equal(effects.installSessionEffects(), currentDispose);
+  await app.auth.clearSession();
+  assert.equal(app.navigations.length, 1);
+  assert.equal(app.getGoogleSignOutCalls(), 1);
+  currentDispose();
+  await app.auth.saveAuthTokens(refreshed, app.session.getSessionVersion());
+  await app.auth.clearSession();
+  assert.equal(app.navigations.length, 1);
+});
+
+test('a cleanup callback reentering clearSession shares the same cleanup operation', async () => {
+  const app = setup();
+  let reentered;
+  const unsubscribe = app.auth.subscribeSessionCleanup((phase) => {
+    if (phase === 'invalidated') reentered = app.auth.clearSession();
+  });
+  const pending = app.auth.clearSession();
+  assert.equal(pending, reentered);
+  await pending;
+  assert.equal(app.session.getSessionVersion(), 1);
+  assert.equal(app.navigations.length, 1);
+  unsubscribe();
+});
+
+test('an app cleanup callback failure cannot prevent token deletion or other callbacks', async () => {
+  const app = setup();
+  const phases = [];
+  app.auth.subscribeSessionCleanup(() => {
+    throw new Error('App effect failed');
+  });
+  app.auth.subscribeSessionCleanup((phase) => phases.push(phase));
+  const result = await app.auth.clearSession();
+  assert.equal(result.success, true);
+  assert.equal(app.values.size, 0);
+  assert.deepEqual(phases, ['invalidated', 'clearing-tokens', 'cleared']);
+  assert.equal(app.navigations.length, 1);
+});
+
+const errorOperations = [
+  ['src/api/auth.ts', 'AuthApiError', (api) => api.login('user', 'password', false)],
+  ['src/api/child.ts', 'ChildApiError', (api) => api.fetchChildren()],
+  ['src/api/calendar.ts', 'CalendarApiError', (api) => api.fetchChildren()],
+  [
+    'src/api/chat.ts',
+    'ChatApiError',
+    (api) => api.sendChatMessage({ sessionId: null, message: 'Hi' }),
+  ],
+  ['src/api/checklist.ts', 'ChecklistApiError', (api) => api.getTodayChecklists()],
+  ['src/api/meal.ts', 'MealApiError', (api) => api.fetchSchoolMeals('20261126', '20261126')],
+  ['src/api/newsletter.ts', 'NewsletterApiError', (api) => api.getNewsletterDetail(1)],
+  ['src/api/notifications.ts', 'NotificationApiError', (api) => api.fetchUnreadCount()],
+  ['src/api/schoolGuide.ts', 'SchoolGuideApiError', (api) => api.getSchoolGuideCategories()],
+  ['src/api/user.ts', 'UserApiError', (api) => api.getMe()],
+  ['src/api/school.ts', null, (api) => api.searchSchools('School')],
+];
+
+errorOperations.forEach(([filename, errorClass, operation]) => {
+  [true, false].forEach((coded) => {
+    test(`${filename} preserves HTTP status and domain error type with server code: ${coded}`, async () => {
+      const app = setup({
+        adapter: (config) => {
+          throw new axios.AxiosError('Forbidden', 'ERR_BAD_REQUEST', config, undefined, {
+            ...success(
+              config,
+              coded ? { code: 'DOMAIN4031', message: 'No permission' } : 'Forbidden'
+            ),
+            status: 403,
+          });
+        },
+      });
+      const api = app.load(filename);
+      await assert.rejects(operation(api), (error) => {
+        const Expected = errorClass ? api[errorClass] : app.load('src/api/errors.ts').ApiError;
+        assert.ok(error instanceof Expected);
+        assert.equal(error.status, 403);
+        assert.equal(error.code, coded ? 'DOMAIN4031' : 'HTTP403');
+        assert.equal(error.message, coded ? 'No permission' : '알 수 없는 오류');
+        return true;
+      });
+      assert.equal(app.refreshCalls.length, 0);
+    });
+  });
+});
+
+test('shared error conversion preserves cancellation even when it contains an HTTP response', () => {
+  const app = setup();
+  const error = new axios.CanceledError('Cancelled');
+  error.response = { status: 503, data: { code: 'SERVER5031' } };
+  const converted = app.load('src/api/errors.ts').toApiError(error, app.auth.AuthApiError);
+  assert.equal(converted, error);
+  assert.equal(axios.isCancel(converted), true);
+});
+
+test('domain error conversion preserves network and timeout metadata instead of wrapping it', async () => {
+  const timeout = new axios.AxiosError('Timeout', 'ECONNABORTED');
+  const app = setup({
+    adapter: () => {
+      throw timeout;
+    },
+  });
+  await assert.rejects(app.load('src/api/child.ts').fetchChildren(), (error) => error === timeout);
+});
+
+test('a cancelled domain request retains its cancellation identity', async () => {
+  const cancelled = new axios.CanceledError('Cancelled');
+  const app = setup({
+    adapter: () => {
+      throw cancelled;
+    },
+  });
+  await assert.rejects(
+    app.load('src/api/newsletter.ts').getNewsletterDetail(1),
+    (error) => error === cancelled
+  );
+});
+
+test('refresh cannot restore a logged-out session using a token whose deletion failed', async () => {
+  const app = setup({ failDelete: 'refreshToken' });
+  await app.auth.clearSession();
+  await assert.rejects(
+    app.auth.refreshAccessToken(app.session.getSessionVersion()),
+    axios.isCancel
+  );
+  assert.equal(app.refreshCalls.length, 0);
+  assert.equal(app.session.getSessionSnapshot().authenticated, false);
+});
+
+test('cancelling one refresh waiter settles it immediately without aborting another waiter', async () => {
+  const refresh = deferred();
+  const app = setup({
+    refresh: () => refresh.promise,
+    adapter: (config) =>
+      config.headers.Authorization === 'Bearer new-access' ? success(config) : unauthorized(config),
+  });
+  const controller = new AbortController();
+  let cancelledError;
+  const cancelled = app.auth.apiClient
+    .get('/cancel', {
+      headers: { Authorization: 'Bearer old-access' },
+      signal: controller.signal,
+    })
+    .catch((error) => {
+      cancelledError = error;
+    });
+  const current = app.request();
+  await flush();
+  controller.abort();
+  await flush();
+  const cancelledBeforeRefresh = axios.isCancel(cancelledError);
+  assert.equal(app.refreshCalls[0][2].signal.aborted, false);
+  refresh.resolve({ data: { result: refreshed } });
+  await Promise.all([cancelled, current]);
+  assert.equal(cancelledBeforeRefresh, true);
+  assert.equal(app.refreshCalls.length, 1);
+  assert.equal(app.requests.filter((request) => request.url === '/cancel').length, 1);
+});
+
+test('a late 401 for an old access token reuses the refreshed token without rotating again', async () => {
+  const response = deferred();
+  const app = setup({
+    adapter: async (config) => {
+      if (config.headers.Authorization === 'Bearer new-access') return success(config);
+      if (config.url === '/slow') await response.promise;
+      return unauthorized(config);
+    },
+  });
+  const slow = app.auth.apiClient.get('/slow', { headers: { Authorization: 'Bearer old-access' } });
+  await flush();
+  await app.request();
+  response.resolve();
+  await slow;
+  assert.equal(app.refreshCalls.length, 1);
+  assert.equal(app.navigations.length, 0);
+});
+
+test('a remember-me write finishing after logout rejects its obsolete completion', async () => {
+  const write = deferred();
+  const app = setup({ beforeWrite: (key) => (key === 'rememberMe' ? write.promise : undefined) });
+  const pending = Promise.allSettled([
+    app.auth.saveRememberMe(true, app.session.getSessionVersion()),
+  ]);
+  await flush();
+  const cleanup = app.auth.clearSession();
+  write.resolve();
+  const [result] = await pending;
+  await cleanup;
+  assert.equal(result.status, 'rejected');
+  assert.equal(axios.isCancel(result.reason), true);
+  assert.equal(app.values.size, 0);
+});
+
+test('remember-me lookup rejects when its session changes before storage returns', async () => {
+  const read = deferred();
+  const app = setup({
+    getItem: (key, values) => (key === 'rememberMe' ? read.promise : values.get(key)),
+  });
+  const pending = Promise.allSettled([app.auth.getRememberMe()]);
+  await app.auth.clearSession();
+  await app.auth.saveAuthTokens(refreshed, app.session.getSessionVersion());
+  read.resolve('true');
+  const [result] = await pending;
+  assert.equal(result.status, 'rejected');
+  assert.equal(axios.isCancel(result.reason), true);
+});
+
+test('a failing store reset cannot skip clearing the other authentication stores', async () => {
+  const app = setup();
+  app.kakao.getState().setRememberMe(true);
+  app.google.getState().setRememberMe(true);
+  const unsubscribe = app.registration.subscribe(() => {
+    throw new Error('Store subscriber failed');
+  });
+  await app.auth.clearSession();
+  unsubscribe();
+  assert.equal(app.kakao.getState().rememberMe, false);
+  assert.equal(app.google.getState().rememberMe, false);
+  assert.equal(app.values.size, 0);
+});
+
+['checkLoginId', 'checkPhoneNumber', 'checkEmail'].forEach((operation) => {
+  test(`${operation} preserves a cancelled response instead of treating it as a conflict`, async () => {
+    const error = new axios.CanceledError('Cancelled');
+    const app = setup({
+      adapter: (config) => {
+        error.config = config;
+        error.response = { ...success(config), status: 409 };
+        throw error;
+      },
+    });
+    await assert.rejects(app.auth[operation]('value'), (caught) => caught === error);
+  });
+});
+
+test('an Axios cancellation carrying a 401 does not trigger token refresh', async () => {
+  const error = new axios.CanceledError('Cancelled');
+  const app = setup({
+    adapter: (config) => {
+      error.config = config;
+      error.response = { ...success(config), status: 401 };
+      throw error;
+    },
+  });
+  await assert.rejects(app.request(), (caught) => caught === error);
+  assert.equal(app.refreshCalls.length, 0);
+  assert.equal(app.navigations.length, 0);
+});
+
+const sessionEffectsHook = (app, contentReady = false) => {
+  let navigationReady = false;
+  const listeners = new Set();
+  const navigation = {
+    isReady: () => navigationReady,
+    addListener: (event, callback) => {
+      assert.equal(event, 'ready');
+      listeners.add(callback);
+      return () => listeners.delete(callback);
+    },
+  };
+  const runner = hookHarness('src/auth/useSessionEffects.ts', {
+    'expo-router': {
+      useNavigationContainerRef: () => navigation,
+      router: { replace: (route) => app.navigations.push(route) },
+    },
+    '../utils/authSession': app.session,
+    './sessionEffects': app.load('src/auth/sessionEffects.ts'),
+  });
+  runner.render(contentReady);
+  return {
+    runner,
+    listeners,
+    ready: () => {
+      navigationReady = true;
+      listeners.forEach((notify) => notify());
+    },
+  };
+};
+
+test('startup cleanup waits for content and navigator readiness, then redirects once', async () => {
+  const app = setup({ installEffects: false });
+  const hook = sessionEffectsHook(app);
+  try {
+    await app.auth.clearSession();
+    await hook.runner.flush();
+    assert.equal(app.navigations.length, 0);
+    hook.ready();
+    await hook.runner.flush();
+    assert.equal(app.navigations.length, 0);
+    hook.runner.render(true);
+    assert.deepEqual(app.navigations, ['/(auth)/login']);
+    hook.runner.render(true);
+    assert.equal(app.navigations.length, 1);
+  } finally {
+    hook.runner.unmount();
+  }
+  assert.equal(hook.listeners.size, 0);
+});
+
+test('a delayed navigator ready event releases pending cleanup navigation', async () => {
+  const app = setup({ installEffects: false });
+  const hook = sessionEffectsHook(app, true);
+  try {
+    await app.auth.clearSession();
+    await hook.runner.flush();
+    assert.equal(app.navigations.length, 0);
+    hook.ready();
+    await hook.runner.flush();
+    assert.equal(app.navigations.length, 1);
+  } finally {
+    hook.runner.unmount();
+  }
+});
+
+test('a fresh login invalidates an old redirect queued before navigator readiness', async () => {
+  const app = setup({ installEffects: false });
+  const hook = sessionEffectsHook(app);
+  try {
+    await app.auth.clearSession();
+    await hook.runner.flush();
+    await app.auth.saveAuthTokens(refreshed, app.session.getSessionVersion());
+    await hook.runner.flush();
+    hook.ready();
+    hook.runner.render(true);
+    assert.equal(app.navigations.length, 0);
+  } finally {
+    hook.runner.unmount();
+  }
+});
+
+test('unmounting the app removes navigation and cleanup listeners', async () => {
+  const app = setup({ installEffects: false });
+  const hook = sessionEffectsHook(app, true);
+  hook.runner.unmount();
+  assert.equal(hook.listeners.size, 0);
+  await app.auth.clearSession();
+  assert.equal(app.navigations.length, 0);
+  assert.equal(hook.runner.postUnmountUpdates, 0);
+});
+
+['handleConnectGoogle', 'handleConnectKakao'].forEach((name) => {
+  test(`${name} does not open a social login after its settings lookup crosses sessions`, async () => {
+    const read = deferred();
+    const app = setup({
+      getItem: (key, values) => (key === 'rememberMe' ? read.promise : values.get(key)),
+    });
+    const opened = [];
+    const alerts = [];
+    const processing = [];
+    const callback = loadScreenCallback('app/profile/edit.tsx', name, {
+      ...app.session,
+      getRememberMe: app.auth.getRememberMe,
+      processingProvider: null,
+      setProcessingProvider: (value) => processing.push(value),
+      useKakaoAuthStore: app.kakao,
+      GoogleSignin: { signOut: async () => opened.push('google') },
+      WebBrowser: { openAuthSessionAsync: async () => opened.push('kakao') },
+      getKakaoAuthorizeUrl: () => 'https://example.test/authorize',
+      KAKAO_REDIRECT_URI: 'example://callback',
+      Alert: { alert: (...args) => alerts.push(args) },
+    });
+    const pending = callback();
+    await app.auth.clearSession();
+    await app.auth.saveAuthTokens(refreshed, app.session.getSessionVersion());
+    read.resolve('true');
+    await pending;
+    assert.equal(opened.length, 0);
+    assert.equal(alerts.length, 0);
+    assert.equal(processing.length, 1);
+    assert.equal(app.kakao.getState().rememberMe, false);
+  });
+});
+
+['during', 'after'].forEach((timing) => {
+  test(`a stale-token lookup finishing ${timing} rotation cannot suppress a needed refresh`, async () => {
+    const lookup = deferred();
+    const refresh = deferred();
+    let blockLookup = false;
+    let blocked = false;
+    const app = setup({
+      getItem: (key, values) => {
+        if (key === 'accessToken' && blockLookup && !blocked) {
+          blocked = true;
+          return lookup.promise;
+        }
+        return values.get(key);
+      },
+      refresh: () => refresh.promise,
+      adapter: (config) =>
+        config.headers.Authorization === 'Bearer new-access'
+          ? success(config)
+          : unauthorized(config),
+    });
+    await app.auth.saveAuthTokens(
+      { accessToken: 'current-access', refreshToken: 'current-refresh' },
+      app.session.getSessionVersion()
+    );
+    blockLookup = true;
+    const oldRequest = app.auth.apiClient.get('/old', {
+      headers: { Authorization: 'Bearer obsolete-access' },
+    });
+    await flush();
+    const currentRequest = app.auth.apiClient.get('/current', {
+      headers: { Authorization: 'Bearer current-access' },
+    });
+    const pending = Promise.allSettled([oldRequest, currentRequest]);
+    await flush();
+    const startedRefreshes = app.refreshCalls.length;
+    if (timing === 'after') {
+      refresh.resolve({ data: { result: refreshed } });
+      await flush();
+    }
+    lookup.resolve('current-access');
+    refresh.resolve({ data: { result: refreshed } });
+    const results = await pending;
+    assert.equal(startedRefreshes, 1);
+    results.forEach((result) => assert.equal(result.status, 'fulfilled'));
+    assert.equal(app.refreshCalls.length, 1);
+  });
+});
+
+['accessToken', 'refreshToken'].forEach((key) => {
+  test(`a failed ${key} write cannot leave mixed credentials in an authenticated session`, async () => {
+    const app = setup({
+      beforeWrite: (name) => {
+        if (name === key) throw new Error('Storage write failed');
+      },
+    });
+    const version = app.session.getSessionVersion();
+    await assert.rejects(app.auth.saveAuthTokens(refreshed, version));
+    assert.equal(app.session.getSessionSnapshot().authenticated, false);
+    assert.equal(app.values.has('accessToken'), false);
+    assert.equal(app.values.has('refreshToken'), false);
+    assert.equal(app.navigations.length, 1);
+    await assert.rejects(app.request(), axios.isCancel);
+    assert.equal(app.refreshCalls.length, 0);
+  });
 });

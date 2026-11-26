@@ -1,27 +1,10 @@
-import axios from 'axios';
-import { apiClient, getAuthRequestConfig } from './auth';
+import { ApiError, toApiError } from './errors';
+import { apiClient } from './client';
+import { getAuthRequestConfig } from '../auth/session';
 
-export class SchoolGuideApiError extends Error {
-  constructor(
-    public readonly code: string,
-    message: string,
-    public readonly status?: number
-  ) {
-    super(message);
-    this.name = 'SchoolGuideApiError';
-  }
-}
+export class SchoolGuideApiError extends ApiError {}
 
-const wrapError = (error: unknown): Error => {
-  if (axios.isAxiosError(error) && error.response?.data?.code) {
-    return new SchoolGuideApiError(
-      error.response.data.code,
-      error.response.data.message ?? '알 수 없는 오류',
-      error.response.status
-    );
-  }
-  return error instanceof Error ? error : new Error(String(error));
-};
+const wrapError = (error: unknown) => toApiError(error, SchoolGuideApiError);
 
 const getAuthConfig = (version?: number) =>
   getAuthRequestConfig(

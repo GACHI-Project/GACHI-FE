@@ -33,6 +33,7 @@ const hookHarness = (file, mocks, globals = {}, exportName = 'default', sourceFi
   let cursor = 0;
   let timerId = 0;
   let effects = [];
+  let layoutEffects = [];
   let dirty = false;
   let disposed = false;
   let args = [];
@@ -48,6 +49,19 @@ const hookHarness = (file, mocks, globals = {}, exportName = 'default', sourceFi
     cursor += 1;
     if (!cells[index] || !same(cells[index].deps, deps)) cells[index] = { deps, value: fn() };
     return cells[index].value;
+  };
+  const scheduleEffect = (callback, deps, queue) => {
+    const index = cursor;
+    cursor += 1;
+    if (!cells[index] || !same(cells[index].deps, deps)) {
+      const previous = cells[index];
+      const cell = { deps };
+      cells[index] = cell;
+      queue.push(() => {
+        previous?.cleanup?.();
+        cell.cleanup = callback();
+      });
+    }
   };
   const react = {
     useState: (initial) => {
@@ -109,19 +123,8 @@ const hookHarness = (file, mocks, globals = {}, exportName = 'default', sourceFi
       }, [subscribe, check]);
       return snapshot;
     },
-    useEffect: (callback, deps) => {
-      const index = cursor;
-      cursor += 1;
-      if (!cells[index] || !same(cells[index].deps, deps)) {
-        const previous = cells[index];
-        const cell = { deps };
-        cells[index] = cell;
-        effects.push(() => {
-          previous?.cleanup?.();
-          cell.cleanup = callback();
-        });
-      }
-    },
+    useEffect: (callback, deps) => scheduleEffect(callback, deps, effects),
+    useLayoutEffect: (callback, deps) => scheduleEffect(callback, deps, layoutEffects),
   };
   const resolvedMocks = typeof mocks === 'function' ? mocks(react, () => focused) : mocks;
   const imports = {
@@ -179,22 +182,30 @@ const hookHarness = (file, mocks, globals = {}, exportName = 'default', sourceFi
     return exports;
   };
   const exports = load(path.resolve(__dirname, '../..', file));
-  const render = (...nextArgs) => {
+  const renderPhase = (flushEffects, ...nextArgs) => {
     if (nextArgs.length) args = nextArgs;
     let iterations = 0;
     do {
       dirty = false;
       cursor = 0;
-      effects = [];
       result = exports[exportName](...args);
-      effects.forEach((effect) => effect());
+      const committedEffects = layoutEffects;
+      layoutEffects = [];
+      committedEffects.forEach((callback) => callback());
+      if (flushEffects) {
+        const pendingEffects = effects;
+        effects = [];
+        pendingEffects.forEach((callback) => callback());
+      }
       iterations += 1;
       if (iterations > 20) throw new Error('Hook did not settle');
     } while (dirty);
     return result;
   };
+  const render = (...nextArgs) => renderPhase(true, ...nextArgs);
   return {
     render,
+    renderBeforeEffects: (...nextArgs) => renderPhase(false, ...nextArgs),
     renderValue: (read) => {
       readingRenderValue = true;
       try {

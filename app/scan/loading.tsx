@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
@@ -13,44 +13,20 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import {
-  getNewsletterStatus,
-  NewsletterApiError,
-  NewsletterStatus,
-  resumeNewsletter as resumeNewsletterApi,
-  retryAnalysis as retryAnalysisApi,
-  skipNewsletterPage as skipNewsletterPageApi,
-  uploadNewsletter as uploadNewsletterApi,
-} from '../../src/api/newsletter';
+import { NewsletterApiError } from '../../src/api/newsletter';
 import Header from '../../src/components/common/Header';
 import ScanHelpModal from '../../src/components/scan/ScanHelpModal';
 import ScanStepIndicator from '../../src/components/scan/ScanStepIndicator';
 import colors from '../../src/constants/colors';
 import { SCAN_FRAME_H, ScanChildParams } from '../../src/constants/scan';
 import useResponsiveLayout from '../../src/hooks/useResponsiveLayout';
-import { invalidateResources, queryClient, resourceKey } from '../../src/query/client';
-import { useApiMutation, useServerQuery, useSessionScope } from '../../src/query/hooks';
+import useNewsletterProcessing from '../../src/hooks/scan/useNewsletterProcessing';
+import useNewsletterProcessingAnimation from '../../src/hooks/scan/useNewsletterProcessingAnimation';
 import styles from '../../src/styles/scan/loading';
 import { getPausedDescription, getPausedTitle } from '../../src/utils/newsletterPaused';
 import { parsePagesParam } from '../../src/utils/scanNavigation';
 
-const NEWSLETTER_RESOURCES = [
-  'newsletters',
-  'newsletter',
-  'recent',
-  'preview',
-  'newsletterChecklist',
-  'summary',
-  'topics',
-  'cultural',
-  'translation',
-];
-
 const ScanLoadingScreen = () => {
-  const retryAnalysis = useApiMutation(retryAnalysisApi, NEWSLETTER_RESOURCES);
-  const skipNewsletterPage = useApiMutation(skipNewsletterPageApi, NEWSLETTER_RESOURCES);
-  const resumeNewsletter = useApiMutation(resumeNewsletterApi, NEWSLETTER_RESOURCES);
-  const uploadNewsletter = useApiMutation(uploadNewsletterApi, NEWSLETTER_RESOURCES);
   const {
     photoUri,
     pages,
@@ -76,225 +52,31 @@ const ScanLoadingScreen = () => {
   const insets = useSafeAreaInsets();
   const { height, isCompact } = useResponsiveLayout();
   const frameStyle = { height: Math.min(height * 0.4, SCAN_FRAME_H), flex: 0 };
-  const progress = useRef(new Animated.Value(0)).current;
-  const scanLine = useRef(new Animated.Value(0)).current;
-
-  const frameOpacity = useRef(new Animated.Value(0)).current;
-  const checkmarkScale = useRef(new Animated.Value(0)).current;
-  const glowPulse = useRef(new Animated.Value(1)).current;
-  const textOpacity = useRef(new Animated.Value(0)).current;
-  const textSlide = useRef(new Animated.Value(20)).current;
-  const nextBtnOpacity = useRef(new Animated.Value(0)).current;
-  const nextBtnSlide = useRef(new Animated.Value(30)).current;
-
-  const glowAnimation = useRef<Animated.CompositeAnimation | null>(null);
-  const completionAnimation = useRef<Animated.CompositeAnimation | null>(null);
   const { t } = useTranslation();
   const [helpVisible, setHelpVisible] = useState(false);
-  const [newsletterId, setNewsletterId] = useState<number | null>(null);
-  const [actionLoading, setActionLoading] = useState<'retry' | 'skip' | null>(null);
-  const scope = useSessionScope();
-  const statusQuery = useServerQuery(
-    'newsletterStatus',
-    [newsletterId],
-    (signal) => getNewsletterStatus(newsletterId!, signal),
-    {
-      enabled: newsletterId !== null,
-      staleTime: 0,
-      refetchInterval: (query) =>
-        query.state.error ||
-        ['COMPLETED', 'FAILED', 'PAUSED'].includes(query.state.data?.status ?? '')
-          ? false
-          : 2000,
-    }
-  );
+  const processing = useNewsletterProcessing({
+    photoUris,
+    childId: childId ? Number(childId) : undefined,
+    resumeNewsletterId,
+  });
   const {
-    refetch: refetchStatus,
-    isError: statusError,
-    errorUpdatedAt: statusErrorAt,
-  } = statusQuery;
-  const displayPercent = statusQuery.data?.progressPercent ?? 0;
-  const analysisStatus = statusQuery.data?.status ?? 'PENDING';
-  const isComplete = analysisStatus === 'COMPLETED';
-  const pausedInfo = analysisStatus === 'PAUSED' ? statusQuery.data : null;
-  const pageProgress = {
-    total: statusQuery.data?.totalPages,
-    processed: statusQuery.data?.processedPages,
-  };
-  const startTaskRef = useRef<{ key: string; promise: Promise<number> } | null>(null);
-  const inputKey = JSON.stringify([resumeNewsletterId, photoUris, childId]);
-
-  useEffect(() => {
-    if (isComplete) void invalidateResources(NEWSLETTER_RESOURCES, scope.version);
-  }, [isComplete, newsletterId, scope.version]);
-
-  const handleActionError = useCallback(() => {
-    Alert.alert(t('scan.loading.error.analysisFailed'), t('scan.loading.error.analysisFailedMsg'));
-  }, [t]);
-
-  const applyResumeResult = useCallback(
-    async (id: number, _result: { status: NewsletterStatus }) => {
-      await queryClient.invalidateQueries({
-        queryKey: resourceKey(scope.version, scope.language, 'newsletterStatus', id),
-        refetchType: 'all',
-      });
-    },
-    [scope.version, scope.language]
-  );
-
-  useEffect(() => {
-    if (pausedInfo) {
-      scanLine.stopAnimation();
-      return undefined;
-    }
-
-    const loopScanLine = () => {
-      scanLine.setValue(0);
-      Animated.timing(scanLine, {
-        toValue: 1,
-        duration: 2500,
-        useNativeDriver: true,
-      }).start(({ finished }) => {
-        if (finished) loopScanLine();
-      });
-    };
-    loopScanLine();
-
-    return () => {
-      scanLine.stopAnimation();
-    };
-  }, [scanLine, pausedInfo]);
-
-  useEffect(() => {
-    let active = true;
-    if (!photoUris.length && resumeNewsletterId === undefined) return undefined;
-    if (startTaskRef.current?.key !== inputKey) {
-      const promise =
-        resumeNewsletterId !== undefined
-          ? resumeNewsletter(resumeNewsletterId).then(() => resumeNewsletterId)
-          : uploadNewsletter(photoUris, childId ? Number(childId) : undefined).then(
-              (result) => result.newsletterId
-            );
-      startTaskRef.current = { key: inputKey, promise };
-    }
-    startTaskRef.current.promise
-      .then((id) => {
-        if (active) setNewsletterId(id);
-      })
-      .catch((error: unknown) => {
-        if (!active) return;
-        let message = t('scan.loading.error.uploadDefault');
-        if (error instanceof NewsletterApiError) {
-          if (error.code === 'NL4091') message = t('scan.loading.error.duplicate');
-          else if (error.code === 'NL4002') message = t('scan.loading.error.unsupportedFormat');
-          else if (error.code === 'NL4003') message = t('scan.loading.error.fileTooLarge');
-        }
-        Alert.alert(t('scan.loading.error.uploadFailed'), message, [
-          { text: t('common.confirm'), onPress: () => router.back() },
-        ]);
-      });
-    return () => {
-      active = false;
-    };
-  }, [inputKey, resumeNewsletterId, childId, resumeNewsletter, uploadNewsletter, photoUris, t]);
-
-  useEffect(() => {
-    Animated.timing(progress, {
-      toValue: displayPercent / 100,
-      duration: 400,
-      useNativeDriver: false,
-    }).start();
-  }, [displayPercent, progress]);
-
-  useEffect(() => {
-    if (!newsletterId || (analysisStatus !== 'FAILED' && !statusError)) return;
-    Alert.alert(t('scan.loading.error.analysisFailed'), t('scan.loading.error.analysisFailedMsg'), [
-      { text: t('common.cancel'), style: 'cancel', onPress: () => router.back() },
-      {
-        text: t('scan.loading.paused.retryButton'),
-        onPress: () => {
-          const operation =
-            !statusError && analysisStatus === 'FAILED'
-              ? retryAnalysis(newsletterId).then((result) =>
-                  applyResumeResult(newsletterId, result)
-                )
-              : refetchStatus();
-          void operation.catch(handleActionError);
-        },
-      },
-    ]);
-  }, [
-    analysisStatus,
     newsletterId,
-    statusError,
-    statusErrorAt,
-    retryAnalysis,
-    refetchStatus,
-    applyResumeResult,
-    handleActionError,
-    t,
-  ]);
-
-  useEffect(() => {
-    if (!isComplete) return () => {};
-
-    completionAnimation.current = Animated.parallel([
-      Animated.timing(frameOpacity, {
-        toValue: 1,
-        duration: 400,
-        useNativeDriver: true,
-      }),
-      Animated.sequence([
-        Animated.delay(200),
-        Animated.spring(checkmarkScale, {
-          toValue: 1,
-          tension: 50,
-          friction: 5,
-          useNativeDriver: true,
-        }),
-      ]),
-      Animated.sequence([
-        Animated.delay(550),
-        Animated.parallel([
-          Animated.timing(textOpacity, { toValue: 1, duration: 350, useNativeDriver: true }),
-          Animated.spring(textSlide, {
-            toValue: 0,
-            tension: 60,
-            friction: 8,
-            useNativeDriver: true,
-          }),
-        ]),
-      ]),
-      Animated.sequence([
-        Animated.delay(900),
-        Animated.parallel([
-          Animated.timing(nextBtnOpacity, { toValue: 1, duration: 400, useNativeDriver: true }),
-          Animated.spring(nextBtnSlide, {
-            toValue: 0,
-            tension: 55,
-            friction: 8,
-            useNativeDriver: true,
-          }),
-        ]),
-      ]),
-    ]);
-
-    completionAnimation.current.start(() => {
-      glowAnimation.current = Animated.loop(
-        Animated.sequence([
-          Animated.timing(glowPulse, { toValue: 1.12, duration: 950, useNativeDriver: true }),
-          Animated.timing(glowPulse, { toValue: 1.0, duration: 950, useNativeDriver: true }),
-        ])
-      );
-      glowAnimation.current.start();
-    });
-
-    return () => {
-      completionAnimation.current?.stop();
-      glowAnimation.current?.stop();
-    };
-  }, [
-    isComplete,
+    phase,
+    status,
+    action: actionLoading,
+    error,
+    retry: handleRetry,
+    skipPage: handleSkip,
+    isCurrent,
+    canRetry,
+    canSkip,
+  } = processing;
+  const isComplete = phase === 'completed';
+  const analysisStatus = status?.status ?? 'PENDING';
+  const displayPercent = status?.progressPercent ?? 0;
+  const pausedInfo = status?.status === 'PAUSED' ? status : null;
+  const pageProgress = { total: status?.totalPages, processed: status?.processedPages };
+  const {
     frameOpacity,
     checkmarkScale,
     glowPulse,
@@ -302,43 +84,44 @@ const ScanLoadingScreen = () => {
     textSlide,
     nextBtnOpacity,
     nextBtnSlide,
-  ]);
-
-  const handleRetry = async () => {
-    if (!newsletterId || actionLoading) return;
-    setActionLoading('retry');
-    try {
-      const result = await resumeNewsletter(newsletterId);
-      await applyResumeResult(newsletterId, result);
-    } catch {
-      handleActionError();
-    } finally {
-      setActionLoading(null);
+    progressWidth,
+    scanLineY,
+  } = useNewsletterProcessingAnimation(processing.key, phase, displayPercent, frameStyle.height);
+  const alertedError = useRef<typeof error>(null);
+  useEffect(() => {
+    if (!error || !isCurrent() || alertedError.current === error) return;
+    alertedError.current = error;
+    const close = () => {
+      if (isCurrent()) router.back();
+    };
+    if (error.kind === 'start') {
+      let message = t('scan.loading.error.uploadDefault');
+      if (error.cause instanceof NewsletterApiError) {
+        if (error.cause.code === 'NL4091') message = t('scan.loading.error.duplicate');
+        else if (error.cause.code === 'NL4002') message = t('scan.loading.error.unsupportedFormat');
+        else if (error.cause.code === 'NL4003') message = t('scan.loading.error.fileTooLarge');
+      }
+      Alert.alert(t('scan.loading.error.uploadFailed'), message, [
+        { text: t('common.confirm'), onPress: close },
+      ]);
+      return;
     }
-  };
-
-  const handleSkip = async () => {
-    if (!newsletterId || !pausedInfo?.pausedPageNo || actionLoading) return;
-    setActionLoading('skip');
-    try {
-      const result = await skipNewsletterPage(newsletterId, pausedInfo.pausedPageNo);
-      await applyResumeResult(newsletterId, result);
-    } catch {
-      handleActionError();
-    } finally {
-      setActionLoading(null);
-    }
-  };
-
-  const progressWidth = progress.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0%', '100%'],
-  });
-
-  const scanLineY = scanLine.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0, frameStyle.height],
-  });
+    Alert.alert(
+      t('scan.loading.error.analysisFailed'),
+      t('scan.loading.error.analysisFailedMsg'),
+      error.retryable
+        ? [
+            { text: t('common.cancel'), style: 'cancel', onPress: close },
+            {
+              text: t('scan.loading.paused.retryButton'),
+              onPress: () => {
+                void handleRetry();
+              },
+            },
+          ]
+        : [{ text: t('common.confirm'), onPress: error.kind === 'action' ? undefined : close }]
+    );
+  }, [error, handleRetry, isCurrent, t]);
 
   const showPageCount =
     !pausedInfo &&
@@ -361,8 +144,8 @@ const ScanLoadingScreen = () => {
   }
 
   const pausedDescription = pausedInfo ? getPausedDescription(pausedInfo, t) : '';
-  const showRetry = !!pausedInfo?.retryable;
-  const showSkip = !!pausedInfo?.skippable;
+  const showRetry = !!pausedInfo && canRetry;
+  const showSkip = !!pausedInfo && canSkip;
 
   let statusIcon: React.ReactNode;
   if (isComplete) {
@@ -461,7 +244,8 @@ const ScanLoadingScreen = () => {
             activeOpacity={0.8}
             accessibilityRole="button"
             accessibilityLabel={t('scan.loading.accessibilityNext')}
-            onPress={() =>
+            onPress={() => {
+              if (!isCurrent()) return;
               router.push({
                 pathname: '/scan/result',
                 params: {
@@ -471,8 +255,8 @@ const ScanLoadingScreen = () => {
                   childGrade,
                   newsletterId: String(newsletterId),
                 },
-              })
-            }
+              });
+            }}
           >
             <Text style={styles.nextBtnText}>{t('scan.loading.next')}</Text>
           </TouchableOpacity>

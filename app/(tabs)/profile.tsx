@@ -1,13 +1,5 @@
 import { useState } from 'react';
-import {
-  ScrollView,
-  View,
-  Text,
-  TouchableOpacity,
-  Image,
-  ActivityIndicator,
-  Alert,
-} from 'react-native';
+import { ScrollView, View, Text, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -22,6 +14,7 @@ import ChildEditSheet from '../../src/components/profile/ChildEditSheet';
 import useProfileData from '../../src/hooks/profile/useProfileData';
 import useChildMutations from '../../src/hooks/profile/useChildMutations';
 import { formatYearMonth } from '../../src/utils/date';
+import { toChildInfo } from '../../src/utils/child';
 import GoogleIcon from '../../assets/social/google.png';
 import KakaoIcon from '../../assets/social/kakao.png';
 
@@ -109,24 +102,7 @@ const ProfileScreen = () => {
                   style={isLast ? styles.childRowLast : styles.childRow}
                   onPress={() => {
                     setIsNewChild(false);
-                    setEditingChild({
-                      id: String(child.id),
-                      name: child.name,
-                      selectedSchool: {
-                        schoolCode: child.schoolCode,
-                        schoolName: child.schoolName,
-                        englishSchoolName: '',
-                        schoolKind: '',
-                        officeCode: child.officeCode,
-                        officeName: '',
-                        locationName: '',
-                        roadAddress: '',
-                      },
-                      schoolQuery: child.schoolName,
-                      grade: child.grade,
-                      calendarColor: child.colorCode,
-                      className: child.className ?? '',
-                    });
+                    setEditingChild(toChildInfo(child));
                     setSheetVisible(true);
                   }}
                 >
@@ -134,7 +110,9 @@ const ProfileScreen = () => {
                   <View style={styles.childInfo}>
                     <Text style={styles.childName}>{child.name}</Text>
                     <Text style={styles.childGrade}>
-                      {t('profile.grade', { grade: child.grade })}
+                      {child.schoolName?.trim()
+                        ? `${child.schoolName.trim()} ${t('common.grade', { grade: child.grade })}`
+                        : t('profile.grade', { grade: child.grade })}
                       {child.className
                         ? ` ${t('profile.className', { className: child.className })}`
                         : ''}
@@ -226,26 +204,8 @@ const ProfileScreen = () => {
         child={editingChild}
         isNew={isNewChild}
         onClose={() => setSheetVisible(false)}
-        onSave={async (updated) => {
-          try {
-            await saveChild(updated, isNewChild);
-            setSheetVisible(false);
-          } catch (e) {
-            const addMsg = e instanceof Error ? e.message : t('profile.childEdit.addFailed');
-            Alert.alert(
-              t('common.error'),
-              isNewChild ? addMsg : t('profile.childEdit.updateFailed')
-            );
-          }
-        }}
-        onDelete={async (id) => {
-          try {
-            await removeChild(id);
-          } catch {
-            Alert.alert(t('common.error'), t('profile.childEdit.deleteFailed'));
-          }
-          setSheetVisible(false);
-        }}
+        onSave={(updated) => saveChild(updated, isNewChild)}
+        onDelete={removeChild}
       />
     </View>
   );

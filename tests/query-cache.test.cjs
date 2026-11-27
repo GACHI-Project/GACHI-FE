@@ -623,7 +623,20 @@ const scanLoadingScreen = (r, query) => {
       '../../query/state': r.load('src/query/state.ts'),
       '../../query/hooks': {
         useApiMutation: (fn) => fn,
-        useServerQuery: () => query,
+        useServerQuery: (domain, params) => {
+          // Mirror the mocked observer result in the shared cache used by command guards.
+          const cached = r.client.getQueryCache().build(r.client, {
+            queryKey: r.key(domain, ...params),
+          });
+          cached.setState({
+            data: query.data,
+            status: query.isError ? 'error' : 'success',
+            error: query.error ?? null,
+            errorUpdatedAt: query.errorUpdatedAt ?? 0,
+            errorUpdateCount: query.errorUpdatedAt ?? 0,
+          });
+          return { ...query, isError: !!query.isError, error: query.error ?? null };
+        },
         useSessionScope: () => ({ ...r.scope(), authenticated: true }),
       },
       '../../utils/authSession': r.session,

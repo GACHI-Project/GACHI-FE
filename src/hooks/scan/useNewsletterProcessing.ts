@@ -30,9 +30,10 @@ const NEWSLETTER_RESOURCES = [
 type Action = 'retry' | 'skip';
 type Command = 'refresh' | 'resume' | 'retry-analysis' | 'skip';
 type ProcessingError =
-  | { kind: 'start'; cause: unknown }
+  | { kind: 'start'; id: object; cause: unknown }
   | {
       kind: 'action';
+      id: object;
       cause: unknown;
       command: Exclude<Command, 'refresh'>;
       pageNo?: number;
@@ -189,13 +190,14 @@ const useNewsletterProcessing = ({
             status: result.status,
             progressPercent: result.status === 'COMPLETED' ? 100 : 0,
             progressMessage: '',
+            canRetry: false,
           },
           action: commands.current.get(key)?.action ?? null,
         });
       },
       (cause: unknown) => {
         if (active && isCurrent() && !axios.isCancel(cause)) {
-          setLifecycle({ ...initialLifecycle(key), error: { kind: 'start', cause } });
+          setLifecycle({ ...initialLifecycle(key), error: { kind: 'start', id: task, cause } });
         }
       }
     );
@@ -234,9 +236,23 @@ const useNewsletterProcessing = ({
   const hasStatusError =
     newsletterId !== null && statusQuery.isError && !axios.isCancel(statusQuery.error);
   const { refetch } = statusQuery;
+  const statusErrorCount =
+    queryClient.getQueryState(
+      resourceKey(scope.version, scope.language, 'newsletterStatus', newsletterId)
+    )?.errorUpdateCount ?? 0;
+  const statusErrorId = useMemo(
+    () => ({
+      key,
+      language: scope.language,
+      newsletterId,
+      updatedAt: statusQuery.errorUpdatedAt,
+      count: statusErrorCount,
+    }),
+    [key, scope.language, newsletterId, statusQuery.errorUpdatedAt, statusErrorCount]
+  );
   const snapshot: CommandSnapshot = {
     newsletterId,
-    status,
+    status: statusQuery.data,
     statusError: statusQuery.isError,
     error: statusQuery.error,
     processingError: current.error,
@@ -248,12 +264,12 @@ const useNewsletterProcessing = ({
   useLayoutEffect(() => {
     commandState.current = {
       newsletterId,
-      status,
+      status: statusQuery.data,
       statusError: statusQuery.isError,
       error: statusQuery.error,
       processingError: current.error,
     };
-  }, [newsletterId, status, statusQuery.isError, statusQuery.error, current.error]);
+  }, [newsletterId, statusQuery.data, statusQuery.isError, statusQuery.error, current.error]);
 
   useEffect(() => {
     const pending = commands.current.get(key);
@@ -288,10 +304,22 @@ const useNewsletterProcessing = ({
     async (intent: Action | 'retry-error') => {
       if (!isCurrent() || context.request || commands.current.has(key)) return;
       const latest = commandState.current;
+      const id = latest.newsletterId;
+      if (id === null) return;
+      const cached = queryClient.getQueryState<NewsletterStatusResult>(
+        resourceKey(scope.version, scope.language, 'newsletterStatus', id)
+      );
+      // Cache notifications can precede the commit that updates commandState.
+      if (
+        !cached ||
+        cached.data !== latest.status ||
+        (cached.status === 'error') !== latest.statusError ||
+        cached.error !== latest.error
+      )
+        return;
       const command =
         intent === 'retry-error' ? getErrorRetryCommand(latest) : getCommand(intent, latest);
-      const id = latest.newsletterId;
-      if (!command || id === null) return;
+      if (!command) return;
       const nextAction = command === 'skip' ? 'skip' : 'retry';
       const retryStatus = command === 'refresh';
       const request = {};
@@ -326,6 +354,7 @@ const useNewsletterProcessing = ({
             ...prev,
             error: {
               kind: 'action',
+              id: request,
               cause,
               command,
               pageNo: command === 'skip' ? latest.status?.pausedPageNo : undefined,
@@ -363,6 +392,7 @@ const useNewsletterProcessing = ({
     if (hasStatusError) {
       return {
         kind: 'status' as const,
+        id: statusErrorId,
         cause: statusQuery.error,
         retryable: canRetry,
         at: statusQuery.errorUpdatedAt,
@@ -376,7 +406,7 @@ const useNewsletterProcessing = ({
       };
     if (newsletterId === null) return null;
     if (status?.status === 'FAILED') {
-      return { kind: 'analysis' as const, cause: null, retryable: canRetry };
+      return { kind: 'analysis' as const, id: status, cause: null, retryable: canRetry };
     }
     return null;
   }, [
@@ -388,6 +418,7 @@ const useNewsletterProcessing = ({
     hasStatusError,
     statusQuery.error,
     statusQuery.errorUpdatedAt,
+    statusErrorId,
     status,
     canRetry,
     canRetryError,

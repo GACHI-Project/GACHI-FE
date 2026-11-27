@@ -88,10 +88,10 @@ const ScanLoadingScreen = () => {
     progressWidth,
     scanLineY,
   } = useNewsletterProcessingAnimation(processing.key, phase, displayPercent, frameStyle.height);
-  const alertedError = useRef<typeof error>(null);
+  const alertedErrors = useRef(new Set<object>());
   useEffect(() => {
-    if (!error || !isCurrent() || alertedError.current === error) return;
-    alertedError.current = error;
+    if (!error || !isCurrent() || alertedErrors.current.has(error.id)) return;
+    alertedErrors.current.add(error.id);
     const close = () => {
       if (isCurrent()) router.back();
     };

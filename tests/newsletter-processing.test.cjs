@@ -230,13 +230,7 @@ test('an error retry cannot skip a different page after the server advances', as
   assert.equal(screen.api.resume.calls.length, 0);
 });
 
-test('the loading alert retries a failed skip without sending resume', async () => {
-  const screen = setup();
-  await start(screen);
-  const failed = screen.result.skipPage();
-  screen.api.skip.calls[0].reject(Object.assign(new Error('Unavailable'), { status: 503 }));
-  await failed;
-  await screen.runner.flush();
+const loadingView = (screen) => {
   const alerts = [];
   const jsx = (type, props) => ({ type, props });
   const view = hookHarness('app/scan/loading.tsx', {
@@ -266,6 +260,17 @@ test('the loading alert retries a failed skip without sending resume', async () 
     '../../src/utils/scanNavigation': {},
   });
   cleanups.push(view.unmount);
+  return { view, alerts };
+};
+
+test('the loading alert retries a failed skip without sending resume', async () => {
+  const screen = setup();
+  await start(screen);
+  const failed = screen.result.skipPage();
+  screen.api.skip.calls[0].reject(Object.assign(new Error('Unavailable'), { status: 503 }));
+  await failed;
+  await screen.runner.flush();
+  const { view, alerts } = loadingView(screen);
   view.render();
   assert.equal(alerts.length, 1);
   const retryButton = alerts[0][2].find(
@@ -279,6 +284,132 @@ test('the loading alert retries a failed skip without sending resume', async () 
   await waitFor(screen, () => screen.api.status.calls.length === 2);
   screen.api.status.calls[1].resolve(snapshot('COMPLETED'));
   await waitFor(screen, () => screen.result.phase === 'completed');
+});
+
+test('progress refreshes do not repeat a write alert but new write and read failures do', async () => {
+  const screen = setup();
+  await start(screen);
+  const cause = Object.assign(new Error('Response lost'), { status: 503 });
+  const failed = screen.result.retry();
+  screen.api.resume.calls[0].reject(cause);
+  await failed;
+  await screen.runner.flush();
+  const { view, alerts } = loadingView(screen);
+  view.render();
+  assert.equal(alerts.length, 1);
+  const firstId = screen.result.error.id;
+  const checkProgress = async (progressPercent) => {
+    const read = screen.poll();
+    screen.api.status.calls.at(-1).resolve(snapshot('PROCESSING', { progressPercent }));
+    await read;
+    await screen.runner.flush();
+    view.render();
+    assert.equal(alerts.length, 1);
+    assert.equal(screen.result.error.id, firstId);
+  };
+  await checkProgress(30);
+  await checkProgress(40);
+  const read = screen.poll();
+  screen.api.status.calls.at(-1).resolve(paused());
+  await read;
+  await screen.runner.flush();
+  const failedAgain = screen.result.retry();
+  screen.api.resume.calls[1].reject(cause);
+  await failedAgain;
+  await screen.runner.flush();
+  view.render();
+  assert.equal(alerts.length, 2);
+  assert.notEqual(screen.result.error.id, firstId);
+  const checkReadFailure = async (expectedAlerts) => {
+    const failedRead = screen.poll().catch(() => {});
+    screen.api.status.calls.at(-1).reject(cause);
+    await failedRead;
+    await screen.runner.flush();
+    view.render();
+    assert.equal(screen.result.error.kind, 'status');
+    assert.equal(alerts.length, expectedAlerts);
+    view.render();
+    assert.equal(alerts.length, expectedAlerts);
+  };
+  await checkReadFailure(3);
+  await checkReadFailure(4);
+  const recovered = screen.poll();
+  screen.api.status.calls.at(-1).resolve(snapshot('PROCESSING', { progressPercent: 60 }));
+  await recovered;
+  await screen.runner.flush();
+  view.render();
+  assert.equal(screen.result.error.kind, 'action');
+  assert.equal(alerts.length, 4);
+});
+
+[false, true].forEach((canRetry) => {
+  test(`a FAILED start response waits for GET retry permission (${canRetry})`, async () => {
+    const screen = setup({ photoUris: [], resumeNewsletterId: 1 });
+    screen.api.resume.calls[0].resolve({ newsletterId: 1, status: 'FAILED' });
+    await waitFor(screen, () => screen.api.status.calls.length === 1);
+    assert.equal(screen.result.status.status, 'FAILED');
+    assert.equal(screen.result.canRetry, false);
+    assert.equal(screen.result.error.retryable, false);
+    void screen.result.retry();
+    void screen.result.retryError();
+    assert.equal(screen.api.retry.calls.length, 0);
+    screen.api.status.calls[0].resolve(snapshot('FAILED', { canRetry }));
+    await waitFor(screen, () => screen.result.status.canRetry === canRetry);
+    assert.equal(screen.result.canRetry, canRetry);
+    const retry = screen.result.retryError();
+    assert.equal(screen.api.retry.calls.length, canRetry ? 1 : 0);
+    if (canRetry) {
+      screen.api.retry.calls[0].resolve({ newsletterId: 1, status: 'PROCESSING' });
+      await waitFor(screen, () => screen.api.status.calls.length === 2);
+      screen.api.status.calls[1].resolve(snapshot('COMPLETED'));
+    }
+    await retry;
+  });
+});
+
+['retry', 'retryError', 'skipPage'].forEach((action) => {
+  test(`${action} refuses a command when the shared status advances before the next render`, async () => {
+    const screen = setup();
+    await start(screen);
+    const failed = screen.result.skipPage();
+    screen.api.skip.calls[0].reject(Object.assign(new Error('Response lost'), { status: 503 }));
+    await failed;
+    await screen.runner.flush();
+    const retained = screen.result[action];
+    const key = screen.runtime.key('newsletterStatus', 1);
+    screen.runtime.client.setQueryData(key, { ...paused(), pausedPageNo: 3 });
+    assert.equal(screen.result.status.pausedPageNo, 2);
+    void retained();
+    assert.equal(screen.api.skip.calls.length, 1);
+    assert.equal(screen.api.resume.calls.length, 0);
+    assert.equal(screen.api.retry.calls.length, 0);
+    screen.runner.render();
+    assert.equal(screen.result.status.pausedPageNo, 3);
+    const skip = screen.result.skipPage();
+    assert.equal(screen.api.skip.calls[1].args[1], 3);
+    screen.api.skip.calls[1].resolve({ newsletterId: 1, status: 'PROCESSING' });
+    await waitFor(screen, () => screen.api.status.calls.length === 2);
+    screen.api.status.calls[1].resolve(snapshot('COMPLETED'));
+    await skip;
+  });
+});
+
+test('a read failure before the next render blocks stale writes until its GET retry is committed', async () => {
+  const screen = setup();
+  await start(screen);
+  const retained = screen.result.retry;
+  const read = screen.poll().catch(() => {});
+  screen.api.status.calls[1].reject(Object.assign(new Error('Read failed'), { status: 503 }));
+  await read;
+  assert.equal(screen.result.error, null);
+  void retained();
+  assert.equal(screen.api.resume.calls.length, 0);
+  screen.runner.render();
+  assert.equal(screen.result.error.kind, 'status');
+  const retry = screen.result.retryError();
+  assert.equal(screen.api.status.calls.length, 3);
+  screen.api.status.calls[2].resolve(snapshot('COMPLETED'));
+  await retry;
 });
 
 test('start status stays local until a server status read populates the shared cache', async () => {

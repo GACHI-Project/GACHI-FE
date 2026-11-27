@@ -30,6 +30,7 @@ const queuedApi = () => {
 const hookHarness = (file, mocks, globals = {}, exportName = 'default', sourceFiles = []) => {
   const cells = [];
   const timers = new Map();
+  const effectCleanups = new Map();
   let cursor = 0;
   let timerId = 0;
   let effects = [];
@@ -54,12 +55,14 @@ const hookHarness = (file, mocks, globals = {}, exportName = 'default', sourceFi
     const index = cursor;
     cursor += 1;
     if (!cells[index] || !same(cells[index].deps, deps)) {
-      const previous = cells[index];
       const cell = { deps };
       cells[index] = cell;
       queue.push(() => {
-        previous?.cleanup?.();
-        cell.cleanup = callback();
+        const cleanup = effectCleanups.get(index);
+        effectCleanups.delete(index);
+        cleanup?.();
+        const nextCleanup = callback();
+        if (nextCleanup) effectCleanups.set(index, nextCleanup);
       });
     }
   };
@@ -252,7 +255,11 @@ const hookHarness = (file, mocks, globals = {}, exportName = 'default', sourceFi
       if (dirty) render();
     },
     unmount: () => {
-      cells.forEach((cell) => cell.cleanup?.());
+      if (disposed) return;
+      effects = [];
+      layoutEffects = [];
+      effectCleanups.forEach((cleanup) => cleanup());
+      effectCleanups.clear();
       disposed = true;
     },
   };

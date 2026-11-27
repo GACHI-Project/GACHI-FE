@@ -20,6 +20,70 @@ afterEach(() => {
   runtimes.clear();
 });
 
+test('unmount cleans the committed subscription while replacement effects are pending', () => {
+  const runner = hookHarness('tests/fixtures/useExternalStore.ts', {});
+  const listeners = new Set();
+  let cleanupCount = 0;
+  let replacementCount = 0;
+  let value = 0;
+  const store = {
+    getSnapshot: () => value,
+    subscribe: (listener) => {
+      listeners.add(listener);
+      return () => {
+        cleanupCount += 1;
+        listeners.delete(listener);
+      };
+    },
+    beforeSubscribe: () => {},
+  };
+  runner.render(store);
+  assert.equal(listeners.size, 1);
+  const replacement = {
+    ...store,
+    subscribe: () => {
+      replacementCount += 1;
+      return () => {};
+    },
+  };
+  runner.renderBeforeEffects(replacement);
+  assert.equal(listeners.size, 1);
+  runner.unmount();
+  runner.unmount();
+  assert.equal(cleanupCount, 1);
+  assert.equal(replacementCount, 0);
+  assert.equal(listeners.size, 0);
+  value = 1;
+  listeners.forEach((notify) => notify());
+  assert.equal(runner.postUnmountUpdates, 0);
+});
+
+test('flushing replacement effects cleans the old subscription before installing the new one', () => {
+  const runner = hookHarness('tests/fixtures/useExternalStore.ts', {});
+  const events = [];
+  const store = {
+    getSnapshot: () => 0,
+    subscribe: () => {
+      events.push('subscribe A');
+      return () => events.push('cleanup A');
+    },
+    beforeSubscribe: () => {},
+  };
+  runner.render(store);
+  runner.renderBeforeEffects({
+    ...store,
+    subscribe: () => {
+      events.push('subscribe B');
+      return () => events.push('cleanup B');
+    },
+  });
+  assert.deepEqual(events, ['subscribe A']);
+  runner.render();
+  assert.deepEqual(events, ['subscribe A', 'cleanup A', 'subscribe B']);
+  runner.unmount();
+  assert.deepEqual(events, ['subscribe A', 'cleanup A', 'subscribe B', 'cleanup B']);
+});
+
 test('the hook harness catches a store change before subscription and cleans up its listener', async () => {
   let value = 0;
   const listeners = new Set();

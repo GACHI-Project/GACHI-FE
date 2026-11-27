@@ -16,8 +16,8 @@
     "test:lists": "node --test tests/async-list-state.test.cjs",
     "test:auth": "node --test tests/auth-session.test.cjs tests/register-validation.test.cjs",
     "test:layout": "node --test tests/i18n-layout.test.cjs",
-    "test": "node --test tests/notification-count.test.cjs tests/async-list-state.test.cjs tests/auth-session.test.cjs tests/i18n-layout.test.cjs tests/register-validation.test.cjs tests/query-cache.test.cjs tests/query-review.test.cjs tests/child-school-address.test.cjs",
-    "test:query": "node --test tests/query-cache.test.cjs tests/query-review.test.cjs tests/child-school-address.test.cjs"
+    "test": "node --test tests/notification-count.test.cjs tests/async-list-state.test.cjs tests/auth-session.test.cjs tests/i18n-layout.test.cjs tests/register-validation.test.cjs tests/query-cache.test.cjs tests/query-review.test.cjs tests/newsletter-processing.test.cjs tests/child-school-address.test.cjs",
+    "test:query": "node --test tests/query-cache.test.cjs tests/query-review.test.cjs tests/newsletter-processing.test.cjs tests/child-school-address.test.cjs"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.2",

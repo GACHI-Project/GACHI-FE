@@ -20,6 +20,70 @@ afterEach(() => {
   runtimes.clear();
 });
 
+test('unmount cleans the committed subscription while replacement effects are pending', () => {
+  const runner = hookHarness('tests/fixtures/useExternalStore.ts', {});
+  const listeners = new Set();
+  let cleanupCount = 0;
+  let replacementCount = 0;
+  let value = 0;
+  const store = {
+    getSnapshot: () => value,
+    subscribe: (listener) => {
+      listeners.add(listener);
+      return () => {
+        cleanupCount += 1;
+        listeners.delete(listener);
+      };
+    },
+    beforeSubscribe: () => {},
+  };
+  runner.render(store);
+  assert.equal(listeners.size, 1);
+  const replacement = {
+    ...store,
+    subscribe: () => {
+      replacementCount += 1;
+      return () => {};
+    },
+  };
+  runner.renderBeforeEffects(replacement);
+  assert.equal(listeners.size, 1);
+  runner.unmount();
+  runner.unmount();
+  assert.equal(cleanupCount, 1);
+  assert.equal(replacementCount, 0);
+  assert.equal(listeners.size, 0);
+  value = 1;
+  listeners.forEach((notify) => notify());
+  assert.equal(runner.postUnmountUpdates, 0);
+});
+
+test('flushing replacement effects cleans the old subscription before installing the new one', () => {
+  const runner = hookHarness('tests/fixtures/useExternalStore.ts', {});
+  const events = [];
+  const store = {
+    getSnapshot: () => 0,
+    subscribe: () => {
+      events.push('subscribe A');
+      return () => events.push('cleanup A');
+    },
+    beforeSubscribe: () => {},
+  };
+  runner.render(store);
+  runner.renderBeforeEffects({
+    ...store,
+    subscribe: () => {
+      events.push('subscribe B');
+      return () => events.push('cleanup B');
+    },
+  });
+  assert.deepEqual(events, ['subscribe A']);
+  runner.render();
+  assert.deepEqual(events, ['subscribe A', 'cleanup A', 'subscribe B']);
+  runner.unmount();
+  assert.deepEqual(events, ['subscribe A', 'cleanup A', 'subscribe B', 'cleanup B']);
+});
+
 test('the hook harness catches a store change before subscription and cleans up its listener', async () => {
   let value = 0;
   const listeners = new Set();
@@ -531,28 +595,56 @@ const scanLoadingScreen = (r, query) => {
   const upload = queuedApi();
   const alerts = [];
   const mocks = screenMocks();
-  const runner = hookHarness('app/scan/loading.tsx', {
-    ...mocks,
-    'react-native': { ...mocks['react-native'], Alert: { alert: (...args) => alerts.push(args) } },
-    '@expo/vector-icons': {},
-    'expo-router': { useLocalSearchParams: () => ({ photoUri: 'scan.jpg' }) },
-    '../../src/api/newsletter': { uploadNewsletter: upload.request, NewsletterApiError: Error },
-    '../../src/components/common/Header': {},
-    '../../src/components/scan/ScanHelpModal': {},
-    '../../src/components/scan/ScanStepIndicator': {},
-    '../../src/constants/colors': { default: { primary: {}, text: {} } },
-    '../../src/constants/scan': {},
-    '../../src/hooks/useResponsiveLayout': { default: () => ({ height: 800 }) },
-    '../../src/query/client': r.load('src/query/client.ts'),
-    '../../src/query/hooks': {
-      useApiMutation: (fn) => fn,
-      useServerQuery: () => query,
-      useSessionScope: () => r.scope(),
+  const runner = hookHarness(
+    'app/scan/loading.tsx',
+    {
+      ...mocks,
+      axios: require('axios'),
+      '@react-navigation/native': { useIsFocused: () => true },
+      'react-native': {
+        ...mocks['react-native'],
+        Alert: { alert: (...args) => alerts.push(args) },
+      },
+      '@expo/vector-icons': {},
+      'expo-router': { useLocalSearchParams: () => ({ photoUri: 'scan.jpg' }) },
+      '../../src/api/newsletter': { uploadNewsletter: upload.request, NewsletterApiError: Error },
+      '../../src/components/common/Header': {},
+      '../../src/components/scan/ScanHelpModal': {},
+      '../../src/components/scan/ScanStepIndicator': {},
+      '../../src/constants/colors': { default: { primary: {}, text: {} } },
+      '../../src/constants/scan': {},
+      '../../src/hooks/useResponsiveLayout': { default: () => ({ height: 800 }) },
+      '../../src/hooks/scan/useNewsletterProcessingAnimation': { default: () => ({}) },
+      '../../src/styles/scan/loading': { default: {} },
+      '../../src/utils/newsletterPaused': {},
+      '../../src/utils/scanNavigation': {},
+      '../../api/newsletter': { uploadNewsletter: upload.request },
+      '../../query/client': r.load('src/query/client.ts'),
+      '../../query/state': r.load('src/query/state.ts'),
+      '../../query/hooks': {
+        useApiMutation: (fn) => fn,
+        useServerQuery: (domain, params) => {
+          // Mirror the mocked observer result in the shared cache used by command guards.
+          const cached = r.client.getQueryCache().build(r.client, {
+            queryKey: r.key(domain, ...params),
+          });
+          cached.setState({
+            data: query.data,
+            status: query.isError ? 'error' : 'success',
+            error: query.error ?? null,
+            errorUpdatedAt: query.errorUpdatedAt ?? 0,
+            errorUpdateCount: query.errorUpdatedAt ?? 0,
+          });
+          return { ...query, isError: !!query.isError, error: query.error ?? null };
+        },
+        useSessionScope: () => ({ ...r.scope(), authenticated: true }),
+      },
+      '../../utils/authSession': r.session,
     },
-    '../../src/styles/scan/loading': { default: {} },
-    '../../src/utils/newsletterPaused': {},
-    '../../src/utils/scanNavigation': {},
-  });
+    {},
+    'default',
+    ['src/hooks/scan/useNewsletterProcessing.ts']
+  );
   runner.render();
   return { runner, upload, alerts };
 };
@@ -582,6 +674,7 @@ test('a second failed status refresh still offers the user another retry', async
   const query = {
     data: { status: 'PROCESSING' },
     isError: true,
+    error: Object.assign(new Error('Unavailable'), { status: 503 }),
     errorUpdatedAt: 1,
     refetch: () => Promise.resolve({ isError: true }),
   };
@@ -591,7 +684,7 @@ test('a second failed status refresh still offers the user another retry', async
   assert.equal(alerts.length, 1);
   alerts[0][2][1].onPress();
   query.errorUpdatedAt = 2;
-  runner.render();
+  await runner.flush();
   assert.equal(alerts.length, 2);
   assert.equal(alerts[1][2][1].text, 'scan.loading.paused.retryButton');
   runner.unmount();
@@ -603,6 +696,7 @@ test('a failed status GET retries GET even when the cached analysis status is FA
   const query = {
     data: { status: 'FAILED' },
     isError: true,
+    error: Object.assign(new Error('Unavailable'), { status: 503 }),
     errorUpdatedAt: 1,
     refetch: () => {
       requests += 1;

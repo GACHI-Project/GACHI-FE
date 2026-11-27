@@ -30,6 +30,7 @@ const queuedApi = () => {
 const hookHarness = (file, mocks, globals = {}, exportName = 'default', sourceFiles = []) => {
   const cells = [];
   const timers = new Map();
+  const effectCleanups = new Map();
   let cursor = 0;
   let timerId = 0;
   let effects = [];
@@ -49,6 +50,21 @@ const hookHarness = (file, mocks, globals = {}, exportName = 'default', sourceFi
     cursor += 1;
     if (!cells[index] || !same(cells[index].deps, deps)) cells[index] = { deps, value: fn() };
     return cells[index].value;
+  };
+  const scheduleEffect = (callback, deps, queue) => {
+    const index = cursor;
+    cursor += 1;
+    if (!cells[index] || !same(cells[index].deps, deps)) {
+      const cell = { deps };
+      cells[index] = cell;
+      queue.push(() => {
+        const cleanup = effectCleanups.get(index);
+        effectCleanups.delete(index);
+        cleanup?.();
+        const nextCleanup = callback();
+        if (nextCleanup) effectCleanups.set(index, nextCleanup);
+      });
+    }
   };
   const react = {
     useState: (initial) => {
@@ -110,32 +126,8 @@ const hookHarness = (file, mocks, globals = {}, exportName = 'default', sourceFi
       }, [subscribe, check]);
       return snapshot;
     },
-    useLayoutEffect: (callback, deps) => {
-      const index = cursor;
-      cursor += 1;
-      if (!cells[index] || !same(cells[index].deps, deps)) {
-        const previous = cells[index];
-        const cell = { deps };
-        cells[index] = cell;
-        layoutEffects.push(() => {
-          previous?.cleanup?.();
-          cell.cleanup = callback();
-        });
-      }
-    },
-    useEffect: (callback, deps) => {
-      const index = cursor;
-      cursor += 1;
-      if (!cells[index] || !same(cells[index].deps, deps)) {
-        const previous = cells[index];
-        const cell = { deps };
-        cells[index] = cell;
-        effects.push(() => {
-          previous?.cleanup?.();
-          cell.cleanup = callback();
-        });
-      }
-    },
+    useEffect: (callback, deps) => scheduleEffect(callback, deps, effects),
+    useLayoutEffect: (callback, deps) => scheduleEffect(callback, deps, layoutEffects),
   };
   const resolvedMocks = typeof mocks === 'function' ? mocks(react, () => focused) : mocks;
   const imports = {
@@ -202,11 +194,11 @@ const hookHarness = (file, mocks, globals = {}, exportName = 'default', sourceFi
       result = exports[exportName](...args);
       const committedEffects = layoutEffects;
       layoutEffects = [];
-      committedEffects.forEach((effect) => effect());
+      committedEffects.forEach((callback) => callback());
       if (flushEffects) {
         const pendingEffects = effects;
         effects = [];
-        pendingEffects.forEach((effect) => effect());
+        pendingEffects.forEach((callback) => callback());
       }
       iterations += 1;
       if (iterations > 20) throw new Error('Hook did not settle');
@@ -263,7 +255,11 @@ const hookHarness = (file, mocks, globals = {}, exportName = 'default', sourceFi
       if (dirty) render();
     },
     unmount: () => {
-      cells.forEach((cell) => cell.cleanup?.());
+      if (disposed) return;
+      effects = [];
+      layoutEffects = [];
+      effectCleanups.forEach((cleanup) => cleanup());
+      effectCleanups.clear();
       disposed = true;
     },
   };

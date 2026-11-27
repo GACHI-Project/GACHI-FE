@@ -198,6 +198,12 @@ const cardStyles = StyleSheet.create({
   classPickerPlaceholder: {
     height: 20,
   },
+  classLoadingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    minHeight: 32,
+  },
   gradeButtonSelected: {
     backgroundColor: colors.primary[400],
     borderColor: colors.primary[400],

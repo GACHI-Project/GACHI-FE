@@ -22,15 +22,13 @@ import {
   type ImageSourcePropType,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { clearSession, getRememberMe, saveAuthTokens } from '../../src/auth/session';
 import GoogleIcon from '../../assets/social/google.png';
 import KakaoIcon from '../../assets/social/kakao.png';
 import {
-  clearSession,
   completeGoogleLogin as completeGoogleLoginApi,
   getKakaoAuthorizeUrl,
-  getRememberMe,
   linkGoogle as linkGoogleApi,
-  saveAuthTokens,
   unlinkGoogle as unlinkGoogleApi,
   unlinkKakao as unlinkKakaoApi,
 } from '../../src/api/auth';
@@ -300,9 +298,11 @@ const ProfileEditScreen = () => {
     const version = getSessionVersion();
     setProcessingProvider('google');
     try {
-      const rememberMe = await getRememberMe();
+      const rememberMe = await getRememberMe(version);
       await GoogleSignin.signOut().catch(() => {});
+      assertCurrentSession(version);
       await GoogleSignin.hasPlayServices();
+      assertCurrentSession(version);
       const response = await GoogleSignin.signIn();
       assertCurrentSession(version);
       if (response.type === 'cancelled') return;
@@ -353,22 +353,25 @@ const ProfileEditScreen = () => {
         Alert.alert(t('common.error'), t('common.networkError'));
       }
     } finally {
-      setProcessingProvider((current) => (current === 'google' ? null : current));
+      if (isCurrentSession(version))
+        setProcessingProvider((current) => (current === 'google' ? null : current));
     }
   };
 
   const handleConnectKakao = async () => {
     if (processingProvider !== null) return;
+    const version = getSessionVersion();
     setProcessingProvider('kakao');
     try {
-      const rememberMe = await getRememberMe();
+      const rememberMe = await getRememberMe(version);
       useKakaoAuthStore.getState().setMode('link');
       useKakaoAuthStore.getState().setRememberMe(rememberMe);
       await WebBrowser.openAuthSessionAsync(getKakaoAuthorizeUrl(), KAKAO_REDIRECT_URI);
     } catch {
-      Alert.alert(t('common.error'), t('common.networkError'));
+      if (isCurrentSession(version)) Alert.alert(t('common.error'), t('common.networkError'));
     } finally {
-      setProcessingProvider((current) => (current === 'kakao' ? null : current));
+      if (isCurrentSession(version))
+        setProcessingProvider((current) => (current === 'kakao' ? null : current));
     }
   };
 

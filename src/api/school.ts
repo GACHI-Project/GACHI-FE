@@ -1,13 +1,8 @@
-import axios from 'axios';
-import { SchoolResult } from '../types/school';
-import { apiClient } from './auth';
+import { toApiError } from './errors';
+import { SchoolIdentity, SchoolResult } from '../types/school';
+import { apiClient } from './client';
 
-const wrapError = (error: unknown): Error => {
-  if (axios.isAxiosError(error) && error.response?.data?.code) {
-    return new Error(error.response.data.message ?? '알 수 없는 오류');
-  }
-  return error instanceof Error ? error : new Error(String(error));
-};
+const wrapError = (error: unknown) => toApiError(error);
 
 export interface SchoolSearchResult {
   keyword: string;
@@ -52,4 +47,17 @@ export const searchSchools = async (
   } catch (error) {
     throw wrapError(error);
   }
+};
+
+export const fetchSchoolDetails = async (
+  school: SchoolIdentity,
+  signal?: AbortSignal
+): Promise<SchoolResult | null> => {
+  const schools = await searchSchools(school.schoolName.trim(), 20, signal);
+  return (
+    schools.find(
+      (candidate) =>
+        candidate.schoolCode === school.schoolCode && candidate.officeCode === school.officeCode
+    ) ?? null
+  );
 };

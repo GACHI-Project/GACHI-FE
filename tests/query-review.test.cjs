@@ -256,7 +256,7 @@ test('manual document pagination respects authentication and pending search debo
 });
 
 test('manual class names survive failed refetches but successful lists validate selections', () => {
-  const r = setup();
+  const r = setup({ school: {} });
   const query = { data: [{ className: '1' }, { className: '2' }], isError: true, isSuccess: false };
   const updates = [];
   const runner = hookHarness(
@@ -268,6 +268,7 @@ test('manual class names survive failed refetches but successful lists validate 
       '../../../src/components/common/StepHeader': {},
       '../../../src/constants/child': {},
       '../../../src/query/hooks': { useServerQuery: () => query },
+      '../../../src/query/schools': r.load('src/query/schools.ts'),
       '../../../src/store/registerStore': {},
       '../../../src/styles/register/child': { default: {} },
       '../../../src/styles/register/childCard': { default: {} },
@@ -526,6 +527,7 @@ test('profile lookup failure offers retry before presenting account connection c
     '../../assets/social/kakao.png': {},
     '../../assets/icon.png': {},
     '../../src/api/auth': {},
+    '../../src/auth/session': {},
     '../../src/api/user': {},
     '../../src/components/auth/FormField': {},
     '../../src/components/common/ConfirmModal': {},

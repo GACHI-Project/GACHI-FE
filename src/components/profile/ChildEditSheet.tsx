@@ -1,5 +1,7 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import {
+  ActivityIndicator,
+  Alert,
   View,
   Text,
   Modal,
@@ -19,14 +21,16 @@ import { ChildCard, isChildComplete } from '../../../app/(auth)/register/child';
 import colors from '../../constants/colors';
 import fonts from '../../constants/fonts';
 import layout from '../../constants/layout';
+import useSchoolAddress from '../../hooks/profile/useSchoolAddress';
+import { getSessionVersion, isCurrentSession } from '../../utils/authSession';
 
 interface ChildEditSheetProps {
   visible: boolean;
   child: ChildInfo | null;
   isNew?: boolean;
   onClose: () => void;
-  onSave: (updated: ChildInfo) => void;
-  onDelete: (id: string) => void;
+  onSave: (updated: ChildInfo) => Promise<void> | void;
+  onDelete: (id: string) => Promise<void> | void;
 }
 
 const ChildEditSheet = ({
@@ -40,11 +44,24 @@ const ChildEditSheet = ({
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const [editingChild, setEditingChild] = useState<ChildInfo | null>(null);
+  const selectedSchool = useSchoolAddress(editingChild?.selectedSchool ?? null, visible);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [action, setAction] = useState<'save' | 'delete' | null>(null);
+  const requestRef = useRef<object | null>(null);
+  const editorRef = useRef<ChildInfo | null>(null);
+  const isPending = action !== null;
   const overlayOpacity = useRef(new Animated.Value(0)).current;
   const sheetTranslateY = useRef(new Animated.Value(300)).current;
-  useEffect(() => {
+  useLayoutEffect(() => {
+    editorRef.current = visible ? child : null;
+    requestRef.current = null;
+    setAction(null);
+    setDeleteModalVisible(false);
     if (visible && child) setEditingChild({ ...child });
+    return () => {
+      editorRef.current = null;
+      requestRef.current = null;
+    };
   }, [child, visible]);
 
   useEffect(() => {
@@ -71,23 +88,63 @@ const ChildEditSheet = ({
   }, [visible, overlayOpacity, sheetTranslateY]);
 
   const updateField = (updates: Partial<ChildInfo>) => {
+    if (requestRef.current || editorRef.current !== child) return;
     setEditingChild((prev) => (prev ? { ...prev, ...updates } : prev));
   };
 
   const handleDelete = () => {
-    if (!editingChild) return;
+    if (!editingChild || requestRef.current || editorRef.current !== child) return;
     setDeleteModalVisible(true);
   };
 
   const handleCloseSheet = () => {
+    if (requestRef.current) return;
     Keyboard.dismiss();
     setDeleteModalVisible(false);
     onClose();
   };
 
+  const runAction = async (nextAction: 'save' | 'delete') => {
+    if (
+      !visible ||
+      !child ||
+      !editingChild ||
+      editorRef.current !== child ||
+      requestRef.current ||
+      (nextAction === 'save' && !isChildComplete(editingChild))
+    )
+      return;
+    const request = {};
+    const version = getSessionVersion();
+    requestRef.current = request;
+    setAction(nextAction);
+    setDeleteModalVisible(false);
+    Keyboard.dismiss();
+    const isCurrent = () => requestRef.current === request && isCurrentSession(version);
+    try {
+      if (nextAction === 'save') await onSave(editingChild);
+      else await onDelete(editingChild.id);
+      if (isCurrent()) onClose();
+    } catch (error) {
+      if (!isCurrent()) return;
+      let message = t('profile.childEdit.deleteFailed');
+      if (nextAction === 'save') {
+        message = t('profile.childEdit.updateFailed');
+        if (isNew)
+          message = error instanceof Error ? error.message : t('profile.childEdit.addFailed');
+      }
+      Alert.alert(t('common.error'), message);
+    } finally {
+      if (requestRef.current === request) {
+        requestRef.current = null;
+        setAction(null);
+      }
+    }
+  };
+
   if (!editingChild) return null;
 
-  const canSave = isChildComplete(editingChild);
+  const canSave = !isPending && isChildComplete(editingChild);
 
   return (
     <>
@@ -113,29 +170,44 @@ const ChildEditSheet = ({
                     contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom }]}
                     keyboardShouldPersistTaps="handled"
                   >
-                    <ChildCard
-                      child={editingChild}
-                      order={editingChild.name}
-                      isDeletable={false}
-                      variant="edit"
-                      onUpdate={updateField}
-                      onDelete={() => {}}
-                    />
+                    <View
+                      pointerEvents={isPending ? 'none' : 'auto'}
+                      accessibilityState={{ disabled: isPending }}
+                    >
+                      <ChildCard
+                        child={{ ...editingChild, selectedSchool }}
+                        order={editingChild.name}
+                        isDeletable={false}
+                        variant="edit"
+                        onUpdate={updateField}
+                        onDelete={() => {}}
+                      />
+                    </View>
                     <View style={styles.footer}>
                       <TouchableOpacity
                         style={[styles.saveBtn, !canSave && styles.saveBtnDisabled]}
-                        onPress={() => onSave(editingChild)}
+                        onPress={() => runAction('save')}
                         disabled={!canSave}
+                        accessibilityLabel={t('profile.childEdit.save')}
+                        accessibilityState={{ disabled: !canSave, busy: action === 'save' }}
                         activeOpacity={0.8}
                       >
-                        <Text style={styles.saveBtnText}>{t('profile.childEdit.save')}</Text>
+                        <Text style={styles.saveBtnText}>
+                          {t(action === 'save' ? 'common.saving' : 'profile.childEdit.save')}
+                        </Text>
                       </TouchableOpacity>
                       {!isNew && (
                         <TouchableOpacity
-                          style={styles.deleteBtn}
+                          style={[styles.deleteBtn, isPending && styles.actionDisabled]}
                           onPress={handleDelete}
+                          disabled={isPending}
+                          accessibilityLabel={t('profile.childEdit.delete')}
+                          accessibilityState={{ disabled: isPending, busy: action === 'delete' }}
                           activeOpacity={0.7}
                         >
+                          {action === 'delete' ? (
+                            <ActivityIndicator size="small" color={colors.text.red} />
+                          ) : null}
                           <Text style={styles.deleteBtnText}>{t('profile.childEdit.delete')}</Text>
                         </TouchableOpacity>
                       )}
@@ -157,10 +229,8 @@ const ChildEditSheet = ({
         cancelText={t('common.close')}
         onCancel={() => setDeleteModalVisible(false)}
         confirmText={t('profile.childEdit.delete')}
-        onConfirm={() => {
-          setDeleteModalVisible(false);
-          if (editingChild) onDelete(editingChild.id);
-        }}
+        confirmDisabled={isPending}
+        onConfirm={() => runAction('delete')}
       />
     </>
   );
@@ -227,6 +297,11 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     alignItems: 'center',
     justifyContent: 'center',
+    flexDirection: 'row',
+    gap: 8,
+  },
+  actionDisabled: {
+    opacity: 0.5,
   },
   deleteBtnText: {
     textAlign: 'center',

@@ -25,6 +25,8 @@ export interface ChildResult {
   schoolName: string;
   schoolCode: string;
   officeCode: string;
+  roadAddress?: string | null;
+  locationName?: string | null;
   grade: number;
   colorCode: string;
   className: string | null;

@@ -33,6 +33,7 @@ const hookHarness = (file, mocks, globals = {}, exportName = 'default', sourceFi
   let cursor = 0;
   let timerId = 0;
   let effects = [];
+  let layoutEffects = [];
   let dirty = false;
   let disposed = false;
   let args = [];
@@ -109,6 +110,19 @@ const hookHarness = (file, mocks, globals = {}, exportName = 'default', sourceFi
       }, [subscribe, check]);
       return snapshot;
     },
+    useLayoutEffect: (callback, deps) => {
+      const index = cursor;
+      cursor += 1;
+      if (!cells[index] || !same(cells[index].deps, deps)) {
+        const previous = cells[index];
+        const cell = { deps };
+        cells[index] = cell;
+        layoutEffects.push(() => {
+          previous?.cleanup?.();
+          cell.cleanup = callback();
+        });
+      }
+    },
     useEffect: (callback, deps) => {
       const index = cursor;
       cursor += 1;
@@ -179,22 +193,30 @@ const hookHarness = (file, mocks, globals = {}, exportName = 'default', sourceFi
     return exports;
   };
   const exports = load(path.resolve(__dirname, '../..', file));
-  const render = (...nextArgs) => {
+  const renderPhase = (flushEffects, ...nextArgs) => {
     if (nextArgs.length) args = nextArgs;
     let iterations = 0;
     do {
       dirty = false;
       cursor = 0;
-      effects = [];
       result = exports[exportName](...args);
-      effects.forEach((effect) => effect());
+      const committedEffects = layoutEffects;
+      layoutEffects = [];
+      committedEffects.forEach((effect) => effect());
+      if (flushEffects) {
+        const pendingEffects = effects;
+        effects = [];
+        pendingEffects.forEach((effect) => effect());
+      }
       iterations += 1;
       if (iterations > 20) throw new Error('Hook did not settle');
     } while (dirty);
     return result;
   };
+  const render = (...nextArgs) => renderPhase(true, ...nextArgs);
   return {
     render,
+    renderBeforeEffects: (...nextArgs) => renderPhase(false, ...nextArgs),
     renderValue: (read) => {
       readingRenderValue = true;
       try {

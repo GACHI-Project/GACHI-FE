@@ -1,5 +1,5 @@
 import { toApiError } from './errors';
-import { SchoolResult } from '../types/school';
+import { SchoolIdentity, SchoolResult } from '../types/school';
 import { apiClient } from './client';
 
 const wrapError = (error: unknown) => toApiError(error);
@@ -47,4 +47,17 @@ export const searchSchools = async (
   } catch (error) {
     throw wrapError(error);
   }
+};
+
+export const fetchSchoolDetails = async (
+  school: SchoolIdentity,
+  signal?: AbortSignal
+): Promise<SchoolResult | null> => {
+  const schools = await searchSchools(school.schoolName.trim(), 20, signal);
+  return (
+    schools.find(
+      (candidate) =>
+        candidate.schoolCode === school.schoolCode && candidate.officeCode === school.officeCode
+    ) ?? null
+  );
 };

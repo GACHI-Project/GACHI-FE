@@ -11,6 +11,7 @@ import * as WebBrowser from 'expo-web-browser';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Image, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { saveAuthTokens, saveRememberMe } from '../../src/auth/session';
 import GoogleIcon from '../../assets/social/google.png';
 import KakaoIcon from '../../assets/social/kakao.png';
 import {
@@ -18,8 +19,6 @@ import {
   completeGoogleLogin as completeGoogleLoginApi,
   getKakaoAuthorizeUrl,
   login as loginApi,
-  saveAuthTokens,
-  saveRememberMe,
 } from '../../src/api/auth';
 import { getMe as getMeApi } from '../../src/api/user';
 import AuthInput from '../../src/components/auth/AuthInput';

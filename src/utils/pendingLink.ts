@@ -1,5 +1,6 @@
 import { Alert } from 'react-native';
-import { AuthApiError, linkGoogle, linkKakao, saveAuthTokens } from '../api/auth';
+import { saveAuthTokens } from '../auth/session';
+import { AuthApiError, linkGoogle, linkKakao } from '../api/auth';
 import i18n from '../i18n';
 import { invalidateResources } from '../query/client';
 import { executeSessionMutation } from '../query/operations';

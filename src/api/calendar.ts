@@ -1,27 +1,10 @@
-import axios from 'axios';
-import { apiClient, getAuthRequestConfig } from './auth';
+import { ApiError, toApiError } from './errors';
+import { apiClient } from './client';
+import { getAuthRequestConfig } from '../auth/session';
 
-export class CalendarApiError extends Error {
-  constructor(
-    public readonly code: string,
-    message: string,
-    public readonly status?: number
-  ) {
-    super(message);
-    this.name = 'CalendarApiError';
-  }
-}
+export class CalendarApiError extends ApiError {}
 
-const wrapError = (error: unknown): Error => {
-  if (axios.isAxiosError(error) && error.response) {
-    return new CalendarApiError(
-      error.response.data?.code ?? `HTTP${error.response.status}`,
-      error.response.data?.message ?? '알 수 없는 오류',
-      error.response.status
-    );
-  }
-  return error instanceof Error ? error : new Error(String(error));
-};
+const wrapError = (error: unknown) => toApiError(error, CalendarApiError);
 
 const getAuthConfig = (version?: number) =>
   getAuthRequestConfig(() => new CalendarApiError('UNAUTHORIZED', '로그인이 필요합니다.'), version);

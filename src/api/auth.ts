@@ -1,294 +1,53 @@
-import { GoogleSignin } from '@react-native-google-signin/google-signin';
-import axios, { type AxiosRequestConfig, type InternalAxiosRequestConfig } from 'axios';
-import { router } from 'expo-router';
-import * as SecureStore from 'expo-secure-store';
-import { useGoogleAuthStore } from '../store/googleAuthStore';
-import { useKakaoAuthStore } from '../store/kakaoAuthStore';
-import { useRegisterStore } from '../store/registerStore';
-import { useSocialLinkStore } from '../store/socialLinkStore';
+import axios from 'axios';
+import { getAuthRequestConfig, type SessionRequestConfig } from '../auth/session';
 import { ServerNotificationPreference } from '../types/notification';
-import {
-  assertCurrentSession,
-  assertSessionAuthenticated,
-  getSessionVersion,
-  invalidateSession,
-  isCurrentSession,
-  markSessionAuthenticated,
-} from '../utils/authSession';
+import { apiClient } from './client';
+import { ApiError, toApiError } from './errors';
 
-export class AuthApiError extends Error {
-  constructor(
-    public readonly code: string,
-    message: string,
-    public readonly status?: number
-  ) {
-    super(message);
-    this.name = 'AuthApiError';
-  }
-}
+export class AuthApiError extends ApiError {}
 
-const wrapError = (error: unknown): Error => {
-  if (axios.isAxiosError(error) && error.response) {
-    return new AuthApiError(
-      error.response.data?.code ?? 'UNKNOWN',
-      error.response.data?.message ?? '알 수 없는 오류',
-      error.response.status
-    );
-  }
-  return error instanceof Error ? error : new Error(String(error));
-};
+const wrapError = (error: unknown) => toApiError(error, AuthApiError);
 
-export const apiClient = axios.create({
-  baseURL: 'https://43.202.191.103',
-  headers: { 'Content-Type': 'application/json' },
-  timeout: 10000,
-});
-
-type InternalSessionRequestConfig = InternalAxiosRequestConfig & {
-  retried?: boolean;
-  sessionVersion?: number;
-};
-
-export type SessionRequestConfig = AxiosRequestConfig & { sessionVersion: number };
-
-type AuthTokenKey = 'accessToken' | 'refreshToken';
-export interface SessionCleanupResult {
-  success: boolean;
-  failedTokenKeys: AuthTokenKey[];
-}
-const AUTH_TOKEN_KEYS: AuthTokenKey[] = ['accessToken', 'refreshToken'];
-
-// Capture the session before token lookup, and carry it through dispatch/retries.
-export const getAuthRequestConfig = async (
-  createUnauthorizedError: () => Error,
-  version = getSessionVersion()
-): Promise<SessionRequestConfig> => {
-  assertSessionAuthenticated(version);
-  const token = await SecureStore.getItemAsync('accessToken');
-  assertSessionAuthenticated(version);
-  if (!token) throw createUnauthorizedError();
-  return { headers: { Authorization: `Bearer ${token}` }, sessionVersion: version };
-};
-
-let refreshTask: {
-  version: number;
-  controller: AbortController;
-  promise: Promise<string>;
-} | null = null;
-let clearingSession: Promise<SessionCleanupResult> | null = null;
-let tokenWrite: Promise<void> = Promise.resolve();
-
-const REMEMBER_ME_KEY = 'rememberMe';
-
-export const saveRememberMe = (rememberMe: boolean, version: number): Promise<void> => {
-  const write = tokenWrite.then(async () => {
-    assertCurrentSession(version);
-    if (clearingSession) throw new axios.CanceledError('Session is being cleared');
-    await SecureStore.setItemAsync(REMEMBER_ME_KEY, rememberMe ? 'true' : 'false');
-  });
-  tokenWrite = write.catch(() => {});
-  return write;
-};
-
-export const getRememberMe = async (): Promise<boolean> => {
-  const value = await SecureStore.getItemAsync(REMEMBER_ME_KEY);
-  return value === 'true';
-};
-
-export const saveAuthTokens = (
-  tokens: { accessToken: string; refreshToken: string },
+export const requestLogout = async (
+  accessToken: string,
+  refreshToken: string | null,
   version: number
 ): Promise<void> => {
-  const write = tokenWrite.then(async () => {
-    assertCurrentSession(version);
-    if (clearingSession) throw new axios.CanceledError('Session is being cleared');
-    await SecureStore.setItemAsync('accessToken', tokens.accessToken);
-    assertCurrentSession(version);
-    await SecureStore.setItemAsync('refreshToken', tokens.refreshToken);
-    markSessionAuthenticated(version);
-  });
-  tokenWrite = write.catch(() => {});
-  return write;
-};
-
-const refreshAccessToken = (version: number): Promise<string> => {
-  if (refreshTask?.version === version) return refreshTask.promise;
-
-  const controller = new AbortController();
-  const promise = (async () => {
-    try {
-      const storedRefresh = await SecureStore.getItemAsync('refreshToken');
-      assertCurrentSession(version);
-      if (!storedRefresh) throw new AuthApiError('UNAUTHORIZED', '로그인이 필요합니다.');
-
-      const { data } = await axios.post(
-        `${apiClient.defaults.baseURL}/api/v1/auth/reissue`,
-        { refreshToken: storedRefresh },
-        {
-          headers: { 'Content-Type': 'application/json' },
-          timeout: apiClient.defaults.timeout,
-          signal: controller.signal,
-        }
-      );
-      await saveAuthTokens(data.result, version);
-      return data.result.accessToken;
-    } catch (error) {
-      // 이전 세션의 늦은 실패로 새 세션을 종료하지 않는다.
-      if (isCurrentSession(version)) await clearSession();
-      throw error;
-    } finally {
-      if (refreshTask?.controller === controller) refreshTask = null;
-    }
-  })();
-  refreshTask = { version, controller, promise };
-  return promise;
-};
-
-apiClient.interceptors.request.use((config) => {
-  const request = config as InternalSessionRequestConfig;
-  request.sessionVersion ??= getSessionVersion();
-  assertCurrentSession(request.sessionVersion);
-  if (request.headers.Authorization) assertSessionAuthenticated(request.sessionVersion);
-  if (clearingSession) throw new axios.CanceledError('Session is being cleared');
-  return request;
-});
-
-apiClient.interceptors.response.use(
-  (response) => {
-    const request = response.config as InternalSessionRequestConfig;
-    assertCurrentSession(request.sessionVersion!);
-    return response;
-  },
-  async (error) => {
-    const originalRequest = error.config as InternalSessionRequestConfig | undefined;
-
-    if (originalRequest?.sessionVersion !== undefined) {
-      assertCurrentSession(originalRequest.sessionVersion);
-    }
-
-    if (
-      !originalRequest ||
-      error.response?.status !== 401 ||
-      originalRequest.retried ||
-      !originalRequest.headers.Authorization
-    ) {
-      return Promise.reject(error);
-    }
-
-    const version = originalRequest.sessionVersion!;
-    assertCurrentSession(version);
-    originalRequest.retried = true;
-    const token = await refreshAccessToken(version);
-    assertCurrentSession(version);
-    originalRequest.headers.Authorization = `Bearer ${token}`;
-    return apiClient(originalRequest);
-  }
-);
-
-export const clearSession = (): Promise<SessionCleanupResult> => {
-  if (clearingSession) return clearingSession;
-
-  invalidateSession();
-  refreshTask?.controller.abort();
-  refreshTask = null;
-  useRegisterStore.getState().reset();
-  useKakaoAuthStore.getState().reset();
-  useGoogleAuthStore.getState().reset();
-  useSocialLinkStore.getState().reset();
-
-  clearingSession = tokenWrite
-    .then(async () => {
-      Promise.resolve()
-        .then(() => GoogleSignin.signOut())
-        .catch(() => {});
-      // 진행 중이던 토큰 저장이 끝난 뒤 삭제해 이전 토큰이 다시 남지 않게 한다.
-      const results = await Promise.allSettled(
-        AUTH_TOKEN_KEYS.map(async (key) => SecureStore.deleteItemAsync(key))
-      );
-      const failedKeys = AUTH_TOKEN_KEYS.filter((_, index) => results[index].status === 'rejected');
-      const retries = await Promise.allSettled(
-        failedKeys.map(async (key) => SecureStore.deleteItemAsync(key))
-      );
-      const failedTokenKeys = failedKeys.filter((_, index) => retries[index].status === 'rejected');
-      await SecureStore.deleteItemAsync(REMEMBER_ME_KEY).catch(() => {});
-      router.replace('/(auth)/login');
-      return { success: failedTokenKeys.length === 0, failedTokenKeys };
-    })
-    .finally(() => {
-      clearingSession = null;
-    });
-  return clearingSession;
-};
-
-export const logout = async (): Promise<SessionCleanupResult | undefined> => {
-  const version = getSessionVersion();
   try {
-    const accessToken = await SecureStore.getItemAsync('accessToken');
-    assertCurrentSession(version);
-    const refreshToken = await SecureStore.getItemAsync('refreshToken');
-    assertCurrentSession(version);
-    if (accessToken) {
-      const config: SessionRequestConfig = {
-        headers: { Authorization: `Bearer ${accessToken}` },
-        sessionVersion: version,
-      };
-      await apiClient.post('/api/v1/auth/logout', { refreshToken }, config);
-    }
-  } catch {
-    // API 실패해도 로컬 토큰 삭제 후 로그인으로 이동
+    const config: SessionRequestConfig = {
+      headers: { Authorization: `Bearer ${accessToken}` },
+      sessionVersion: version,
+    };
+    await apiClient.post('/api/v1/auth/logout', { refreshToken }, config);
+  } catch (error) {
+    throw wrapError(error);
   }
-  if (isCurrentSession(version)) return clearSession();
-  return undefined;
 };
 
-export const checkLoginId = async (
-  loginId: string,
+const checkAvailability = async (
+  path: string,
+  payload: Record<string, string>,
   signal?: AbortSignal
 ): Promise<{ available: boolean }> => {
   try {
-    const response = await apiClient.post('/api/v1/auth/check-login-id', { loginId }, { signal });
+    const response = await apiClient.post(path, payload, { signal });
     return { available: response.data.result?.available ?? true };
   } catch (error) {
-    if (axios.isAxiosError(error) && error.response?.status === 409) {
+    if (!axios.isCancel(error) && axios.isAxiosError(error) && error.response?.status === 409) {
       return { available: false };
     }
     throw wrapError(error);
   }
 };
 
-export const checkPhoneNumber = async (
-  phoneNumber: string,
-  signal?: AbortSignal
-): Promise<{ available: boolean }> => {
-  try {
-    const response = await apiClient.post(
-      '/api/v1/auth/check-phone-number',
-      { phoneNumber },
-      { signal }
-    );
-    return { available: response.data.result?.available ?? true };
-  } catch (error) {
-    if (axios.isAxiosError(error) && error.response?.status === 409) {
-      return { available: false };
-    }
-    throw wrapError(error);
-  }
-};
+export const checkLoginId = (loginId: string, signal?: AbortSignal) =>
+  checkAvailability('/api/v1/auth/check-login-id', { loginId }, signal);
 
-export const checkEmail = async (
-  email: string,
-  signal?: AbortSignal
-): Promise<{ available: boolean }> => {
-  try {
-    const response = await apiClient.post('/api/v1/auth/check-email', { email }, { signal });
-    return { available: response.data.result?.available ?? true };
-  } catch (error) {
-    if (axios.isAxiosError(error) && error.response?.status === 409) {
-      return { available: false };
-    }
-    throw wrapError(error);
-  }
-};
+export const checkPhoneNumber = (phoneNumber: string, signal?: AbortSignal) =>
+  checkAvailability('/api/v1/auth/check-phone-number', { phoneNumber }, signal);
+
+export const checkEmail = (email: string, signal?: AbortSignal) =>
+  checkAvailability('/api/v1/auth/check-email', { email }, signal);
 
 export const sendEmailVerificationCode = async (
   email: string,

@@ -13,7 +13,7 @@ afterEach(() => {
 
 const setup = () => {
   const api = queuedApi();
-  const runtime = queryRuntime({ auth: { apiClient: { get: api.request } } });
+  const runtime = queryRuntime({ client: { apiClient: { get: api.request } } });
   cleanups.add(runtime.dispose);
   return { api, runtime };
 };
@@ -693,7 +693,7 @@ const profileScreen = (runtime, write) => {
     '@expo/vector-icons': {},
     'expo-router': {},
     'react-i18next': { useTranslation: () => ({ t: (key) => key, i18n: { language: 'ko' } }) },
-    '../../src/api/auth': {},
+    '../../src/auth/logout': {},
     '../../src/components/common/ConfirmModal': { default: 'ConfirmModal' },
     '../../src/components/common/Header': { default: 'Header' },
     '../../src/components/profile/ChildEditSheet': { default: 'ChildEditSheet' },

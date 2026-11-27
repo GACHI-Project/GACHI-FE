@@ -1,25 +1,10 @@
-import axios from 'axios';
-import { apiClient, getAuthRequestConfig } from './auth';
+import { ApiError, toApiError } from './errors';
+import { apiClient } from './client';
+import { getAuthRequestConfig } from '../auth/session';
 
-export class ChildApiError extends Error {
-  constructor(
-    public readonly code: string,
-    message: string
-  ) {
-    super(message);
-    this.name = 'ChildApiError';
-  }
-}
+export class ChildApiError extends ApiError {}
 
-const wrapError = (error: unknown): Error => {
-  if (axios.isAxiosError(error) && error.response?.data?.code) {
-    return new ChildApiError(
-      error.response.data.code,
-      error.response.data.message ?? '알 수 없는 오류'
-    );
-  }
-  return error instanceof Error ? error : new Error(String(error));
-};
+const wrapError = (error: unknown) => toApiError(error, ChildApiError);
 
 const getAuthConfig = (version?: number) =>
   getAuthRequestConfig(() => new ChildApiError('UNAUTHORIZED', '로그인이 필요합니다.'), version);

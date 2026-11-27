@@ -1,5 +1,6 @@
-import axios from 'axios';
-import { apiClient, getAuthRequestConfig } from './auth';
+import { ApiError, toApiError } from './errors';
+import { apiClient } from './client';
+import { getAuthRequestConfig } from '../auth/session';
 
 export type NewsletterStatus = 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED' | 'PAUSED';
 
@@ -24,27 +25,9 @@ export interface NewsletterStatusResult {
   skippable?: boolean;
 }
 
-export class NewsletterApiError extends Error {
-  constructor(
-    public readonly code: string,
-    message: string,
-    public readonly status?: number
-  ) {
-    super(message);
-    this.name = 'NewsletterApiError';
-  }
-}
+export class NewsletterApiError extends ApiError {}
 
-const wrapError = (error: unknown): Error => {
-  if (axios.isAxiosError(error) && error.response?.data?.code) {
-    return new NewsletterApiError(
-      error.response.data.code,
-      error.response.data.message ?? '알 수 없는 오류',
-      error.response.status
-    );
-  }
-  return error instanceof Error ? error : new Error(String(error));
-};
+const wrapError = (error: unknown) => toApiError(error, NewsletterApiError);
 
 const getAuthConfig = (version?: number) =>
   getAuthRequestConfig(

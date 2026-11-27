@@ -2,12 +2,11 @@ import { router, useLocalSearchParams } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { useEffect, useRef } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { saveAuthTokens, saveRememberMe } from '../../src/auth/session';
 import {
   AuthApiError,
   completeKakaoLogin as completeKakaoLoginApi,
   linkKakao as linkKakaoApi,
-  saveAuthTokens,
-  saveRememberMe,
 } from '../../src/api/auth';
 import { getMe as getMeApi } from '../../src/api/user';
 import colors from '../../src/constants/colors';

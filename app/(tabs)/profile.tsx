@@ -5,7 +5,7 @@ import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import ConfirmModal from '../../src/components/common/ConfirmModal';
 import { type ChildInfo } from '../../src/types/child';
-import { logout } from '../../src/api/auth';
+import { logout } from '../../src/auth/logout';
 import { CALENDAR_COLORS } from '../../src/constants/child';
 import colors from '../../src/constants/colors';
 import styles from '../../src/styles/profile/profile';

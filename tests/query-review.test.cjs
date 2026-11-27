@@ -527,6 +527,7 @@ test('profile lookup failure offers retry before presenting account connection c
     '../../assets/social/kakao.png': {},
     '../../assets/icon.png': {},
     '../../src/api/auth': {},
+    '../../src/auth/session': {},
     '../../src/api/user': {},
     '../../src/components/auth/FormField': {},
     '../../src/components/common/ConfirmModal': {},

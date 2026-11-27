@@ -1,13 +1,8 @@
-import axios from 'axios';
+import { toApiError } from './errors';
 import { SchoolIdentity, SchoolResult } from '../types/school';
-import { apiClient } from './auth';
+import { apiClient } from './client';
 
-const wrapError = (error: unknown): Error => {
-  if (axios.isAxiosError(error) && error.response?.data?.code) {
-    return new Error(error.response.data.message ?? '알 수 없는 오류');
-  }
-  return error instanceof Error ? error : new Error(String(error));
-};
+const wrapError = (error: unknown) => toApiError(error);
 
 export interface SchoolSearchResult {
   keyword: string;

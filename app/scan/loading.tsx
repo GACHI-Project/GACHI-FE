@@ -66,6 +66,7 @@ const ScanLoadingScreen = () => {
     action: actionLoading,
     error,
     retry: handleRetry,
+    retryError: handleErrorRetry,
     skipPage: handleSkip,
     isCurrent,
     canRetry,
@@ -115,13 +116,13 @@ const ScanLoadingScreen = () => {
             {
               text: t('scan.loading.paused.retryButton'),
               onPress: () => {
-                void handleRetry();
+                void handleErrorRetry();
               },
             },
           ]
         : [{ text: t('common.confirm'), onPress: error.kind === 'action' ? undefined : close }]
     );
-  }, [error, handleRetry, isCurrent, t]);
+  }, [error, handleErrorRetry, isCurrent, t]);
 
   const showPageCount =
     !pausedInfo &&

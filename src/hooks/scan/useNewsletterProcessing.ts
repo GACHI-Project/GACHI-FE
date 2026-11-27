@@ -28,10 +28,19 @@ const NEWSLETTER_RESOURCES = [
 ];
 
 type Action = 'retry' | 'skip';
-type ProcessingError = { kind: 'start' | 'action'; cause: unknown };
+type Command = 'refresh' | 'resume' | 'retry-analysis' | 'skip';
+type ProcessingError =
+  | { kind: 'start'; cause: unknown }
+  | {
+      kind: 'action';
+      cause: unknown;
+      command: Exclude<Command, 'refresh'>;
+      pageNo?: number;
+    };
 type Lifecycle = {
   key: string;
   newsletterId: number | null;
+  initialStatus?: NewsletterStatusResult;
   action: Action | null;
   error: ProcessingError | null;
 };
@@ -63,8 +72,8 @@ type CommandSnapshot = {
   status: NewsletterStatusResult | undefined;
   statusError: boolean;
   error: unknown;
+  processingError: ProcessingError | null;
 };
-type Command = 'refresh' | 'resume' | 'retry-analysis' | 'skip';
 
 const getCommand = (action: Action, snapshot: CommandSnapshot): Command | null => {
   if (snapshot.newsletterId === null) return null;
@@ -78,6 +87,16 @@ const getCommand = (action: Action, snapshot: CommandSnapshot): Command | null =
   if (status?.status === 'PAUSED' && status.retryable) return 'resume';
   if (status?.status === 'FAILED' && status.canRetry !== false) return 'retry-analysis';
   return null;
+};
+
+const getErrorRetryCommand = (snapshot: CommandSnapshot): Command | null => {
+  const failure = snapshot.processingError;
+  if (snapshot.statusError || failure?.kind !== 'action') return getCommand('retry', snapshot);
+  if (!isTransientQueryError(failure.cause)) return null;
+  const command = getCommand(failure.command === 'skip' ? 'skip' : 'retry', snapshot);
+  if (command !== failure.command) return null;
+  if (command === 'skip' && snapshot.status?.pausedPageNo !== failure.pageNo) return null;
+  return command;
 };
 
 // Query owns server snapshots and bounded network retries; this hook owns screen lifetime
@@ -143,7 +162,6 @@ const useNewsletterProcessing = ({
 
   const startTask = useRef<{
     key: string;
-    seeded: boolean;
     promise: ReturnType<typeof uploadNewsletter>;
   } | null>(null);
   useEffect(() => {
@@ -154,7 +172,6 @@ const useNewsletterProcessing = ({
     if (startTask.current?.key !== key) {
       startTask.current = {
         key,
-        seeded: false,
         promise:
           resumeNewsletterId === undefined
             ? upload(photoUris, childId)
@@ -165,19 +182,14 @@ const useNewsletterProcessing = ({
     void task.promise.then(
       (result) => {
         if (!active || !isCurrent()) return;
-        if (!task.seeded)
-          queryClient.setQueryData(
-            resourceKey(scope.version, scope.language, 'newsletterStatus', result.newsletterId),
-            {
-              status: result.status,
-              progressPercent: result.status === 'COMPLETED' ? 100 : 0,
-              progressMessage: '',
-            }
-          );
-        task.seeded = true;
         setLifecycle({
           ...initialLifecycle(key),
           newsletterId: result.newsletterId,
+          initialStatus: {
+            status: result.status,
+            progressPercent: result.status === 'COMPLETED' ? 100 : 0,
+            progressMessage: '',
+          },
           action: commands.current.get(key)?.action ?? null,
         });
       },
@@ -218,7 +230,7 @@ const useNewsletterProcessing = ({
           : 2000,
     }
   );
-  const status = newsletterId === null ? undefined : statusQuery.data;
+  const status = newsletterId === null ? undefined : (statusQuery.data ?? current.initialStatus);
   const hasStatusError =
     newsletterId !== null && statusQuery.isError && !axios.isCancel(statusQuery.error);
   const { refetch } = statusQuery;
@@ -227,9 +239,11 @@ const useNewsletterProcessing = ({
     status,
     statusError: statusQuery.isError,
     error: statusQuery.error,
+    processingError: current.error,
   };
   const canRetry = getCommand('retry', snapshot) !== null;
   const canSkip = getCommand('skip', snapshot) !== null;
+  const canRetryError = getErrorRetryCommand(snapshot) !== null;
   const commandState = useRef<CommandSnapshot>(snapshot);
   useLayoutEffect(() => {
     commandState.current = {
@@ -237,8 +251,9 @@ const useNewsletterProcessing = ({
       status,
       statusError: statusQuery.isError,
       error: statusQuery.error,
+      processingError: current.error,
     };
-  }, [newsletterId, status, statusQuery.isError, statusQuery.error]);
+  }, [newsletterId, status, statusQuery.isError, statusQuery.error, current.error]);
 
   useEffect(() => {
     const pending = commands.current.get(key);
@@ -270,12 +285,14 @@ const useNewsletterProcessing = ({
   }, [key, context, isCurrent, scope.version, scope.language]);
 
   const runAction = useCallback(
-    async (nextAction: Action) => {
+    async (intent: Action | 'retry-error') => {
       if (!isCurrent() || context.request || commands.current.has(key)) return;
       const latest = commandState.current;
-      const command = getCommand(nextAction, latest);
+      const command =
+        intent === 'retry-error' ? getErrorRetryCommand(latest) : getCommand(intent, latest);
       const id = latest.newsletterId;
       if (!command || id === null) return;
+      const nextAction = command === 'skip' ? 'skip' : 'retry';
       const retryStatus = command === 'refresh';
       const request = {};
       context.request = request;
@@ -304,8 +321,16 @@ const useNewsletterProcessing = ({
         if (!retryStatus) await refetch({ throwOnError: true });
       } catch (cause) {
         // Failed reads belong to statusQuery so the retry remains a GET, never another write.
-        if (!commandFinished && isCurrent() && !axios.isCancel(cause)) {
-          setLifecycle((prev) => ({ ...prev, error: { kind: 'action', cause } }));
+        if (!commandFinished && command !== 'refresh' && isCurrent() && !axios.isCancel(cause)) {
+          setLifecycle((prev) => ({
+            ...prev,
+            error: {
+              kind: 'action',
+              cause,
+              command,
+              pageNo: command === 'skip' ? latest.status?.pausedPageNo : undefined,
+            },
+          }));
         }
       } finally {
         commands.current.delete(key);
@@ -329,6 +354,7 @@ const useNewsletterProcessing = ({
     ]
   );
   const retry = useCallback(() => runAction('retry'), [runAction]);
+  const retryError = useCallback(() => runAction('retry-error'), [runAction]);
   const skipPage = useCallback(() => runAction('skip'), [runAction]);
 
   const error = useMemo(() => {
@@ -346,8 +372,7 @@ const useNewsletterProcessing = ({
     if (current.error)
       return {
         ...current.error,
-        retryable:
-          current.error.kind === 'action' && isTransientQueryError(current.error.cause) && canRetry,
+        retryable: current.error.kind === 'action' && canRetryError,
       };
     if (newsletterId === null) return null;
     if (status?.status === 'FAILED') {
@@ -365,6 +390,7 @@ const useNewsletterProcessing = ({
     statusQuery.errorUpdatedAt,
     status,
     canRetry,
+    canRetryError,
   ]);
 
   let phase: ProcessingPhase = 'starting';
@@ -393,6 +419,7 @@ const useNewsletterProcessing = ({
     canRetry,
     canSkip,
     retry,
+    retryError,
     skipPage,
     isCurrent,
   };

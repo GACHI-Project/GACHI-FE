@@ -46,7 +46,7 @@ const setup = (
     'src/hooks/scan/useNewsletterProcessing.ts',
     (react, focused) => {
       const useQuery = (inputOptions) => {
-        options = { ...inputOptions, _optimisticResults: 'optimistic' };
+        options = { ...inputOptions, gcTime: Infinity, _optimisticResults: 'optimistic' };
         const [view] = react.useState(() => new QueryObserver(runtime.client, options));
         observer = view;
         const result = view.getOptimisticResult(options);
@@ -157,6 +157,141 @@ const start = async (screen, status = paused()) => {
   screen.api.status.calls[0].resolve(status);
   await waitFor(screen, () => screen.result.status?.status === status.status);
 };
+
+[
+  ['skipPage', 'skip', paused()],
+  ['skipPage', 'skip', { ...paused(), retryable: false }],
+  ['retry', 'resume', paused()],
+  ['retry', 'retry', snapshot('FAILED', { canRetry: true })],
+].forEach(([action, endpoint, status]) => {
+  test(`error retry repeats the failed ${endpoint} command (resume allowed: ${status.retryable})`, async () => {
+    const screen = setup();
+    await start(screen, status);
+    const failed = screen.result[action]();
+    screen.api[endpoint].calls[0].reject(Object.assign(new Error('Unavailable'), { status: 503 }));
+    await failed;
+    await screen.runner.flush();
+    assert.equal(screen.result.error.kind, 'action');
+    assert.equal(screen.result.error.retryable, true);
+    const retry = screen.result.retryError();
+    await screen.result.retryError();
+    assert.equal(screen.api[endpoint].calls.length, 2);
+    assert.deepEqual(screen.api[endpoint].calls[1].args, screen.api[endpoint].calls[0].args);
+    assert.equal(
+      screen.api.skip.calls.length + screen.api.resume.calls.length + screen.api.retry.calls.length,
+      2
+    );
+    screen.api[endpoint].calls[1].resolve({ newsletterId: 1, status: 'PROCESSING' });
+    await waitFor(screen, () => screen.api.status.calls.length === 2);
+    screen.api.status.calls[1].resolve(snapshot('COMPLETED'));
+    await retry;
+    await screen.runner.flush();
+    assert.equal(screen.result.phase, 'completed');
+  });
+});
+
+test('a newer status failure makes an alert retry GET instead of repeating a failed skip', async () => {
+  const screen = setup();
+  await start(screen);
+  const failed = screen.result.skipPage();
+  screen.api.skip.calls[0].reject(Object.assign(new Error('Skip failed'), { status: 503 }));
+  await failed;
+  await screen.runner.flush();
+  const retainedRetry = screen.result.retryError;
+  const read = screen.poll().catch(() => {});
+  screen.api.status.calls[1].reject(Object.assign(new Error('Read failed'), { status: 503 }));
+  await read;
+  await screen.runner.flush();
+  assert.equal(screen.result.error.kind, 'status');
+  const retry = retainedRetry();
+  assert.equal(screen.api.status.calls.length, 3);
+  assert.equal(screen.api.skip.calls.length, 1);
+  assert.equal(screen.api.resume.calls.length, 0);
+  screen.api.status.calls[2].resolve(paused());
+  await retry;
+});
+
+test('an error retry cannot skip a different page after the server advances', async () => {
+  const screen = setup();
+  await start(screen);
+  const failed = screen.result.skipPage();
+  screen.api.skip.calls[0].reject(Object.assign(new Error('Skip failed'), { status: 503 }));
+  await failed;
+  await screen.runner.flush();
+  assert.equal(screen.api.skip.calls[0].args[1], 2);
+  const retainedRetry = screen.result.retryError;
+  const read = screen.poll();
+  screen.api.status.calls[1].resolve({ ...paused(), pausedPageNo: 3 });
+  await read;
+  await screen.runner.flush();
+  assert.equal(screen.result.error.retryable, false);
+  await retainedRetry();
+  assert.equal(screen.api.skip.calls.length, 1);
+  assert.equal(screen.api.resume.calls.length, 0);
+});
+
+test('the loading alert retries a failed skip without sending resume', async () => {
+  const screen = setup();
+  await start(screen);
+  const failed = screen.result.skipPage();
+  screen.api.skip.calls[0].reject(Object.assign(new Error('Unavailable'), { status: 503 }));
+  await failed;
+  await screen.runner.flush();
+  const alerts = [];
+  const jsx = (type, props) => ({ type, props });
+  const view = hookHarness('app/scan/loading.tsx', {
+    'react/jsx-runtime': { jsx, jsxs: jsx },
+    '@expo/vector-icons': {},
+    'expo-router': { router: {}, useLocalSearchParams: () => ({ photoUri: 'first.jpg' }) },
+    'react-i18next': { useTranslation: () => ({ t: (key) => key }) },
+    'react-native': {
+      Alert: { alert: (...args) => alerts.push(args) },
+      Animated: { View: 'Animated.View' },
+    },
+    'react-native-safe-area-context': { useSafeAreaInsets: () => ({ bottom: 0 }) },
+    '../../src/api/newsletter': {},
+    '../../src/components/common/Header': {},
+    '../../src/components/scan/ScanHelpModal': {},
+    '../../src/components/scan/ScanStepIndicator': {},
+    '../../src/constants/colors': screen.runtime.load('src/constants/colors.ts'),
+    '../../src/constants/scan': { SCAN_FRAME_H: 300 },
+    '../../src/hooks/useResponsiveLayout': { default: () => ({ height: 800, isCompact: false }) },
+    '../../src/hooks/scan/useNewsletterProcessing': { default: () => screen.result },
+    '../../src/hooks/scan/useNewsletterProcessingAnimation': { default: () => ({}) },
+    '../../src/styles/scan/loading': { default: {} },
+    '../../src/utils/newsletterPaused': {
+      getPausedTitle: () => '',
+      getPausedDescription: () => '',
+    },
+    '../../src/utils/scanNavigation': {},
+  });
+  cleanups.push(view.unmount);
+  view.render();
+  assert.equal(alerts.length, 1);
+  const retryButton = alerts[0][2].find(
+    (button) => button.text === 'scan.loading.paused.retryButton'
+  );
+  retryButton.onPress();
+  assert.equal(screen.api.skip.calls.length, 2);
+  assert.equal(screen.api.skip.calls[1].args[1], 2);
+  assert.equal(screen.api.resume.calls.length, 0);
+  screen.api.skip.calls[1].resolve({ newsletterId: 1, status: 'PROCESSING' });
+  await waitFor(screen, () => screen.api.status.calls.length === 2);
+  screen.api.status.calls[1].resolve(snapshot('COMPLETED'));
+  await waitFor(screen, () => screen.result.phase === 'completed');
+});
+
+test('start status stays local until a server status read populates the shared cache', async () => {
+  const screen = setup();
+  screen.api.upload.calls[0].resolve({ newsletterId: 1, status: 'PROCESSING' });
+  await waitFor(screen, () => screen.api.status.calls.length === 1);
+  assert.equal(screen.result.status.status, 'PROCESSING');
+  const key = screen.runtime.key('newsletterStatus', 1);
+  assert.equal(screen.runtime.client.getQueryData(key), undefined);
+  screen.api.status.calls[0].resolve(paused());
+  await waitFor(screen, () => screen.result.phase === 'paused');
+  assert.equal(screen.runtime.client.getQueryData(key).status, 'PAUSED');
+});
 
 test('upload starts once across rerenders and processing polls until completion invalidates results', async () => {
   const screen = setup();
@@ -544,6 +679,37 @@ const relatedQuery = (screen) => {
   });
   return api;
 };
+
+['upload', 'resume'].forEach((endpoint) => {
+  test(`a delayed ${endpoint} response cannot overwrite a newer shared status read`, async () => {
+    const screen = setup(
+      endpoint === 'resume' ? { photoUris: [], resumeNewsletterId: 1 } : undefined,
+      { realHooks: true }
+    );
+    await waitFor(screen, () => screen.api[endpoint].calls.length === 1);
+    const related = relatedQuery(screen);
+    screen.api[endpoint].calls[0].resolve({ newsletterId: 1, status: 'PROCESSING' });
+    await waitFor(screen, () => related.calls.length === 1);
+    const view = screen.runtime.observe(
+      screen.runtime
+        .load('src/query/options.ts')
+        .serverOptions(screen.runtime.scope(), 'newsletterStatus', [1], screen.api.status.request)
+    );
+    assert.equal(screen.api.status.calls.length, 1);
+    screen.api.status.calls[0].resolve(snapshot('COMPLETED'));
+    await waitFor(screen, () => view.result.data?.status === 'COMPLETED');
+    const key = screen.runtime.key('newsletterStatus', 1);
+    const completed = screen.runtime.client.getQueryData(key);
+    const updatedAt = screen.runtime.client.getQueryState(key).dataUpdatedAt;
+    related.calls[0].resolve({ refreshed: true });
+    await waitFor(screen, () => screen.result.newsletterId === 1);
+    assert.equal(screen.runtime.client.getQueryData(key), completed);
+    assert.equal(screen.runtime.client.getQueryState(key).dataUpdatedAt, updatedAt);
+    assert.equal(screen.result.status.status, 'COMPLETED');
+    assert.equal(screen.result.status.progressPercent, 100);
+    assert.equal(screen.result.phase, 'completed');
+  });
+});
 
 test('production upload mutation waits for related cache refresh across blur and focus without sending twice', async () => {
   const screen = setup(undefined, { realHooks: true });
